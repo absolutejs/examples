@@ -288,6 +288,7 @@ export type SavedIntake = {
     | "escalated"
     | "voicemail"
     | "no-answer"
+    | "silence-timeout"
     | "failed"
     | "closed";
   callReason?: string;
