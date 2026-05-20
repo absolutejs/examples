@@ -1,0 +1,74 @@
+@use "sass:color";
+
+$module-accent: #14b8a6;
+
+/* Locally-scoped class names — the build pipeline rewrites them to
+   `<original>__<hash>` so they can't collide with global utility CSS. */
+.card {
+  border: 1px solid var(--t-border);
+  border-left: 4px solid $module-accent;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba($module-accent, 0.18), rgba($module-accent, 0.05)),
+    var(--t-surface);
+  padding: 18px 20px;
+  display: grid;
+  gap: 8px;
+  min-height: 260px;
+  box-shadow: 0 20px 48px var(--t-card-shadow);
+}
+
+.label {
+  color: var(--t-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--t-label-active);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.description {
+  margin: 0;
+  color: var(--t-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tokenList {
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+  padding: 0;
+  list-style: none;
+}
+
+.token {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--t-surface-2);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tokenKey {
+  color: var(--t-muted);
+}
+
+.tokenValue {
+  color: color.adjust($module-accent, $lightness: -10%);
+  font-weight: 600;
+}
+
+:export {
+  accent: #{$module-accent};
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.absolutejs/
+.cache/
+*.log
+.DS_Store
+**/*.env
+.claude/
+.codex
+.absolutejs-tsconfig.vue-check.json
+.absolutejs-vue-tsc.tsbuildinfo

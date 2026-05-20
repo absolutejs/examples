@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>AbsoluteJS Image Optimization - HTMX</title>
+    <meta
+      name="description"
+      content="Image optimization with HTMX, powered by AbsoluteJS."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/image-demo.css"
+    />
+    <script
+      src="https://unpkg.com/htmx.org@2.0.4"
+      integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body>
+    <header>
+      <a href="/htmx" class="logo">
+        <img
+          src="/assets/png/absolutejs-temp.png"
+          height="24"
+          alt="AbsoluteJS"
+        />
+        AbsoluteJS
+      </a>
+      <nav>
+        <a href="/">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a href="/html">HTML</a>
+        <a href="/htmx" class="active">HTMX</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <img src="/assets/svg/htmx-logo-black.svg" height="32" alt="HTMX" />
+        <h1>HTMX</h1>
+        <span class="badge">Image Optimization</span>
+      </div>
+
+      <h2 class="section-title">Responsive Images</h2>
+      <p class="section-desc">
+        HTMX pages use the same <code>data-optimized</code> attribute as plain
+        HTML. AbsoluteJS rewrites the images at build time, and HTMX handles
+        dynamic partial swaps on top.
+      </p>
+
+      <div class="image-grid">
+        <div class="image-card">
+          <div class="image-wrapper">
+            <img
+              data-optimized
+              src="/assets/jpg/landscape.jpg"
+              width="1200"
+              height="800"
+              sizes="(max-width: 640px) 100vw, 340px"
+              alt="Landscape photo"
+            />
+          </div>
+          <div class="card-body">
+            <div class="card-title">Landscape</div>
+            <div class="card-desc">
+              1200x800 with responsive sizes. Build rewrites src and adds
+              srcset.
+            </div>
+          </div>
+          <div class="card-meta">
+            <span>src: <code>/assets/jpg/landscape.jpg</code></span>
+          </div>
+        </div>
+
+        <div class="image-card">
+          <div class="image-wrapper">
+            <img
+              data-optimized
+              src="/assets/jpg/portrait.jpg"
+              width="600"
+              height="900"
+              sizes="(max-width: 640px) 100vw, 340px"
+              alt="Portrait photo"
+            />
+          </div>
+          <div class="card-body">
+            <div class="card-title">Portrait</div>
+            <div class="card-desc">
+              600x900 portrait. Width/height preserved for CLS prevention.
+            </div>
+          </div>
+          <div class="card-meta">
+            <span>src: <code>/assets/jpg/portrait.jpg</code></span>
+          </div>
+        </div>
+
+        <div class="image-card">
+          <div class="image-wrapper">
+            <img
+              data-optimized
+              src="/assets/jpg/square.jpg"
+              width="800"
+              height="800"
+              sizes="(max-width: 640px) 100vw, 340px"
+              alt="Square photo"
+            />
+          </div>
+          <div class="card-body">
+            <div class="card-title">Square</div>
+            <div class="card-desc">
+              800x800 square. Same data-optimized attribute, automatic
+              optimization.
+            </div>
+          </div>
+          <div class="card-meta">
+            <span>src: <code>/assets/jpg/square.jpg</code></span>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Fill Mode</h2>
+      <p class="section-desc">
+        For fill mode in HTMX pages, use CSS on the parent and data-optimized on
+        the img.
+      </p>
+
+      <div class="fill-demo">
+        <img
+          data-optimized
+          src="/assets/jpg/landscape.jpg"
+          alt="Fill mode landscape"
+        />
+      </div>
+
+      <h2 class="section-title">Unoptimized (no data-optimized)</h2>
+      <p class="section-desc">
+        Without the data-optimized attribute, the image is served as-is. Just a
+        normal &lt;img&gt; tag — no build-time rewriting.
+      </p>
+
+      <div class="image-grid">
+        <div class="image-card">
+          <div class="image-wrapper">
+            <img
+              src="/assets/jpg/square.jpg"
+              width="800"
+              height="800"
+              alt="Unoptimized square"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="card-body">
+            <div class="card-title">Unoptimized</div>
+            <div class="card-desc">
+              Original JPG served directly. No data-optimized = no
+              transformation.
+            </div>
+          </div>
+          <div class="card-meta">
+            <span>unoptimized: <code>true</code></span>
+          </div>
+        </div>
+      </div>
+
+      <p class="footer">
+        <img src="/assets/png/absolutejs-temp.png" alt="" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+  </body>
+</html>

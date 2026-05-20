@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Islands - HTMX</title>
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/islands.css"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/htmx" class="logo">
+        <img
+          src="/assets/png/absolutejs-temp.png"
+          height="24"
+          alt="AbsoluteJS"
+        />
+        AbsoluteJS
+      </a>
+      <nav>
+        <a href="/">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a href="/html">HTML</a>
+        <a href="/htmx" class="active">HTMX</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <h1>HTMX</h1>
+        <span class="badge">Islands</span>
+      </div>
+
+      <p class="section-desc">
+        Each island is an independent component that hydrates on its own
+        schedule. Islands from different frameworks share state through a common
+        store.
+      </p>
+
+      <h2 class="section-title">Islands</h2>
+      <p class="section-desc">
+        HTMX host pages use the loose Island primitive for all islands.
+      </p>
+
+      <h3 class="subsection-title">
+        <span class="hydrate-label">hydrate="load"</span>
+        Eager
+      </h3>
+      <section class="grid">
+        <absolute-island
+          framework="react"
+          component="ReactCounter"
+          hydrate="load"
+          props='{"initialCount":0,"label":"React island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="svelte"
+          component="SvelteCounter"
+          hydrate="load"
+          props='{"initialCount":0,"label":"Svelte island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="vue"
+          component="VueCounter"
+          hydrate="load"
+          props='{"initialCount":0,"label":"Vue island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="angular"
+          component="AngularCounter"
+          hydrate="load"
+          props='{"initialCount":0,"label":"Angular island"}'
+        ></absolute-island>
+      </section>
+
+      <h3 class="subsection-title">
+        <span class="hydrate-label">hydrate="idle"</span>
+        Idle
+      </h3>
+      <section class="grid">
+        <absolute-island
+          framework="react"
+          component="ReactCounter"
+          hydrate="idle"
+          props='{"initialCount":0,"label":"React island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="svelte"
+          component="SvelteCounter"
+          hydrate="idle"
+          props='{"initialCount":0,"label":"Svelte island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="vue"
+          component="VueCounter"
+          hydrate="idle"
+          props='{"initialCount":0,"label":"Vue island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="angular"
+          component="AngularCounter"
+          hydrate="idle"
+          props='{"initialCount":0,"label":"Angular island"}'
+        ></absolute-island>
+      </section>
+
+      <h3 class="subsection-title">
+        <span class="hydrate-label">hydrate="visible"</span>
+        Visible
+      </h3>
+      <section class="grid">
+        <absolute-island
+          framework="react"
+          component="ReactCounter"
+          hydrate="visible"
+          props='{"initialCount":0,"label":"React island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="svelte"
+          component="SvelteCounter"
+          hydrate="visible"
+          props='{"initialCount":0,"label":"Svelte island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="vue"
+          component="VueCounter"
+          hydrate="visible"
+          props='{"initialCount":0,"label":"Vue island"}'
+        ></absolute-island>
+        <absolute-island
+          framework="angular"
+          component="AngularCounter"
+          hydrate="visible"
+          props='{"initialCount":0,"label":"Angular island"}'
+        ></absolute-island>
+      </section>
+
+      <p class="footer">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          rel="noopener noreferrer"
+          target="_blank"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+  </body>
+</html>

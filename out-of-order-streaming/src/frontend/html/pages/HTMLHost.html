@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AbsoluteJS Streaming - HTML Raw Slots</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/svg/html5.svg" />
+    <link rel="stylesheet" href="../../styles/indexes/streaming.css" />
+  </head>
+  <body>
+    <header>
+      <a href="/" class="logo">
+        <img src="/assets/png/absolutejs-temp.png" alt="AbsoluteJS" />
+        AbsoluteJS
+      </a>
+      <div class="nav-stack">
+        <nav class="nav-row">
+          <span class="nav-label">Raw Slots</span>
+          <a href="/">React</a>
+          <a href="/svelte">Svelte</a>
+          <a href="/vue">Vue</a>
+          <a href="/angular">Angular</a>
+          <a href="/html" class="active">HTML</a>
+          <a href="/htmx">HTMX</a>
+        </nav>
+        <nav class="nav-row nav-row-secondary">
+          <span class="nav-label">Framework Primitives</span>
+          <a href="/react-framework">React</a>
+          <a href="/svelte-framework">Svelte</a>
+          <a href="/vue-framework">Vue</a>
+          <a href="/angular-framework">Angular</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <img src="/assets/svg/html5.svg" alt="HTML" width="32" height="32" />
+        <h1>HTML Raw Slots</h1>
+        <span class="badge">Transport Primitive</span>
+      </div>
+
+      <p class="section-desc">
+        This page is plain HTML. The server passes
+        <code>streamingSlots</code> directly to
+        <code>handleHTMLPageRequest</code>, so the fallback cards ship
+        immediately and the resolved HTML lands later in out-of-order resolution
+        order.
+      </p>
+
+      <h2 class="section-title">Streamed Slots</h2>
+      <p class="section-desc">
+        Six slots declared in order. Watch them resolve out of sequence &mdash;
+        slot 4 arrives first, then 2, 6, 5, 1, and finally 3.
+      </p>
+
+      <section class="grid">
+        <div id="html-first" data-absolute-slot="true">
+          <article class="stream-card stream-card-html stream-card-fallback">
+            <div class="stream-header">
+              <img alt="HTML" height="20" src="/assets/svg/html5.svg" />
+              <span>HTML Slot 1</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 1st</span>
+              <span>Expected 5th</span>
+              <span>Fallback</span>
+              <span>handleHTMLPageRequest</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for server to stream resolved markup into this slot.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </div>
+        <div id="html-second" data-absolute-slot="true">
+          <article class="stream-card stream-card-html stream-card-fallback">
+            <div class="stream-header">
+              <img alt="HTML" height="20" src="/assets/svg/html5.svg" />
+              <span>HTML Slot 2</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 2nd</span>
+              <span>Expected 2nd</span>
+              <span>Fallback</span>
+              <span>handleHTMLPageRequest</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for server to stream resolved markup into this slot.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </div>
+        <div id="html-third" data-absolute-slot="true">
+          <article class="stream-card stream-card-html stream-card-fallback">
+            <div class="stream-header">
+              <img alt="HTML" height="20" src="/assets/svg/html5.svg" />
+              <span>HTML Slot 3</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 3rd</span>
+              <span>Expected 6th</span>
+              <span>Fallback</span>
+              <span>handleHTMLPageRequest</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for server to stream resolved markup into this slot.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </div>
+        <div id="html-fourth" data-absolute-slot="true">
+          <article class="stream-card stream-card-html stream-card-fallback">
+            <div class="stream-header">
+              <img alt="HTML" height="20" src="/assets/svg/html5.svg" />
+              <span>HTML Slot 4</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 4th</span>
+              <span>Expected 1st</span>
+              <span>Fallback</span>
+              <span>handleHTMLPageRequest</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for server to stream resolved markup into this slot.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </div>
+        <div id="html-fifth" data-absolute-slot="true">
+          <article class="stream-card stream-card-html stream-card-fallback">
+            <div class="stream-header">
+              <img alt="HTML" height="20" src="/assets/svg/html5.svg" />
+              <span>HTML Slot 5</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 5th</span>
+              <span>Expected 4th</span>
+              <span>Fallback</span>
+              <span>handleHTMLPageRequest</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for server to stream resolved markup into this slot.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </div>
+        <div id="html-sixth" data-absolute-slot="true">
+          <article class="stream-card stream-card-html stream-card-fallback">
+            <div class="stream-header">
+              <img alt="HTML" height="20" src="/assets/svg/html5.svg" />
+              <span>HTML Slot 6</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 6th</span>
+              <span>Expected 3rd</span>
+              <span>Fallback</span>
+              <span>handleHTMLPageRequest</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for server to stream resolved markup into this slot.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </div>
+      </section>
+
+      <p class="footer">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          AbsoluteJS
+        </a>
+      </p>
+    </main>
+  </body>
+</html>

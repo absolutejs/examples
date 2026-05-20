@@ -1,0 +1,224 @@
+<header>
+  <a href="/angular" class="logo">
+    <img src="/assets/png/absolutejs-temp.png" height="24" alt="AbsoluteJS" />
+    AbsoluteJS
+  </a>
+  <nav>
+    <a href="/">React</a>
+    <a href="/svelte">Svelte</a>
+    <a href="/vue">Vue</a>
+    <a href="/angular" class="active">Angular</a>
+    <a href="/html">HTML</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-title">
+    <img src="/assets/svg/angular.svg" height="32" alt="Angular" />
+    <h1>Angular</h1>
+  </div>
+
+  <div class="worker-cards">
+    <div class="worker-card">
+      <div class="card-title">SHA-256 Hash</div>
+      <p class="card-desc">Offload cryptographic hashing to a worker thread.</p>
+      <button
+        (click)="runHash()"
+        [class.loading]="hashLoading"
+        [disabled]="hashLoading"
+      >
+        {{ hashLoading ? 'Computing' : 'Compute Hash' }}
+      </button>
+      <div class="worker-result">
+        <div class="result-row">
+          <span>Input</span
+          ><span>{{ hashResult ? hashResult.input : '\u2014' }}</span>
+        </div>
+        <div class="result-row">
+          <span>Hash</span
+          ><span
+            >{{ hashResult ? hashResult.hash.slice(0, 16) + '...' : '\u2014'
+            }}</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="worker-card">
+      <div class="card-title">Prime Finder</div>
+      <p class="card-desc">CPU-bound computation off the main thread.</p>
+      <button
+        (click)="runPrime()"
+        [class.loading]="primeLoading"
+        [disabled]="primeLoading"
+      >
+        {{ primeLoading ? 'Computing' : "Find 10,000th Prime" }}
+      </button>
+      <div class="worker-result">
+        <div class="result-row">
+          <span>Prime #10000</span
+          ><span
+            >{{ primeResult ? primeResult.prime.toLocaleString() : '\u2014'
+            }}</span
+          >
+        </div>
+        <div class="result-row">
+          <span>Duration</span
+          ><span
+            >{{ primeResult ? primeResult.duration + 'ms' : '\u2014' }}</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="worker-card">
+      <div class="card-title">Sort Array</div>
+      <p class="card-desc">Data processing without blocking the UI.</p>
+      <button
+        (click)="runSort()"
+        [class.loading]="sortLoading"
+        [disabled]="sortLoading"
+      >
+        {{ sortLoading ? 'Sorting' : 'Sort 1M Numbers' }}
+      </button>
+      <div class="worker-result">
+        <div class="result-row">
+          <span>Min</span
+          ><span
+            >{{ sortResult ? sortResult.min.toLocaleString() : '\u2014' }}</span
+          >
+        </div>
+        <div class="result-row">
+          <span>Max</span
+          ><span
+            >{{ sortResult ? sortResult.max.toLocaleString() : '\u2014' }}</span
+          >
+        </div>
+        <div class="result-row">
+          <span>Median</span
+          ><span
+            >{{ sortResult ? sortResult.median.toLocaleString() : '\u2014'
+            }}</span
+          >
+        </div>
+        <div class="result-row">
+          <span>Duration</span
+          ><span>{{ sortResult ? sortResult.duration + 'ms' : '\u2014' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="worker-card">
+      <div class="card-title">Thread Race</div>
+      <p class="card-desc">Worker and main thread timers side by side.</p>
+      <div class="race-bars">
+        <div class="race-bar-row">
+          <div class="race-bar-label">
+            <span>Worker Timer</span>
+            <span>{{ formatTime(workerTime) }}</span>
+          </div>
+          <div class="race-bar-track">
+            <div
+              class="race-bar-fill worker"
+              [style.width.%]="workerTime / 10000 * 100 > 100 ? 100 : workerTime / 10000 * 100"
+            ></div>
+          </div>
+        </div>
+        <div class="race-bar-row">
+          <div class="race-bar-label">
+            <span>Main Thread</span>
+            <span>{{ formatTime(mainTime) }}</span>
+          </div>
+          <div class="race-bar-track">
+            <div
+              class="race-bar-fill main-thread"
+              [style.width.%]="mainTime / 10000 * 100 > 100 ? 100 : mainTime / 10000 * 100"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div class="race-controls">
+        <button (click)="startRace()" [disabled]="racing">Start Race</button>
+        <button (click)="stopRace()" [disabled]="!racing">Stop Race</button>
+        <button
+          class="stress"
+          (click)="stressMainThread()"
+          [disabled]="stressing || !racing"
+        >
+          {{ stressing ? 'Stressing...' : 'Stress Main Thread' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="worker-card">
+      <div class="card-title">Image Processing</div>
+      <p class="card-desc">Grayscale conversion via worker on pixel data.</p>
+      <label
+        class="file-upload"
+        (dragover)="onImageDragOver($event)"
+        (dragleave)="onImageDragLeave($event)"
+        (drop)="onImageDrop($event)"
+      >
+        <input
+          type="file"
+          accept="image/*"
+          (change)="onImageFileChange($event)"
+        />
+        <span>{{ imageFileName ?? 'Drop an image or click to upload' }}</span>
+      </label>
+      <button
+        (click)="runImageProcess()"
+        [class.loading]="imageLoading"
+        [disabled]="imageLoading || !imageLoaded"
+      >
+        {{ imageLoading ? 'Processing' : imageDuration !== null ? 'Apply
+        Grayscale \u2014 ' + imageDuration + 'ms' : 'Apply Grayscale' }}
+      </button>
+      <div class="canvas-row" [style.display]="imageLoaded ? 'flex' : 'none'">
+        <canvas id="originalCanvas" width="200" height="150"></canvas>
+        <canvas id="processedCanvas" width="200" height="150"></canvas>
+      </div>
+    </div>
+
+    <div class="worker-card">
+      <div class="card-title">Parallel Race</div>
+      <p class="card-desc">
+        3 workers with different workloads running simultaneously.
+      </p>
+      <button
+        (click)="runParallelRace()"
+        [class.loading]="parallelLoading"
+        [disabled]="parallelLoading"
+      >
+        {{ parallelLoading ? 'Racing' : 'Start Race' }}
+      </button>
+      <div class="parallel-workers">
+        <div
+          *ngFor="let w of parallelWorkers; let i = index"
+          class="parallel-worker"
+        >
+          <div class="parallel-worker-header">
+            <span>{{ workerLabels[i] }}</span>
+            <span>{{ w.elapsed > 0 ? w.elapsed + 'ms' : '' }}</span>
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              [class.done]="w.done"
+              [style.width.%]="w.percent"
+              [style.transition]="parallelResetting ? 'none' : ''"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer">
+    <img src="/assets/png/absolutejs-temp.png" alt="" />
+    Powered by
+    <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
+      >AbsoluteJS</a
+    >
+  </p>
+</main>

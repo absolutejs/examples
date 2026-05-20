@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>AbsoluteJS RAG Workflow Demo - HTMX</title>
+    <meta
+      name="description"
+      content="AbsoluteJS RAG vector demo with server-rendered HTMX fragments."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/rag-vector-demo.css"
+    />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body class="rag-demo-page">
+    <header>
+      <div class="header-left">
+        <a class="logo" href="/react/pinecone">
+          <img
+            src="/assets/png/absolutejs-temp.png"
+            height="24"
+            alt="AbsoluteJS"
+          />
+          AbsoluteJS
+        </a>
+      </div>
+      <nav>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">SQLite Native</span
+          ><a href="/react/sqlite-native">React</a
+          ><a href="/svelte/sqlite-native">Svelte</a
+          ><a href="/vue/sqlite-native">Vue</a
+          ><a href="/angular/sqlite-native">Angular</a
+          ><a href="/html/sqlite-native">HTML</a
+          ><a href="/htmx/sqlite-native">HTMX</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">SQLite Fallback</span
+          ><a href="/react/sqlite-fallback">React</a
+          ><a href="/svelte/sqlite-fallback">Svelte</a
+          ><a href="/vue/sqlite-fallback">Vue</a
+          ><a href="/angular/sqlite-fallback">Angular</a
+          ><a href="/html/sqlite-fallback">HTML</a
+          ><a href="/htmx/sqlite-fallback">HTMX</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">PostgreSQL</span
+          ><a href="/react/postgres">React</a
+          ><a href="/svelte/postgres">Svelte</a><a href="/vue/postgres">Vue</a
+          ><a href="/angular/postgres">Angular</a
+          ><a href="/html/postgres">HTML</a><a href="/htmx/postgres">HTMX</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label active">Pinecone</span
+          ><a href="/react/pinecone">React</a
+          ><a href="/svelte/pinecone">Svelte</a><a href="/vue/pinecone">Vue</a
+          ><a href="/angular/pinecone">Angular</a
+          ><a href="/html/pinecone">HTML</a
+          ><a href="/htmx/pinecone" class="active">HTMX</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="demo-layout">
+      <section class="demo-card">
+        <h1>AbsoluteJS RAG Workflow Demo - HTMX</h1>
+        <div
+          id="rag-readiness-badge"
+          hx-get="/demo/rag-readiness/pinecone"
+          hx-trigger="load"
+          hx-swap="outerHTML"
+        >
+          <p class="demo-metadata">Loading RAG readiness...</p>
+        </div>
+        <p>
+          This page is fully server-rendered for HTMX. Retrieval, document
+          management, chunk preview, and diagnostics are all driven by
+          server-side fragments backed by the AbsoluteJS RAG workflow routes.
+        </p>
+        <p class="demo-metadata">
+          Pinned to
+          <code
+            >@absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
+            @absolutejs/rag@0.0.5</code
+          >
+          and surfacing the shared <code>@absolutejs/rag</code> plus
+          <code>@absolutejs/rag/ui</code> diagnostics on this page.
+        </p>
+        <ul class="demo-checklist">
+          <li>
+            Inspect the stuffed file-backed seed corpus and verify extractor
+            metadata across PDFs, office docs, archives, images, audio, video,
+            EPUB, email, and legacy files.
+          </li>
+          <li>
+            Upload first-party fixture files through the server-owned extractor
+            route and verify retrieval against the uploaded source path.
+          </li>
+          <li>
+            Ingest a custom document and let the page refresh diagnostics,
+            documents, and chunk previews without leaving the current route.
+          </li>
+          <li>
+            Run retrieval and verify the returned chunk text, source label, and
+            metadata summary match the indexed source.
+          </li>
+          <li>
+            Stream a grounded answer from the first-class HTMX workflow path
+            with retrieval, citations, and answer rendering on the same page.
+          </li>
+          <li>
+            Run the built-in benchmark suite and compare retrieval strategies,
+            rerankers, citations, and missing evidence on the same page.
+          </li>
+          <li>
+            Inspect grounded-answer coverage and reference mapping so every
+            citation number resolves to concrete evidence.
+          </li>
+          <li>
+            Review knowledge-base operations health, extractor readiness, and
+            recent admin jobs from the first-class ops surface.
+          </li>
+        </ul>
+      </section>
+
+      <div id="mutation-status" class="demo-results">
+        <h3>Sync Feedback</h3>
+        <p class="demo-metadata">
+          Run a sync, ingest, reset, or delete action to see the latest
+          server-side mutation summary here.
+        </p>
+        <p class="demo-metadata">
+          This panel is updated in-place by HTMX and stays on the same route as
+          the diagnostics and ops surfaces.
+        </p>
+      </div>
+
+      <section class="demo-grid">
+        <article class="demo-card">
+          <h2>Diagnostics</h2>
+          <div
+            id="htmx-status"
+            hx-get="/rag/pinecone/status"
+            hx-trigger="load, rag:mutated from:body"
+            hx-swap="innerHTML"
+          >
+            <p class="demo-metadata">Loading diagnostics...</p>
+          </div>
+          <div
+            id="htmx-ops"
+            hx-get="/demo/ops/pinecone"
+            hx-trigger="load, rag:mutated from:body"
+            hx-swap="innerHTML"
+          >
+            <p class="demo-metadata">Loading knowledge-base operations...</p>
+          </div>
+          <div
+            id="htmx-release"
+            hx-get="/demo/release/pinecone/htmx"
+            hx-trigger="load, rag:mutated from:body"
+            hx-swap="innerHTML"
+          >
+            <p class="demo-metadata">Loading release control...</p>
+          </div>
+          <div class="demo-actions">
+            <button
+              type="button"
+              hx-post="/demo/message/pinecone/reseed"
+              hx-target="#mutation-status"
+              hx-swap="innerHTML"
+            >
+              Re-seed defaults
+            </button>
+            <button
+              type="button"
+              hx-post="/demo/message/pinecone/reset"
+              hx-target="#mutation-status"
+              hx-swap="innerHTML"
+            >
+              Reset custom docs
+            </button>
+            <button
+              type="button"
+              hx-get="/rag/pinecone/status"
+              hx-target="#htmx-status"
+              hx-swap="innerHTML"
+            >
+              Refresh diagnostics
+            </button>
+          </div>
+        </article>
+
+        <article class="demo-card">
+          <h2>Retrieve And Verify</h2>
+          <p class="demo-metadata">
+            Submit a search and confirm the returned chunk text and source label
+            match the indexed sources below.
+          </p>
+          <p class="demo-metadata">
+            Site discovery checks require running the
+            <code>sync-site-discovery</code> source first, then searching
+            <code>sync/site/demo/sync-fixtures/site/docs/guide</code>.
+          </p>
+          <div class="demo-actions">
+            <button
+              type="button"
+              hx-post="/demo/message/pinecone/search"
+              hx-vals='{"query":"Which aurora launch packet phrase shows late interaction can match precise wording without splitting the parent document?","topK":"6","retrieval":"hybrid"}'
+              hx-target="#search-results"
+              hx-swap="innerHTML"
+            >
+              Late interaction / multivector
+            </button>
+            <button
+              type="button"
+              hx-post="/demo/sync/pinecone/sync-site-discovery"
+              hx-target="#ops-panel"
+              hx-swap="outerHTML"
+            >
+              Sync site discovery now
+            </button>
+          </div>
+          <form
+            class="demo-search-form"
+            hx-post="/demo/message/pinecone/search"
+            hx-target="#search-results"
+            hx-swap="innerHTML"
+          >
+            <label for="query">Query</label>
+            <input
+              id="query"
+              name="query"
+              placeholder="e.g. Which source mentions metadata filters?"
+              required
+              type="text"
+            />
+            <label for="topK">Top K</label>
+            <input
+              id="topK"
+              name="topK"
+              max="20"
+              min="1"
+              type="number"
+              value="6"
+            />
+            <label for="scoreThreshold">Minimum score (0-1)</label>
+            <input
+              id="scoreThreshold"
+              name="scoreThreshold"
+              placeholder="optional"
+              type="number"
+              step="0.01"
+              min="0"
+              max="1"
+            />
+            <label for="kind">Kind</label>
+            <select id="kind" name="kind">
+              <option value="">any</option>
+              <option value="seed">seed</option>
+              <option value="custom">custom</option>
+            </select>
+            <label for="source">Source filter</label>
+            <input
+              id="source"
+              name="source"
+              placeholder="optional"
+              type="text"
+            />
+            <label for="documentId">Document ID filter</label>
+            <input
+              id="documentId"
+              name="documentId"
+              placeholder="optional"
+              type="text"
+            />
+            <button type="submit">Search</button>
+          </form>
+          <div id="search-results" class="demo-results"></div>
+
+          <div class="demo-results">
+            <h3>Benchmark Retrieval</h3>
+            <p class="demo-metadata">
+              This flow stays fully server-driven for HTMX and runs the built-in
+              benchmark suite through the backend-specific evaluation route so
+              you can compare expected, retrieved, and missing evidence without
+              client state.
+            </p>
+            <div class="demo-actions">
+              <button
+                type="button"
+                hx-post="/demo/evaluate/pinecone"
+                hx-target="#evaluation-results"
+                hx-swap="innerHTML"
+              >
+                Run benchmark suite
+              </button>
+            </div>
+            <div id="evaluation-results" class="demo-results">
+              <p class="demo-metadata">
+                Run the benchmark suite to see per-case expected sources,
+                retrieved sources, and retrieval quality metrics.
+              </p>
+            </div>
+          </div>
+
+          <div class="demo-results">
+            <h3>Retrieval Quality Tooling</h3>
+            <p class="demo-metadata">
+              This flow stays fully server-driven for HTMX and keeps the saved
+              suite, retrieval-strategy comparison, reranker showdown, and
+              quality winners on the same page.
+            </p>
+            <div class="demo-actions">
+              <button
+                type="button"
+                hx-get="/demo/quality/pinecone/htmx"
+                hx-target="#quality-results"
+                hx-swap="innerHTML"
+              >
+                Run quality comparison
+              </button>
+            </div>
+            <div id="quality-results" class="demo-results">
+              <p class="demo-metadata">
+                Run the comparison to inspect the saved suite, reranker
+                leaderboard, and SQLite planner outcome summary.
+              </p>
+            </div>
+          </div>
+
+          <div class="demo-stream-panel">
+            <h3>Stream Retrieval Workflow</h3>
+            <p class="demo-metadata">
+              This flow uses the HTMX server-side message + SSE stream path
+              directly. Ask a question and watch retrieval, sources, and answer
+              rendering stream into the page.
+            </p>
+            <form
+              id="stream-form"
+              class="demo-stream-form"
+              hx-post="/demo/message/pinecone/message"
+              hx-target="#stream-thread"
+              hx-swap="beforeend"
+            >
+              <div
+                id="stream-model-picker"
+                hx-get="/demo/ai-models/htmx"
+                hx-trigger="load"
+                hx-swap="outerHTML"
+              >
+                <p class="demo-metadata">Loading answer models...</p>
+              </div>
+              <div id="stream-query-field">
+                <label for="stream-query">Question</label>
+                <input
+                  id="stream-query"
+                  name="content"
+                  placeholder="e.g. What should I verify after ingesting a new source?"
+                  required
+                  type="text"
+                />
+              </div>
+              <div id="stream-form-controls" class="demo-stream-actions">
+                <button type="submit">Ask with retrieval stream</button>
+              </div>
+            </form>
+            <div id="stream-workflow-summary" class="demo-result-grid">
+              <article class="demo-result-item">
+                <h4>Workflow Contract</h4>
+                <ul class="demo-detail-list">
+                  <li>Canonical entry point: HTMX workflow route</li>
+                  <li>Connected page surface: message + SSE transport</li>
+                  <li>Snapshot stage: idle</li>
+                  <li>Live stage field: idle</li>
+                  <li>Snapshot sources: 0</li>
+                  <li>Snapshot running: no</li>
+                </ul>
+              </article>
+              <article class="demo-result-item">
+                <h4>Workflow Proof</h4>
+                <ul class="demo-detail-list">
+                  <li>Retrieved: no</li>
+                  <li>Has sources: no</li>
+                  <li>Citation count: 0</li>
+                  <li>Grounding coverage: ungrounded</li>
+                </ul>
+              </article>
+            </div>
+            <div id="stream-thread" class="demo-results">
+              <p class="demo-metadata">
+                Submit a question to stream retrieval status, sources, grounded
+                citations, and answer content.
+              </p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="demo-grid">
+        <article class="demo-card">
+          <h2>Ingest Document</h2>
+          <p class="demo-metadata">
+            Add a document, choose its source format and chunking strategy, then
+            verify how AbsoluteJS indexes it.
+          </p>
+          <div class="demo-results">
+            <h3>Upload Extracted Fixtures</h3>
+            <p class="demo-metadata">
+              These buttons use the server-owned upload fixture route. Each
+              request ingests a safe local binary fixture through the published
+              upload ingest path and returns the verification query for
+              retrieval.
+            </p>
+            <p class="demo-metadata">
+              Upload fixtures validate the extractor pipeline immediately. The
+              managed document list below stays focused on authored example
+              documents, while uploaded binaries are verified through retrieval.
+            </p>
+            <div class="demo-preset-grid">
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-native-pdf"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload native PDF
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-scanned-pdf"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload scanned PDF
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-spreadsheet"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload spreadsheet
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-presentation"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload deck
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-email"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload email thread
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-image-ocr"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload image OCR
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-audio"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload audio
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-video"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload video
+              </button>
+              <button
+                type="button"
+                hx-post="/demo/upload/pinecone/upload-archive"
+                hx-target="#upload-status"
+                hx-swap="innerHTML"
+              >
+                Upload archive
+              </button>
+            </div>
+            <form
+              class="demo-upload-row"
+              hx-post="/demo/upload-file/pinecone"
+              hx-encoding="multipart/form-data"
+              hx-target="#upload-status"
+              hx-swap="innerHTML"
+            >
+              <input name="file" type="file" />
+              <button type="submit">Upload file</button>
+            </form>
+            <div id="upload-status" class="demo-results"></div>
+          </div>
+          <form
+            class="demo-add-form"
+            hx-post="/demo/message/pinecone/documents"
+            hx-target="#mutation-status"
+            hx-swap="innerHTML"
+          >
+            <label for="customId">Optional ID</label>
+            <input id="customId" name="id" type="text" />
+            <label for="customTitle">Title</label>
+            <input id="customTitle" name="title" required type="text" />
+            <label for="customSource">Source</label>
+            <input
+              id="customSource"
+              name="source"
+              required
+              placeholder="e.g. onboarding-guide.md"
+              type="text"
+            />
+            <label for="customFormat">Source format</label>
+            <select id="customFormat" name="format">
+              <option value="markdown" selected>Markdown</option>
+              <option value="html">HTML</option>
+              <option value="text">Plain text</option>
+            </select>
+            <label for="customChunkStrategy">Chunking strategy</label>
+            <select id="customChunkStrategy" name="chunking.strategy">
+              <option value="source_aware" selected>Source-aware</option>
+              <option value="paragraphs">Paragraphs</option>
+              <option value="sentences">Sentences</option>
+              <option value="fixed">Fixed window</option>
+            </select>
+            <label for="customText">Text</label>
+            <textarea id="customText" name="text" required rows="6"></textarea>
+            <button type="submit">Ingest document and rebuild index</button>
+          </form>
+        </article>
+
+        <article class="demo-card">
+          <h2>Indexed Sources</h2>
+          <div
+            id="document-list"
+            hx-get="/demo/documents/pinecone"
+            hx-trigger="load, rag:mutated from:body"
+            hx-swap="innerHTML"
+          >
+            <p class="demo-metadata">Loading indexed documents...</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

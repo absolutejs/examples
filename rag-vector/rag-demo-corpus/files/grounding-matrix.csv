@@ -1,0 +1,11 @@
+suite,coverage,note
+suite-1,grounded,"Grounding matrix row 1 says evidence coverage should stay inspectable in the React surface."
+suite-2,grounded,"Grounding matrix row 2 says evidence coverage should stay inspectable in the React surface."
+suite-3,grounded,"Grounding matrix row 3 says evidence coverage should stay inspectable in the React surface."
+suite-4,grounded,"Grounding matrix row 4 says evidence coverage should stay inspectable in the React surface."
+suite-5,grounded,"Grounding matrix row 5 says evidence coverage should stay inspectable in the React surface."
+suite-6,grounded,"Grounding matrix row 6 says evidence coverage should stay inspectable in the React surface."
+suite-7,grounded,"Grounding matrix row 7 says evidence coverage should stay inspectable in the React surface."
+suite-8,grounded,"Grounding matrix row 8 says evidence coverage should stay inspectable in the React surface."
+suite-9,grounded,"Grounding matrix row 9 says evidence coverage should stay inspectable in the React surface."
+suite-10,grounded,"Grounding matrix row 10 says evidence coverage should stay inspectable in the React surface."

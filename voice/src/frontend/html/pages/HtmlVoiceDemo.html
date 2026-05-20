@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>AbsoluteJS Voice Demo - HTML</title>
+    <meta
+      name="description"
+      content="AbsoluteJS chat-style voice demo with guided and general modes in plain HTML."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/voice-demo.css"
+    />
+  </head>
+  <body class="voice-demo-page" data-framework="html">
+    <header>
+      <a class="logo" href="/html">
+        <img
+          src="/assets/png/absolutejs-temp.png"
+          height="24"
+          alt="AbsoluteJS"
+        />
+        AbsoluteJS
+      </a>
+      <nav>
+        <a href="/react">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a class="active" href="/html">HTML</a>
+        <a href="/htmx">HTMX</a>
+        <a href="/reviews">Reviews</a>
+        <a href="/traces">Traces</a>
+        <a href="/carriers">Carriers</a>
+        <a href="/phone-agent">Phone Agent</a>
+      </nav>
+    </header>
+    <main class="voice-shell">
+      <section class="voice-grid">
+        <article class="voice-card voice-hero">
+          <div class="voice-hero-layout">
+            <div>
+              <span class="voice-framework-pill">HTML Client</span>
+              <h2>Chat-style voice demo in HTML</h2>
+              <p class="voice-brand-copy">
+                HTML uses the raw voice client and microphone helper directly,
+                with no framework runtime in the middle.
+              </p>
+              <div class="voice-badges">
+                <span class="voice-badge">Deepgram Flux</span>
+                <span class="voice-badge">Phrase hint correction</span>
+                <span class="voice-badge">Reconnect-aware sessions</span>
+              </div>
+            </div>
+            <div class="voice-metrics">
+              <div class="voice-metric">
+                <span class="voice-metric-label">Connection</span>
+                <span class="voice-metric-value" id="metric-connection"
+                  >Waiting</span
+                >
+              </div>
+              <div class="voice-metric">
+                <span class="voice-metric-label">Scenario</span>
+                <span class="voice-metric-value" id="metric-session"
+                  >Choose one</span
+                >
+              </div>
+              <div class="voice-metric">
+                <span class="voice-metric-label">Saved captures</span>
+                <span class="voice-metric-value" id="metric-intakes">0</span>
+              </div>
+              <div class="voice-metric">
+                <span class="voice-metric-label">Model</span>
+                <span class="voice-metric-value" id="metric-provider"
+                  >Local</span
+                >
+              </div>
+              <div class="voice-metric">
+                <span class="voice-metric-label">Routing</span>
+                <span class="voice-metric-value" id="metric-routing"
+                  >Balanced</span
+                >
+              </div>
+              <div class="voice-metric">
+                <span class="voice-metric-label">Guarded profile</span>
+                <span
+                  class="voice-metric-value"
+                  id="metric-profile-switch-guard"
+                  >Unknown</span
+                >
+                <span
+                  class="voice-metric-label"
+                  id="metric-profile-switch-guard-summary"
+                  >Waiting for session guard</span
+                >
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="voice-card voice-provider-card">
+          <span class="voice-framework-pill">Model Provider</span>
+          <h2>Choose the assistant brain</h2>
+          <p class="voice-footnote">
+            Switch providers before starting the microphone. The voice route
+            receives the selected provider on every session.
+          </p>
+          <label class="voice-provider-select">
+            <span>Provider</span>
+            <select id="model-provider-select">
+              <option value="deterministic">Deterministic local model</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic Claude</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+          </label>
+          <label class="voice-provider-select">
+            <span>Voice profile</span>
+            <select id="voice-profile-select">
+              <option value="meeting-recorder">Meeting recorder</option>
+              <option value="support-agent">Support agent</option>
+              <option value="appointment-scheduler">
+                Appointment scheduler
+              </option>
+              <option value="noisy-phone-call">Noisy phone call</option>
+            </select>
+          </label>
+          <label class="voice-provider-select">
+            <span>STT routing</span>
+            <select id="routing-mode-select">
+              <option value="balanced">Balanced routing</option>
+              <option value="fastest">Fastest realtime</option>
+              <option value="cheapest">Cheapest acceptable</option>
+              <option value="quality">Quality first</option>
+            </select>
+          </label>
+          <label class="voice-provider-select">
+            <span>Speech engine</span>
+            <select id="speech-engine-select">
+              <option value="cascaded">Cascaded STT + LLM + TTS</option>
+              <option value="openai-realtime">OpenAI Realtime</option>
+            </select>
+          </label>
+          <p class="voice-footnote" id="routing-mode-copy">
+            Weighted cost, latency, and accuracy for normal production.
+          </p>
+        </article>
+
+        <article class="voice-card voice-proof-dashboard-card">
+          <span class="voice-framework-pill">Proof dashboards</span>
+          <h2>Open the production evidence</h2>
+          <p class="voice-footnote">
+            The same trace-backed package routes work in every framework:
+            interruption, live timing, turn waterfalls, readiness, and provider
+            contracts.
+          </p>
+          <div class="voice-proof-links">
+            <a href="/demo-proof">
+              <strong>Run full proof</strong>
+              <span>One action runs the suite and links every surface.</span>
+            </a>
+            <a href="/barge-in">
+              <strong>Barge-in</strong>
+              <span>Interruption stop latency from browser events.</span>
+            </a>
+            <a href="/live-latency">
+              <strong>Live latency</strong>
+              <span>Speech-to-assistant timing from live browser traces.</span>
+            </a>
+            <a href="/turn-latency">
+              <strong>Turn waterfall</strong>
+              <span>Speech detection through first audio.</span>
+            </a>
+            <a href="/voice/proof-trends">
+              <strong>Sustained trends</strong>
+              <span
+                >Repeated provider, turn, live-latency, recovery, and readiness
+                trends.</span
+              >
+            </a>
+            <a href="/voice/real-call-evidence-runtime">
+              <strong>Real-call runtime</strong>
+              <span
+                >Persisted real browser and phone evidence collected into
+                rolling profile history.</span
+              >
+            </a>
+            <a href="/traces">
+              <strong>Trace timelines</strong>
+              <span>Session timelines across providers and recovery.</span>
+            </a>
+            <a href="/production-readiness">
+              <strong>Readiness</strong>
+              <span>Deploy gate for runtime, providers, sinks, and proof.</span>
+            </a>
+            <a href="/provider-contracts">
+              <strong>Provider contracts</strong>
+              <span>Configured capability and fallback matrix.</span>
+            </a>
+          </div>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="real-call-worker-card"
+        >
+          <p class="empty-copy">Checking real-call evidence collector.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="platform-coverage-card"
+        >
+          <p class="empty-copy">Checking Vapi replacement coverage.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="proof-trends-card"
+        >
+          <p class="empty-copy">Checking sustained proof trends.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="profile-comparison-card"
+        >
+          <span class="voice-framework-pill">Profile + Reconnect Evidence</span>
+          <p class="empty-copy">Checking profile stack comparison.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="reconnect-evidence-card"
+        >
+          <p class="empty-copy">Checking persisted reconnect evidence.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="profile-switch-card"
+        >
+          <span class="voice-framework-pill"
+            >Profile Switch Recommendation</span
+          >
+          <p class="empty-copy">Checking profile switch recommendation.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="readiness-failures-card"
+        >
+          <p class="empty-copy">Checking readiness gate explanations.</p>
+        </article>
+
+        <absolute-voice-session-snapshot
+          class="voice-card voice-provider-health-card"
+          description="HTML renders a downloadable support bundle with session media graph, provider routing, and turn-quality evidence."
+          interval-ms="5000"
+          path="/api/voice/session-snapshot/latest"
+          title="Session Debug Snapshot"
+        ></absolute-voice-session-snapshot>
+
+        <absolute-voice-call-debugger-launch
+          class="voice-card voice-provider-health-card"
+          description="HTML opens the latest full call debugger with snapshot, replay, provider path, transcript, and incident markdown."
+          interval-ms="5000"
+          path="/api/voice-call-debugger/latest"
+          title="Debug Latest Call"
+        ></absolute-voice-call-debugger-launch>
+
+        <article class="voice-card voice-routing-card">
+          <span class="voice-framework-pill">Routing Trace</span>
+          <h2>Why this STT provider?</h2>
+          <p class="voice-footnote">
+            Latest router event from the self-hosted trace store.
+          </p>
+          <div id="routing-decision">
+            <p class="empty-copy">
+              Start a voice session to see the selected STT provider.
+            </p>
+          </div>
+        </article>
+
+        <article
+          class="voice-card voice-agent-squad-card"
+          id="agent-squad-card"
+        >
+          <span class="voice-framework-pill">Agent Squad</span>
+          <h2>Specialist routing is live</h2>
+          <p class="voice-footnote">
+            Say “I have a billing question about my invoice” to route from the
+            front desk to billing with a compact context policy.
+          </p>
+          <div class="voice-routing-grid">
+            <div>
+              <span>Current specialist</span>
+              <strong>front-desk</strong>
+            </div>
+            <div>
+              <span>Context policy</span>
+              <strong>handoff-summary-current-turn</strong>
+            </div>
+            <div>
+              <span>Handoffs</span>
+              <strong>0</strong>
+            </div>
+            <div>
+              <span>Messages sent</span>
+              <strong>ready</strong>
+            </div>
+          </div>
+          <p class="voice-footnote">
+            No specialist handoff in this session yet.
+          </p>
+          <p class="voice-footnote">
+            <a href="/agent-squad-contract">Open squad contract proof</a>
+          </p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="provider-status-card"
+        >
+          <p class="empty-copy">Checking provider health.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="provider-capabilities-card"
+        >
+          <p class="empty-copy">Checking provider capabilities.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="provider-contracts-card"
+        >
+          <p class="empty-copy">Checking provider contracts.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-simulation-card"
+          id="provider-simulation-card"
+        >
+          <p class="empty-copy">Loading provider simulation controls.</p>
+        </article>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="turn-quality-card"
+        >
+          <p class="empty-copy">Checking turn quality.</p>
+        </article>
+
+        <absolute-voice-turn-latency
+          class="voice-card voice-provider-health-card"
+          interval-ms="5000"
+          proof-label="Run latency proof"
+          proof-path="/api/turn-latency/proof"
+        ></absolute-voice-turn-latency>
+
+        <article
+          class="voice-card voice-provider-health-card"
+          id="campaign-dialer-proof-card"
+        >
+          <p class="empty-copy">Checking campaign dialer proof.</p>
+        </article>
+
+        <article
+          class="voice-card voice-workflow-card"
+          id="workflow-status-card"
+        >
+          <span class="voice-framework-pill">Voice Ops Status</span>
+          <h2 id="workflow-status-label">Checking</h2>
+          <p class="voice-footnote">
+            One embedded readiness check for certified workflows, provider
+            health, and handoffs.
+          </p>
+          <div
+            class="voice-workflow-summary"
+            id="workflow-status-summary"
+          ></div>
+          <p class="voice-footnote">
+            <a href="/api/voice/ops-status">Open ops status</a> ·
+            <a href="/evals/fixtures">Open certified fixtures</a>
+          </p>
+        </article>
+
+        <absolute-voice-delivery-runtime
+          class="voice-card voice-workflow-card"
+          interval-ms="5000"
+        ></absolute-voice-delivery-runtime>
+
+        <div
+          class="voice-card voice-workflow-card"
+          data-voice-ops-action-center
+        ></div>
+
+        <div
+          class="voice-card voice-workflow-card"
+          data-voice-ops-action-history
+        ></div>
+
+        <div id="live-ops-panel"></div>
+
+        <absolute-voice-trace-timeline
+          class="voice-card voice-provider-health-card"
+          incident-bundle-base-path="/voice-incidents"
+          interval-ms="5000"
+          limit="2"
+          operations-record-base-path="/voice-operations"
+        ></absolute-voice-trace-timeline>
+
+        <absolute-voice-session-observability
+          class="voice-card voice-provider-health-card"
+          description="HTML renders one per-call support report with turn waterfalls, provider recovery, tools, handoffs, guardrails, and incident handoff links."
+          interval-ms="5000"
+          path="/api/voice/session-observability/demo-incident-bundle"
+          title="Session Observability"
+        ></absolute-voice-session-observability>
+
+        <div id="barge-in-proof-card"></div>
+
+        <div id="live-latency-proof-card"></div>
+
+        <article class="voice-card voice-card-side">
+          <h2>Run the guided voice demo</h2>
+          <ol class="voice-guide-list">
+            <li>Use Start guided test for the prompt-driven chat flow.</li>
+            <li>Use Start general recording for a single freeform capture.</li>
+            <li>Pause after speaking so each turn commits cleanly.</li>
+            <li>Click Stop microphone when you want to stop live capture.</li>
+          </ol>
+        </article>
+
+        <article class="voice-card voice-assistant-config">
+          <span class="voice-framework-pill">Assistant API</span>
+          <h2>support</h2>
+          <p class="voice-footnote">
+            Powered by createVoiceAssistant with a support-triage artifact plan.
+          </p>
+          <div class="voice-config-grid">
+            <div>
+              <div class="voice-assistant-label">Tools</div>
+              <ul class="voice-compact-list">
+                <li>intake classifier</li>
+                <li>lifecycle router</li>
+                <li>review/task recorder</li>
+              </ul>
+            </div>
+            <div>
+              <div class="voice-assistant-label">Guardrails</div>
+              <ul class="voice-compact-list">
+                <li>Escalate when the caller asks for a human</li>
+                <li>
+                  Route transfer, voicemail, and no-answer intents into call
+                  outcomes
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div class="voice-assistant-label">Experiments</div>
+              <ul class="voice-compact-list">
+                <li>baseline guide copy</li>
+                <li>direct support copy</li>
+              </ul>
+            </div>
+            <div>
+              <div class="voice-assistant-label">Artifacts</div>
+              <ul class="voice-compact-list">
+                <li>review artifact</li>
+                <li>ops task</li>
+                <li>integration event</li>
+                <li>trace-ready session</li>
+              </ul>
+            </div>
+          </div>
+          <p class="voice-footnote">
+            <a href="/assistant">Open analytics</a> ·
+            <a href="/tasks">Open tasks</a> ·
+            <a href="/integrations">Open integration events</a> ·
+            <a href="/barge-in">Open barge-in proof</a>
+          </p>
+        </article>
+
+        <article class="voice-card voice-card-wide">
+          <h2>Conversation</h2>
+          <div class="voice-status-list">
+            <div class="status-row">
+              <span class="label">Voice status</span>
+              <span class="value" id="status-voice">idle</span>
+            </div>
+            <div class="status-row">
+              <span class="label">Reconnect</span>
+              <span class="value" id="status-reconnect">idle</span>
+            </div>
+            <div class="status-row">
+              <span class="label">Current prompt</span>
+              <span class="value" id="status-prompt"
+                >Choose a scenario to begin. Guided test asks follow-up prompts.
+                General recording just captures what you say.</span
+              >
+            </div>
+            <div class="status-row">
+              <span class="label">Microphone</span>
+              <span class="value" id="status-mic"
+                >Ready. Click Start voice test to begin.</span
+              >
+            </div>
+            <div class="status-row">
+              <span class="label">Current utterance</span>
+              <span class="value" id="status-partial"
+                >No speech captured yet</span
+              >
+            </div>
+            <div class="status-row">
+              <span class="label">Errors</span>
+              <span class="value" id="status-error">None</span>
+            </div>
+            <div class="status-row">
+              <span class="label">Call lifecycle</span>
+              <span class="value" id="status-call-lifecycle">Not started</span>
+            </div>
+          </div>
+          <div class="voice-chat-list" id="chat-list">
+            <article class="voice-chat-message assistant">
+              <div class="voice-chat-role">Voice demo</div>
+              <p class="voice-turn-text">Pick a scenario to begin the demo.</p>
+            </article>
+          </div>
+          <div class="voice-monitor" id="voice-monitor">
+            <div class="voice-monitor-header">
+              <span class="voice-monitor-label">Input monitor</span>
+              <span class="voice-live-pill" id="voice-monitor-copy"
+                ><span class="voice-live-dot"></span>Microphone idle</span
+              >
+            </div>
+            <svg
+              aria-label="Microphone waveform"
+              class="voice-wave"
+              viewBox="0 0 320 88"
+            >
+              <path class="voice-wave-baseline" d="M 0 44 L 320 44"></path>
+              <path class="voice-wave-glow" id="voice-wave-glow"></path>
+              <path class="voice-wave-line" id="voice-wave-path"></path>
+            </svg>
+          </div>
+          <div class="voice-actions">
+            <button class="primary" id="start-guided" type="button">
+              Start guided test
+            </button>
+            <button id="start-general" type="button">
+              Start general recording
+            </button>
+            <button hidden id="stop-mic" type="button">Stop microphone</button>
+          </div>
+          <div class="voice-actions" id="call-control-actions"></div>
+          <p class="voice-footnote">
+            This demo uses the dev-only in-memory voice session store. Real
+            deployments should replace it with Redis or Postgres.
+          </p>
+        </article>
+
+        <article class="voice-card voice-hero">
+          <h2>Saved captures</h2>
+          <p class="voice-footnote">
+            Open <a href="/reviews/latest">the latest review</a> or
+            <a href="/reviews">browse all reviews</a> after a completed demo
+            call.
+          </p>
+          <div class="voice-saved-list" id="saved-intakes">
+            <p class="empty-copy">No saved captures yet.</p>
+          </div>
+        </article>
+      </section>
+      <p class="footer">
+        <img src="/assets/png/absolutejs-temp.png" alt="" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+
+    <script src="../scripts/voice-demo.ts" type="module"></script>
+  </body>
+</html>

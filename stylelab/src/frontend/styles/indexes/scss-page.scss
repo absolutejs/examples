@@ -1,0 +1,594 @@
+@use "sass:color";
+@use "sass:list";
+@use "sass:map";
+@use "sass:math";
+@use "sass:meta";
+
+$ink: #18202f;
+$muted: #5b6475;
+$paper: #f8fafc;
+$line: #d7dde8;
+$react: #2563eb;
+$svelte: #e11d48;
+$vue: #059669;
+$angular: #c026d3;
+$html: #ea580c;
+$swatch-base: #c2410c;
+$htmx: #4f46e5;
+
+$themes: (
+  dark: (
+    bg: #0b0d12,
+    surface: #131822,
+    surface-2: #1a2030,
+    border: rgba(255, 255, 255, 0.08),
+    text: #e6e8ee,
+    muted: #9aa3b2,
+    nav-bg: rgba(10, 10, 10, 0.94),
+    nav-border: rgba(255, 255, 255, 0.06),
+    nav-link: #71717a,
+    nav-link-hover: #e4e4e7,
+    nav-link-active: #ffffff,
+    nav-link-bg: rgba(255, 255, 255, 0.04),
+    nav-link-bg-hover: rgba(255, 255, 255, 0.08),
+    nav-link-bg-active: rgba(255, 255, 255, 0.1),
+    label: #a1a1aa,
+    label-active: #f4f4f5,
+    brand: #e4e4e7,
+    card-tint: 14%,
+    card-shadow: rgba(0, 0, 0, 0.45),
+  ),
+  light: (
+    bg: #f5f7fb,
+    surface: #ffffff,
+    surface-2: #f0f3f9,
+    border: rgba(15, 23, 42, 0.08),
+    text: $ink,
+    muted: $muted,
+    nav-bg: rgba(255, 255, 255, 0.86),
+    nav-border: rgba(15, 23, 42, 0.06),
+    nav-link: $muted,
+    nav-link-hover: $ink,
+    nav-link-active: $ink,
+    nav-link-bg: rgba(15, 23, 42, 0.04),
+    nav-link-bg-hover: rgba(15, 23, 42, 0.07),
+    nav-link-bg-active: rgba(15, 23, 42, 0.12),
+    label: $muted,
+    label-active: $ink,
+    brand: $ink,
+    card-tint: 88%,
+    card-shadow: rgba(15, 23, 42, 0.1),
+  ),
+);
+
+@mixin panel($accent) {
+  border: 1px solid rgba($accent, 0.3);
+  border-left: 5px solid $accent;
+  background: color-mix(in srgb, white 88%, $accent 12%);
+}
+
+@function theme-vars($name) {
+  $palette: map.get($themes, $name);
+  $declarations: ();
+  @each $key, $value in $palette {
+    $declarations: map.merge(
+      $declarations,
+      (--t-#{$key}: $value)
+    );
+  }
+  @return $declarations;
+}
+
+@mixin emit-theme($name) {
+  @each $prop, $value in theme-vars($name) {
+    #{$prop}: #{$value};
+  }
+}
+
+@mixin breakpoint($size) {
+  $breakpoints: (
+    sm: 480px,
+    md: 720px,
+    lg: 820px,
+  );
+  @media (max-width: map.get($breakpoints, $size)) {
+    @content;
+  }
+}
+
+@function step($n) {
+  @return math.div($n * 4px, 1);
+}
+
+$accent-map: (
+  primary: $html,
+  mixin: $react,
+  nesting: $svelte,
+  functions: $vue,
+  responsive: $angular,
+  generated: $htmx,
+);
+
+%pill {
+  border-radius: 999px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+%card-base {
+  display: grid;
+  gap: 12px;
+  min-height: 260px;
+  padding: 24px;
+  border: 1px solid var(--t-border);
+  border-radius: 8px;
+  background: var(--t-surface);
+  box-shadow: 0 20px 48px var(--t-card-shadow);
+}
+
+:root {
+  @include emit-theme(dark);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    @include emit-theme(light);
+    color-scheme: light;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--t-bg);
+  color: var(--t-text);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+header,
+.site-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: step(6);
+  flex-shrink: 0;
+  padding: 0.75rem 2rem;
+  border-bottom: 1px solid var(--t-nav-border);
+  background: var(--t-nav-bg);
+  backdrop-filter: blur(20px);
+  color: var(--t-text);
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo,
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--t-brand);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  img {
+    width: auto;
+    height: 24px;
+  }
+}
+
+nav,
+.nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.demo-nav-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.demo-nav-row-label {
+  margin-right: 0.35rem;
+  color: var(--t-label);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.active {
+    color: var(--t-label-active);
+  }
+}
+
+nav a,
+.nav a,
+nav span.disabled,
+.nav span.disabled {
+  @extend %pill;
+
+  padding: 7px 10px;
+  border: 0;
+  background: var(--t-nav-link-bg);
+  color: var(--t-nav-link);
+  font-size: 0.8rem;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--t-nav-link-bg-hover);
+    color: var(--t-nav-link-hover);
+  }
+
+  &.active {
+    background: var(--t-nav-link-bg-active);
+    color: var(--t-nav-link-active);
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+nav a,
+.nav a {
+  cursor: pointer;
+}
+
+@include breakpoint(lg) {
+  header,
+  .site-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  nav,
+  .nav {
+    align-items: stretch;
+  }
+
+  .demo-nav-row {
+    justify-content: flex-start;
+  }
+}
+
+main {
+  width: min(1040px, calc(100% - 32px));
+  margin: 42px auto;
+}
+
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: min(1040px, calc(100% - 32px));
+  margin: 0 auto 32px;
+  color: var(--t-muted);
+  font-size: 13px;
+  text-align: center;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--t-text);
+    font-weight: 700;
+  }
+
+  img {
+    width: auto;
+    height: 18px;
+  }
+}
+
+.hero {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 26px;
+
+  @media (max-width: 1279px) {
+    padding-left: 40px;
+  }
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  img {
+    width: auto;
+    height: 48px;
+  }
+
+  h1 {
+    margin: 0;
+    color: var(--t-text);
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--t-muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1;
+}
+
+.lede {
+  max-width: 760px;
+  margin: 0;
+  color: var(--t-muted);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+@mixin feature-panel($accent, $weight: normal) {
+  border-color: var(--t-border);
+  @if $weight == strong {
+    border-left: 6px solid $accent;
+    background:
+      linear-gradient(135deg, rgba($accent, 0.15), rgba($accent, 0.05)),
+      var(--t-surface);
+  } @else {
+    border-left: 4px solid $accent;
+    background:
+      linear-gradient(135deg, rgba($accent, 0.15), rgba($accent, 0.05)),
+      var(--t-surface);
+  }
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  gap: 16px;
+}
+
+.feature-card {
+  @extend %card-base;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  p {
+    color: var(--t-muted);
+    line-height: 1.55;
+  }
+}
+
+@each $variant, $accent in $accent-map {
+  .feature-card-#{$variant} {
+    @if $variant == primary {
+      @include feature-panel($accent, strong);
+    } @else {
+      @include feature-panel($accent);
+    }
+
+    --card-accent: #{$accent};
+    --card-accent-strong: #{color.adjust($accent, $lightness: -14%)};
+    --card-accent-soft: #{color.adjust($accent, $lightness: 24%)};
+  }
+}
+
+.feature-label {
+  color: var(--t-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.swatch-row,
+.button-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.generated-scale {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 48px;
+  margin-top: auto;
+}
+
+$swatches: (one: 0%, two: 14%, three: -14%);
+
+@each $name, $shift in $swatches {
+  .swatch-#{$name} {
+    background: color.adjust($swatch-base, $lightness: $shift);
+  }
+}
+
+.swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+.demo-button {
+  @extend %pill;
+
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@mixin button-variant($name, $bg, $fg) {
+  .demo-button-#{$name} {
+    border-color: color.mix(white, $bg, 45%);
+    background: $bg;
+    color: $fg;
+  }
+}
+
+@include button-variant(primary, map.get($accent-map, mixin), white);
+@include button-variant(
+  secondary,
+  transparent,
+  var(--t-text)
+);
+
+.demo-button-secondary {
+  border-color: var(--t-border);
+
+  &:hover {
+    background: var(--t-surface-2);
+  }
+}
+
+.nested-list {
+  display: grid;
+  gap: 8px;
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--t-surface-2);
+    line-height: 1.5;
+
+    span {
+      color: var(--t-muted);
+    }
+
+    strong {
+      color: var(--t-text);
+    }
+  }
+}
+
+@for $index from 1 through 4 {
+  .generated-scale span:nth-child(#{$index}) {
+    height: 8px + ($index * 8px);
+  }
+}
+
+$generated-scale-colors: (
+  oklch(84.5% 0.143 164.978),
+  oklch(76.5% 0.177 163.223),
+  oklch(69.6% 0.17 162.48),
+  oklch(59.6% 0.145 163.225)
+);
+
+@for $index from 1 through list.length($generated-scale-colors) {
+  .generated-scale span:nth-child(#{$index}) {
+    background: list.nth($generated-scale-colors, $index);
+  }
+}
+
+.generated-scale span {
+  flex: 1;
+  border-radius: 6px;
+}
+
+.responsive-bars {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+
+  $bar-widths: 100%, 75%, 50%;
+
+  @for $i from 1 through list.length($bar-widths) {
+    span:nth-child(#{$i}) {
+      width: list.nth($bar-widths, $i);
+    }
+  }
+
+  span {
+    height: 12px;
+    border-radius: 999px;
+    background: var(--card-accent);
+  }
+}
+
+.utility-row {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+$utility-chip-backgrounds: (
+  oklch(93% 0.034 272.788),
+  oklch(87% 0.065 274.039),
+  oklch(78.5% 0.115 274.713)
+);
+
+$utility-chip-colors: (
+  oklch(45.7% 0.24 277.023),
+  oklch(39.8% 0.195 277.366),
+  oklch(35.9% 0.144 278.697)
+);
+
+@for $index from 1 through list.length($utility-chip-backgrounds) {
+  .utility-chip-#{$index} {
+    background: list.nth($utility-chip-backgrounds, $index);
+    color: list.nth($utility-chip-colors, $index);
+  }
+}
+
+.utility-chip {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .feature-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

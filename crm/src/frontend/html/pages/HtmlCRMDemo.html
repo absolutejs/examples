@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AbsoluteJS CRM Example — HTML</title>
+    <link rel="stylesheet" href="/dist/css/crm-demo.css" />
+  </head>
+  <body>
+    <div class="crm-page">
+      <div class="crm-shell">
+        <header class="crm-header">
+          <div class="crm-header__brand">
+            <strong>@absolutejs/crm</strong>
+            <span>Multi-vendor CRM via @absolutejs/crm — same backend, six frameworks.</span>
+          </div>
+          <nav class="crm-nav" aria-label="Frameworks">
+            <a href="/react">React</a>
+            <a href="/svelte">Svelte</a>
+            <a href="/vue">Vue</a>
+            <a href="/angular">Angular</a>
+            <a href="/html" class="is-active">HTML</a>
+            <a href="/htmx">HTMX</a>
+          </nav>
+        </header>
+        <section class="crm-hero">
+          <h1>Capture a lead</h1>
+          <p>
+            Submit the form → @absolutejs/crm runtime creates the contact in
+            the configured vendor and mirrors it to the local entity store.
+            The recent-contacts panel polls the same store.
+          </p>
+          <p style="margin-top: 0.75rem">
+            <strong>HTML: </strong>HTML keeps the form declarative — the page's inline script
+            POSTs the lead payload and re-fetches the recent-contacts list.
+          </p>
+        </section>
+        <div class="crm-grid">
+          <div class="crm-card">
+            <h2>Lead capture form</h2>
+            <form class="crm-form" id="lead-form">
+              <div class="crm-form__row">
+                <label>
+                  First name
+                  <input name="firstName" required />
+                </label>
+                <label>
+                  Last name
+                  <input name="lastName" required />
+                </label>
+              </div>
+              <label>
+                Email
+                <input type="email" name="email" required />
+              </label>
+              <div class="crm-form__row">
+                <label>
+                  Phone
+                  <input name="phone" />
+                </label>
+                <label>
+                  Company
+                  <input name="company" />
+                </label>
+              </div>
+              <label>
+                Notes
+                <textarea name="notes" rows="3"></textarea>
+              </label>
+              <button class="crm-form__submit" type="submit">
+                Capture lead
+              </button>
+              <div id="lead-status"></div>
+            </form>
+          </div>
+          <div class="crm-card">
+            <h2>Recent contacts</h2>
+            <div id="recent-contacts" class="crm-contacts"></div>
+          </div>
+        </div>
+        <footer class="crm-footer">
+          Backed by @absolutejs/crm runtime — same backend for all 6 framework pages.
+        </footer>
+      </div>
+    </div>
+    <script>
+      const formatRelativeTime = (ms) => {
+        const diff = Date.now() - ms;
+        if (diff < 60000) return "just now";
+        if (diff < 3600000) return Math.floor(diff / 60000) + "m ago";
+        if (diff < 86400000) return Math.floor(diff / 3600000) + "h ago";
+        return Math.floor(diff / 86400000) + "d ago";
+      };
+
+      const renderContacts = (contacts) => {
+        const container = document.getElementById("recent-contacts");
+        if (!contacts.length) {
+          container.innerHTML =
+            '<p style="color: var(--muted)">No leads yet — submit the form to see one land here.</p>';
+          return;
+        }
+        container.innerHTML = contacts
+          .map((c) => {
+            const name =
+              (c.firstName || "") +
+              (c.lastName ? " " + c.lastName : "") ||
+              "(unnamed)";
+            const meta = [c.email || "—", c.phone, c.company]
+              .filter(Boolean)
+              .join(" · ");
+            return (
+              '<article class="crm-contact">' +
+              '<span class="crm-contact__time">' +
+              formatRelativeTime(c.createdAt) +
+              "</span>" +
+              '<div class="crm-contact__name">' +
+              name +
+              "</div>" +
+              '<div class="crm-contact__meta">' +
+              meta +
+              "</div>" +
+              "</article>"
+            );
+          })
+          .join("");
+      };
+
+      const refresh = async () => {
+        const res = await fetch("/api/recent-contacts");
+        if (!res.ok) return;
+        const json = await res.json();
+        renderContacts(json.contacts);
+      };
+
+      document
+        .getElementById("lead-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const payload = Object.fromEntries(form.entries());
+          const status = document.getElementById("lead-status");
+          status.className = "";
+          status.textContent = "";
+          const res = await fetch("/api/leads", {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" },
+          });
+          const json = await res.json();
+          if (!json.ok) {
+            status.className = "crm-status is-error";
+            status.textContent = json.error || "Submission failed";
+            return;
+          }
+          status.className = "crm-status is-success";
+          status.textContent =
+            "Lead captured (" + (json.contact?.id || "unknown") + ")";
+          e.target.reset();
+          await refresh();
+        });
+
+      refresh();
+      setInterval(refresh, 5000);
+    </script>
+  </body>
+</html>

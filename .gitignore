@@ -1,0 +1,38 @@
+# Dependencies
+*/node_modules/
+node_modules/
+
+# Local env and secrets
+*/.env
+*/.env.*
+!*/.env.example
+.env
+.env.*
+!.env.example
+
+# AbsoluteJS generated state
+*/.absolute/
+*/.absolutejs/
+*/.cache/
+*/build/
+*/dist/
+.absolute/
+.absolutejs/
+.cache/
+build/
+dist/
+
+# Example-local runtime artifacts
+*/compiled-server
+*/.playwright-mcp/
+*/rag-store.sqlite
+*/rag-store.sqlite-journal
+
+# Voice-example runtime data
+*/.voice-runtime/
+
+# OS / editor noise
+.DS_Store
+*.swp
+*.swo
+*~

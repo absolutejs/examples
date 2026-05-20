@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>AbsoluteJS Service Workers - HTML</title>
+    <meta
+      name="description"
+      content="Service workers with HTML, powered by AbsoluteJS."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/sw-demo.css"
+    />
+  </head>
+
+  <body>
+    <header>
+      <a href="/html" class="logo">
+        <img
+          src="/assets/png/absolutejs-temp.png"
+          height="24"
+          alt="AbsoluteJS"
+        />
+        AbsoluteJS
+      </a>
+      <nav>
+        <a href="/">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a href="/html" class="active">HTML</a>
+      </nav>
+    </header>
+    <main>
+      <div class="page-title">
+        <img src="/assets/svg/HTML5_Badge.svg" height="32" alt="HTML" />
+        <h1>HTML</h1>
+      </div>
+
+      <div class="sw-cards">
+        <!-- Registration -->
+        <div class="sw-card">
+          <div class="card-title">Registration</div>
+          <p class="card-desc">Register and unregister the service worker.</p>
+          <div id="sw-badge" class="status-badge inactive">
+            <span class="dot"></span>
+            <span id="sw-badge-label">Unregistered</span>
+          </div>
+          <div class="btn-row">
+            <button id="btn-register">Register</button>
+            <button id="btn-unregister" class="danger" disabled>
+              Unregister
+            </button>
+          </div>
+          <div class="sw-result">
+            <div class="result-row">
+              <span>Scope</span><span id="reg-scope">&mdash;</span>
+            </div>
+            <div class="result-row">
+              <span>Script</span><span id="reg-script">&mdash;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cache Storage -->
+        <div class="sw-card">
+          <div class="card-title">Cache Storage</div>
+          <p class="card-desc">
+            Cache framework logos and manage cached resources.
+          </p>
+          <div class="btn-row">
+            <button id="btn-cache" disabled>Cache Logos</button>
+            <button id="btn-clear-cache" class="danger" disabled>
+              Clear All
+            </button>
+          </div>
+          <div class="sw-result">
+            <div class="result-row">
+              <span>Cached</span><span id="cache-count">0 items</span>
+            </div>
+          </div>
+          <div id="cache-list" class="cache-list"></div>
+        </div>
+
+        <!-- Message Channel -->
+        <div class="sw-card">
+          <div class="card-title">Message Channel</div>
+          <p class="card-desc">
+            Ping the service worker and measure round-trip latency.
+          </p>
+          <button id="btn-ping" disabled>Send 5 Pings</button>
+          <div id="ping-results" class="ping-results"></div>
+          <div class="sw-result">
+            <div class="result-row">
+              <span>Avg Latency</span><span id="ping-avg">&mdash;</span>
+            </div>
+            <div class="result-row">
+              <span>Pings</span><span id="ping-count">0 / 5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fetch Intercept -->
+        <div class="sw-card">
+          <div class="card-title">Fetch Intercept</div>
+          <p class="card-desc">
+            Fetch resources and see if they come from cache or network.
+          </p>
+          <button id="btn-fetch" disabled>Test Fetch</button>
+          <div id="fetch-results" class="sw-result" style="display: none"></div>
+        </div>
+
+        <!-- Lifecycle -->
+        <div class="sw-card">
+          <div class="card-title">Lifecycle</div>
+          <p class="card-desc">
+            Track the service worker through its lifecycle stages.
+          </p>
+          <div id="lifecycle-steps" class="lifecycle-steps">
+            <div class="lifecycle-step">
+              <div id="lc-dot-installing" class="lifecycle-dot"></div>
+              <span id="lc-label-installing" class="lifecycle-label"
+                >installing</span
+              >
+            </div>
+            <div class="lifecycle-step">
+              <div id="lc-dot-installed" class="lifecycle-dot"></div>
+              <span id="lc-label-installed" class="lifecycle-label"
+                >installed</span
+              >
+            </div>
+            <div class="lifecycle-step">
+              <div id="lc-dot-activating" class="lifecycle-dot"></div>
+              <span id="lc-label-activating" class="lifecycle-label"
+                >activating</span
+              >
+            </div>
+            <div class="lifecycle-step">
+              <div id="lc-dot-activated" class="lifecycle-dot"></div>
+              <span id="lc-label-activated" class="lifecycle-label"
+                >activated</span
+              >
+            </div>
+            <div class="lifecycle-step">
+              <div id="lc-dot-redundant" class="lifecycle-dot"></div>
+              <span id="lc-label-redundant" class="lifecycle-label"
+                >redundant</span
+              >
+            </div>
+          </div>
+          <div class="sw-result">
+            <div class="result-row">
+              <span>Current</span><span id="lc-current">&mdash;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Offline Test -->
+        <div class="sw-card">
+          <div class="card-title">Offline Test</div>
+          <p class="card-desc">
+            Test cached vs uncached resources when offline.
+          </p>
+          <div id="online-badge" class="status-badge active">
+            <span class="dot"></span>
+            <span id="online-label">Online</span>
+          </div>
+          <button id="btn-offline" disabled>Test Resources</button>
+          <div
+            id="offline-results"
+            class="sw-result"
+            style="display: none"
+          ></div>
+        </div>
+      </div>
+
+      <p class="footer">
+        <img src="/assets/png/absolutejs-temp.png" alt="" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+    <script src="../scripts/sw-demo.ts"></script>
+  </body>
+</html>

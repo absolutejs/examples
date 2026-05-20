@@ -1,0 +1,10 @@
+node_modules/
+build/
+dist/
+.absolutejs/
+.env
+.env.*
+*.log
+.claude/
+scripts/
+compiled-server

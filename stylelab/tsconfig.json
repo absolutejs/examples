@@ -1,0 +1,26 @@
+{
+  "angularCompilerOptions": {
+    "strictInjectionParameters": true,
+    "strictTemplates": true
+  },
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ESNext",
+    "types": ["bun"],
+    "useDefineForClassFields": false
+  },
+  "include": [
+    "src/**/*",
+    "absolute.config.ts",
+    "node_modules/@absolutejs/absolute/dist/types/style-module-shim.d.ts"
+  ]
+}

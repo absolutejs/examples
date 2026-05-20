@@ -1,0 +1,1 @@
+Subject Legacy escalation message says email extraction should preserve sender context and issue history.

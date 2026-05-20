@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AbsoluteJS CRM Example — HTMX</title>
+    <link rel="stylesheet" href="/dist/css/crm-demo.css" />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body>
+    <div class="crm-page">
+      <div class="crm-shell">
+        <header class="crm-header">
+          <div class="crm-header__brand">
+            <strong>@absolutejs/crm</strong>
+            <span>Multi-vendor CRM via @absolutejs/crm — same backend, six frameworks.</span>
+          </div>
+          <nav class="crm-nav" aria-label="Frameworks">
+            <a href="/react">React</a>
+            <a href="/svelte">Svelte</a>
+            <a href="/vue">Vue</a>
+            <a href="/angular">Angular</a>
+            <a href="/html">HTML</a>
+            <a href="/htmx" class="is-active">HTMX</a>
+          </nav>
+        </header>
+        <section class="crm-hero">
+          <h1>Capture a lead</h1>
+          <p>
+            Submit the form → @absolutejs/crm runtime creates the contact in
+            the configured vendor and mirrors it to the local entity store.
+            The recent-contacts panel polls the same store.
+          </p>
+          <p style="margin-top: 0.75rem">
+            <strong>HTMX: </strong>HTMX submits via hx-post and re-polls the
+            recent-contacts panel — no client JS beyond htmx.min.js.
+          </p>
+        </section>
+        <div class="crm-grid">
+          <div class="crm-card">
+            <h2>Lead capture form</h2>
+            <form
+              class="crm-form"
+              hx-post="/api/leads"
+              hx-ext="json-enc"
+              hx-on::after-request="if(event.detail.successful){this.reset();htmx.trigger('#recent-contacts','refresh');}"
+            >
+              <div class="crm-form__row">
+                <label>
+                  First name
+                  <input name="firstName" required />
+                </label>
+                <label>
+                  Last name
+                  <input name="lastName" required />
+                </label>
+              </div>
+              <label>
+                Email
+                <input type="email" name="email" required />
+              </label>
+              <div class="crm-form__row">
+                <label>
+                  Phone
+                  <input name="phone" />
+                </label>
+                <label>
+                  Company
+                  <input name="company" />
+                </label>
+              </div>
+              <label>
+                Notes
+                <textarea name="notes" rows="3"></textarea>
+              </label>
+              <button class="crm-form__submit" type="submit">
+                Capture lead
+              </button>
+            </form>
+          </div>
+          <div class="crm-card">
+            <h2>Recent contacts</h2>
+            <div
+              id="recent-contacts"
+              class="crm-contacts"
+              hx-get="/api/recent-contacts"
+              hx-trigger="load, refresh from:body, every 5s"
+              hx-swap="innerHTML"
+            ></div>
+          </div>
+        </div>
+        <footer class="crm-footer">
+          Backed by @absolutejs/crm runtime — same backend for all 6 framework pages.
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,462 @@
+stylusInk = #18202f
+stylusMuted = #5b6475
+stylusPaper = #f5f7fb
+
+cardReact = #2563eb
+cardSvelte = #e11d48
+cardVue = #059669
+cardAngular = #c026d3
+cardHtml = #ea580c
+swatchBase = #c2410c
+cardHtmx = #4f46e5
+
+themes = {
+  dark: {
+    bg: #0b0d12,
+    surface: #131822,
+    surface-2: #1a2030,
+    border: rgba(255, 255, 255, 0.08),
+    text: #e6e8ee,
+    muted: #9aa3b2,
+    nav-bg: rgba(10, 10, 10, 0.94),
+    nav-border: rgba(255, 255, 255, 0.06),
+    nav-link: #71717a,
+    nav-link-hover: #e4e4e7,
+    nav-link-active: #ffffff,
+    nav-link-bg: rgba(255, 255, 255, 0.04),
+    nav-link-bg-hover: rgba(255, 255, 255, 0.08),
+    nav-link-bg-active: rgba(255, 255, 255, 0.10),
+    label: #a1a1aa,
+    label-active: #f4f4f5,
+    brand: #e4e4e7,
+    list-bg: rgba(255, 255, 255, 0.04),
+    card-shadow: rgba(0, 0, 0, 0.45),
+    scheme: dark
+  }
+  light: {
+    bg: stylusPaper,
+    surface: #ffffff,
+    surface-2: #f0f3f9,
+    border: rgba(15, 23, 42, 0.08),
+    text: stylusInk,
+    muted: stylusMuted,
+    nav-bg: rgba(255, 255, 255, 0.86),
+    nav-border: rgba(15, 23, 42, 0.06),
+    nav-link: stylusMuted,
+    nav-link-hover: stylusInk,
+    nav-link-active: stylusInk,
+    nav-link-bg: rgba(15, 23, 42, 0.04),
+    nav-link-bg-hover: rgba(15, 23, 42, 0.07),
+    nav-link-bg-active: rgba(15, 23, 42, 0.12),
+    label: stylusMuted,
+    label-active: stylusInk,
+    brand: stylusInk,
+    list-bg: rgba(15, 23, 42, 0.04),
+    card-shadow: rgba(15, 23, 42, 0.10),
+    scheme: light
+  }
+}
+
+cardAccents = {
+  primary: { color: cardHtml, weight: strong }
+  mixin: { color: cardReact, weight: normal }
+  nesting: { color: cardSvelte, weight: normal }
+  functions: { color: cardVue, weight: normal }
+  responsive: { color: cardAngular, weight: normal }
+  generated: { color: cardHtmx, weight: normal }
+}
+
+apply-theme(name)
+  for key, val in themes[name]
+    if key == 'scheme'
+      color-scheme val
+    else
+      {'--t-' + key} val
+
+pill()
+  border-radius 999px
+  transition background 0.2s ease, color 0.2s ease
+
+feature-panel(accent, weight = normal)
+  border-color var(--t-border)
+  if weight == strong
+    border-left 6px solid accent
+    background linear-gradient(135deg, rgba(accent, 0.15), rgba(accent, 0.05)), var(--t-surface)
+  else
+    border-left 4px solid accent
+    background linear-gradient(135deg, rgba(accent, 0.15), rgba(accent, 0.05)), var(--t-surface)
+
+button-variant(name, bg, fg)
+  .demo-button-{name}
+    border-color mix(white, bg, 45%)
+    background bg
+    color fg
+
+stack(gap = 8px)
+  display flex
+  align-items center
+  gap gap
+  margin-top auto
+  {block}
+
+:root
+  apply-theme('dark')
+
+@media (prefers-color-scheme: light)
+  :root
+    apply-theme('light')
+
+*
+  box-sizing border-box
+
+body
+  margin 0
+  background var(--t-bg)
+  color var(--t-text)
+  font-family Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+
+a
+  color inherit
+
+header,
+.site-header
+  position sticky
+  top 0
+  display flex
+  align-items flex-start
+  justify-content space-between
+  gap 24px
+  flex-shrink 0
+  padding 0.75rem 2rem
+  border-bottom 1px solid var(--t-nav-border)
+  background var(--t-nav-bg)
+  backdrop-filter blur(20px)
+  color var(--t-text)
+  z-index 100
+
+.header-left
+  align-items center
+  display flex
+  gap 1rem
+
+.logo,
+.brand
+  align-items center
+  color var(--t-brand)
+  display flex
+  font-size 1rem
+  font-weight 600
+  gap 0.5rem
+  text-decoration none
+
+  img
+    height 24px
+    width auto
+
+nav,
+.nav
+  display flex
+  flex-direction column
+  gap 0.35rem
+  align-items flex-end
+
+.demo-nav-row
+  align-items center
+  display flex
+  flex-wrap wrap
+  gap 0.25rem
+  justify-content flex-end
+
+.demo-nav-row-label
+  color var(--t-label)
+  font-size 0.76rem
+  font-weight 600
+  margin-right 0.35rem
+  text-transform uppercase
+
+  &.active
+    color var(--t-label-active)
+
+nav a,
+.nav a,
+nav span.disabled,
+.nav span.disabled
+  pill()
+  padding 7px 10px
+  border 0
+  background var(--t-nav-link-bg)
+  color var(--t-nav-link)
+  text-decoration none
+  font-size 0.8rem
+
+  &:hover
+    background var(--t-nav-link-bg-hover)
+    color var(--t-nav-link-hover)
+
+  &.active
+    background var(--t-nav-link-bg-active)
+    color var(--t-nav-link-active)
+
+  &.disabled
+    cursor not-allowed
+    opacity 0.45
+
+nav a,
+.nav a
+  cursor pointer
+
+@media (max-width: 820px)
+  header,
+  .site-header
+    align-items stretch
+    flex-direction column
+    gap 0.75rem
+
+  nav,
+  .nav
+    align-items stretch
+
+  .demo-nav-row
+    justify-content flex-start
+
+main
+  width unquote('min(1040px, calc(100% - 32px))')
+  margin 42px auto
+
+.site-footer
+  align-items center
+  display flex
+  gap 0.35rem
+  justify-content center
+  width unquote('min(1040px, calc(100% - 32px))')
+  margin 0 auto 32px
+  color var(--t-muted)
+  font-size 13px
+  text-align center
+
+  a
+    align-items center
+    color var(--t-text)
+    display inline-flex
+    gap 0.35rem
+    font-weight 700
+
+  img
+    height 18px
+    width auto
+
+.hero
+  display grid
+  gap 16px
+  margin-bottom 26px
+
+@media (max-width: 1279px)
+  .hero
+    padding-left 40px
+
+.page-title
+  align-items center
+  display flex
+  gap 0.75rem
+
+  img
+    height 48px
+    width auto
+
+  h1
+    margin 0
+    color var(--t-text)
+    font-size 2rem
+    font-weight 600
+    line-height 1
+
+.eyebrow
+  margin 0
+  color var(--t-muted)
+  font-size 13px
+  font-weight 700
+  text-transform uppercase
+
+h1
+  margin 0
+  font-size clamp(34px, 5vw, 56px)
+  line-height 1
+
+.lede
+  max-width 760px
+  margin 0
+  color var(--t-muted)
+  font-size 18px
+  line-height 1.6
+
+.feature-grid
+  display grid
+  grid-template-columns 1fr
+  grid-auto-rows 1fr
+  gap 16px
+
+.feature-card
+  display grid
+  gap 12px
+  min-height 260px
+  padding 24px
+  border 1px solid var(--t-border)
+  border-radius 8px
+  background var(--t-surface)
+  box-shadow 0 20px 48px var(--t-card-shadow)
+
+  h2,
+  p
+    margin 0
+
+  p
+    color var(--t-muted)
+    line-height 1.55
+
+for variant, config in cardAccents
+  .feature-card-{variant}
+    feature-panel(config.color, config.weight)
+    --card-accent config.color
+    --card-accent-strong darken(config.color, 14)
+    --card-accent-soft lighten(config.color, 24)
+
+.feature-label
+  color var(--t-muted)
+  font-size 12px
+  font-weight 800
+  text-transform uppercase
+
+.swatch-row,
+.button-row
+  stack(8px)
+
+.generated-scale
+  display flex
+  align-items flex-end
+  gap 8px
+  height 48px
+  margin-top auto
+
+.swatch
+  width 32px
+  height 32px
+  border-radius 999px
+  box-shadow inset 0 0 0 1px rgba(255, 255, 255, 0.42)
+
+.swatch-one
+  background swatchBase
+
+.swatch-two
+  background lighten(swatchBase, 14)
+
+.swatch-three
+  background darken(swatchBase, 14)
+
+.demo-button
+  pill()
+  min-height 36px
+  padding 0 14px
+  border 1px solid
+  font-family inherit
+  font-size inherit
+  font-weight 700
+  cursor pointer
+
+button-variant(primary, cardReact, white)
+button-variant(secondary, transparent, var(--t-text))
+
+.demo-button-secondary
+  border-color var(--t-border)
+
+  &:hover
+    background var(--t-surface-2)
+
+.nested-list
+  display grid
+  gap 8px
+  margin auto 0 0
+  padding 0
+  list-style none
+
+  li
+    display flex
+    justify-content space-between
+    gap 12px
+    padding 8px 12px
+    border-radius 6px
+    background var(--t-surface-2)
+    line-height 1.5
+
+    span
+      color var(--t-muted)
+
+    strong
+      color var(--t-text)
+
+for index in 1..4
+  .generated-scale span:nth-child({index})
+    height 8px + (index * 8px)
+
+.generated-scale span:nth-child(1)
+  background oklch(84.5% 0.143 164.978)
+
+.generated-scale span:nth-child(2)
+  background oklch(76.5% 0.177 163.223)
+
+.generated-scale span:nth-child(3)
+  background oklch(69.6% 0.17 162.48)
+
+.generated-scale span:nth-child(4)
+  background oklch(59.6% 0.145 163.225)
+
+.generated-scale span
+  flex 1
+  border-radius 6px
+
+.responsive-bars
+  display grid
+  gap 8px
+  margin-top auto
+
+  span
+    height 12px
+    border-radius 999px
+    background var(--card-accent)
+
+    &:nth-child(1)
+      width 100%
+
+    &:nth-child(2)
+      width 75%
+
+    &:nth-child(3)
+      width 50%
+
+.utility-row
+  display flex
+  gap 8px
+  margin-top auto
+
+utilityChipBackgrounds = oklch(93% 0.034 272.788) oklch(87% 0.065 274.039) oklch(78.5% 0.115 274.713)
+utilityChipColors = oklch(45.7% 0.24 277.023) oklch(39.8% 0.195 277.366) oklch(35.9% 0.144 278.697)
+
+for index in 1..3
+  .utility-chip-{index}
+    background utilityChipBackgrounds[index - 1]
+    color utilityChipColors[index - 1]
+
+.utility-chip
+  display inline-grid
+  width 36px
+  height 36px
+  place-items center
+  border-radius 8px
+  font-weight 700
+
+@media (min-width: 768px)
+  .feature-grid
+    grid-template-columns repeat(2, minmax(0, 1fr))
+
+@media (min-width: 1280px)
+  .feature-grid
+    grid-template-columns repeat(3, minmax(0, 1fr))

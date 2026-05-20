@@ -1,0 +1,215 @@
+<header>
+  <a href="/angular" class="logo">
+    <img src="/assets/png/absolutejs-temp.png" height="24" alt="AbsoluteJS" />
+    AbsoluteJS
+  </a>
+  <nav>
+    <a href="/">React</a>
+    <a href="/svelte">Svelte</a>
+    <a href="/vue">Vue</a>
+    <a href="/angular" class="active">Angular</a>
+    <a href="/html">HTML</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-title">
+    <img src="/assets/svg/angular.svg" height="32" alt="Angular" />
+    <h1>Angular</h1>
+  </div>
+
+  <div class="sw-cards">
+    <!-- Registration -->
+    <div class="sw-card">
+      <div class="card-title">Registration</div>
+      <p class="card-desc">Register and unregister the service worker.</p>
+      <div [class]="'status-badge ' + badgeClass">
+        <span class="dot"></span>
+        {{ badgeLabel }}
+      </div>
+      <div class="btn-row">
+        <button
+          [disabled]="swState === 'active' || swState === 'unsupported'"
+          (click)="register()"
+        >
+          Register
+        </button>
+        <button
+          class="danger"
+          [disabled]="swState !== 'active'"
+          (click)="unregister()"
+        >
+          Unregister
+        </button>
+      </div>
+      <div class="sw-result">
+        <div class="result-row">
+          <span>Scope</span><span>{{ scope ?? '\u2014' }}</span>
+        </div>
+        <div class="result-row">
+          <span>Script</span
+          ><span>{{ scriptUrl ? scriptUrl.split('/').pop() : '\u2014' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache Storage -->
+    <div class="sw-card">
+      <div class="card-title">Cache Storage</div>
+      <p class="card-desc">
+        Cache framework logos and manage cached resources.
+      </p>
+      <div class="btn-row">
+        <button
+          [class.loading]="caching"
+          [disabled]="!swReady || caching"
+          (click)="cacheAll()"
+        >
+          {{ caching ? 'Caching' : 'Cache Logos' }}
+        </button>
+        <button
+          class="danger"
+          [disabled]="!swReady || cachedUrls.length === 0"
+          (click)="clearCache()"
+        >
+          Clear All
+        </button>
+      </div>
+      <div class="sw-result">
+        <div class="result-row">
+          <span>Cached</span><span>{{ cachedUrls.length }} items</span>
+        </div>
+      </div>
+      <div *ngIf="cachedUrls.length > 0" class="cache-list">
+        <div *ngFor="let url of cachedUrls" class="cache-item">
+          <span>{{ shortenUrl(url) }}</span>
+          <button (click)="deleteFromCache(url)">Remove</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Channel -->
+    <div class="sw-card">
+      <div class="card-title">Message Channel</div>
+      <p class="card-desc">
+        Ping the service worker and measure round-trip latency.
+      </p>
+      <button
+        [class.loading]="pinging"
+        [disabled]="!swReady || pinging"
+        (click)="runPing()"
+      >
+        {{ pinging ? 'Pinging (' + pingResults.length + '/' + pingCount + ')' :
+        'Send ' + pingCount + ' Pings' }}
+      </button>
+      <div *ngIf="pingResults.length > 0" class="ping-results">
+        <div *ngFor="let r of pingResults" class="ping-row">
+          <div class="ping-bar-track">
+            <div
+              class="ping-bar-fill"
+              [style.width.%]="r.latency / 50 * 100 > 100 ? 100 : r.latency / 50 * 100"
+            ></div>
+          </div>
+          <span class="ping-label">{{ r.latency }}ms</span>
+        </div>
+      </div>
+      <div class="sw-result">
+        <div class="result-row">
+          <span>Avg Latency</span
+          ><span
+            >{{ avgPingLatency !== null ? avgPingLatency + 'ms' : '\u2014'
+            }}</span
+          >
+        </div>
+        <div class="result-row">
+          <span>Pings</span
+          ><span>{{ pingResults.length }} / {{ pingCount }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fetch Intercept -->
+    <div class="sw-card">
+      <div class="card-title">Fetch Intercept</div>
+      <p class="card-desc">
+        Fetch resources and see if they come from cache or network.
+      </p>
+      <button
+        [class.loading]="fetching"
+        [disabled]="!swReady || fetching"
+        (click)="runFetchTest()"
+      >
+        {{ fetching ? 'Fetching' : 'Test Fetch' }}
+      </button>
+      <div *ngIf="fetchResults.length > 0" class="sw-result">
+        <div *ngFor="let r of fetchResults" class="result-row">
+          <span>{{ r.url }}</span>
+          <span>{{ r.status }} {{ r.source }} {{ r.duration }}ms</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lifecycle -->
+    <div class="sw-card">
+      <div class="card-title">Lifecycle</div>
+      <p class="card-desc">
+        Track the service worker through its lifecycle stages.
+      </p>
+      <div class="lifecycle-steps">
+        <div *ngFor="let state of swStates" class="lifecycle-step">
+          <div
+            class="lifecycle-dot"
+            [class.current]="isLifecycleCurrent(state)"
+            [class.reached]="isLifecycleReached(state) && !isLifecycleCurrent(state)"
+          ></div>
+          <span
+            class="lifecycle-label"
+            [class.current]="isLifecycleCurrent(state)"
+            [class.reached]="isLifecycleReached(state) && !isLifecycleCurrent(state)"
+            >{{ state }}</span
+          >
+        </div>
+      </div>
+      <div class="sw-result">
+        <div class="result-row">
+          <span>Current</span
+          ><span>{{ currentLifecycleState ?? '\u2014' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Offline Test -->
+    <div class="sw-card">
+      <div class="card-title">Offline Test</div>
+      <p class="card-desc">Test cached vs uncached resources when offline.</p>
+      <div [class]="'status-badge ' + (online ? 'active' : 'inactive')">
+        <span class="dot"></span>
+        {{ online ? 'Online' : 'Offline' }}
+      </div>
+      <button
+        [class.loading]="testing"
+        [disabled]="!swReady || testing"
+        (click)="testOffline()"
+      >
+        {{ testing ? 'Testing' : 'Test Resources' }}
+      </button>
+      <div *ngIf="offlineResults.length > 0" class="sw-result">
+        <div *ngFor="let r of offlineResults" class="result-row">
+          <span>{{ r.url }}</span>
+          <span
+            >{{ r.ok ? 'OK (' + r.status + ')' : 'FAIL (' + r.status + ')'
+            }}</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer">
+    <img src="/assets/png/absolutejs-temp.png" alt="" />
+    Powered by
+    <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
+      >AbsoluteJS</a
+    >
+  </p>
+</main>

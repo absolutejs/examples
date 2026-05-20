@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>AbsoluteJS Workers - HTML</title>
+    <meta
+      name="description"
+      content="Web workers with HTML, powered by AbsoluteJS."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/worker-demo.css"
+    />
+  </head>
+
+  <body>
+    <header>
+      <a href="/html" class="logo">
+        <img
+          src="/assets/png/absolutejs-temp.png"
+          height="24"
+          alt="AbsoluteJS"
+        />
+        AbsoluteJS
+      </a>
+      <nav>
+        <a href="/">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a href="/html" class="active">HTML</a>
+      </nav>
+    </header>
+    <main>
+      <div class="page-title">
+        <img src="/assets/svg/HTML5_Badge.svg" height="32" alt="HTML" />
+        <h1>HTML</h1>
+      </div>
+
+      <div class="worker-cards">
+        <div class="worker-card">
+          <div class="card-title">SHA-256 Hash</div>
+          <p class="card-desc">
+            Offload cryptographic hashing to a worker thread.
+          </p>
+          <button id="run-hash">Compute Hash</button>
+          <div id="hash-result" class="worker-result">
+            <div class="result-row"><span>Input</span><span>&mdash;</span></div>
+            <div class="result-row"><span>Hash</span><span>&mdash;</span></div>
+          </div>
+        </div>
+
+        <div class="worker-card">
+          <div class="card-title">Prime Finder</div>
+          <p class="card-desc">CPU-bound computation off the main thread.</p>
+          <button id="run-prime">Find 10,000th Prime</button>
+          <div id="prime-result" class="worker-result">
+            <div class="result-row">
+              <span>Prime #10000</span><span>&mdash;</span>
+            </div>
+            <div class="result-row">
+              <span>Duration</span><span>&mdash;</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="worker-card">
+          <div class="card-title">Sort Array</div>
+          <p class="card-desc">Data processing without blocking the UI.</p>
+          <button id="run-sort">Sort 1M Numbers</button>
+          <div id="sort-result" class="worker-result">
+            <div class="result-row"><span>Min</span><span>&mdash;</span></div>
+            <div class="result-row"><span>Max</span><span>&mdash;</span></div>
+            <div class="result-row">
+              <span>Median</span><span>&mdash;</span>
+            </div>
+            <div class="result-row">
+              <span>Duration</span><span>&mdash;</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="worker-card">
+          <div class="card-title">Thread Race</div>
+          <p class="card-desc">Worker and main thread timers side by side.</p>
+          <div class="race-bars">
+            <div class="race-bar-row">
+              <div class="race-bar-label">
+                <span>Worker Timer</span>
+                <span id="worker-time">0.0s</span>
+              </div>
+              <div class="race-bar-track">
+                <div
+                  id="worker-bar"
+                  class="race-bar-fill worker"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+            <div class="race-bar-row">
+              <div class="race-bar-label">
+                <span>Main Thread</span>
+                <span id="main-time">0.0s</span>
+              </div>
+              <div class="race-bar-track">
+                <div
+                  id="main-bar"
+                  class="race-bar-fill main-thread"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="race-controls">
+            <button id="start-race">Start Race</button>
+            <button id="stop-race" disabled>Stop Race</button>
+            <button id="freeze-btn" class="stress" disabled>
+              Stress Main Thread
+            </button>
+          </div>
+        </div>
+
+        <div class="worker-card">
+          <div class="card-title">Image Processing</div>
+          <p class="card-desc">
+            Grayscale conversion via worker on pixel data.
+          </p>
+          <label id="image-upload" class="file-upload">
+            <input type="file" accept="image/*" id="image-input" />
+            <span>Drop an image or click to upload</span>
+          </label>
+          <button id="run-image" disabled>Apply Grayscale</button>
+          <div class="canvas-row" style="display: none">
+            <canvas id="original-canvas" width="200" height="150"></canvas>
+            <canvas id="processed-canvas" width="200" height="150"></canvas>
+          </div>
+        </div>
+
+        <div class="worker-card">
+          <div class="card-title">Parallel Race</div>
+          <p class="card-desc">
+            3 workers with different workloads running simultaneously.
+          </p>
+          <button id="run-parallel">Start Race</button>
+          <div id="parallel-result" class="parallel-workers">
+            <div class="parallel-worker">
+              <div class="parallel-worker-header">
+                <span>240K primes</span><span id="pw-status-0"></span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  id="pw-fill-0"
+                  class="progress-fill"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+            <div class="parallel-worker">
+              <div class="parallel-worker-header">
+                <span>480K primes</span><span id="pw-status-1"></span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  id="pw-fill-1"
+                  class="progress-fill"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+            <div class="parallel-worker">
+              <div class="parallel-worker-header">
+                <span>880K primes</span><span id="pw-status-2"></span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  id="pw-fill-2"
+                  class="progress-fill"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="footer">
+        <img src="/assets/png/absolutejs-temp.png" alt="" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+    <script src="../scripts/worker-demo.ts"></script>
+  </body>
+</html>

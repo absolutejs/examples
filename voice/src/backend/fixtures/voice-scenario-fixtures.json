@@ -1,0 +1,233 @@
+{
+  "fixtures": [
+    {
+      "description": "Deterministic certification pack for the demo voice workflows.",
+      "id": "demo-certification-pack",
+      "label": "Demo certification pack",
+      "events": [
+        {
+          "at": 1777200000000,
+          "id": "fixture-guided-start",
+          "payload": {},
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "type": "session.started"
+        },
+        {
+          "at": 1777200001000,
+          "id": "fixture-guided-turn-1",
+          "payload": { "text": "My name is Riley Chen" },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "turnId": "guided-1",
+          "type": "turn.committed"
+        },
+        {
+          "at": 1777200002000,
+          "id": "fixture-guided-assistant-1",
+          "payload": {
+            "text": "Thanks Riley. Which integration are you testing?"
+          },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "turnId": "guided-1",
+          "type": "turn.assistant"
+        },
+        {
+          "at": 1777200003000,
+          "id": "fixture-guided-turn-2",
+          "payload": {
+            "text": "I am testing the absolutejs voice integration"
+          },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "turnId": "guided-2",
+          "type": "turn.committed"
+        },
+        {
+          "at": 1777200004000,
+          "id": "fixture-guided-assistant-2",
+          "payload": { "text": "Got it. What follow up should be created?" },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "turnId": "guided-2",
+          "type": "turn.assistant"
+        },
+        {
+          "at": 1777200005000,
+          "id": "fixture-guided-turn-3",
+          "payload": { "text": "Create a follow up task for tomorrow" },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "turnId": "guided-3",
+          "type": "turn.committed"
+        },
+        {
+          "at": 1777200006000,
+          "id": "fixture-guided-assistant-3",
+          "payload": {
+            "text": "The guided demo is complete and the follow up is saved."
+          },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "turnId": "guided-3",
+          "type": "turn.assistant"
+        },
+        {
+          "at": 1777200007000,
+          "id": "fixture-guided-end",
+          "payload": { "disposition": "completed", "type": "end" },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "type": "call.lifecycle"
+        },
+        {
+          "at": 1777200008000,
+          "id": "fixture-guided-workflow-contract",
+          "payload": {
+            "contractId": "guided-demo-completes",
+            "issues": [],
+            "missingFields": [],
+            "outcome": "complete",
+            "requiredFields": [
+              "transcript",
+              "assistantSummary",
+              "promptAnswers",
+              "turnCount"
+            ],
+            "status": "pass"
+          },
+          "scenarioId": "proof-guided",
+          "sessionId": "fixture-guided",
+          "turnId": "guided-3",
+          "type": "workflow.contract"
+        },
+        {
+          "at": 1777200010000,
+          "id": "fixture-general-start",
+          "payload": {},
+          "scenarioId": "proof-general",
+          "sessionId": "fixture-general",
+          "type": "session.started"
+        },
+        {
+          "at": 1777200011000,
+          "id": "fixture-general-turn-1",
+          "payload": { "text": "This is a general recording for the demo." },
+          "scenarioId": "proof-general",
+          "sessionId": "fixture-general",
+          "turnId": "general-1",
+          "type": "turn.committed"
+        },
+        {
+          "at": 1777200012000,
+          "id": "fixture-general-assistant-1",
+          "payload": { "text": "Recording saved." },
+          "scenarioId": "proof-general",
+          "sessionId": "fixture-general",
+          "turnId": "general-1",
+          "type": "turn.assistant"
+        },
+        {
+          "at": 1777200013000,
+          "id": "fixture-general-end",
+          "payload": { "disposition": "completed", "type": "end" },
+          "scenarioId": "proof-general",
+          "sessionId": "fixture-general",
+          "type": "call.lifecycle"
+        },
+        {
+          "at": 1777200014000,
+          "id": "fixture-general-workflow-contract",
+          "payload": {
+            "contractId": "general-recording-completes",
+            "issues": [],
+            "missingFields": [],
+            "outcome": "complete",
+            "requiredFields": ["transcript", "assistantSummary", "turnCount"],
+            "status": "pass"
+          },
+          "scenarioId": "proof-general",
+          "sessionId": "fixture-general",
+          "turnId": "general-1",
+          "type": "workflow.contract"
+        },
+        {
+          "at": 1777200020000,
+          "id": "fixture-transfer-start",
+          "payload": {},
+          "scenarioId": "proof-transfer",
+          "sessionId": "fixture-transfer",
+          "type": "session.started"
+        },
+        {
+          "at": 1777200021000,
+          "id": "fixture-transfer-turn-1",
+          "payload": { "text": "Please transfer me to a human agent." },
+          "scenarioId": "proof-transfer",
+          "sessionId": "fixture-transfer",
+          "turnId": "transfer-1",
+          "type": "turn.committed"
+        },
+        {
+          "at": 1777200022000,
+          "id": "fixture-transfer-assistant-1",
+          "payload": { "text": "I will transfer you now." },
+          "scenarioId": "proof-transfer",
+          "sessionId": "fixture-transfer",
+          "turnId": "transfer-1",
+          "type": "turn.assistant"
+        },
+        {
+          "at": 1777200023000,
+          "id": "fixture-transfer-lifecycle",
+          "payload": { "target": "+15551234567", "type": "transfer" },
+          "scenarioId": "proof-transfer",
+          "sessionId": "fixture-transfer",
+          "type": "call.lifecycle"
+        },
+        {
+          "at": 1777200024000,
+          "id": "fixture-transfer-handoff",
+          "payload": {
+            "action": "transfer",
+            "deliveries": { "webhook": { "status": "delivered" } },
+            "status": "delivered",
+            "target": "+15551234567"
+          },
+          "scenarioId": "proof-transfer",
+          "sessionId": "fixture-transfer",
+          "type": "call.handoff"
+        },
+        {
+          "at": 1777200025000,
+          "id": "fixture-transfer-end",
+          "payload": {
+            "disposition": "transferred",
+            "target": "+15551234567",
+            "type": "end"
+          },
+          "scenarioId": "proof-transfer",
+          "sessionId": "fixture-transfer",
+          "type": "call.lifecycle"
+        },
+        {
+          "at": 1777200026000,
+          "id": "fixture-transfer-workflow-contract",
+          "payload": {
+            "contractId": "transfer-handoff-delivered",
+            "issues": [],
+            "missingFields": [],
+            "outcome": "transfer",
+            "requiredFields": ["transcript", "assistantSummary"],
+            "status": "pass"
+          },
+          "scenarioId": "proof-transfer",
+          "sessionId": "fixture-transfer",
+          "turnId": "transfer-1",
+          "type": "workflow.contract"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.absolutejs/
+.cache/
+bun.lock
+*.log
+rag-store.sqlite
+.DS_Store
+**/*.env
+.claude/
+.playwright-mcp/
+rag-store.sqlite-journal

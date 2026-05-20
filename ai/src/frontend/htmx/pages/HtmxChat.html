@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>AbsoluteJS AI Chat - HTMX</title>
+    <meta
+      name="description"
+      content="AI streaming demo with HTMX, powered by AbsoluteJS."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/chat.css"
+    />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+
+  <body>
+    <header>
+      <div class="header-left">
+        <button
+          class="sidebar-toggle"
+          id="sidebar-toggle"
+          title="Open sidebar"
+          type="button"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <rect height="18" rx="2" width="18" x="3" y="3" />
+            <line x1="9" x2="9" y1="3" y2="21" />
+          </svg>
+        </button>
+        <a class="logo" href="/htmx">
+          <img
+            src="/assets/png/absolutejs-temp.png"
+            height="24"
+            alt="AbsoluteJS"
+          />
+          AbsoluteJS
+        </a>
+      </div>
+      <nav>
+        <a href="/">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a href="/html">HTML</a>
+        <a href="/htmx" class="active">HTMX</a>
+      </nav>
+    </header>
+
+    <div class="app-layout">
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Chats</span>
+          <button
+            class="new-chat-btn"
+            id="new-chat-btn"
+            title="New chat"
+            type="button"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <line x1="12" x2="12" y1="5" y2="19" />
+              <line x1="5" x2="19" y1="12" y2="12" />
+            </svg>
+          </button>
+        </div>
+        <div class="sidebar-list" id="sidebar-list"></div>
+      </div>
+
+      <div class="app-main">
+        <div class="chat-container" id="chat-container">
+          <!-- Populated by chat.ts -->
+        </div>
+        <p class="htmx-note">
+          <small
+            >Note: AI streaming uses a vanilla WebSocket alongside HTMX since
+            bidirectional token streaming isn't supported by hx-ws.</small
+          >
+        </p>
+        <p class="footer">
+          <img src="/assets/png/absolutejs-temp.png" alt="" />
+          Powered by
+          <a
+            href="https://absolutejs.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            >AbsoluteJS</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <!-- Model picker modal -->
+    <div class="picker-overlay" id="picker-overlay" style="display: none"></div>
+    <div class="picker-modal" id="picker-modal" style="display: none">
+      <div class="picker-layout">
+        <div class="picker-providers" id="picker-providers"></div>
+        <div class="picker-main">
+          <div class="picker-search">
+            <svg
+              fill="none"
+              height="15"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="15"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" x2="16.65" y1="21" y2="16.65" />
+            </svg>
+            <input
+              class="picker-search-input"
+              id="picker-search-input"
+              placeholder="Search models..."
+            />
+            <div class="picker-filter-wrap">
+              <button
+                class="picker-filter-btn"
+                id="picker-filter-btn"
+                title="Filter by capabilities"
+                type="button"
+              >
+                <svg
+                  fill="none"
+                  height="15"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="15"
+                >
+                  <line x1="4" x2="4" y1="21" y2="14" />
+                  <line x1="4" x2="4" y1="10" y2="3" />
+                  <line x1="12" x2="12" y1="21" y2="12" />
+                  <line x1="12" x2="12" y1="8" y2="3" />
+                  <line x1="20" x2="20" y1="21" y2="16" />
+                  <line x1="20" x2="20" y1="12" y2="3" />
+                  <line x1="1" x2="7" y1="14" y2="14" />
+                  <line x1="9" x2="15" y1="8" y2="8" />
+                  <line x1="17" x2="23" y1="16" y2="16" />
+                </svg>
+                <span
+                  class="filter-count"
+                  id="filter-count"
+                  style="display: none"
+                ></span>
+              </button>
+              <div
+                class="filter-popover"
+                id="filter-popover"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+          <div class="picker-list" id="picker-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden file input for attachments -->
+    <input
+      type="file"
+      id="file-input"
+      multiple
+      style="display: none"
+      accept="image/png,image/jpeg,image/gif,image/webp,application/pdf"
+    />
+
+    <script src="../../html/scripts/chat.ts"></script>
+  </body>
+</html>

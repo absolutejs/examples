@@ -1,0 +1,137 @@
+import { CommonModule } from "@angular/common";
+import { Component } from "@angular/core";
+
+@Component({
+  imports: [CommonModule],
+  selector: "angular-less-page",
+  standalone: true,
+  template: `
+    <header>
+      <div class="header-left">
+        <a class="logo" href="/react/tailwind"
+          ><img
+            alt="AbsoluteJS"
+            height="24"
+            src="/assets/png/absolutejs-temp.png"
+          />AbsoluteJS StyleLab</a
+        >
+      </div>
+      <nav>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">Tailwind</span
+          ><a href="/react/tailwind">React</a
+          ><a href="/svelte/tailwind">Svelte</a><a href="/vue/tailwind">Vue</a
+          ><a href="/angular/tailwind">Angular</a
+          ><a href="/html/tailwind">HTML</a><a href="/htmx/tailwind">HTMX</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">SCSS</span
+          ><a href="/react/scss">React</a><a href="/svelte/scss">Svelte</a
+          ><a href="/vue/scss">Vue</a><a href="/angular/scss">Angular</a
+          ><a href="/html/scss">HTML</a><a href="/htmx/scss">HTMX</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label active">Less</span
+          ><a href="/react/less">React</a><a href="/svelte/less">Svelte</a
+          ><a href="/vue/less">Vue</a
+          ><a class="active" href="/angular/less">Angular</a
+          ><a href="/html/less">HTML</a><a href="/htmx/less">HTMX</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">Stylus</span
+          ><a href="/react/stylus">React</a><a href="/svelte/stylus">Svelte</a
+          ><a href="/vue/stylus">Vue</a><a href="/angular/stylus">Angular</a
+          ><a href="/html/stylus">HTML</a><a href="/htmx/stylus">HTMX</a>
+        </div>
+      </nav>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="page-title">
+          <img alt="Angular" height="32" src="/assets/svg/angular.svg" />
+          <h1>Angular</h1>
+        </div>
+        <p class="lede">
+          AbsoluteJS compiles the selected stylesheet and wires it into this
+          page.
+        </p>
+      </section>
+      <section class="feature-grid">
+        <article class="feature-card feature-card-primary">
+          <span class="feature-label">Variables</span>
+          <h2>Design tokens</h2>
+          <p>
+            Colors, spacing, shadows, and surfaces come from stylesheet values.
+          </p>
+          <div class="swatch-row">
+            <span class="swatch swatch-one"></span
+            ><span class="swatch swatch-two"></span
+            ><span class="swatch swatch-three"></span>
+          </div>
+        </article>
+        <article class="feature-card feature-card-mixin">
+          <span class="feature-label">Mixins</span>
+          <h2>Reusable patterns</h2>
+          <p>
+            Buttons and panels share one reusable recipe with variant inputs.
+          </p>
+          <div class="button-row">
+            <button class="demo-button demo-button-primary" type="button">
+              Primary</button
+            ><button class="demo-button demo-button-secondary" type="button">
+              Secondary
+            </button>
+          </div>
+        </article>
+        <article class="feature-card feature-card-nesting">
+          <span class="feature-label">Nesting</span>
+          <h2>Scoped structure</h2>
+          <ul class="nested-list">
+            <li><span>Parent state</span><strong>active</strong></li>
+            <li><span>Child selector</span><strong>hover</strong></li>
+            <li><span>Inline target</span><strong>focus</strong></li>
+          </ul>
+        </article>
+        <article class="feature-card feature-card-functions">
+          <span class="feature-label">Functions</span>
+          <h2>Computed output</h2>
+          <p>Generated shades and sizing are produced inside the stylesheet.</p>
+          <div class="generated-scale">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </article>
+        <article class="feature-card feature-card-responsive">
+          <span class="feature-label">Responsive rules</span>
+          <h2>Adaptive layout</h2>
+          <p>Breakpoints adjust the grid, spacing, and header rhythm.</p>
+          <div class="responsive-bars">
+            <span></span><span></span><span></span>
+          </div>
+        </article>
+        <article class="feature-card feature-card-generated">
+          <span class="feature-label">Generated classes</span>
+          <h2>Utility output</h2>
+          <p>
+            Loops emit repeatable utility selectors from one compact source.
+          </p>
+          <div class="utility-row">
+            <span class="utility-chip utility-chip-1">1</span
+            ><span class="utility-chip utility-chip-2">2</span
+            ><span class="utility-chip utility-chip-3">3</span>
+          </div>
+        </article>
+      </section>
+    </main>
+    <footer class="site-footer">
+      Powered by
+      <a href="https://absolutejs.com"
+        ><img
+          alt="AbsoluteJS"
+          height="18"
+          src="/assets/png/absolutejs-temp.png"
+        />AbsoluteJS</a
+      >
+    </footer>
+  `,
+})
+export class AngularLessPageComponent {}

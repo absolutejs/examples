@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AbsoluteJS Streaming - HTMX Stream Slots</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/assets/svg/htmx.svg"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/assets/svg/htmx-logo-white.svg"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="stylesheet" href="../../styles/indexes/streaming.css" />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="logo">
+        <img src="/assets/png/absolutejs-temp.png" alt="AbsoluteJS" />
+        AbsoluteJS
+      </a>
+      <div class="nav-stack">
+        <nav class="nav-row">
+          <span class="nav-label">Raw Slots</span>
+          <a href="/">React</a>
+          <a href="/svelte">Svelte</a>
+          <a href="/vue">Vue</a>
+          <a href="/angular">Angular</a>
+          <a href="/html">HTML</a>
+          <a href="/htmx" class="active">HTMX</a>
+        </nav>
+        <nav class="nav-row nav-row-secondary">
+          <span class="nav-label">Framework Primitives</span>
+          <a href="/react-framework">React</a>
+          <a href="/svelte-framework">Svelte</a>
+          <a href="/vue-framework">Vue</a>
+          <a href="/angular-framework">Angular</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <picture>
+          <source
+            media="(prefers-color-scheme: dark)"
+            srcset="/assets/svg/htmx-logo-white.svg"
+          />
+          <img src="/assets/svg/htmx.svg" alt="HTMX" width="32" height="32" />
+        </picture>
+        <h1>HTMX Stream Slots</h1>
+        <span class="badge">HTMX Primitive</span>
+      </div>
+
+      <p class="section-desc">
+        This page uses <code>&lt;abs-htmx-stream-slot&gt;</code>. AbsoluteJS
+        lowers each tag into native HTMX markup, so the authored API stays
+        first-class while the browser still performs normal
+        <code>hx-get</code> fragment requests.
+      </p>
+
+      <h2 class="section-title">Independent HTMX Stream Slots</h2>
+      <p class="section-desc">
+        Six slots are declared in order. After AbsoluteJS lowers them, their
+        HTMX fragment requests resolve independently, so slot 4 lands first,
+        then 2, 6, 5, 1, and finally 3.
+      </p>
+
+      <section class="grid">
+        <abs-htmx-stream-slot src="/htmx/slots/htmx-first">
+          <article class="stream-card stream-card-htmx stream-card-fallback">
+            <div class="stream-header">
+              <picture
+                ><source
+                  media="(prefers-color-scheme: dark)"
+                  srcset="/assets/svg/htmx-logo-white.svg" />
+                <img alt="HTMX" height="20" src="/assets/svg/htmx.svg"
+              /></picture>
+              <span>HTMX Slot 1</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 1st</span>
+              <span>Expected 5th</span>
+              <span>Fallback</span>
+              <span>abs-htmx-stream-slot</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for AbsoluteJS to lower this tag into a native HTMX
+              fragment request.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </abs-htmx-stream-slot>
+        <abs-htmx-stream-slot src="/htmx/slots/htmx-second">
+          <article class="stream-card stream-card-htmx stream-card-fallback">
+            <div class="stream-header">
+              <picture
+                ><source
+                  media="(prefers-color-scheme: dark)"
+                  srcset="/assets/svg/htmx-logo-white.svg" />
+                <img alt="HTMX" height="20" src="/assets/svg/htmx.svg"
+              /></picture>
+              <span>HTMX Slot 2</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 2nd</span>
+              <span>Expected 2nd</span>
+              <span>Fallback</span>
+              <span>abs-htmx-stream-slot</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for AbsoluteJS to lower this tag into a native HTMX
+              fragment request.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </abs-htmx-stream-slot>
+        <abs-htmx-stream-slot src="/htmx/slots/htmx-third">
+          <article class="stream-card stream-card-htmx stream-card-fallback">
+            <div class="stream-header">
+              <picture
+                ><source
+                  media="(prefers-color-scheme: dark)"
+                  srcset="/assets/svg/htmx-logo-white.svg" />
+                <img alt="HTMX" height="20" src="/assets/svg/htmx.svg"
+              /></picture>
+              <span>HTMX Slot 3</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 3rd</span>
+              <span>Expected 6th</span>
+              <span>Fallback</span>
+              <span>abs-htmx-stream-slot</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for AbsoluteJS to lower this tag into a native HTMX
+              fragment request.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </abs-htmx-stream-slot>
+        <abs-htmx-stream-slot src="/htmx/slots/htmx-fourth">
+          <article class="stream-card stream-card-htmx stream-card-fallback">
+            <div class="stream-header">
+              <picture
+                ><source
+                  media="(prefers-color-scheme: dark)"
+                  srcset="/assets/svg/htmx-logo-white.svg" />
+                <img alt="HTMX" height="20" src="/assets/svg/htmx.svg"
+              /></picture>
+              <span>HTMX Slot 4</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 4th</span>
+              <span>Expected 1st</span>
+              <span>Fallback</span>
+              <span>abs-htmx-stream-slot</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for AbsoluteJS to lower this tag into a native HTMX
+              fragment request.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </abs-htmx-stream-slot>
+        <abs-htmx-stream-slot src="/htmx/slots/htmx-fifth">
+          <article class="stream-card stream-card-htmx stream-card-fallback">
+            <div class="stream-header">
+              <picture
+                ><source
+                  media="(prefers-color-scheme: dark)"
+                  srcset="/assets/svg/htmx-logo-white.svg" />
+                <img alt="HTMX" height="20" src="/assets/svg/htmx.svg"
+              /></picture>
+              <span>HTMX Slot 5</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 5th</span>
+              <span>Expected 4th</span>
+              <span>Fallback</span>
+              <span>abs-htmx-stream-slot</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for AbsoluteJS to lower this tag into a native HTMX
+              fragment request.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </abs-htmx-stream-slot>
+        <abs-htmx-stream-slot src="/htmx/slots/htmx-sixth">
+          <article class="stream-card stream-card-htmx stream-card-fallback">
+            <div class="stream-header">
+              <picture
+                ><source
+                  media="(prefers-color-scheme: dark)"
+                  srcset="/assets/svg/htmx-logo-white.svg" />
+                <img alt="HTMX" height="20" src="/assets/svg/htmx.svg"
+              /></picture>
+              <span>HTMX Slot 6</span>
+            </div>
+            <div class="stream-meta">
+              <span>Declared 6th</span>
+              <span>Expected 3rd</span>
+              <span>Fallback</span>
+              <span>abs-htmx-stream-slot</span>
+            </div>
+            <p class="stream-desc">
+              Waiting for AbsoluteJS to lower this tag into a native HTMX
+              fragment request.
+            </p>
+            <div class="stream-timestamp-skeleton"></div>
+          </article>
+        </abs-htmx-stream-slot>
+      </section>
+
+      <p class="footer">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          AbsoluteJS
+        </a>
+      </p>
+    </main>
+  </body>
+</html>

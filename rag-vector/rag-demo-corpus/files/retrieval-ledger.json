@@ -1,0 +1,45 @@
+{
+  "title": "Retrieval ledger",
+  "runs": [
+    {
+      "id": "run-1",
+      "note": "Retrieval ledger run 1 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-2",
+      "note": "Retrieval ledger run 2 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-3",
+      "note": "Retrieval ledger run 3 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-4",
+      "note": "Retrieval ledger run 4 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-5",
+      "note": "Retrieval ledger run 5 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-6",
+      "note": "Retrieval ledger run 6 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-7",
+      "note": "Retrieval ledger run 7 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-8",
+      "note": "Retrieval ledger run 8 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-9",
+      "note": "Retrieval ledger run 9 says filters, citations, and chunk provenance should remain visible in the review surface."
+    },
+    {
+      "id": "run-10",
+      "note": "Retrieval ledger run 10 says filters, citations, and chunk provenance should remain visible in the review surface."
+    }
+  ]
+}
