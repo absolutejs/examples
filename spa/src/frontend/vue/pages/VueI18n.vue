@@ -60,9 +60,10 @@ export const setupApp = defineVueSetupApp((app, { router, url }) => {
   // stay frozen at whatever the initial URL implied. ctx.router is the
   // live vue-router instance the auto-wrapper installed, so user code
   // here can register guards / plugins / scrollBehavior overrides etc.
-  router?.beforeEach((to: { path: string }) => {
+  router?.beforeEach((to) => {
+    const { path } = to as { path: string };
     i18n.global.locale.value = localeFromUrl(
-      to.path,
+      path,
     ) as typeof i18n.global.locale.value;
   });
 });
