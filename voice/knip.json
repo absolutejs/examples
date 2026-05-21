@@ -3,8 +3,6 @@
   "entry": [
     "src/backend/server.ts",
     "absolute.config.ts",
-    "scripts/**/*.ts",
-    "snippets/*.ts",
     "src/frontend/angular/pages/**/*.ts",
     "src/frontend/react/pages/**/*.tsx",
     "src/frontend/svelte/pages/**/*.svelte",
@@ -12,10 +10,6 @@
     "src/frontend/html/scripts/**/*.ts",
     "src/frontend/htmx/scripts/**/*.ts"
   ],
-  "project": [
-    "src/**/*.{ts,tsx,vue,svelte,js}",
-    "scripts/**/*.ts",
-    "snippets/*.ts"
-  ],
+  "project": ["src/**/*.{ts,tsx,vue,svelte,js}"],
   "ignoreDependencies": ["htmx.org", "svelte-check", "vue-tsc"]
 }
