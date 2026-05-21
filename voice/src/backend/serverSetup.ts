@@ -13,8 +13,12 @@ import "./coverage";
 import "./mediaProofs";
 import "./sessionsProofPack";
 import "./proofSuite";
+import "./telephonyBridgeConfig";
+import "./voiceSurfaces";
 import "./voiceConfig";
+import "./realtimeVoice";
 import "./demoRoutes";
 
-export { intakeVoiceConfig, realtimeVoicePlugin } from "./voiceConfig";
+export { voiceConfig } from "./voiceConfig";
+export { realtimeVoicePlugin } from "./realtimeVoice";
 export { demoRoutes } from "./demoRoutes";

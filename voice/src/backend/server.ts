@@ -4,18 +4,14 @@ import { voice } from "@absolutejs/voice";
 import { Elysia } from "elysia";
 
 import { pagesPlugin } from "./plugins/pagesPlugin";
-import {
-  demoRoutes,
-  intakeVoiceConfig,
-  realtimeVoicePlugin,
-} from "./serverSetup";
+import { demoRoutes, voiceConfig, realtimeVoicePlugin } from "./serverSetup";
 
 const { absolutejs, manifest } = await prepare();
 
 const server = new Elysia()
   .use(absolutejs)
   .use(pagesPlugin(manifest))
-  .use(voice(intakeVoiceConfig))
+  .use(voice(voiceConfig))
   .use(realtimeVoicePlugin)
   .use(demoRoutes)
   .use(networking)

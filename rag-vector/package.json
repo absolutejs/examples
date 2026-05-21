@@ -8,7 +8,7 @@
     "@absolutejs/absolute-rag-sqlite": "0.0.5",
     "@absolutejs/ai": "0.0.5",
     "@absolutejs/auth": "0.22.7",
-    "@absolutejs/rag": "0.0.10",
+    "@absolutejs/rag": "0.0.13",
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",

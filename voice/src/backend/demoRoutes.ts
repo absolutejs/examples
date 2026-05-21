@@ -155,7 +155,7 @@ import {
   runtimeDirectory,
   runtimeStorage,
 } from "./stores";
-import { createTelephonyBridgeConfig } from "./voiceConfig";
+import { createTelephonyBridgeConfig } from "./telephonyBridgeConfig";
 
 export const demoRoutes = new Elysia()
   .get("/api/provider-contracts", () => buildDemoProviderContractMatrix())
