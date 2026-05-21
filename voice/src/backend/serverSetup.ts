@@ -13,6 +13,7 @@ import "./coverage";
 import "./mediaProofs";
 import "./sessionsProofPack";
 import "./proofSuite";
+import "./channelDefaults";
 import "./telephonyBridgeConfig";
 import "./voiceSurfaces";
 import "./voiceConfig";

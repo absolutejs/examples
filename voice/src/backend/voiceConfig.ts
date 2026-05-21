@@ -1,31 +1,15 @@
-import { type SavedIntake } from "../shared/demo";
-import { VOICE_DEMO_PHRASE_HINTS, buildSavedIntake } from "./voiceFlow";
 import {
   createVoiceConfiguration,
   type VoiceSessionRecord,
-  voice,
 } from "@absolutejs/voice";
-
-import { correctDemoTurn } from "./agentSquad";
-import { handoffAdapters } from "./carrierHandoff";
-import { persistIntake } from "./contracts";
-
+import { type SavedIntake } from "../shared/demo";
+import { channelDefaults } from "./channelDefaults";
 import {
   escapeHtml,
   formatCallDisposition,
   renderPromptAnswers,
 } from "./helpers";
-
-import { createDemoProfileSwitchGuard } from "./observabilityExport";
-import { assistant, liveOpsRuntime } from "./profileSwitch";
-
-import { contractAwareOnTurn } from "./proofSuite";
-import { rememberSessionRoutingMode } from "./providers";
-
 import { sttAdapter } from "./realCallEvidence";
-
-import { handoffDeliveryStore, runtimeStorage } from "./stores";
-
 import { voiceSurfaces } from "./voiceSurfaces";
 
 export const voiceConfig = createVoiceConfiguration<
@@ -33,6 +17,9 @@ export const voiceConfig = createVoiceConfiguration<
   VoiceSessionRecord,
   SavedIntake
 >({
+  ...channelDefaults("/voice/intake"),
+  path: "/voice/intake",
+  stt: sttAdapter,
   htmx: ({ result }) => {
     if (!result) {
       return `<p class="empty-copy">No saved captures yet.</p>`;
@@ -62,34 +49,5 @@ export const voiceConfig = createVoiceConfiguration<
   <p class="saved-summary">${escapeHtml(result.assistantSummary)}</p>
 </article>`;
   },
-  onComplete: async ({ session }) => {
-    const result = session.turns
-      .toReversed()
-      .find((turn) => turn.result !== undefined)?.result as
-      | SavedIntake
-      | undefined;
-    const savedIntake = result ?? buildSavedIntake(session);
-    persistIntake(savedIntake);
-  },
-  handoff:
-    handoffAdapters.length > 0
-      ? {
-          adapters: handoffAdapters,
-          deliveryQueue: handoffDeliveryStore,
-        }
-      : undefined,
-  ops: assistant.ops,
-  correctTurn: correctDemoTurn,
-  phraseHints: async (input) => {
-    await rememberSessionRoutingMode(input);
-    return VOICE_DEMO_PHRASE_HINTS;
-  },
-  profileSwitchGuard: createDemoProfileSwitchGuard("/voice/intake"),
-  onTurn: contractAwareOnTurn,
-  path: "/voice/intake",
-  preset: "reliability",
-  session: runtimeStorage.session,
-  stt: sttAdapter,
-  liveOps: liveOpsRuntime,
   ...voiceSurfaces,
 });
