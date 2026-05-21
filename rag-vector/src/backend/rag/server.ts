@@ -120,7 +120,7 @@ const service = new Elysia()
     }
 
     const bytes = await file(
-      join(process.cwd(), "rag-demo-corpus", preset.fixturePath),
+      join(process.cwd(), "corpus", preset.fixturePath),
     ).arrayBuffer();
     const base64Content = Buffer.from(new Uint8Array(bytes)).toString("base64");
     const response = await dispatchInternalRequest(

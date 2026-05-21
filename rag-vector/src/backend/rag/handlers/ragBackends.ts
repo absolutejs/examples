@@ -90,7 +90,7 @@ export const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
 ];
 
 export const RAG_DEMO_PINECONE_DIMENSIONS = 1024;
-export const DEMO_CORPUS_DIR = join(process.cwd(), "rag-demo-corpus");
+export const DEMO_CORPUS_DIR = join(process.cwd(), "corpus");
 
 const SQLITE_NATIVE_TABLE_NAME = "rag_demo_vectors_native_vec0";
 const SQLITE_NATIVE_CHUNK_TABLE_NAME = "rag_demo_vectors_native_chunks";
@@ -158,7 +158,7 @@ const loadSeedCorpusInput = async (): Promise<RAGDocumentIngestInput> =>
     ),
     baseMetadata: {
       kind: "seed",
-      sourceKind: "rag-demo-corpus",
+      sourceKind: "corpus",
     },
     extractors: ragDemoExtractors,
   });

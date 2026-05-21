@@ -493,7 +493,7 @@ const buildFixtureStorageDocuments = async ({
       keys.map(async (key) => {
         const relativePath = join("storage-bucket", key);
         const bytes = await Bun.file(
-          join(process.cwd(), "rag-demo-corpus", relativePath),
+          join(process.cwd(), "corpus", relativePath),
         ).bytes();
         return {
           content: Buffer.from(bytes).toString("base64"),
@@ -988,10 +988,10 @@ export const createRagDemoState = ({
         persistence: syncStatePath,
         schedule: "every 15 seconds",
       },
-      target: "rag-demo-corpus/sync-folder",
+      target: "corpus/sync-folder",
       load: async () => {
         const loaded = await loadRAGDocumentsFromDirectory({
-          directory: join(process.cwd(), "rag-demo-corpus", "sync-folder"),
+          directory: join(process.cwd(), "corpus", "sync-folder"),
           recursive: true,
         });
 

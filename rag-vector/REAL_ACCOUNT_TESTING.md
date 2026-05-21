@@ -5,7 +5,7 @@ This example already supports switching the existing sync tiles from fixture mod
 ## Run Flow
 
 1. Set the env vars for the provider you want to test.
-2. Start the example: `bun run dev` (starts Postgres, the RAG service, and the web app together; the demo corpus is committed under `rag-demo-corpus/`).
+2. Start the example: `bun run dev` (starts Postgres, the RAG service, and the web app together; the demo corpus is committed under `corpus/`).
 3. Open any framework page already in the navbar.
 4. Go to `Knowledge Base Operations`.
 5. Confirm the relevant tile shows:

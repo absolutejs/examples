@@ -92,7 +92,7 @@ export const pagesPlugin = (
       }
 
       return new Response(
-        file(join(process.cwd(), "rag-demo-corpus", preset.fixturePath)),
+        file(join(process.cwd(), "corpus", preset.fixturePath)),
         {
           headers: { "Content-Type": preset.contentType },
         },
