@@ -27,4 +27,3 @@ const server = new Elysia()
   });
 
 export type Server = typeof server;
-export default server;
