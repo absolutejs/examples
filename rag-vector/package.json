@@ -49,19 +49,12 @@
   },
   "scripts": {
     "dev": "absolute workspace dev",
-    "format": "absolute prettier --write",
+    "typecheck": "absolute typecheck",
     "lint": "absolute eslint",
+    "format": "absolute prettier --write",
     "pg:start": "sh -lc 'docker start absolutejs-rag-demo-pg >/dev/null 2>&1 || docker run -d --name absolutejs-rag-demo-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=absolute_rag_demo -p 55433:5432 -v absolutejs-rag-demo-pg-data:/var/lib/postgresql/data pgvector/pgvector:pg17'",
     "pg:stop": "sh -lc 'docker stop absolutejs-rag-demo-pg >/dev/null 2>&1 || true'",
     "pg:logs": "docker logs absolutejs-rag-demo-pg",
-    "pg:reset": "sh -lc 'docker rm -f absolutejs-rag-demo-pg >/dev/null 2>&1 || true; docker volume rm absolutejs-rag-demo-pg-data >/dev/null 2>&1 || true'",
-    "start": "bun ./scripts/run-start.ts",
-    "typecheck": "absolute typecheck",
-    "corpus:generate": "bun ./scripts/generate-demo-corpus.ts",
-    "dev:web": "absolute dev",
-    "dev:rag-service": "bun --watch src/backend/rag-service.ts",
-    "start:web": "absolute start",
-    "start:rag-service": "bun src/backend/rag-service.ts",
-    "dev:single": "bun ./scripts/run-dev.ts"
+    "pg:reset": "sh -lc 'docker rm -f absolutejs-rag-demo-pg >/dev/null 2>&1 || true; docker volume rm absolutejs-rag-demo-pg-data >/dev/null 2>&1 || true'"
   }
 }
