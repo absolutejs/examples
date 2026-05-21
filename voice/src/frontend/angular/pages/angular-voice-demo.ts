@@ -349,7 +349,7 @@ export const INITIAL_SPEECH_ENGINE = new InjectionToken<VoiceSpeechEngine>(
             }
             <p class="voice-footnote">
               <a href="/switching-from-vapi">Open switching guide</a> ·
-              <a href="/api/voice/vapi-coverage">Open JSON</a>
+              <a href="/api/voice/platform-coverage">Open JSON</a>
             </p>
           </article>
 
@@ -1622,7 +1622,7 @@ export class AngularVoiceDemoComponent {
     }),
   });
   platformCoverage = inject(VoicePlatformCoverageService).connect(
-    "/api/voice/vapi-coverage",
+    "/api/voice/platform-coverage",
     {
       intervalMs: 10_000,
     },

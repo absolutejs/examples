@@ -15,7 +15,6 @@ import "./sessionsProofPack";
 import "./proofSuite";
 import "./channelDefaults";
 import "./telephonyBridgeConfig";
-import "./voiceSurfaces";
 import "./voiceConfig";
 import "./realtimeVoice";
 import "./demoRoutes";

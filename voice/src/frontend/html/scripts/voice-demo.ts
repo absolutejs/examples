@@ -286,7 +286,7 @@ const readinessFailures = mountVoiceReadinessFailures(
   },
 );
 const platformCoverage = createVoicePlatformCoverageStore(
-  "/api/voice/vapi-coverage",
+  "/api/voice/platform-coverage",
   {
     intervalMs: 10_000,
   },

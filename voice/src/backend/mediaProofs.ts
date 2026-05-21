@@ -71,9 +71,9 @@ const opsSurfaceLinks = [
   {
     description:
       "Machine-readable proof coverage for Vapi replacement surfaces.",
-    href: "/api/voice/vapi-coverage",
+    href: "/api/voice/platform-coverage",
     label: "Vapi Coverage API",
-    statusHref: "/api/voice/vapi-coverage",
+    statusHref: "/api/voice/platform-coverage",
   },
   {
     description:

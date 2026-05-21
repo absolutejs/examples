@@ -762,7 +762,7 @@ const competitiveCoverageSurfaces = [
         status: "pass",
       },
       {
-        href: "/api/voice/media-pipeline-calibration",
+        href: "/api/voice/media-pipeline",
         kind: "proof",
         name: "mediaPipelineCalibration",
         required: true,

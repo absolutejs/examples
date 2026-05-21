@@ -50,7 +50,7 @@ const framework = document.body.dataset.framework ?? "htmx";
 const platformCoverageHost = document.querySelector("#platform-coverage-card");
 if (platformCoverageHost instanceof HTMLElement) {
   const platformCoverage = createVoicePlatformCoverageStore(
-    "/api/voice/vapi-coverage",
+    "/api/voice/platform-coverage",
     {
       intervalMs: 10_000,
     },

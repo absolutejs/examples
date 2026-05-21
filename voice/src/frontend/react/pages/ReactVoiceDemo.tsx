@@ -709,7 +709,7 @@ export const ReactVoiceDemo = ({
               description="React renders the package coverage component against the same proof-backed route used by the server."
               intervalMs={10_000}
               limit={4}
-              path="/api/voice/vapi-coverage"
+              path="/api/voice/platform-coverage"
               title="Vapi Replacement Coverage"
             />
 

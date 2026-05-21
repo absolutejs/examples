@@ -209,7 +209,7 @@
     }),
   });
   const platformCoverage = createVoicePlatformCoverage(
-    "/api/voice/vapi-coverage",
+    "/api/voice/platform-coverage",
     {
       intervalMs: 10_000,
     },
