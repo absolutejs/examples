@@ -1,4 +1,4 @@
-export type DemoBackendMode =
+type DemoBackendMode =
   | "sqlite-native"
   | "sqlite-fallback"
   | "postgres"
@@ -19,14 +19,14 @@ export type PineconeDemoBackendInput = {
   dimensions?: number;
 };
 
-export const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
+const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
   "sqlite-native",
   "sqlite-fallback",
   "postgres",
   "pinecone",
 ];
 
-export const getBackendPath = (mode: DemoBackendMode) => {
+const getBackendPath = (mode: DemoBackendMode) => {
   switch (mode) {
     case "sqlite-fallback":
       return "/rag/sqlite-fallback";

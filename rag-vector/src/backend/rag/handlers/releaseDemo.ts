@@ -86,8 +86,6 @@ type DemoReleaseStores = {
   >;
 };
 
-type DemoReleaseController = ReturnType<typeof createDemoReleaseController>;
-
 type InternalHandler = (request: Request) => Promise<Response>;
 
 type DemoReleaseScenario = {
@@ -2237,5 +2235,3 @@ export const createDemoReleaseController = ({
     pluginConfig,
   };
 };
-
-export type { DemoReleaseController };

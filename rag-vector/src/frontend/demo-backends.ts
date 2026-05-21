@@ -73,7 +73,7 @@ import {
   buildRAGChunkGraphNavigation,
 } from "@absolutejs/rag/client/ui";
 
-export type RagDocumentKind = "seed" | "custom";
+type RagDocumentKind = "seed" | "custom";
 export type DemoBackendMode =
   | "sqlite-native"
   | "sqlite-fallback"
@@ -151,7 +151,7 @@ export type DemoStatusView = {
   vectorModeMessage: string;
 };
 
-export type SearchResultChunk = {
+type SearchResultChunk = {
   chunkId: string;
   title: string;
   source: string;
@@ -163,7 +163,7 @@ export type SearchResultChunk = {
   targetId: string;
 };
 
-export type SearchResultSectionJump = {
+type SearchResultSectionJump = {
   id: string;
   label: string;
   targetId: string;
@@ -282,7 +282,7 @@ export type AddFormState = {
   text: string;
 };
 
-export type DemoBenchmarkCategory =
+type DemoBenchmarkCategory =
   | "base"
   | "transformed"
   | "mixed"
@@ -346,7 +346,7 @@ export type DemoAIModelCatalogResponse = {
   models: DemoAIModelOption[];
 };
 
-export type DemoReleaseAction = {
+type DemoReleaseAction = {
   id: string;
   label: string;
   description: string;
@@ -2062,7 +2062,7 @@ export const buildDemoReleasePanelState = (
   };
 };
 
-export type DemoGroundingProviderEntry = {
+type DemoGroundingProviderEntry = {
   providerKey: string;
   providerId: string;
   providerLabel: string;
@@ -2072,7 +2072,7 @@ export type DemoGroundingProviderEntry = {
   response: RAGAnswerGroundingEvaluationResponse;
 };
 
-export type DemoGroundingProviderCaseEntry = {
+type DemoGroundingProviderCaseEntry = {
   providerKey: string;
   label: string;
   status: RAGAnswerGroundingEvaluationCaseResult["status"];
@@ -2085,7 +2085,7 @@ export type DemoGroundingProviderCaseEntry = {
   answerExcerpt: string;
 };
 
-export type DemoGroundingProviderCaseComparison = {
+type DemoGroundingProviderCaseComparison = {
   caseId: string;
   label: string;
   entries: DemoGroundingProviderCaseEntry[];
@@ -2129,7 +2129,7 @@ export const demoFrameworks: Array<{ id: DemoFrameworkId; label: string }> = [
   { id: "htmx", label: "HTMX" },
 ];
 
-export const demoBackends: DemoBackendDescriptor[] = [
+const demoBackends: DemoBackendDescriptor[] = [
   { id: "sqlite-native", label: "SQLite Native", available: true },
   { id: "sqlite-fallback", label: "SQLite Fallback", available: true },
   { id: "postgres", label: "PostgreSQL", available: true },
@@ -2194,11 +2194,6 @@ const isDemoActiveRetrievalState = (
       typeof record.streamPrompt === "undefined")
   );
 };
-
-export const getRecentQueryStateKey = (
-  frameworkId: DemoFrameworkId,
-  mode: DemoBackendMode,
-) => `${frameworkId}:${mode}`;
 
 export const readJsonResponse = async (response: Response) => {
   const text = await response.text();
@@ -2683,11 +2678,10 @@ export const buildDemoEvaluationInput = (): RAGEvaluationInput => ({
   })),
 });
 
-export const formatEvaluationPercent = (value: number) =>
+const formatEvaluationPercent = (value: number) =>
   `${(value * 100).toFixed(1)}%`;
 
-export const formatEvaluationPassingRate = (value: number) =>
-  `${value.toFixed(1)}%`;
+const formatEvaluationPassingRate = (value: number) => `${value.toFixed(1)}%`;
 
 export const formatEvaluationCaseSummary = (entry: RAGEvaluationCaseResult) =>
   [
@@ -3273,32 +3267,10 @@ export const formatEvaluationHistoryDiff = (history?: RAGEvaluationHistory) => {
   return lines;
 };
 
-export type DemoHistoryRow = RAGLabelValueRow;
-export type DemoComparisonTraceRow = RAGLabelValueRow;
-export type DemoComparisonPresentation = {
-  id: string;
-  label: string;
-  summary: string;
-  traceSummaryRows: RAGLabelValueRow[];
-  diffLabel: string;
-  diffRows: RAGLabelValueRow[];
-};
-export type DemoGroundingProviderPresentation = {
-  id: string;
-  label: string;
-  summary: string;
-};
-export type DemoGroundingProviderCaseComparisonPresentation = {
-  caseId: string;
-  label: string;
-  summary: string;
-  rows: RAGLabelValueRow[];
-};
-
 const formatTraceModes = (modes: string[]) =>
   modes.length > 0 ? modes.join(" / ") : "n/a";
 
-export const formatEvaluationHistoryPresentation =
+const formatEvaluationHistoryPresentation =
   buildRAGEvaluationHistoryPresentation;
 export const formatEvaluationHistoryRows = (history?: RAGEvaluationHistory) =>
   ensureLabeledRow(
@@ -3357,24 +3329,8 @@ export const formatEvaluationHistoryTracePresentations = (
     return { ...entry, rows };
   });
 };
-export const formatEvaluationHistoryTraceSnapshots = (
-  history?: RAGEvaluationHistory,
-) => {
-  const presentations = formatEvaluationHistoryTracePresentations(history);
-  if (presentations.length > 0) {
-    return presentations.map((entry) => `${entry.label}: ${entry.summary}`);
-  }
 
-  if (!history?.latestRun) {
-    return ["No saved case-level retrieval traces yet."];
-  }
-
-  return [
-    "Run the benchmark again with trace-aware history to capture case-level retrieval changes.",
-  ];
-};
-
-export const formatComparisonTraceSummaryRows = (
+const formatComparisonTraceSummaryRows = (
   entry: RAGRerankerComparisonEntry | RAGRetrievalComparisonEntry,
 ) =>
   ensureLabeledRow(
@@ -3390,7 +3346,7 @@ export const formatComparisonTraceSummaryRows = (
     "SQLite planner outcome",
     buildComparisonSQLitePlannerOutcomeValue(entry),
   );
-export const formatComparisonTraceDiffRows = (
+const formatComparisonTraceDiffRows = (
   entry: RAGRerankerComparisonEntry | RAGRetrievalComparisonEntry,
   leader?: RAGRerankerComparisonEntry | RAGRetrievalComparisonEntry,
 ) =>
@@ -3439,51 +3395,12 @@ export const formatRerankerComparisonOverviewPresentation =
   buildRAGRerankerComparisonOverviewPresentation;
 export const buildTracePresentation = buildRAGRetrievalTracePresentation;
 
-export const formatRerankerComparisonEntry = (
-  entry: RAGRerankerComparisonEntry,
-) => {
-  const leadMediaCues = buildComparisonLeadMediaCueValue(entry);
-  const plannerOutcome = buildComparisonSQLitePlannerOutcomeValue(entry);
-  return [
-    entry.label,
-    `passing ${formatEvaluationPassingRate(entry.response.passingRate)}`,
-    `f1 ${entry.response.summary.averageF1.toFixed(3)}`,
-    `latency ${entry.response.summary.averageLatencyMs.toFixed(1)}ms`,
-    leadMediaCues !== "none" ? `lead media ${leadMediaCues}` : undefined,
-    plannerOutcome !== "none" ? `planner ${plannerOutcome}` : undefined,
-  ]
-    .filter(
-      (value): value is string => typeof value === "string" && value.length > 0,
-    )
-    .join(" · ");
-};
-
 export const formatRerankerComparisonSummary = (
   comparison: RAGRerankerComparison,
 ) => {
   return formatRerankerComparisonOverviewPresentation(comparison).rows.map(
     (row) => `${row.label}: ${row.value}`,
   );
-};
-
-export const formatRetrievalComparisonEntry = (
-  entry: RAGRetrievalComparisonEntry,
-) => {
-  const leadMediaCues = buildComparisonLeadMediaCueValue(entry);
-  const plannerOutcome = buildComparisonSQLitePlannerOutcomeValue(entry);
-  return [
-    entry.label,
-    `mode ${entry.retrievalMode}`,
-    `passing ${formatEvaluationPassingRate(entry.response.passingRate)}`,
-    `f1 ${entry.response.summary.averageF1.toFixed(3)}`,
-    `latency ${entry.response.summary.averageLatencyMs.toFixed(1)}ms`,
-    leadMediaCues !== "none" ? `lead media ${leadMediaCues}` : undefined,
-    plannerOutcome !== "none" ? `planner ${plannerOutcome}` : undefined,
-  ]
-    .filter(
-      (value): value is string => typeof value === "string" && value.length > 0,
-    )
-    .join(" · ");
 };
 
 export const formatRetrievalComparisonSummary = (
@@ -3527,52 +3444,6 @@ export const formatGroundingEvaluationDetails = (
   `extra: ${entry.extraIds.join(", ") || "none"}`,
   `unresolved citations: ${entry.unresolvedCitationCount}`,
 ];
-
-export const formatGroundingProviderEntry = (
-  entry: DemoGroundingProviderEntry,
-) =>
-  [
-    entry.label,
-    `passing ${formatEvaluationPassingRate(entry.response.passingRate)}`,
-    `citation f1 ${entry.response.summary.averageCitationF1.toFixed(3)}`,
-    `resolved ${formatEvaluationPercent(entry.response.summary.averageResolvedCitationRate)}`,
-    `latency ${entry.elapsedMs.toFixed(1)}ms`,
-  ].join(" · ");
-
-export const formatGroundingProviderSummary = (
-  comparison: DemoGroundingProviderComparison,
-) =>
-  formatGroundingProviderOverviewPresentation(comparison).rows.map(
-    (row) => `${row.label}: ${row.value}`,
-  );
-
-export const formatGroundingProviderCaseEntry = (
-  entry: DemoGroundingProviderCaseEntry,
-) =>
-  [
-    entry.label,
-    entry.status.toUpperCase(),
-    `f1 ${entry.citationF1.toFixed(3)}`,
-    `resolved ${formatEvaluationPercent(entry.resolvedCitationRate)}`,
-    `matched ${entry.matchedIds.join(", ") || "none"}`,
-    `missing ${entry.missingIds.join(", ") || "none"}`,
-    `extra ${entry.extraIds.join(", ") || "none"}`,
-  ].join(" · ");
-
-export const formatGroundingProviderCaseSummary = (
-  comparison: DemoGroundingProviderCaseComparison,
-) => {
-  const resolveLabel = (key?: string) =>
-    comparison.entries.find((entry) => entry.providerKey === key)?.label ??
-    key ??
-    "n/a";
-
-  return [
-    `Best grounded: ${resolveLabel(comparison.summary.bestByStatus)}`,
-    `Best citation F1: ${resolveLabel(comparison.summary.bestByCitationF1)}`,
-    `Best resolved citations: ${resolveLabel(comparison.summary.bestByResolvedCitationRate)}`,
-  ];
-};
 
 export const formatGroundingProviderPresentations =
   buildRAGGroundingProviderPresentations;
@@ -3718,17 +3589,6 @@ const truncateAnswerSnapshot = (value: string, maxLength = 140) =>
     ? value
     : `${value.slice(0, maxLength - 1).trimEnd()}…`;
 
-export const formatGroundingProviderCaseDetails = (
-  entry: DemoGroundingProviderCaseEntry,
-) => [
-  `coverage ${entry.coverage}`,
-  `matched ${entry.matchedIds.length > 0 ? entry.matchedIds.join(", ") : "none"}`,
-  `missing ${entry.missingIds.length > 0 ? entry.missingIds.join(", ") : "none"}`,
-  `extra ${entry.extraIds.length > 0 ? entry.extraIds.join(", ") : "none"}`,
-  `resolved ${formatEvaluationPercent(entry.resolvedCitationRate)}`,
-  `answer: ${truncateAnswerSnapshot(entry.answerExcerpt)}`,
-];
-
 const formatGroundingSnapshotArtifacts = (
   entry: RAGAnswerGroundingEvaluationHistory["caseSnapshots"][number],
 ) => {
@@ -3865,7 +3725,7 @@ export const formatGroundingHistorySnapshots = (
 export const formatGroundingHistorySnapshotPresentations =
   buildRAGAnswerGroundingCaseSnapshotPresentations;
 
-export const formatGroundingHistoryPresentation =
+const formatGroundingHistoryPresentation =
   buildRAGAnswerGroundingHistoryPresentation;
 
 export const formatGroundingHistorySummary = (
@@ -3898,11 +3758,6 @@ export const formatGroundingHistoryDetails = (
     (row) => `${row.label}: ${row.value}`,
   );
 
-export const formatGroundingHistoryLeaderboardEntry = (
-  entry: RAGAnswerGroundingEvaluationLeaderboardEntry,
-) =>
-  `#${entry.rank} · ${entry.label} · passing ${formatEvaluationPassingRate(entry.passingRate)} · citation f1 ${entry.averageCitationF1.toFixed(3)} · resolved ${formatEvaluationPercent(entry.averageResolvedCitationRate)}`;
-
 export const isBackendMode = (value: unknown): value is DemoBackendMode =>
   value === "sqlite-native" ||
   value === "sqlite-fallback" ||
@@ -3917,14 +3772,11 @@ export const isFrameworkId = (value: unknown): value is DemoFrameworkId =>
   value === "html" ||
   value === "htmx";
 
-export const getBackendLabel = (mode: DemoBackendMode) =>
+const getBackendLabel = (mode: DemoBackendMode) =>
   demoBackends.find((backend) => backend.id === mode)?.label ?? mode;
 
 export const getAvailableDemoBackends = (backends?: DemoBackendDescriptor[]) =>
   backends ?? demoBackends;
-
-export const getFrameworkLabel = (framework: DemoFrameworkId) =>
-  demoFrameworks.find((entry) => entry.id === framework)?.label ?? framework;
 
 export const getDemoPagePath = (
   framework: DemoFrameworkId,
@@ -3943,7 +3795,7 @@ export const getRAGPathForMode = (mode: DemoBackendMode) => {
   }
 };
 
-export const readBackendModeFromPath = (
+const readBackendModeFromPath = (
   pathname: string,
   defaultMode: DemoBackendMode = "sqlite-native",
 ) => {
@@ -3951,7 +3803,7 @@ export const readBackendModeFromPath = (
   return isBackendMode(mode) ? mode : defaultMode;
 };
 
-export const readFrameworkFromPath = (
+const readFrameworkFromPath = (
   pathname: string,
   defaultFramework: DemoFrameworkId = "react",
 ) => {
@@ -3969,9 +3821,7 @@ export const getInitialBackendMode = (
   return readBackendModeFromPath(window.location.pathname, defaultMode);
 };
 
-export const getInitialFramework = (
-  defaultFramework: DemoFrameworkId = "react",
-) => {
+const getInitialFramework = (defaultFramework: DemoFrameworkId = "react") => {
   if (typeof window === "undefined") {
     return defaultFramework;
   }
@@ -4404,15 +4254,6 @@ const buildChunkPreviewSources = (preview: DemoChunkPreview): RAGSource[] =>
     text: chunk.text,
     title: preview.document.title,
   }));
-
-export const buildChunkPreviewSectionDiagnostics = (
-  preview?: DemoChunkPreview | null,
-): DemoSectionDiagnostic[] =>
-  preview
-    ? (buildRAGSectionRetrievalDiagnostics(
-        buildChunkPreviewSources(preview),
-      ) as DemoSectionDiagnostic[])
-    : [];
 
 export const buildActiveChunkPreviewSectionDiagnostic = (
   preview?: DemoChunkPreview | null,
@@ -5122,13 +4963,6 @@ export const buildInspectionEntries = (
   ];
 };
 
-export const formatAdminJobSummary = (job: RAGAdminJobRecord) =>
-  buildRAGAdminJobPresentations([job])[0]?.summary ?? "";
-
-export const formatAdminActionSummary = (action: RAGAdminActionRecord) => {
-  return buildRAGAdminActionPresentations([action])[0]?.summary ?? "";
-};
-
 export const formatAdminJobList = (jobs?: RAGAdminJobRecord[]) =>
   buildRAGAdminJobPresentations(jobs).map((job) => job.summary);
 
@@ -5147,7 +4981,7 @@ const isLinkedProviderSource = (source: RAGSyncSourceRecord) =>
   source.metadata?.accountMode === "live-linked" &&
   typeof source.metadata?.linkedConnectorProvider === "string";
 
-export type LinkedConnectorAccountSummary = {
+type LinkedConnectorAccountSummary = {
   sourceId: string;
   sourceLabel: string;
   providerId: string;
@@ -5803,12 +5637,7 @@ export const formatSectionDiagnosticStageWeightReasons = (
       ),
   );
 
-export const formatSectionDiagnosticQueryAttribution = (
-  diagnostic: DemoSectionDiagnostic,
-) =>
-  `Query attribution · ${diagnostic.queryAttribution?.mode ?? "n/a"} · primary ${diagnostic.queryAttribution?.primaryHits ?? 0} · transformed ${diagnostic.queryAttribution?.transformedHits ?? 0} · variant ${diagnostic.queryAttribution?.variantHits ?? 0}`;
-
-export const formatSectionDiagnosticQueryAttributionReasons = (
+const formatSectionDiagnosticQueryAttributionReasons = (
   diagnostic: DemoSectionDiagnostic,
 ) =>
   (diagnostic.queryAttribution?.reasons ?? []).map((reason: string) =>

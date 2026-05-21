@@ -68,7 +68,7 @@ type PineconeRagAdapter = {
   getStatus?: () => RAGVectorStoreStatus;
   store: RAGVectorStore;
 };
-export type DemoRAGAdapter =
+type DemoRAGAdapter =
   | SQLiteRagAdapter
   | PostgresRagAdapter
   | PineconeRagAdapter;
@@ -78,19 +78,18 @@ export type DemoRAGBackend = DemoBackendDescriptor & {
 };
 
 export const DEFAULT_BACKEND_MODE: DemoBackendMode = "sqlite-native";
-export const RAG_DEMO_TABLE_NAME = "rag_demo_vectors";
 export const RAG_DEMO_DOCUMENT_TABLE_NAME = "rag_demo_documents";
 export const RAG_DEMO_DEFAULT_CHUNK_SIZE = 420;
 export const RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE = 320;
-export const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
+const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
   "sqlite-native",
   "sqlite-fallback",
   "postgres",
   "pinecone",
 ];
 
-export const RAG_DEMO_PINECONE_DIMENSIONS = 1024;
-export const DEMO_CORPUS_DIR = join(process.cwd(), "corpus");
+const RAG_DEMO_PINECONE_DIMENSIONS = 1024;
+const DEMO_CORPUS_DIR = join(process.cwd(), "corpus");
 
 const SQLITE_NATIVE_TABLE_NAME = "rag_demo_vectors_native_vec0";
 const SQLITE_NATIVE_CHUNK_TABLE_NAME = "rag_demo_vectors_native_chunks";
@@ -311,7 +310,7 @@ const isPineconeReady = (input?: PineconeDemoBackendInput) =>
     input.indexName.trim().length > 0,
   );
 
-export const getBackendPath = (mode: DemoBackendMode) => {
+const getBackendPath = (mode: DemoBackendMode) => {
   switch (mode) {
     case "sqlite-fallback":
       return "/rag/sqlite-fallback";
@@ -323,61 +322,6 @@ export const getBackendPath = (mode: DemoBackendMode) => {
     default:
       return "/rag/sqlite-native";
   }
-};
-
-export const listDemoBackends = (
-  opts: {
-    postgresUrl?: string;
-    pinecone?: PineconeDemoBackendInput;
-  } = {},
-): DemoBackendDescriptor[] => {
-  const postgresUrl =
-    typeof opts.postgresUrl === "string" ? opts.postgresUrl.trim() : "";
-  const pineconeReady = isPineconeReady(opts.pinecone);
-
-  return RAG_DEMO_BACKEND_ORDER.map((id) => {
-    if (id === "postgres") {
-      return postgresUrl.length > 0
-        ? {
-            id: "postgres",
-            label: "PostgreSQL",
-            path: getBackendPath("postgres"),
-            available: true,
-          }
-        : {
-            id: "postgres",
-            label: "PostgreSQL",
-            path: getBackendPath("postgres"),
-            available: false,
-            reason:
-              "Set RAG_POSTGRES_URL to enable the PostgreSQL pgvector backend.",
-          };
-    }
-
-    if (id === "pinecone") {
-      return pineconeReady
-        ? {
-            id: "pinecone",
-            label: "Pinecone",
-            path: getBackendPath("pinecone"),
-            available: true,
-          }
-        : {
-            id: "pinecone",
-            label: "Pinecone",
-            path: getBackendPath("pinecone"),
-            available: false,
-            reason: PINECONE_DISABLED_REASON,
-          };
-    }
-
-    return {
-      id,
-      label: id === "sqlite-native" ? "SQLite Native" : "SQLite Fallback",
-      path: getBackendPath(id),
-      available: true,
-    };
-  });
 };
 
 export const createRAGBackends = (

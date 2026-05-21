@@ -5,8 +5,7 @@ import {
   createProvidersConfiguration,
 } from "@absolutejs/auth";
 
-export const GMAIL_READONLY_SCOPE =
-  "https://www.googleapis.com/auth/gmail.readonly";
+const GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 const GOOGLE_CONTACTS_READONLY_SCOPE =
   "https://www.googleapis.com/auth/contacts.readonly";
 

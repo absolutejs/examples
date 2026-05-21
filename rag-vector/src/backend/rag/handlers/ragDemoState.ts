@@ -164,8 +164,6 @@ export type RagDemoStartup = {
 
 const ACTIVE_BACKEND_COOKIE = "absolute_rag_mode";
 
-export type RagDemoState = ReturnType<typeof createRagDemoState>;
-
 const getEnv = (name: string) => {
   const value = process.env[name];
   return typeof value === "string" && value.trim().length > 0

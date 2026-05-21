@@ -2,7 +2,7 @@ import { gemini, openaiCompatible, openaiResponses } from "@absolutejs/ai";
 
 type DemoAIProviderFactory = ReturnType<typeof gemini>;
 
-export type DemoAIModelOption = {
+type DemoAIModelOption = {
   key: string;
   providerId: string;
   providerLabel: string;
