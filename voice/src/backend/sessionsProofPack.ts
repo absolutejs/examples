@@ -598,9 +598,6 @@ const buildDemoObservabilityArtifactIndex =
     };
   };
 
-const buildDemoObservabilityExport = () =>
-  buildVoiceObservabilityExport(observabilityExportOptions());
-
 const proofPackObservabilityExportOptions = () => {
   const {
     callDebuggerReports: _callDebuggerReports,
@@ -1429,17 +1426,10 @@ const productionReadinessOptions = (
 
 export {
   buildDemoObservabilityArtifactIndex,
-  buildDemoObservabilityExport,
   buildDemoOperationsRecord,
-  buildDemoVoiceProofPack,
   buildDemoVoiceSessionSnapshot,
-  buildHealthyDemoVoiceSupportBundle,
-  buildLatestDemoVoiceCallDebuggerReport,
-  buildLatestDemoVoiceSessionSnapshot,
-  buildProductionReadinessObservabilityExport,
   demoVoiceCallDebuggerOptions,
   observabilityExportOptions,
   productionReadinessOptions,
-  proofPackObservabilityExportOptions,
   refreshProductionReadinessProof,
 };

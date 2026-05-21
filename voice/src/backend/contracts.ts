@@ -537,7 +537,6 @@ const renderDemoChecklistHTML = () => {
 
 export {
   campaignStore,
-  demoChecklistItems,
   demoOutcomeContracts,
   generalWorkflowContract,
   guidedWorkflowContract,
@@ -551,7 +550,6 @@ export {
   renderTelephonyWebhookDecisionsHTML,
   telephonyOutcomePolicy,
   telephonyOutcomeRecorder,
-  telephonyOutcomeSamples,
   telephonyWebhookIdempotencyStore,
   transferWorkflowContract,
   workflowScenarios,

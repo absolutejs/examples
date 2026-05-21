@@ -1528,7 +1528,7 @@ export const INITIAL_SPEECH_ENGINE = new InjectionToken<VoiceSpeechEngine>(
     </div>
   `,
 })
-export class AngularVoiceDemoComponent {
+class AngularVoiceDemoComponent {
   assistantConfig = VOICE_ASSISTANT_CONFIG;
   description = FRAMEWORK_DESCRIPTIONS.angular;
   guideSteps = VOICE_DEMO_GUIDE_STEPS;

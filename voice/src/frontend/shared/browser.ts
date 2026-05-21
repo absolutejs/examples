@@ -16,7 +16,6 @@ import type {
   VoiceOpsStatusReport,
   VoiceRealCallEvidenceRuntimeWorkerHealthReport,
   VoiceReconnectClientState,
-  VoiceRoutingDecisionSummary,
   VoiceStreamState,
 } from "@absolutejs/voice";
 import type { SavedIntake, VoiceAgentSquadDemoStatus } from "../../shared/demo";
@@ -102,16 +101,6 @@ export const fetchAgentSquadDemoStatus = async (sessionId?: string) => {
   }
 
   return (await response.json()) as VoiceAgentSquadDemoStatus;
-};
-
-export const fetchLatestRoutingDecision = async () => {
-  const response = await fetch("/api/routing/latest");
-
-  if (!response.ok) {
-    return null;
-  }
-
-  return (await response.json()) as VoiceRoutingDecisionSummary | null;
 };
 
 export const fetchBargeInReport = async () => {
@@ -983,7 +972,7 @@ export const renderVoiceLiveOpsResultHTML = (
   return `<p class="voice-footnote">Recorded ${escapeHtml(result.action)} for ${escapeHtml(result.sessionId)}.${control} <a href="${escapeHtml(result.operationsRecordHref)}">Open operations record</a> · <a href="${escapeHtml(result.incidentBundleHref)}">Export incident bundle</a>${result.taskHref ? ` · <a href="${escapeHtml(result.taskHref)}">Open tasks</a>` : ""}</p>`;
 };
 
-export const renderVoiceLiveOpsPanelHTML = (input: {
+const renderVoiceLiveOpsPanelHTML = (input: {
   assignee?: string;
   detail?: string;
   error?: string | null;

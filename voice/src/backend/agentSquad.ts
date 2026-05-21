@@ -411,13 +411,10 @@ const correctDemoTurn: VoiceTurnCorrectionHandler<
 
 export {
   agentSquadStatusRoutes,
-  buildAgentSquadDemoStatus,
   correctDemoTurn,
   createContractTurn,
   intakeClassifierTool,
   lifecycleRouterTool,
-  readPayloadNumber,
-  readPayloadString,
   renderAgentSquadContractHTML,
   reviewTaskRecorderTool,
   runDemoAgentSquadContract,

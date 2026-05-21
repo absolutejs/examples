@@ -867,9 +867,6 @@ const readinessProfileCards = [
 export {
   buildBrowserCallProfileReadinessCheck,
   buildRealCallProfileReadinessCheck,
-  demoSloThresholdProfileCache,
-  demoSloThresholdProfileCacheMs,
-  formatTrendMs,
   loadDemoSloThresholdProfile,
   loadProofPackSloThresholdProfile,
   postCallAnalysisOptions,

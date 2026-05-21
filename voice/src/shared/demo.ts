@@ -20,29 +20,6 @@ export type VoiceProfileId =
   | "support-agent"
   | "appointment-scheduler"
   | "noisy-phone-call";
-export type VoiceProviderStatus =
-  | "healthy"
-  | "idle"
-  | "rate-limited"
-  | "degraded"
-  | "recoverable"
-  | "suppressed";
-
-export type VoiceProviderStatusRecord = {
-  averageElapsedMs?: number;
-  errorCount: number;
-  fallbackCount: number;
-  lastError?: string;
-  lastErrorAt?: number;
-  lastSuccessAt?: number;
-  provider: VoiceModelProvider;
-  recommended: boolean;
-  runCount: number;
-  status: VoiceProviderStatus;
-  suppressionRemainingMs?: number;
-  suppressedUntil?: number;
-};
-
 export type VoiceAgentSquadDemoStatus = {
   at?: number;
   contextPolicy: "default" | "handoff-summary-current-turn";
@@ -310,8 +287,8 @@ export type SavedIntake = {
   detectedName?: string;
 };
 
-export const VOICE_ROUTE_PATH = "/voice/intake";
-export const VOICE_REALTIME_ROUTE_PATH = "/voice/realtime";
+const VOICE_ROUTE_PATH = "/voice/intake";
+const VOICE_REALTIME_ROUTE_PATH = "/voice/realtime";
 
 export const VOICE_DEMO_GUIDE_TITLE = "Run the guided voice test";
 
@@ -498,34 +475,9 @@ export const formatVoiceProfileSwitchGuardSummary = (
   return `${action}${confidence}${recommended}`;
 };
 
-export const getVoiceSpeechEngineLabel = (engine: VoiceSpeechEngine) =>
-  VOICE_SPEECH_ENGINES.find((item) => item.id === engine)?.label ?? engine;
-
 export const getVoiceSpeechEngineSampleRate = (engine: VoiceSpeechEngine) =>
   VOICE_SPEECH_ENGINES.find((item) => item.id === engine)?.sampleRateHz ??
   16_000;
-
-export const getVoiceProviderStatusLabel = (status: VoiceProviderStatus) => {
-  switch (status) {
-    case "healthy":
-      return "Healthy";
-    case "rate-limited":
-      return "Rate limited";
-    case "degraded":
-      return "Degraded";
-    case "recoverable":
-      return "Recoverable";
-    case "suppressed":
-      return "Temporarily suppressed";
-    case "idle":
-      return "Idle";
-  }
-};
-
-export const fetchVoiceProviderStatus = async () => {
-  const response = await fetch("/api/provider-status");
-  return (await response.json()) as VoiceProviderStatusRecord[];
-};
 
 export const getInitialVoiceModelProvider = (): VoiceModelProvider => {
   if (typeof window === "undefined") {
@@ -615,11 +567,11 @@ export const rememberVoiceSpeechEngine = (engine: VoiceSpeechEngine) => {
   }
 };
 
-export const getVoiceScenarioLabel = (scenarioId: VoiceScenarioId) =>
+const getVoiceScenarioLabel = (scenarioId: VoiceScenarioId) =>
   scenarioId === "guided" ? "Guided test" : "General recording";
 export const getVoiceModeLabel = getVoiceScenarioLabel;
 
-export const getVoiceScenarioPrompt = (input: {
+const getVoiceScenarioPrompt = (input: {
   scenarioId: VoiceScenarioId | null;
   hasStarted: boolean;
   status?: string;
@@ -689,17 +641,6 @@ export const getVoiceModePrompt = (input: {
     scenarioId: input.mode,
   });
 
-export const getVoiceLeadMessageLegacy = (input: {
-  mode: VoiceDemoMode | null;
-  hasStarted: boolean;
-  status?: string;
-  turnCount: number;
-}) =>
-  getVoiceLeadMessage({
-    ...input,
-    scenarioId: input.mode,
-  });
-
 export const FRAMEWORKS: Array<{
   id: FrameworkId;
   href: string;
@@ -712,44 +653,6 @@ export const FRAMEWORKS: Array<{
   { id: "html", href: "/html", label: "HTML" },
   { id: "htmx", href: "/htmx", label: "HTMX" },
 ];
-
-export const FRAMEWORK_SNIPPETS: Record<FrameworkId, string> = {
-  angular: `import { VoiceStreamService } from "@absolutejs/voice/angular";
-
-voice = inject(VoiceStreamService).connect("${VOICE_ROUTE_PATH}");
-voice.endTurn();
-voice.sendAudio(audioChunk);`,
-  html: `import { createVoiceStream } from "@absolutejs/voice/client";
-
-const voice = createVoiceStream("${VOICE_ROUTE_PATH}");
-voice.callControl({ action: "transfer", target: "billing" });
-voice.endTurn();
-voice.sendAudio(audioChunk);`,
-  htmx: `import { bindVoiceHTMX, createVoiceStream } from "@absolutejs/voice/client";
-
-voice({
-  path: "${VOICE_ROUTE_PATH}",
-  htmx: true,
-  ...
-});`,
-  react: `import { useVoiceStream } from "@absolutejs/voice/react";
-
-const voice = useVoiceStream("${VOICE_ROUTE_PATH}");
-voice.callControl({ action: "escalate", reason: "caller asked for a human" });
-voice.endTurn();
-voice.sendAudio(audioChunk);`,
-  svelte: `import { createVoiceStream } from "@absolutejs/voice/svelte";
-
-const voice = createVoiceStream("${VOICE_ROUTE_PATH}");
-voice.subscribe(syncState);
-voice.sendAudio(audioChunk);`,
-  vue: `import { useVoiceStream } from "@absolutejs/voice/vue";
-
-const voice = useVoiceStream("${VOICE_ROUTE_PATH}");
-voice.callControl({ action: "voicemail" });
-voice.endTurn();
-voice.sendAudio(audioChunk);`,
-};
 
 export const FRAMEWORK_DESCRIPTIONS: Record<FrameworkId, string> = {
   angular:

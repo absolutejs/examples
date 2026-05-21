@@ -1416,17 +1416,13 @@ const liveOpsControlRoutes = new Elysia()
   ) as unknown as Elysia;
 
 export {
-  buildDemoGeminiRealtimeChannelReport,
   buildDemoIncidentTimelineFailureReplay,
   buildDemoIncidentTimelineMediaPipelineReport,
   buildDemoIncidentTimelineOperationsRecord,
   buildDemoMediaPipelineReportOptions,
-  buildDemoRealtimeChannelReport,
   buildDemoRealtimeChannelReportOptions,
   buildDemoRealtimeProviderContractMatrixInput,
   buildDemoVoiceSessionMediaSnapshot,
-  formatLiveOpsActionLabel,
-  handleLiveOpsAction,
   liveOpsControlRoutes,
   opsSurfaceLinks,
   seedDemoOutcomeProof,

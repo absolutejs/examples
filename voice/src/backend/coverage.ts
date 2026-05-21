@@ -1098,9 +1098,7 @@ const renderVapiMigrationHTML = async () => {
 export {
   buildDemoCompetitiveCoverageReport,
   buildDemoGuardrailReport,
-  competitiveCoverageSurfaces,
   demoToolContracts,
   renderGuardrailsHTML,
   renderVapiMigrationHTML,
-  vapiMigrationItems,
 };

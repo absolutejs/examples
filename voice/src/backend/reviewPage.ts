@@ -194,7 +194,7 @@ const buildPostCallSummary = (input: {
   }
 };
 
-export const deriveVoiceReviewState = (
+const deriveVoiceReviewState = (
   review: SavedVoiceReviewArtifact,
 ): VoiceReviewDerivedState => {
   const warnings: string[] = [];

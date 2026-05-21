@@ -7,7 +7,6 @@ import {
   createVoiceAgentSquad,
   createVoiceProofPackStaleWhileRefreshSource,
   createVoiceWorkflowContractHandler,
-  deliverVoiceObservabilityExport,
   renderVoiceFailureReplayMarkdown,
   runVoiceCampaignDialerProof,
   summarizeVoiceLiveLatency,
@@ -30,8 +29,6 @@ import {
   cleanupDemoQualityNoise,
   getDemoProofStatus,
   listDemoProofTracesSafely,
-  observabilityExportDeliveryDestinations,
-  observabilityExportDeliveryReceipts,
   readLatestDemoVoiceProofPackFile,
 } from "./observabilityExport";
 import { assistant, ensureDemoIncidentBundleEvidence } from "./profileSwitch";
@@ -49,7 +46,6 @@ import {
 import { latestProofTrendsJsonPath } from "./realCallEvidence";
 import {
   buildDemoOperationsRecord,
-  buildProductionReadinessObservabilityExport,
   productionReadinessOptions,
   refreshProductionReadinessProof,
 } from "./sessionsProofPack";
@@ -212,25 +208,6 @@ const readLatestDemoVoiceProofPack =
       return readLatestDemoVoiceProofPackFile();
     },
   });
-
-const buildFreshDemoObservabilityExportNow = async () => {
-  await refreshProductionReadinessProof();
-  const report = await buildProductionReadinessObservabilityExport();
-  await deliverVoiceObservabilityExport({
-    destinations: observabilityExportDeliveryDestinations(),
-    receipts: observabilityExportDeliveryReceipts,
-    report,
-  });
-
-  return report;
-};
-
-const buildFreshDemoObservabilityExport = async () => {
-  return productionReadinessProofRuntime.cache(
-    "observability-export",
-    buildFreshDemoObservabilityExportNow,
-  );
-};
 
 const runDemoProofSuite = async (request: Request) => {
   await ensureDemoIncidentBundleEvidence();
@@ -588,18 +565,9 @@ const contractAwareOnTurn: VoiceOnTurnObjectHandler<
 };
 
 export {
-  buildFreshDemoObservabilityExport,
-  buildFreshDemoObservabilityExportNow,
   contractAwareOnTurn,
-  contractAwareOnTurnBase,
-  createDemoLiveAgentSquad,
-  demoLiveAgentSquad,
   failureReplayRoutes,
-  isSpecialistBillingTurn,
   readLatestDemoVoiceProofPack,
   renderDeployGateHTML,
-  renderFailureReplayHTML,
-  runDemoLiveAgentSquad,
   runDemoProofSuite,
 };
-export type { DemoVoiceTurnInput };
