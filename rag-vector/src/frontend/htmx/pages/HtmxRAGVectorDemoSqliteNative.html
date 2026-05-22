@@ -28,27 +28,23 @@
           AbsoluteJS
         </a>
       </div>
-      <nav class="demo-nav">
-        <label class="demo-nav-select">
-          <span>Backend</span>
-          <select onchange="if (this.value) location.assign(this.value);">
-            <option value="/htmx/sqlite-native" selected>SQLite Native</option>
-            <option value="/htmx/sqlite-fallback">SQLite Fallback</option>
-            <option value="/htmx/postgres">PostgreSQL</option>
-            <option value="/htmx/pinecone">Pinecone</option>
-          </select>
-        </label>
-        <label class="demo-nav-select">
-          <span>Framework</span>
-          <select onchange="if (this.value) location.assign(this.value);">
-            <option value="/react/sqlite-native">React</option>
-            <option value="/svelte/sqlite-native">Svelte</option>
-            <option value="/vue/sqlite-native">Vue</option>
-            <option value="/angular/sqlite-native">Angular</option>
-            <option value="/html/sqlite-native">HTML</option>
-            <option value="/htmx/sqlite-native" selected>HTMX</option>
-          </select>
-        </label>
+      <nav>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">Backend</span
+          ><a href="/htmx/sqlite-native" class="active">SQLite Native</a
+          ><a href="/htmx/sqlite-fallback">SQLite Fallback</a
+          ><a href="/htmx/postgres">PostgreSQL</a
+          ><a href="/htmx/pinecone">Pinecone</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">Framework</span
+          ><a href="/react/sqlite-native">React</a
+          ><a href="/svelte/sqlite-native">Svelte</a
+          ><a href="/vue/sqlite-native">Vue</a
+          ><a href="/angular/sqlite-native">Angular</a
+          ><a href="/html/sqlite-native">HTML</a
+          ><a href="/htmx/sqlite-native" class="active">HTMX</a>
+        </div>
       </nav>
     </header>
 
@@ -73,6 +69,41 @@
           Built on <code>@absolutejs/ai</code> and <code>@absolutejs/rag</code>,
           with <code>@absolutejs/rag/ui</code> diagnostics on this page.
         </p>
+        <ul class="demo-checklist">
+          <li>
+            Inspect the stuffed file-backed seed corpus and verify extractor
+            metadata across PDFs, office docs, archives, images, audio, video,
+            EPUB, email, and legacy files.
+          </li>
+          <li>
+            Upload first-party fixture files through the server-owned extractor
+            route and verify retrieval against the uploaded source path.
+          </li>
+          <li>
+            Ingest a custom document and let the page refresh diagnostics,
+            documents, and chunk previews without leaving the current route.
+          </li>
+          <li>
+            Run retrieval and verify the returned chunk text, source label, and
+            metadata summary match the indexed source.
+          </li>
+          <li>
+            Stream a grounded answer from the first-class HTMX workflow path
+            with retrieval, citations, and answer rendering on the same page.
+          </li>
+          <li>
+            Run the built-in benchmark suite and compare retrieval strategies,
+            rerankers, citations, and missing evidence on the same page.
+          </li>
+          <li>
+            Inspect grounded-answer coverage and reference mapping so every
+            citation number resolves to concrete evidence.
+          </li>
+          <li>
+            Review knowledge-base operations health, extractor readiness, and
+            recent admin jobs from the first-class ops surface.
+          </li>
+        </ul>
       </section>
 
       <div id="mutation-status" class="demo-results">

@@ -28,29 +28,23 @@
           AbsoluteJS
         </a>
       </div>
-      <nav class="demo-nav">
-        <label class="demo-nav-select">
-          <span>Backend</span>
-          <select onchange="if (this.value) location.assign(this.value);">
-            <option value="/htmx/sqlite-native">SQLite Native</option>
-            <option value="/htmx/sqlite-fallback" selected>
-              SQLite Fallback
-            </option>
-            <option value="/htmx/postgres">PostgreSQL</option>
-            <option value="/htmx/pinecone">Pinecone</option>
-          </select>
-        </label>
-        <label class="demo-nav-select">
-          <span>Framework</span>
-          <select onchange="if (this.value) location.assign(this.value);">
-            <option value="/react/sqlite-fallback">React</option>
-            <option value="/svelte/sqlite-fallback">Svelte</option>
-            <option value="/vue/sqlite-fallback">Vue</option>
-            <option value="/angular/sqlite-fallback">Angular</option>
-            <option value="/html/sqlite-fallback">HTML</option>
-            <option value="/htmx/sqlite-fallback" selected>HTMX</option>
-          </select>
-        </label>
+      <nav>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">Backend</span
+          ><a href="/htmx/sqlite-native">SQLite Native</a
+          ><a href="/htmx/sqlite-fallback" class="active">SQLite Fallback</a
+          ><a href="/htmx/postgres">PostgreSQL</a
+          ><a href="/htmx/pinecone">Pinecone</a>
+        </div>
+        <div class="demo-nav-row">
+          <span class="demo-nav-row-label">Framework</span
+          ><a href="/react/sqlite-fallback">React</a
+          ><a href="/svelte/sqlite-fallback">Svelte</a
+          ><a href="/vue/sqlite-fallback">Vue</a
+          ><a href="/angular/sqlite-fallback">Angular</a
+          ><a href="/html/sqlite-fallback">HTML</a
+          ><a href="/htmx/sqlite-fallback" class="active">HTMX</a>
+        </div>
       </nav>
     </header>
 
