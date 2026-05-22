@@ -28,39 +28,27 @@
           AbsoluteJS
         </a>
       </div>
-      <nav>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label active">SQLite Native</span
-          ><a href="/react/sqlite-native">React</a
-          ><a href="/svelte/sqlite-native">Svelte</a
-          ><a href="/vue/sqlite-native">Vue</a
-          ><a href="/angular/sqlite-native">Angular</a
-          ><a href="/html/sqlite-native">HTML</a
-          ><a href="/htmx/sqlite-native" class="active">HTMX</a>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">SQLite Fallback</span
-          ><a href="/react/sqlite-fallback">React</a
-          ><a href="/svelte/sqlite-fallback">Svelte</a
-          ><a href="/vue/sqlite-fallback">Vue</a
-          ><a href="/angular/sqlite-fallback">Angular</a
-          ><a href="/html/sqlite-fallback">HTML</a
-          ><a href="/htmx/sqlite-fallback">HTMX</a>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">PostgreSQL</span
-          ><a href="/react/postgres">React</a
-          ><a href="/svelte/postgres">Svelte</a><a href="/vue/postgres">Vue</a
-          ><a href="/angular/postgres">Angular</a
-          ><a href="/html/postgres">HTML</a><a href="/htmx/postgres">HTMX</a>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">Pinecone</span
-          ><a href="/react/pinecone">React</a
-          ><a href="/svelte/pinecone">Svelte</a><a href="/vue/pinecone">Vue</a
-          ><a href="/angular/pinecone">Angular</a
-          ><a href="/html/pinecone">HTML</a><a href="/htmx/pinecone">HTMX</a>
-        </div>
+      <nav class="demo-nav">
+        <label class="demo-nav-select">
+          <span>Backend</span>
+          <select onchange="if (this.value) location.assign(this.value);">
+            <option value="/htmx/sqlite-native" selected>SQLite Native</option>
+            <option value="/htmx/sqlite-fallback">SQLite Fallback</option>
+            <option value="/htmx/postgres">PostgreSQL</option>
+            <option value="/htmx/pinecone">Pinecone</option>
+          </select>
+        </label>
+        <label class="demo-nav-select">
+          <span>Framework</span>
+          <select onchange="if (this.value) location.assign(this.value);">
+            <option value="/react/sqlite-native">React</option>
+            <option value="/svelte/sqlite-native">Svelte</option>
+            <option value="/vue/sqlite-native">Vue</option>
+            <option value="/angular/sqlite-native">Angular</option>
+            <option value="/html/sqlite-native">HTML</option>
+            <option value="/htmx/sqlite-native" selected>HTMX</option>
+          </select>
+        </label>
       </nav>
     </header>
 
@@ -82,54 +70,9 @@
           base.
         </p>
         <p class="demo-metadata">
-          Pinned to
-          <code
-            >@absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
-            @absolutejs/rag@0.0.5</code
-          >
-          and surfacing the shared <code>@absolutejs/rag</code> plus
-          <code>@absolutejs/rag/ui</code> diagnostics on this page.
+          Built on <code>@absolutejs/ai</code> and <code>@absolutejs/rag</code>,
+          with <code>@absolutejs/rag/ui</code> diagnostics on this page.
         </p>
-        <div class="demo-hero-grid">
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Corpus</span>
-            <strong>Stuffed multi-format index</strong>
-            <p>
-              PDF, Office, archive, image, audio, video, EPUB, email, markdown,
-              and legacy files on one page.
-            </p>
-          </article>
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Retrieval</span>
-            <strong>Server-driven search proof</strong>
-            <p>
-              HTMX keeps scoped retrieval, chunk inspection, and sync feedback
-              on one route without client-side framework state.
-            </p>
-          </article>
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Workflow</span>
-            <strong>Grounded answers and citations</strong>
-            <p>
-              Drive the first-class workflow route and inspect sources,
-              citations, and grounding as server-rendered fragments.
-            </p>
-          </article>
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Ops</span>
-            <strong>Ingest, sync, benchmark</strong>
-            <p>
-              Exercise directory, URL, storage, and email sync adapters
-              alongside ingest mutations, benchmarks, and admin status.
-            </p>
-          </article>
-        </div>
-        <div class="demo-pill-row">
-          <span class="demo-pill">1. Retrieve and verify</span>
-          <span class="demo-pill">2. Inspect chunks inline</span>
-          <span class="demo-pill">3. Sync a source</span>
-          <span class="demo-pill">4. Run quality benchmarks</span>
-        </div>
       </section>
 
       <div id="mutation-status" class="demo-results">

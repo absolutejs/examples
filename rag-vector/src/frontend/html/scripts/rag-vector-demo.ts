@@ -15,6 +15,7 @@ import type {
   DemoUploadPreset,
   DemoBackendDescriptor,
   DemoBackendMode,
+  DemoFrameworkId,
   DemoChunkPreview,
   DemoDocument,
   DemoStatusView,
@@ -40,6 +41,7 @@ import {
   getAvailableDemoBackends,
   demoChunkingStrategies,
   demoContentFormats,
+  demoFrameworks,
   demoEvaluationPresets,
   demoReleaseWorkspaces,
   demoUploadPresets,
@@ -144,7 +146,6 @@ import {
   getInitialBackendMode,
   saveActiveRetrievalState,
   saveRecentQueries,
-  navigateToBackendMode,
   getDemoPagePath,
 } from "../../demo-backends";
 
@@ -2656,54 +2657,65 @@ const runEvaluation = async () => {
   }
 };
 
+const ACTIVE_FRAMEWORK: DemoFrameworkId = "html";
+
+// Two dropdowns (backend + framework) instead of a 4×6 grid of links — same
+// destinations, far less header noise. Navigation happens on change. Mirrors
+// the canonical ReactRAGVectorDemoNav component.
 const renderHeaderNav = () => {
   headerNavEl.innerHTML = "";
 
-  const frameworkIds = [
-    "react",
-    "svelte",
-    "vue",
-    "angular",
-    "html",
-    "htmx",
-  ] as const;
-  for (const backend of backendOptions) {
-    const row = document.createElement("div");
-    row.className = "demo-nav-row";
-
-    const label = document.createElement("span");
-    label.className =
-      backend.id === selectedMode
-        ? "demo-nav-row-label active"
-        : "demo-nav-row-label";
-    label.textContent = backend.label;
-    row.append(label);
-
-    for (const frameworkId of frameworkIds) {
-      const anchor = document.createElement("a");
-      anchor.textContent =
-        frameworkId === "htmx"
-          ? "HTMX"
-          : frameworkId === "html"
-            ? "HTML"
-            : frameworkId[0].toUpperCase() + frameworkId.slice(1);
-      if (backend.available) {
-        anchor.href = getDemoPagePath(frameworkId, backend.id);
-      } else {
-        anchor.classList.add("disabled");
-        anchor.setAttribute("aria-disabled", "true");
-        if (backend.reason) {
-          anchor.title = backend.reason;
-        }
-      }
-      if (frameworkId === "html" && backend.id === selectedMode) {
-        anchor.classList.add("active");
-      }
-      row.append(anchor);
+  const goTo = (framework: DemoFrameworkId, backend: DemoBackendMode) => {
+    const target = getDemoPagePath(framework, backend);
+    if (target) {
+      window.location.assign(target);
     }
+  };
 
-    headerNavEl.append(row);
+  const backendLabel = document.createElement("label");
+  backendLabel.className = "demo-nav-select";
+  const backendSpan = document.createElement("span");
+  backendSpan.textContent = "Backend";
+  backendLabel.append(backendSpan);
+  const backendSelect = document.createElement("select");
+  for (const backend of backendOptions) {
+    const option = document.createElement("option");
+    option.value = backend.id;
+    option.textContent = backend.available
+      ? backend.label
+      : `${backend.label} · unavailable`;
+    option.disabled = !backend.available;
+    if (backend.id === selectedMode) {
+      option.selected = true;
+    }
+    backendSelect.append(option);
   }
+  backendSelect.addEventListener("change", () => {
+    goTo(ACTIVE_FRAMEWORK, backendSelect.value as DemoBackendMode);
+  });
+  backendLabel.append(backendSelect);
+  headerNavEl.append(backendLabel);
+
+  const frameworkLabel = document.createElement("label");
+  frameworkLabel.className = "demo-nav-select";
+  const frameworkSpan = document.createElement("span");
+  frameworkSpan.textContent = "Framework";
+  frameworkLabel.append(frameworkSpan);
+  const frameworkSelect = document.createElement("select");
+  for (const framework of demoFrameworks) {
+    const option = document.createElement("option");
+    option.value = framework.id;
+    option.textContent = framework.label;
+    if (framework.id === ACTIVE_FRAMEWORK) {
+      option.selected = true;
+    }
+    frameworkSelect.append(option);
+  }
+  frameworkSelect.addEventListener("change", () => {
+    goTo(frameworkSelect.value as DemoFrameworkId, selectedMode);
+  });
+  frameworkLabel.append(frameworkSelect);
+  headerNavEl.append(frameworkLabel);
 };
 
 const runUploadPreset = async (preset: DemoUploadPreset) => {

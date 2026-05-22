@@ -23,6 +23,7 @@ import {
   type DemoBackendDescriptor,
   type DemoBackendMode,
   type DemoChunkPreview,
+  type DemoFrameworkId,
   type DemoDocument,
   type DemoStatusView,
   type SearchFormState,
@@ -274,35 +275,39 @@ const savedEvaluationSuite = buildDemoEvaluationSuite();
             AbsoluteJS
           </a>
         </div>
-        <nav>
-          @for (backend of backendOptions; track backend.id) {
-            <div class="demo-nav-row">
-              <span
-                [class]="
-                  backend.id === selectedMode
-                    ? 'demo-nav-row-label active'
-                    : 'demo-nav-row-label'
-                "
-                >{{ backend.label }}</span
-              >
-              @for (framework of demoFrameworks; track framework.id) {
-                <a
-                  [href]="
-                    backend.available
-                      ? getDemoPagePath(framework.id, backend.id)
-                      : null
-                  "
-                  [class.active]="
-                    framework.id === 'angular' && backend.id === selectedMode
-                  "
-                  [class.disabled]="!backend.available"
-                  [attr.aria-disabled]="!backend.available"
-                  [attr.title]="backend.available ? null : backend.reason"
-                  >{{ framework.label }}</a
+        <nav class="demo-nav">
+          <label class="demo-nav-select">
+            <span>Backend</span>
+            <select
+              (change)="goToDemoPage('angular', $any($event.target).value)"
+            >
+              @for (backend of backendOptions; track backend.id) {
+                <option
+                  [value]="backend.id"
+                  [disabled]="!backend.available"
+                  [selected]="backend.id === selectedMode"
                 >
+                  {{ backend.label
+                  }}{{ backend.available ? "" : " · unavailable" }}
+                </option>
               }
-            </div>
-          }
+            </select>
+          </label>
+          <label class="demo-nav-select">
+            <span>Framework</span>
+            <select
+              (change)="goToDemoPage($any($event.target).value, selectedMode)"
+            >
+              @for (framework of demoFrameworks; track framework.id) {
+                <option
+                  [value]="framework.id"
+                  [selected]="framework.id === 'angular'"
+                >
+                  {{ framework.label }}
+                </option>
+              }
+            </select>
+          </label>
         </nav>
       </header>
 
@@ -324,55 +329,10 @@ const savedEvaluationSuite = buildDemoEvaluationSuite();
             knowledge base.
           </p>
           <p class="demo-metadata">
-            Pinned to
-            <code
-              >@absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
-              @absolutejs/rag@0.0.5</code
-            >
-            and surfacing the shared
-            <code>@absolutejs/ai + @absolutejs/rag</code> plus
+            Built on <code>@absolutejs/ai</code> and
+            <code>@absolutejs/rag</code>, with
             <code>@absolutejs/rag/ui</code> diagnostics on this page.
           </p>
-          <div class="demo-hero-grid">
-            <article class="demo-stat-card">
-              <span class="demo-stat-label">Corpus</span>
-              <strong>Stuffed multi-format index</strong>
-              <p>
-                PDF, Office, archive, image, audio, video, EPUB, email,
-                markdown, and legacy files on one page.
-              </p>
-            </article>
-            <article class="demo-stat-card">
-              <span class="demo-stat-label">Retrieval</span>
-              <strong>Search with source proof</strong>
-              <p>
-                Row actions jump straight into scoped retrieval and inline chunk
-                inspection instead of making you type filters by hand.
-              </p>
-            </article>
-            <article class="demo-stat-card">
-              <span class="demo-stat-label">Workflow</span>
-              <strong>Grounded answers and citations</strong>
-              <p>
-                Drive the first-class workflow primitive, then inspect coverage,
-                references, and resolved citations without leaving the route.
-              </p>
-            </article>
-            <article class="demo-stat-card">
-              <span class="demo-stat-label">Ops</span>
-              <strong>Ingest, sync, benchmark</strong>
-              <p>
-                Exercise directory, URL, storage, and email sync adapters
-                alongside ingest mutations, benchmarks, and admin status.
-              </p>
-            </article>
-          </div>
-          <div class="demo-pill-row">
-            <span class="demo-pill">1. Retrieve and verify</span>
-            <span class="demo-pill">2. Inspect chunks inline</span>
-            <span class="demo-pill">3. Sync a source</span>
-            <span class="demo-pill">4. Run quality benchmarks</span>
-          </div>
           <div class="demo-section-card-grid">
             @for (section of ragExampleSections; track section.id) {
               <button
@@ -3790,7 +3750,6 @@ export class AngularRAGVectorDemoComponent {
     | "evaluate"
     | "ops" = "overview";
   private hasLoadedActiveSectionData = false;
-  getDemoPagePath = getDemoPagePath;
   backendOptions: DemoBackendDescriptor[] = getAvailableDemoBackends(
     this.pageContext.availableBackends,
   );
@@ -4497,6 +4456,15 @@ export class AngularRAGVectorDemoComponent {
     } finally {
       this.loading = false;
       this.flushView();
+    }
+  }
+
+  // Two dropdowns (backend + framework) instead of a 4×6 grid of links — same
+  // destinations, far less header noise. Navigation happens on change.
+  goToDemoPage(framework: DemoFrameworkId, backend: DemoBackendMode) {
+    const target = getDemoPagePath(framework, backend);
+    if (target && typeof window !== "undefined") {
+      window.location.assign(target);
     }
   }
 

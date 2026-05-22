@@ -28,40 +28,27 @@
           AbsoluteJS
         </a>
       </div>
-      <nav>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">SQLite Native</span
-          ><a href="/react/sqlite-native">React</a
-          ><a href="/svelte/sqlite-native">Svelte</a
-          ><a href="/vue/sqlite-native">Vue</a
-          ><a href="/angular/sqlite-native">Angular</a
-          ><a href="/html/sqlite-native">HTML</a
-          ><a href="/htmx/sqlite-native">HTMX</a>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">SQLite Fallback</span
-          ><a href="/react/sqlite-fallback">React</a
-          ><a href="/svelte/sqlite-fallback">Svelte</a
-          ><a href="/vue/sqlite-fallback">Vue</a
-          ><a href="/angular/sqlite-fallback">Angular</a
-          ><a href="/html/sqlite-fallback">HTML</a
-          ><a href="/htmx/sqlite-fallback">HTMX</a>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label active">PostgreSQL</span
-          ><a href="/react/postgres">React</a
-          ><a href="/svelte/postgres">Svelte</a><a href="/vue/postgres">Vue</a
-          ><a href="/angular/postgres">Angular</a
-          ><a href="/html/postgres">HTML</a
-          ><a href="/htmx/postgres" class="active">HTMX</a>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">Pinecone</span
-          ><a href="/react/pinecone">React</a
-          ><a href="/svelte/pinecone">Svelte</a><a href="/vue/pinecone">Vue</a
-          ><a href="/angular/pinecone">Angular</a
-          ><a href="/html/pinecone">HTML</a><a href="/htmx/pinecone">HTMX</a>
-        </div>
+      <nav class="demo-nav">
+        <label class="demo-nav-select">
+          <span>Backend</span>
+          <select onchange="if (this.value) location.assign(this.value);">
+            <option value="/htmx/sqlite-native">SQLite Native</option>
+            <option value="/htmx/sqlite-fallback">SQLite Fallback</option>
+            <option value="/htmx/postgres" selected>PostgreSQL</option>
+            <option value="/htmx/pinecone">Pinecone</option>
+          </select>
+        </label>
+        <label class="demo-nav-select">
+          <span>Framework</span>
+          <select onchange="if (this.value) location.assign(this.value);">
+            <option value="/react/postgres">React</option>
+            <option value="/svelte/postgres">Svelte</option>
+            <option value="/vue/postgres">Vue</option>
+            <option value="/angular/postgres">Angular</option>
+            <option value="/html/postgres">HTML</option>
+            <option value="/htmx/postgres" selected>HTMX</option>
+          </select>
+        </label>
       </nav>
     </header>
 
@@ -82,13 +69,8 @@
           server-side fragments backed by the AbsoluteJS RAG workflow routes.
         </p>
         <p class="demo-metadata">
-          Pinned to
-          <code
-            >@absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
-            @absolutejs/rag@0.0.5</code
-          >
-          and surfacing the shared <code>@absolutejs/rag</code> plus
-          <code>@absolutejs/rag/ui</code> diagnostics on this page.
+          Built on <code>@absolutejs/ai</code> and <code>@absolutejs/rag</code>,
+          with <code>@absolutejs/rag/ui</code> diagnostics on this page.
         </p>
         <ul class="demo-checklist">
           <li>

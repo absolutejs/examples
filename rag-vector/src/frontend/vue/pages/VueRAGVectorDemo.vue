@@ -15,6 +15,7 @@ import {
   type DemoRetrievalQualityResponse,
   type DemoBackendDescriptor,
   type DemoBackendMode,
+  type DemoFrameworkId,
   type DemoChunkPreview,
   type DemoDocument,
   type SearchFormState,
@@ -266,6 +267,17 @@ const ragExampleSections: Array<{
 const backendOptions = computed(() =>
   getAvailableDemoBackends(props.availableBackends),
 );
+
+const ACTIVE_FRAMEWORK: DemoFrameworkId = "vue";
+
+// Two dropdowns (backend + framework) instead of a 4×6 grid of links — same
+// destinations, far less header noise. Navigation happens on change.
+const goTo = (framework: DemoFrameworkId, backend: DemoBackendMode) => {
+  const target = getDemoPagePath(framework, backend);
+  if (target && typeof window !== "undefined") {
+    window.location.assign(target);
+  }
+};
 const rag = useRAG(getRAGPathForMode(selectedMode.value), {
   autoLoadOps: false,
   autoLoadStatus: false,
@@ -1274,39 +1286,48 @@ onUnmounted(() => {
           AbsoluteJS
         </a>
       </div>
-      <nav>
-        <div
-          v-for="backend in backendOptions"
-          :key="backend.id"
-          class="demo-nav-row"
-        >
-          <span
-            :class="
-              backend.id === selectedMode
-                ? 'demo-nav-row-label active'
-                : 'demo-nav-row-label'
+      <nav class="demo-nav">
+        <label class="demo-nav-select">
+          <span>Backend</span>
+          <select
+            @change="
+              goTo(
+                ACTIVE_FRAMEWORK,
+                ($event.target as HTMLSelectElement).value as DemoBackendMode,
+              )
             "
-            >{{ backend.label }}</span
           >
-          <a
-            v-for="framework in demoFrameworks"
-            :key="`${backend.id}-${framework.id}`"
-            :class="[
-              framework.id === 'vue' && backend.id === selectedMode
-                ? 'active'
-                : '',
-              backend.available ? '' : 'disabled',
-            ]"
-            :href="
-              backend.available
-                ? getDemoPagePath(framework.id, backend.id)
-                : undefined
+            <option
+              v-for="backend in backendOptions"
+              :key="backend.id"
+              :disabled="!backend.available"
+              :selected="backend.id === selectedMode"
+              :value="backend.id"
+            >
+              {{ backend.label }}{{ backend.available ? "" : " · unavailable" }}
+            </option>
+          </select>
+        </label>
+        <label class="demo-nav-select">
+          <span>Framework</span>
+          <select
+            @change="
+              goTo(
+                ($event.target as HTMLSelectElement).value as DemoFrameworkId,
+                selectedMode,
+              )
             "
-            :aria-disabled="!backend.available"
-            :title="backend.available ? undefined : backend.reason"
-            >{{ framework.label }}</a
           >
-        </div>
+            <option
+              v-for="framework in demoFrameworks"
+              :key="framework.id"
+              :selected="framework.id === ACTIVE_FRAMEWORK"
+              :value="framework.id"
+            >
+              {{ framework.label }}
+            </option>
+          </select>
+        </label>
       </nav>
     </header>
 
@@ -1328,55 +1349,9 @@ onUnmounted(() => {
           base.
         </p>
         <p class="demo-metadata">
-          Pinned to
-          <code
-            >@absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
-            @absolutejs/rag@0.0.5</code
-          >
-          and surfacing the shared
-          <code>@absolutejs/ai + @absolutejs/rag</code> plus
-          <code>@absolutejs/rag/ui</code> diagnostics on this page.
+          Built on <code>@absolutejs/ai</code> and <code>@absolutejs/rag</code>,
+          with <code>@absolutejs/rag/ui</code> diagnostics on this page.
         </p>
-        <div class="demo-hero-grid">
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Corpus</span>
-            <strong>Stuffed multi-format index</strong>
-            <p>
-              PDF, Office, archive, image, audio, video, EPUB, email, markdown,
-              and legacy files on one page.
-            </p>
-          </article>
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Retrieval</span>
-            <strong>Search with source proof</strong>
-            <p>
-              Row actions jump straight into scoped retrieval and inline chunk
-              inspection instead of making you type filters by hand.
-            </p>
-          </article>
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Workflow</span>
-            <strong>Grounded answers and citations</strong>
-            <p>
-              Drive the first-class workflow primitive, then inspect coverage,
-              references, and resolved citations without leaving the route.
-            </p>
-          </article>
-          <article class="demo-stat-card">
-            <span class="demo-stat-label">Ops</span>
-            <strong>Ingest, sync, benchmark</strong>
-            <p>
-              Exercise directory, URL, storage, and email sync adapters
-              alongside ingest mutations, benchmarks, and admin status.
-            </p>
-          </article>
-        </div>
-        <div class="demo-pill-row">
-          <span class="demo-pill">1. Retrieve and verify</span>
-          <span class="demo-pill">2. Inspect chunks inline</span>
-          <span class="demo-pill">3. Sync a source</span>
-          <span class="demo-pill">4. Run quality benchmarks</span>
-        </div>
         <div class="demo-section-card-grid">
           <button
             v-for="section in ragExampleSections"
@@ -2331,9 +2306,7 @@ onUnmounted(() => {
                     <template v-if="releasePanel.stableHandoff">
                       <div class="demo-key-value-row">
                         <span
-                          >{{
-                            releasePanel.stableHandoff.sourceRolloutLabel
-                          }}
+                          >{{ releasePanel.stableHandoff.sourceRolloutLabel }}
                           ->
                           {{
                             releasePanel.stableHandoff.targetRolloutLabel

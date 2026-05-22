@@ -567,6 +567,29 @@
     }
   };
 
+  // Two dropdowns (backend + framework) instead of a backend×framework grid of
+  // links — same destinations, far less header noise. Navigation on change.
+  const goToDemoPage = (
+    framework: (typeof demoFrameworks)[number]["id"],
+    backend: DemoBackendMode,
+  ) => {
+    const target = getDemoPagePath(framework, backend);
+    if (target && typeof window !== "undefined") {
+      window.location.assign(target);
+    }
+  };
+
+  const onNavBackendChange = (event: Event) => {
+    const value = (event.target as HTMLSelectElement).value as DemoBackendMode;
+    goToDemoPage("svelte", value);
+  };
+
+  const onNavFrameworkChange = (event: Event) => {
+    const value = (event.target as HTMLSelectElement)
+      .value as (typeof demoFrameworks)[number]["id"];
+    goToDemoPage(value, selectedMode);
+  };
+
   const loadRagReadiness = async () => {
     const requestId = ++ragReadinessRequest;
     if (ragReadinessTimer) {
@@ -1217,37 +1240,31 @@
         AbsoluteJS
       </a>
     </div>
-    <nav>
-      {#each backendOptions as backend}
-        <div class="demo-nav-row">
-          <span
-            class={backend.id === selectedMode
-              ? "demo-nav-row-label active"
-              : "demo-nav-row-label"}
-          >
-            {backend.label}
-          </span>
-          {#each demoFrameworks as framework}
-            <a
-              class={[
-                framework.id === "svelte" && backend.id === selectedMode
-                  ? "active"
-                  : "",
-                backend.available ? "" : "disabled",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              href={backend.available
-                ? getDemoPagePath(framework.id, backend.id)
-                : undefined}
-              aria-disabled={!backend.available}
-              title={backend.available ? undefined : backend.reason}
+    <nav class="demo-nav">
+      <label class="demo-nav-select">
+        <span>Backend</span>
+        <select on:change={onNavBackendChange}>
+          {#each backendOptions as backend}
+            <option
+              disabled={!backend.available}
+              selected={backend.id === selectedMode}
+              value={backend.id}
             >
-              {framework.label}
-            </a>
+              {backend.label}{backend.available ? "" : " · unavailable"}
+            </option>
           {/each}
-        </div>
-      {/each}
+        </select>
+      </label>
+      <label class="demo-nav-select">
+        <span>Framework</span>
+        <select on:change={onNavFrameworkChange}>
+          {#each demoFrameworks as framework}
+            <option selected={framework.id === "svelte"} value={framework.id}>
+              {framework.label}
+            </option>
+          {/each}
+        </select>
+      </label>
     </nav>
   </header>
 
@@ -1268,53 +1285,9 @@
         inspect ops health against the same stuffed multi-format knowledge base.
       </p>
       <p class="demo-metadata">
-        Pinned to <code
-          >@absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
-          @absolutejs/rag@0.0.5</code
-        >
-        and surfacing the shared <code>@absolutejs/ai + @absolutejs/rag</code>
-        plus <code>@absolutejs/rag/ui</code> diagnostics on this page.
+        Built on <code>@absolutejs/ai</code> and <code>@absolutejs/rag</code>,
+        with <code>@absolutejs/rag/ui</code> diagnostics on this page.
       </p>
-      <div class="demo-hero-grid">
-        <article class="demo-stat-card">
-          <span class="demo-stat-label">Corpus</span>
-          <strong>Stuffed multi-format index</strong>
-          <p>
-            PDF, Office, archive, image, audio, video, EPUB, email, markdown,
-            and legacy files on one page.
-          </p>
-        </article>
-        <article class="demo-stat-card">
-          <span class="demo-stat-label">Retrieval</span>
-          <strong>Search with source proof</strong>
-          <p>
-            Row actions jump straight into scoped retrieval and inline chunk
-            inspection instead of making you type filters by hand.
-          </p>
-        </article>
-        <article class="demo-stat-card">
-          <span class="demo-stat-label">Workflow</span>
-          <strong>Grounded answers and citations</strong>
-          <p>
-            Drive the first-class workflow primitive, then inspect coverage,
-            references, and resolved citations without leaving the route.
-          </p>
-        </article>
-        <article class="demo-stat-card">
-          <span class="demo-stat-label">Ops</span>
-          <strong>Ingest, sync, benchmark</strong>
-          <p>
-            Exercise directory, URL, storage, and email sync adapters alongside
-            ingest mutations, benchmarks, and admin status.
-          </p>
-        </article>
-      </div>
-      <div class="demo-pill-row">
-        <span class="demo-pill">1. Retrieve and verify</span>
-        <span class="demo-pill">2. Inspect chunks inline</span>
-        <span class="demo-pill">3. Sync a source</span>
-        <span class="demo-pill">4. Run quality benchmarks</span>
-      </div>
       <div class="demo-section-card-grid">
         {#each ragExampleSections as section}
           <button
