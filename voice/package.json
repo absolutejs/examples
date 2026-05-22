@@ -13,7 +13,7 @@
     "typecheck": "absolute typecheck"
   },
   "dependencies": {
-    "@absolutejs/absolute": "0.19.0-beta.828",
+    "@absolutejs/absolute": "0.19.0-beta.1009",
     "@absolutejs/media": "0.0.1-beta.16",
     "@absolutejs/voice": "0.0.22-beta.534",
     "@absolutejs/voice-assemblyai": "0.0.19-beta.123",
@@ -44,7 +44,7 @@
     "@types/react-dom": "19.2.0",
     "@typescript-eslint/parser": "^8.57.2",
     "eslint": "^10.1.0",
-    "eslint-plugin-absolute": "^0.2.1",
+    "eslint-plugin-absolute": "0.11.0-beta.3",
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-security": "^4.0.0",
     "globals": "^17.4.0",

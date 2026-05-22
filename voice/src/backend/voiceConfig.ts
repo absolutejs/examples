@@ -1,3 +1,4 @@
+import { projectRoot } from "@absolutejs/absolute";
 import { type SavedIntake } from "../shared/demo";
 
 import {
@@ -170,7 +171,7 @@ export const voiceConfig = createVoiceConfiguration<
     ),
     fixtureStore: createVoiceFileScenarioFixtureStore(
       resolve(
-        process.cwd(),
+        projectRoot,
         "src",
         "backend",
         "fixtures",
@@ -593,7 +594,7 @@ export const voiceConfig = createVoiceConfiguration<
     scenarios: workflowScenarios,
     fixtureStore: createVoiceFileScenarioFixtureStore(
       resolve(
-        process.cwd(),
+        projectRoot,
         "src",
         "backend",
         "fixtures",

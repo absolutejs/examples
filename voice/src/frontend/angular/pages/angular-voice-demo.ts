@@ -1,12 +1,12 @@
 import {
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
-  InjectionToken,
   computed,
   effect,
   inject,
   signal,
 } from "@angular/core";
+import { usePageContext } from "@absolutejs/absolute/angular";
 import type { VoiceRoutingDecisionSummary } from "@absolutejs/voice";
 import {
   createVoiceCallDebuggerLaunchViewModel,
@@ -100,18 +100,12 @@ type VoiceDemoWindow = typeof window & {
   __absoluteVoiceDemoSimulateDisconnect?: () => void;
 };
 
-export const INITIAL_MODEL_PROVIDER = new InjectionToken<VoiceModelProvider>(
-  "INITIAL_MODEL_PROVIDER",
-);
-export const INITIAL_PROFILE_ID = new InjectionToken<VoiceProfileId>(
-  "INITIAL_PROFILE_ID",
-);
-export const INITIAL_ROUTING_MODE = new InjectionToken<VoiceRoutingMode>(
-  "INITIAL_ROUTING_MODE",
-);
-export const INITIAL_SPEECH_ENGINE = new InjectionToken<VoiceSpeechEngine>(
-  "INITIAL_SPEECH_ENGINE",
-);
+export type Context = {
+  initialModelProvider: VoiceModelProvider;
+  initialProfileId: VoiceProfileId;
+  initialRoutingMode: VoiceRoutingMode;
+  initialSpeechEngine: VoiceSpeechEngine;
+};
 
 @Component({
   imports: [
@@ -1040,14 +1034,11 @@ class AngularVoiceDemoComponent {
   private readonly microphoneService = inject(VoiceMicrophoneService);
   private readonly savedIntakesService = inject(VoiceSavedIntakesService);
   private readonly serverHtmlPanels = inject(VoiceServerHtmlPanelsService);
-  private readonly initialModelProvider =
-    inject(INITIAL_MODEL_PROVIDER, { optional: true }) ?? "deterministic";
-  private readonly initialProfileId =
-    inject(INITIAL_PROFILE_ID, { optional: true }) ?? "meeting-recorder";
-  private readonly initialRoutingMode =
-    inject(INITIAL_ROUTING_MODE, { optional: true }) ?? "balanced";
-  private readonly initialSpeechEngine =
-    inject(INITIAL_SPEECH_ENGINE, { optional: true }) ?? "cascaded";
+  private readonly pageContext = usePageContext<Context>();
+  private readonly initialModelProvider = this.pageContext.initialModelProvider;
+  private readonly initialProfileId = this.pageContext.initialProfileId;
+  private readonly initialRoutingMode = this.pageContext.initialRoutingMode;
+  private readonly initialSpeechEngine = this.pageContext.initialSpeechEngine;
   modelProvider = signal<VoiceModelProvider>(this.initialModelProvider);
   profileId = signal<VoiceProfileId>(this.initialProfileId);
   routingMode = signal<VoiceRoutingMode>(this.initialRoutingMode);

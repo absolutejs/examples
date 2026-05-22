@@ -92,6 +92,7 @@ export default defineConfig([
         { allowedVars: ["_", "id", "db", "OK", "ws"], minLength: 3 },
       ],
       "absolute/no-explicit-return-type": "error",
+      "absolute/no-import-meta-path": "error",
       "absolute/no-useless-function": "error",
       "absolute/sort-exports": [
         "error",
@@ -223,6 +224,14 @@ export default defineConfig([
     files: ["absolute.config.ts"],
     rules: {
       "no-restricted-exports": "off",
+    },
+  },
+  {
+    // Config files run directly via their own tooling and are never bundled,
+    // so deriving a path from import.meta.url is safe here.
+    files: ["eslint.config.mjs", "**/absolute.config.ts"],
+    rules: {
+      "absolute/no-import-meta-path": "off",
     },
   },
 ]);

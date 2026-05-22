@@ -176,10 +176,10 @@ export const pagesPlugin = (manifest: Record<string, string>) =>
     .get("/html", () => handleHTMLPageRequest(asset(manifest, "HtmlVoiceDemo")))
     .get("/htmx", () => handleHTMXPageRequest(asset(manifest, "HtmxVoiceDemo")))
     .get("/angular", async ({ query }) =>
-      handleAngularPageRequest<typeof AngularVoiceDemoPage>({
+      handleAngularPageRequest<AngularVoiceDemoPage.Context>({
         pagePath: asset(manifest, "AngularVoiceDemo"),
         indexPath: asset(manifest, "AngularVoiceDemoIndex"),
-        props: resolveVoiceDemoSelectionProps(query),
+        requestContext: resolveVoiceDemoSelectionProps(query),
         headTag: generateHeadElement({
           cssPath: asset(manifest, "VoiceDemoCSS"),
           title: "AbsoluteJS Voice Intake - Angular",
