@@ -152,14 +152,6 @@ import {
   saveRecentQueries,
 } from "../../demo-backends";
 
-type DemoRagReadinessState = {
-  className: string;
-  detail: string;
-  elapsedMs: number;
-  label: string;
-  status: "warming" | "ready" | "failed";
-};
-
 type DemoProps = {
   mode?: DemoBackendMode;
 };
@@ -535,8 +527,6 @@ export const ReactRAGVectorDemoFullLabApp = ({
   const [releaseActionBusyId, setReleaseActionBusyId] = useState<string | null>(
     null,
   );
-  const [ragReadiness, setRagReadiness] =
-    useState<DemoRagReadinessState | null>(null);
   const [aiModelCatalog, setAiModelCatalog] =
     useState<DemoAIModelCatalogResponse>({ defaultModelKey: null, models: [] });
   const [selectedAIModelKey, setSelectedAIModelKey] = useState("");
@@ -1027,68 +1017,6 @@ export const ReactRAGVectorDemoFullLabApp = ({
     },
     [],
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    const loadRagReadiness = async () => {
-      try {
-        const response = await fetch(
-          `/demo/rag-readiness/${selectedMode}/json`,
-        );
-        const next = (await response.json()) as DemoRagReadinessState;
-        if (cancelled) {
-          return;
-        }
-        setRagReadiness(next);
-        if (next.status === "warming") {
-          timeoutId = setTimeout(() => {
-            void loadRagReadiness();
-          }, 2000);
-        }
-      } catch {
-        if (!cancelled) {
-          setRagReadiness({
-            className: "demo-rag-readiness-failed",
-            detail: "Unable to load RAG readiness.",
-            elapsedMs: 0,
-            label: "RAG Failed",
-            status: "failed",
-          });
-        }
-      }
-    };
-
-    let initialTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    let initialAnimationFrameId: number | null = null;
-
-    if (typeof requestAnimationFrame === "function") {
-      initialAnimationFrameId = requestAnimationFrame(() => {
-        void loadRagReadiness();
-      });
-    } else {
-      initialTimeoutId = setTimeout(() => {
-        void loadRagReadiness();
-      }, 0);
-    }
-
-    return () => {
-      cancelled = true;
-      if (initialTimeoutId !== null) {
-        clearTimeout(initialTimeoutId);
-      }
-      if (
-        initialAnimationFrameId !== null &&
-        typeof cancelAnimationFrame === "function"
-      ) {
-        cancelAnimationFrame(initialAnimationFrameId);
-      }
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [selectedMode]);
 
   useEffect(() => {
     let initialTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -1774,73 +1702,6 @@ export const ReactRAGVectorDemoFullLabApp = ({
 
   return (
     <main className="demo-layout">
-      <section className="demo-card">
-        <span className="demo-hero-kicker">React workflow surface</span>
-        <h1>AbsoluteJS RAG Workflow Demo - React</h1>
-        {ragReadiness ? (
-          <div className={`demo-rag-readiness ${ragReadiness.className}`}>
-            <strong>{ragReadiness.label}</strong>
-            <span>{ragReadiness.detail}</span>
-          </div>
-        ) : (
-          <p className="demo-metadata">Loading RAG readiness...</p>
-        )}
-        <p>
-          Use one route to ingest, sync, retrieve, stream grounded answers, and
-          inspect ops health against the same stuffed multi-format knowledge
-          base.
-        </p>
-        <p className="demo-metadata">
-          Pinned to{" "}
-          <code>
-            @absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
-            @absolutejs/rag@0.0.5
-          </code>{" "}
-          and surfacing the shared <code>@absolutejs/ai + @absolutejs/rag</code>{" "}
-          plus <code>@absolutejs/rag/ui</code> diagnostics on this page.
-        </p>
-        <div className="demo-hero-grid">
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Corpus</span>
-            <strong>Stuffed multi-format index</strong>
-            <p>
-              PDF, Office, archive, image, audio, video, EPUB, email, markdown,
-              and legacy files on one page.
-            </p>
-          </article>
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Retrieval</span>
-            <strong>Search with source proof</strong>
-            <p>
-              Row actions jump straight into scoped retrieval and inline chunk
-              inspection instead of making you type filters by hand.
-            </p>
-          </article>
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Workflow</span>
-            <strong>Grounded answers and citations</strong>
-            <p>
-              Drive the first-class workflow primitive, then inspect coverage,
-              references, and resolved citations without leaving the route.
-            </p>
-          </article>
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Ops</span>
-            <strong>Ingest, sync, benchmark</strong>
-            <p>
-              Exercise directory, URL, storage, and email sync adapters
-              alongside ingest mutations, benchmarks, and admin status.
-            </p>
-          </article>
-        </div>
-        <div className="demo-pill-row">
-          <span className="demo-pill">1. Retrieve and verify</span>
-          <span className="demo-pill">2. Inspect chunks inline</span>
-          <span className="demo-pill">3. Sync a source</span>
-          <span className="demo-pill">4. Run quality benchmarks</span>
-        </div>
-      </section>
-
       {showConnectorFocus && (
         <section className="demo-card demo-connector-focus">
           <span className="demo-hero-kicker">Connector test bench</span>
