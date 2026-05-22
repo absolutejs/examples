@@ -1,9 +1,22 @@
+import { existsSync } from "node:fs";
+
 import { describe, expect, it } from "bun:test";
 
-import { server } from "../../src/backend/web/server";
+// Integration smoke that boots the web server, so it needs the built asset
+// manifest (produced by `absolute start`/`dev`); it is skipped when the app has
+// not been built. absolute.config.ts defines multiple services, so select the
+// web service before the server module loads its config.
+process.env.ABSOLUTE_WORKSPACE_SERVICE_NAME ??= "web";
+
+const isBuilt = existsSync(
+  new URL("../../build/manifest.json", import.meta.url),
+);
+const server = isBuilt
+  ? (await import("../../src/backend/web/server")).server
+  : undefined;
 
 const postJson = (url: string, payload: unknown, htmx = true) =>
-  server.handle(
+  server!.handle(
     new Request(url, {
       method: "POST",
       headers: {
@@ -14,11 +27,11 @@ const postJson = (url: string, payload: unknown, htmx = true) =>
     }),
   );
 
-const getJson = (url: string) => server.handle(new Request(url));
+const getJson = (url: string) => server!.handle(new Request(url));
 
-describe("release route smoke", () => {
+describe.skipIf(!isBuilt)("release route smoke", () => {
   it("renders the HTMX release fragment with scenario controls and evidence drills", async () => {
-    const response = await server.handle(
+    const response = await server!.handle(
       new Request(
         "http://absolute.local/demo/release/sqlite-native/htmx?workspace=alpha",
       ),
@@ -365,7 +378,7 @@ describe("release route smoke", () => {
   });
 
   it("renders the full HTMX page shell", async () => {
-    const response = await server.handle(
+    const response = await server!.handle(
       new Request("http://absolute.local/htmx/sqlite-native"),
     );
 

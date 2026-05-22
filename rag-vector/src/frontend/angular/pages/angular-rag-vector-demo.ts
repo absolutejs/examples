@@ -5219,7 +5219,6 @@ export const factory = (props: AngularRAGVectorDemoProps) => {
   component.connectStream();
   return component;
 };
-export default AngularRAGVectorDemoComponent;
 
 function isCitationPart(part: {
   type: string;

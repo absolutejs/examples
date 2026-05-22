@@ -253,12 +253,12 @@ describe("demo surface parity smoke", () => {
   it("keeps blocker comparison, trace expectations, and scenario labels visible across demo surfaces", () => {
     const repoRoot = new URL("../..", import.meta.url);
     const files = [
-      "src/frontend/react/pages/ReactRAGVectorDemo.tsx",
+      "src/frontend/react/pages/ReactRAGVectorDemoApp.tsx",
       "src/frontend/vue/pages/VueRAGVectorDemo.vue",
       "src/frontend/svelte/pages/SvelteRAGVectorDemo.svelte",
       "src/frontend/angular/pages/angular-rag-vector-demo.ts",
       "src/frontend/html/scripts/rag-vector-demo.ts",
-      "src/backend/handlers/htmxRagWorkflow.ts",
+      "src/backend/rag/handlers/htmx/release.ts",
     ];
 
     for (const rel of files) {
