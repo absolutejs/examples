@@ -21,14 +21,20 @@ import {
   voice,
   voiceGuardrailPolicyPresets,
 } from "@absolutejs/voice";
+import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { createJsonHandoffDeliveryStore, escapeHtml } from "./helpers";
 
 const savedIntakes: SavedIntake[] = [];
 
+// Resolve runtime data off process.cwd() (stable across `absolute dev` and
+// `absolute start`, both run from the project root) rather than import.meta.dir,
+// which points at src/backend in dev but the bundled dist/ in production — the
+// `../..` walk then lands outside the project and SQLite stores fail to open.
 const runtimeDirectory = process.env.VOICE_DEMO_RUNTIME_DIR
   ? resolve(process.env.VOICE_DEMO_RUNTIME_DIR)
-  : resolve(import.meta.dir, "..", "..", ".voice-runtime", "voice-demo");
+  : resolve(process.cwd(), ".voice-runtime", "voice-demo");
+mkdirSync(runtimeDirectory, { recursive: true });
 
 const runtimeStorage = createVoiceFileRuntimeStorage<
   VoiceSessionRecord,

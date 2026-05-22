@@ -169,7 +169,13 @@ export const voiceConfig = createVoiceConfiguration<
       resolve(runtimeDirectory, "eval-baseline.json"),
     ),
     fixtureStore: createVoiceFileScenarioFixtureStore(
-      resolve(import.meta.dir, "fixtures", "voice-scenario-fixtures.json"),
+      resolve(
+        process.cwd(),
+        "src",
+        "backend",
+        "fixtures",
+        "voice-scenario-fixtures.json",
+      ),
     ),
     links: opsSurfaceLinks,
     operationsRecordHref: "/voice-operations/:sessionId",
@@ -586,7 +592,13 @@ export const voiceConfig = createVoiceConfiguration<
     },
     scenarios: workflowScenarios,
     fixtureStore: createVoiceFileScenarioFixtureStore(
-      resolve(import.meta.dir, "fixtures", "voice-scenario-fixtures.json"),
+      resolve(
+        process.cwd(),
+        "src",
+        "backend",
+        "fixtures",
+        "voice-scenario-fixtures.json",
+      ),
     ),
     tools: demoToolContracts,
     outcomes: {
