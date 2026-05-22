@@ -251,6 +251,15 @@ export const formatDateTime = (value: number) =>
     timeStyle: "short",
   });
 
+// Demo config switches (provider/profile/routing/engine) persist the choice and
+// reload the page with the matching search param so the voice route picks it up
+// on the next session. Shared so every framework's settings handlers stay thin.
+export const reloadWithVoiceSearchParam = (param: string, value: string) => {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set(param, value);
+  window.location.href = nextUrl.toString();
+};
+
 export const formatReconnectState = (reconnect: VoiceReconnectClientState) => {
   const pieces: string[] = [reconnect.status];
 
