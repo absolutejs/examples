@@ -94,6 +94,38 @@ nav {
   align-items: flex-end;
 }
 
+.demo-nav {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.demo-nav-select {
+  align-items: center;
+  color: #a1a1aa;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 600;
+  gap: 0.4rem;
+  text-transform: uppercase;
+}
+
+.demo-nav-select select {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: #e4e4e7;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.7rem;
+  text-transform: none;
+  transition: all 0.2s ease;
+}
+
+.demo-nav-select select:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .demo-auth-menu {
   position: relative;
 }

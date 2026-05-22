@@ -461,63 +461,22 @@ export const ReactRAGVectorDemoShell = ({ mode }: DemoProps) => {
           <p className="demo-metadata">Loading RAG readiness...</p>
         )}
         <p>
-          Use one route to ingest, sync, retrieve, stream grounded answers, and
-          inspect ops health against the same stuffed multi-format knowledge
-          base.
+          One Elysia route to ingest, retrieve, and stream grounded answers with
+          citations over a stuffed multi-format knowledge base.
         </p>
         <p className="demo-metadata">
-          Pinned to{" "}
-          <code>
-            @absolutejs/absolute@0.19.0-beta.655 + @absolutejs/ai@0.0.5 +
-            @absolutejs/rag@0.0.5
-          </code>{" "}
-          and surfacing the shared <code>@absolutejs/ai + @absolutejs/rag</code>{" "}
-          plus <code>@absolutejs/rag/ui</code> diagnostics on this page.
+          Built on <code>@absolutejs/ai</code> and <code>@absolutejs/rag</code>,
+          with <code>@absolutejs/rag/ui</code> diagnostics on this page.
         </p>
-        <div className="demo-hero-grid">
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Corpus</span>
-            <strong>Stuffed multi-format index</strong>
-            <p>
-              PDF, Office, archive, image, audio, video, EPUB, email, markdown,
-              and legacy files on one page.
-            </p>
-          </article>
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Retrieval</span>
-            <strong>Search with source proof</strong>
-            <p>
-              Row actions jump straight into scoped retrieval and inline chunk
-              inspection instead of making you type filters by hand.
-            </p>
-          </article>
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Workflow</span>
-            <strong>Grounded answers and citations</strong>
-            <p>
-              Drive the first-class workflow primitive, then inspect coverage,
-              references, and resolved citations without leaving the route.
-            </p>
-          </article>
-          <article className="demo-stat-card">
-            <span className="demo-stat-label">Ops</span>
-            <strong>Ingest, sync, benchmark</strong>
-            <p>
-              Exercise directory, URL, storage, and email sync adapters
-              alongside ingest mutations, benchmarks, and admin status.
-            </p>
-          </article>
-        </div>
-        <div className="demo-pill-row">
-          <span className="demo-pill">1. Retrieve and verify</span>
-          <span className="demo-pill">2. Inspect chunks inline</span>
-          <span className="demo-pill">3. Sync a source</span>
-          <span className="demo-pill">4. Run quality benchmarks</span>
-        </div>
 
         {message && <p className="demo-banner">{message}</p>}
         {syncSourcesError && <p className="demo-error">{syncSourcesError}</p>}
 
+        <p className="demo-metadata">
+          Pick a capability — the core RAG flow is{" "}
+          <strong>Search &amp; verify</strong> then{" "}
+          <strong>Grounded streaming</strong>.
+        </p>
         <div className="demo-section-card-grid">
           {ragExampleSections.map((section) => (
             <button
@@ -540,17 +499,6 @@ export const ReactRAGVectorDemoShell = ({ mode }: DemoProps) => {
           ))}
         </div>
       </section>
-
-      {activeSection === "overview" && (
-        <section className="demo-card demo-full-lab-placeholder">
-          <h2>Choose a RAG capability card</h2>
-          <p className="demo-metadata">
-            React now follows the same card-driven demo structure as the other
-            framework pages. Pick a lane to show that part of the RAG package
-            example.
-          </p>
-        </section>
-      )}
 
       {activeSection === "connectors" && (
         <>
