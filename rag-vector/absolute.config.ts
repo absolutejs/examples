@@ -46,12 +46,6 @@ export default defineConfig({
     dependsOn: ["postgres"],
     entry: "src/backend/rag/server.ts",
     env: {
-      // The shared root .env sets a global PORT (for the single-service
-      // examples). `absolute workspace dev` up to 0.19.0-beta.702 lets that
-      // ambient PORT override each service's `port`, collapsing every service
-      // onto one port and breaking the readiness probe. Pin PORT per service
-      // so it matches `port` below. Drop once upgraded past the workspace fix.
-      PORT: "3001",
       RAG_POSTGRES_URL: postgresUrl,
     },
     ready: "/health",
@@ -64,9 +58,6 @@ export default defineConfig({
     dependsOn: ["postgres"],
     entry: "src/backend/web/server.ts",
     env: {
-      // See the rag service: pin PORT so the global PORT in the shared .env
-      // does not override this service's port under beta.702 workspace dev.
-      PORT: "3000",
       RAG_POSTGRES_URL: postgresUrl,
     },
     htmlDirectory: "./src/frontend/html",

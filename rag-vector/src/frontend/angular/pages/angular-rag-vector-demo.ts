@@ -1,6 +1,7 @@
 import { FormsModule } from "@angular/forms";
 import { ChangeDetectorRef, Component, inject } from "@angular/core";
 import { RAGClientService, RAGWorkflowService } from "@absolutejs/rag/angular";
+import { usePageContext } from "@absolutejs/absolute/angular";
 import {
   buildRAGEvaluationLeaderboard,
   runRAGEvaluationSuite,
@@ -169,7 +170,7 @@ type DemoRagReadinessState = {
   status: "warming" | "ready" | "failed";
 };
 
-type AngularRAGVectorDemoProps = {
+export type Context = {
   availableBackends?: DemoBackendDescriptor[];
   mode: DemoBackendMode;
 };
@@ -3721,6 +3722,7 @@ export class AngularRAGVectorDemoComponent {
   private readonly ragClient = inject(RAGClientService);
   private readonly ragWorkflowService = inject(RAGWorkflowService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly pageContext = usePageContext<Context>();
 
   workflowChecks = workflowChecks;
   formatDemoMetadataSummary = formatDemoMetadataSummary;
@@ -3789,10 +3791,13 @@ export class AngularRAGVectorDemoComponent {
     | "ops" = "overview";
   private hasLoadedActiveSectionData = false;
   getDemoPagePath = getDemoPagePath;
-  backendOptions: DemoBackendDescriptor[] = getAvailableDemoBackends();
+  backendOptions: DemoBackendDescriptor[] = getAvailableDemoBackends(
+    this.pageContext.availableBackends,
+  );
   demoContentFormats = demoContentFormats;
   demoChunkingStrategies = demoChunkingStrategies;
-  selectedMode: DemoBackendMode = getInitialBackendMode();
+  selectedMode: DemoBackendMode =
+    this.pageContext.mode ?? getInitialBackendMode();
   status: DemoStatusView | null = null;
   documents: DemoDocument[] = [];
   searchForm = { ...initialSearchForm };
@@ -5174,6 +5179,7 @@ export class AngularRAGVectorDemoComponent {
 
   ngOnInit() {
     if (typeof window !== "undefined") {
+      this.connectStream();
       void loadRecentQueries("angular", this.selectedMode).then((entries) => {
         this.recentQueries = entries;
         this.flushView();
@@ -5211,14 +5217,6 @@ export class AngularRAGVectorDemoComponent {
     }
   }
 }
-
-export const factory = (props: AngularRAGVectorDemoProps) => {
-  const component = new AngularRAGVectorDemoComponent();
-  component.backendOptions = getAvailableDemoBackends(props.availableBackends);
-  component.selectedMode = props.mode;
-  component.connectStream();
-  return component;
-};
 
 function isCitationPart(part: {
   type: string;

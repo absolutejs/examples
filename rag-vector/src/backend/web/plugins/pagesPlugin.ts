@@ -222,14 +222,14 @@ export const pagesPlugin = (
           return status(404, `Backend mode ${params.mode} is not available`);
         }
 
-        return handleAngularPageRequest<typeof AngularRAGVectorDemoPage>({
+        return handleAngularPageRequest<AngularRAGVectorDemoPage.Context>({
           headTag: generateHeadElement({
             cssPath: asset(manifest, "RagVectorDemoCSS"),
             title: "AbsoluteJS RAG Workflow Demo - Angular",
           }),
           indexPath: asset(manifest, "AngularRagVectorDemoIndex"),
           pagePath: asset(manifest, "AngularRagVectorDemo"),
-          props: {
+          requestContext: {
             availableBackends: options.backends,
             mode: params.mode,
           },
