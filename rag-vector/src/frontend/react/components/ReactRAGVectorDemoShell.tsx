@@ -212,10 +212,17 @@ const postConnectorSync = async (
   }
 };
 
+// Thrown when /demo/sync-sources returns 401 (signed out). Connectors are
+// auth-backed, so this is an expected state, not a failure to retry.
+class ConnectorAuthRequiredError extends Error {}
+
 const loadConnectorSyncSources = async (selectedMode: DemoBackendMode) => {
   const response = await fetch(`/demo/sync-sources/${selectedMode}`, {
     headers: { Accept: "application/json" },
   });
+  if (response.status === 401) {
+    throw new ConnectorAuthRequiredError("Sign in to use linked connectors.");
+  }
   if (!response.ok) {
     throw new Error(await response.text());
   }
@@ -289,14 +296,19 @@ export const ReactRAGVectorDemoShell = ({ mode }: DemoProps) => {
     try {
       const payload = await loadConnectorSyncSources(selectedMode);
       setSyncSources(payload.syncSources);
-      setHasLoadedConnectorState(true);
     } catch (error) {
       setSyncSourcesError(
-        error instanceof Error
-          ? `Unable to load connector state: ${error.message}`
-          : "Unable to load connector state",
+        error instanceof ConnectorAuthRequiredError
+          ? "Sign in (top-right) to load linked connector state."
+          : error instanceof Error
+            ? `Unable to load connector state: ${error.message}`
+            : "Unable to load connector state",
       );
     } finally {
+      // Mark loaded even on failure so the effect that triggers this load
+      // doesn't re-fire every time the loading flag toggles — a 401 (signed
+      // out) would otherwise loop forever.
+      setHasLoadedConnectorState(true);
       if (!quiet) {
         setSyncSourcesLoading(false);
       }
