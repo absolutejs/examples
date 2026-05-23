@@ -126,6 +126,21 @@ nav {
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Native <select> dropdown lists otherwise render with the OS-default white
+   background, which is unreadable against the demo's light option text.
+   color-scheme makes the browser paint the popup dark; the explicit option
+   colors are a fallback for engines that ignore it. Scoped to the demo-only
+   stylesheet, so this themes every native select across all framework pages. */
+select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: #0f172a;
+  color: #e4e4e7;
+}
+
 .demo-auth-menu {
   position: relative;
 }

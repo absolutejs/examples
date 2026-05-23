@@ -3553,5 +3553,9 @@ stateRerunChipEl.addEventListener("click", () => {
   void rerunLastQuery();
 });
 stateClearChipEl.addEventListener("click", clearAllRetrievalState);
+// Render the header nav immediately. refreshData() (which also renders it) is
+// lazy — it only runs once a non-overview section is opened — so without this the
+// Backend/Framework selects never appear on the default overview landing.
+renderHeaderNav();
 buildAuthMenu();
 void loadRagReadiness();
