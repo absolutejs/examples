@@ -8,6 +8,6 @@
     "src/frontend/svelte/pages/**/*.svelte",
     "src/frontend/vue/pages/**/*.vue"
   ],
-  "ignoreDependencies": ["svelte-check", "vue-tsc"],
+  "ignoreDependencies": ["react-refresh", "svelte-check", "vue-tsc"],
   "project": ["src/**/*.{ts,tsx,vue,svelte,js}"]
 }
