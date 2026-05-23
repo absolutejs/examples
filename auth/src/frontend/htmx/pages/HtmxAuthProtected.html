@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Auth — HTMX</title>
+    <link rel="icon" href="/assets/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/auth.css"
+    />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body class="auth-body">
+    <header class="navbar">
+      <a class="navbar__brand" href="/htmx">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Absolute Auth
+      </a>
+      <nav class="navbar__links">
+        <a class="navbar__link" href="/htmx">Home</a>
+        <a class="navbar__link" href="/htmx/protected">Protected</a>
+        <a class="navbar__link" href="/htmx/settings">Settings</a>
+        <a class="navbar__link" href="/htmx/connectors">Connectors</a>
+      </nav>
+      <div
+        class="navbar__user"
+        id="auth-menu"
+        hx-get="/htmx/auth-menu"
+        hx-trigger="load"
+      ></div>
+    </header>
+    <main class="auth-main" hx-get="/htmx/me" hx-trigger="load">
+      <section class="auth-content">
+        <p class="muted">Checking your session…</p>
+      </section>
+    </main>
+  </body>
+</html>

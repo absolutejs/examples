@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Auth — HTMX</title>
+    <link rel="icon" href="/assets/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/auth.css"
+    />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body class="auth-body">
+    <header class="navbar">
+      <a class="navbar__brand" href="/htmx">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Absolute Auth
+      </a>
+      <nav class="navbar__links">
+        <a class="navbar__link" href="/htmx">Home</a>
+        <a class="navbar__link" href="/htmx/protected">Protected</a>
+        <a class="navbar__link" href="/htmx/settings">Settings</a>
+        <a class="navbar__link" href="/htmx/connectors">Connectors</a>
+      </nav>
+      <div
+        class="navbar__user"
+        id="auth-menu"
+        hx-get="/htmx/auth-menu"
+        hx-trigger="load"
+      ></div>
+    </header>
+    <main class="auth-main">
+      <section class="auth-section stack">
+        <div>
+          <h1 class="page-heading">Account settings</h1>
+          <p class="muted">
+            Manage the login identities linked to your account.
+          </p>
+        </div>
+
+        <div hx-get="/htmx/account" hx-trigger="load"></div>
+
+        <div class="card text-left">
+          <h2 class="card__title">Link another login provider</h2>
+          <p class="muted">Adds a new way to sign in to this same account.</p>
+          <div class="login-card" hx-get="/htmx/link" hx-trigger="load"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__header">
+            <div>
+              <h2 class="panel__title">Linked login identities</h2>
+              <p class="muted">
+                Search, set a primary, remove, or resolve merges.
+              </p>
+            </div>
+            <button
+              class="btn btn--ghost btn--sm"
+              hx-get="/htmx/identities"
+              hx-target="#identities-list"
+              hx-swap="innerHTML"
+            >
+              Refresh
+            </button>
+          </div>
+          <input
+            class="search-input"
+            id="identity-query"
+            name="query"
+            placeholder="Search identities…"
+            hx-get="/htmx/identities"
+            hx-target="#identities-list"
+            hx-swap="innerHTML"
+            hx-trigger="keyup changed delay:300ms"
+            hx-include="this"
+          />
+          <div
+            id="identities-list"
+            hx-get="/htmx/identities"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+          ></div>
+        </div>
+
+        <div class="card card--danger text-left">
+          <h2 class="card__title">Delete account</h2>
+          <p class="muted">
+            Permanently removes your user, all linked identities, and connector
+            grants. This cannot be undone.
+          </p>
+          <form
+            hx-post="/htmx/delete-account"
+            hx-target="#delete-error"
+            hx-swap="innerHTML"
+          >
+            <input
+              class="confirm-input"
+              name="confirm"
+              placeholder="Type DELETE to confirm"
+            />
+            <div class="auth-modal__actions">
+              <button class="btn btn--danger" type="submit">
+                Delete account
+              </button>
+            </div>
+          </form>
+          <div id="delete-error"></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Auth — HTMX</title>
+    <link rel="icon" href="/assets/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/auth.css"
+    />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body class="auth-body">
+    <header class="navbar">
+      <a class="navbar__brand" href="/htmx">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Absolute Auth
+      </a>
+      <nav class="navbar__links">
+        <a class="navbar__link" href="/htmx">Home</a>
+        <a class="navbar__link" href="/htmx/protected">Protected</a>
+        <a class="navbar__link" href="/htmx/settings">Settings</a>
+        <a class="navbar__link" href="/htmx/connectors">Connectors</a>
+      </nav>
+      <div
+        class="navbar__user"
+        id="auth-menu"
+        hx-get="/htmx/auth-menu"
+        hx-trigger="load"
+      ></div>
+    </header>
+    <main class="auth-main">
+      <section class="auth-section stack">
+        <div>
+          <h1 class="page-heading">Connectors</h1>
+          <p class="muted">
+            Link external accounts to grant the demo extra data scopes.
+          </p>
+        </div>
+
+        <div
+          class="grid-2"
+          hx-get="/htmx/connector-links"
+          hx-trigger="load"
+        ></div>
+
+        <div class="panel">
+          <div class="panel__header">
+            <div>
+              <h2 class="panel__title">Linked connectors</h2>
+              <p class="muted">
+                OAuth grants and discovered external accounts.
+              </p>
+            </div>
+            <button
+              class="btn btn--ghost btn--sm"
+              hx-get="/htmx/connector-list"
+              hx-target="#connector-list"
+              hx-swap="innerHTML"
+            >
+              Refresh
+            </button>
+          </div>
+          <div
+            id="connector-list"
+            hx-get="/htmx/connectors"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+          ></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
