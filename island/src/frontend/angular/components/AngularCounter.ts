@@ -12,6 +12,22 @@ import { Subscription } from "rxjs";
 import { IslandStore } from "@absolutejs/absolute/angular";
 import { counterIslandStore } from "../../islands/counterStore";
 
+@Component({
+  selector: "abs-angular-counter",
+  standalone: true,
+  template: `
+    <div class="island-card island-card-angular">
+      <div class="island-header">
+        <img alt="Angular" height="20" src="/assets/svg/angular.svg" />
+        <span>{{ label }}</span>
+      </div>
+      <strong>Local: {{ count() }}</strong>
+      <strong>Shared: {{ sharedCount() }}</strong>
+      <button (click)="increment()" type="button">Increment Angular</button>
+      <button (click)="incrementShared()" type="button">Increment Shared</button>
+    </div>
+  `,
+})
 class AngularCounterImpl implements OnDestroy, OnInit {
   static __absoluteProps = {
     initialCount: 0,
@@ -25,8 +41,8 @@ class AngularCounterImpl implements OnDestroy, OnInit {
     (state) => state.incrementShared,
   );
   subscription = new Subscription();
-  initialCount = 0;
-  label = "";
+  @Input() initialCount = 0;
+  @Input() label = "";
   readonly count = signal(this.initialCount);
   readonly sharedCount = signal(0);
 
@@ -54,24 +70,5 @@ class AngularCounterImpl implements OnDestroy, OnInit {
     this.subscription.unsubscribe();
   }
 }
-
-Component({
-  selector: "abs-angular-counter",
-  standalone: true,
-  template: `
-    <div class="island-card island-card-angular">
-      <div class="island-header">
-        <img alt="Angular" height="20" src="/assets/svg/angular.svg" />
-        <span>{{ label }}</span>
-      </div>
-      <strong>Local: {{ count() }}</strong>
-      <strong>Shared: {{ sharedCount() }}</strong>
-      <button (click)="increment()" type="button">Increment Angular</button>
-      <button (click)="incrementShared()" type="button">Increment Shared</button>
-    </div>
-  `,
-})(AngularCounterImpl);
-Input()(AngularCounterImpl.prototype, "initialCount");
-Input()(AngularCounterImpl.prototype, "label");
 
 export const AngularCounter = AngularCounterImpl;

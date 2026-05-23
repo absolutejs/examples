@@ -1,58 +1,63 @@
+import type * as AngularSwDemoPage from "../../frontend/angular/pages/angular-sw-demo";
+import type SvelteSwDemo from "../../frontend/svelte/pages/SvelteSwDemo.svelte";
+import type VueSwDemo from "../../frontend/vue/pages/VueSwDemo.vue";
 import { Elysia } from "elysia";
 import {
-  handleReactPageRequest,
-  handleHTMLPageRequest,
-  generateHeadElement,
   asset,
+  generateHeadElement,
+  handleHTMLPageRequest,
 } from "@absolutejs/absolute";
+import { handleAngularPageRequest } from "@absolutejs/absolute/angular";
+import { handleReactPageRequest } from "@absolutejs/absolute/react";
 import { handleSveltePageRequest } from "@absolutejs/absolute/svelte";
 import { handleVuePageRequest } from "@absolutejs/absolute/vue";
-import { handleAngularPageRequest } from "@absolutejs/absolute/angular";
 import { ReactSwDemo } from "../../frontend/react/pages/ReactSwDemo";
 
-export const pagesPlugin = (manifest: Record<string, string>) =>
-  new Elysia()
-    .get("/", () =>
-      handleReactPageRequest(ReactSwDemo, asset(manifest, "ReactSwDemoIndex"), {
-        cssPath: asset(manifest, "SwDemoCSS"),
+export const pagesPlugin = (manifest: Record<string, string>) => {
+  const sharedCssPath = asset(manifest, "SwDemoCSS");
+
+  const reactHandler = ({ request }: { request: Request }) =>
+    handleReactPageRequest({
+      index: asset(manifest, "ReactSwDemoIndex"),
+      Page: ReactSwDemo,
+      props: { cssPath: sharedCssPath },
+      request,
+    });
+
+  const svelteHandler = ({ request }: { request: Request }) =>
+    handleSveltePageRequest<typeof SvelteSwDemo>({
+      indexPath: asset(manifest, "SvelteSwDemoIndex"),
+      pagePath: asset(manifest, "SvelteSwDemo"),
+      props: { cssPath: sharedCssPath },
+      request,
+    });
+
+  const vueHandler = ({ request }: { request: Request }) =>
+    handleVuePageRequest<typeof VueSwDemo>({
+      headTag: generateHeadElement({
+        cssPath: sharedCssPath,
+        title: "AbsoluteJS Service Workers - Vue",
       }),
-    )
-    .get("/svelte", async () => {
-      const SvelteSwDemo = (
-        await import("../../frontend/svelte/pages/SvelteSwDemo.svelte")
-      ).default;
+      indexPath: asset(manifest, "VueSwDemoIndex"),
+      pagePath: asset(manifest, "VueSwDemo"),
+      request,
+    });
 
-      return handleSveltePageRequest(
-        SvelteSwDemo,
-        asset(manifest, "SvelteSwDemo"),
-        asset(manifest, "SvelteSwDemoIndex"),
-        {
-          cssPath: asset(manifest, "SwDemoCSS"),
-        },
-      );
-    })
-    .get("/vue", async () => {
-      const { VueSwDemo } = (await import("../vueImporter")).vueImports;
-
-      return handleVuePageRequest(
-        VueSwDemo,
-        asset(manifest, "VueSwDemo"),
-        asset(manifest, "VueSwDemoIndex"),
-        generateHeadElement({
-          cssPath: asset(manifest, "SwDemoCSS"),
-          title: "AbsoluteJS Service Workers - Vue",
-        }),
-      );
-    })
-    .get("/angular", async () =>
-      handleAngularPageRequest(
-        () => import("../../frontend/angular/pages/angular-sw-demo"),
-        asset(manifest, "AngularSwDemo"),
-        asset(manifest, "AngularSwDemoIndex"),
-        generateHeadElement({
-          cssPath: asset(manifest, "SwDemoCSS"),
+  return new Elysia()
+    .get("/", reactHandler)
+    .get("/svelte", svelteHandler)
+    .get("/vue", vueHandler)
+    .get("/angular", ({ request }) =>
+      handleAngularPageRequest<AngularSwDemoPage.Context>({
+        headTag: generateHeadElement({
+          cssPath: sharedCssPath,
           title: "AbsoluteJS Service Workers - Angular",
         }),
-      ),
+        indexPath: asset(manifest, "AngularSwDemoIndex"),
+        pagePath: asset(manifest, "AngularSwDemo"),
+        request,
+        requestContext: {},
+      }),
     )
     .get("/html", () => handleHTMLPageRequest(asset(manifest, "HtmlSwDemo")));
+};

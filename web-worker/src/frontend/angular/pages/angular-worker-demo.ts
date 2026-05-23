@@ -13,6 +13,10 @@ import {
   STRESS_YIELD_MS,
 } from "../../constants";
 
+// This page has no per-request DI context, so the SSR handler's
+// `requestContext` is an empty object.
+export type Context = Record<string, never>;
+
 @Component({
   imports: [CommonModule],
   selector: "angular-page",

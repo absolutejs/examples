@@ -5,7 +5,7 @@
     "": {
       "name": "absolutejs-out-of-order-streaming-example",
       "dependencies": {
-        "@absolutejs/absolute": "0.19.0-beta.677",
+        "@absolutejs/absolute": "0.19.0-beta.1021",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
         "@angular/compiler-cli": "^21.0.0",
@@ -44,19 +44,19 @@
     },
   },
   "packages": {
-    "@absolutejs/absolute": ["@absolutejs/absolute@0.19.0-beta.677", "", { "dependencies": { "@angular/compiler": "^21.0.0", "zustand": "^5.0.12" }, "optionalDependencies": { "@absolutejs/native-darwin-arm64": "0.19.0-beta.653", "@absolutejs/native-darwin-x64": "0.19.0-beta.653", "@absolutejs/native-linux-arm64": "0.19.0-beta.653", "@absolutejs/native-linux-x64": "0.19.0-beta.653", "@absolutejs/native-windows-arm64": "0.19.0-beta.653", "@absolutejs/native-windows-x64": "0.19.0-beta.653" }, "peerDependencies": { "@angular/common": "^21.0.0", "@angular/compiler-cli": "^21.0.0", "@angular/core": "^21.0.0", "@angular/platform-browser": "^21.0.0", "@angular/platform-server": "^21.0.0", "@angular/ssr": "^21.0.0", "elysia": "^1.4.0", "react": "^19.2.0", "react-dom": "^19.2.0", "react-refresh": "^0.18.0", "sharp": ">=0.33.0", "svelte": "^5.35.2", "vue": "^3.5.27", "zone.js": "^0.15.0" }, "optionalPeers": ["@angular/common", "@angular/compiler-cli", "@angular/core", "@angular/platform-browser", "@angular/platform-server", "@angular/ssr", "react", "react-dom", "react-refresh", "sharp", "svelte", "vue", "zone.js"], "bin": { "absolute": "dist/cli/index.js" } }, "sha512-kvyjkFquMD8xTVWT7fKJF8bS4gVn9G9GZqsZBeMocRZ5IVt5ijpUcZWqWv4KtSnYrTBkNmqYoDokMOsxHoRb1Q=="],
+    "@absolutejs/absolute": ["@absolutejs/absolute@0.19.0-beta.1021", "", { "dependencies": { "@elysiajs/static": "^1.4.0", "zustand": "^5.0.12" }, "optionalDependencies": { "@absolutejs/native-darwin-arm64": "0.19.0-beta.1008", "@absolutejs/native-darwin-x64": "0.19.0-beta.1008", "@absolutejs/native-linux-arm64": "0.19.0-beta.1008", "@absolutejs/native-linux-x64": "0.19.0-beta.1008", "@absolutejs/native-windows-arm64": "0.19.0-beta.1008", "@absolutejs/native-windows-x64": "0.19.0-beta.1008" }, "peerDependencies": { "@angular/animations": "^21.0.0", "@angular/common": "^21.0.0", "@angular/compiler": "^21.0.0", "@angular/compiler-cli": "^21.0.0", "@angular/core": "^21.0.0", "@angular/platform-browser": "^21.0.0", "@angular/platform-server": "^21.0.0", "@angular/router": "^21.0.0", "@angular/ssr": "^21.0.0", "@vue/compiler-sfc": "^3.5.27", "elysia": "^1.4.0", "less": "^4.6.0", "postcss": "^8.5.0", "react": "^19.2.0", "react-dom": "^19.2.0", "rxjs": "^7.8.0", "sass": "^1.99.0", "sharp": ">=0.33.0", "stylus": "^0.64.0", "svelte": "^5.35.2", "tailwindcss": "^4.1.0", "typescript": "^5.9.3", "vue": "^3.5.27", "zone.js": "^0.15.0" }, "optionalPeers": ["@angular/animations", "@angular/common", "@angular/compiler", "@angular/compiler-cli", "@angular/core", "@angular/platform-browser", "@angular/platform-server", "@angular/router", "@angular/ssr", "@vue/compiler-sfc", "less", "postcss", "react", "react-dom", "rxjs", "sass", "sharp", "stylus", "svelte", "tailwindcss", "typescript", "vue", "zone.js"], "bin": { "absolute": "dist/cli/index.js" } }, "sha512-7qeMa2e0cZz1ltBOt9RZx0FJQZ7v3m+TnUyhSO8DJQ4jjcVarBNRI7jhzT08B44VldApfgOsKQH+QutRfYUQ0w=="],
 
-    "@absolutejs/native-darwin-arm64": ["@absolutejs/native-darwin-arm64@0.19.0-beta.653", "", { "os": "darwin", "cpu": "arm64" }, "sha512-pzBFmqNlAz0WVQDrHg1MlDigd5jihzECCbiqZVatHvdbNdF+S8IKKnpydBGxfDvH5KzApQxprY0x/WUA5hvlDw=="],
+    "@absolutejs/native-darwin-arm64": ["@absolutejs/native-darwin-arm64@0.19.0-beta.1008", "", { "os": "darwin", "cpu": "arm64" }, "sha512-bztRSnYXrD2O5UL9IUTP/Bc2Pd36sxmEd8elxjBPkgcB4iW9RmGUhCBGOMvGTKuEzHjWaJVVa1na6L9q12AxdA=="],
 
-    "@absolutejs/native-darwin-x64": ["@absolutejs/native-darwin-x64@0.19.0-beta.653", "", { "os": "darwin", "cpu": "x64" }, "sha512-uEcDZqLGlMEwRSsI7ju1zvGGdzwyLw6roZnM0+Ccsmy+RB55TU+Kn1wpZQf8EwtmaZRneyddkD5YvQr0lhHd8g=="],
+    "@absolutejs/native-darwin-x64": ["@absolutejs/native-darwin-x64@0.19.0-beta.1008", "", { "os": "darwin", "cpu": "x64" }, "sha512-Eq/GDnNQZxN/yy9peEmfV/nXccd6ECQUOsx9VIQrqYsvqf1RI9XcArEw2U3YHfUcIV26MfN4SZlUbxSsj6Rnhg=="],
 
-    "@absolutejs/native-linux-arm64": ["@absolutejs/native-linux-arm64@0.19.0-beta.653", "", { "os": "linux", "cpu": "arm64" }, "sha512-40orACVbUYr9w3JWMvB9PN1/akg3qcRctiHPuVuepFkpuawnw+oX1FAsJ9ilAUUR6qnr2UwcGTMVMebQvkW3qw=="],
+    "@absolutejs/native-linux-arm64": ["@absolutejs/native-linux-arm64@0.19.0-beta.1008", "", { "os": "linux", "cpu": "arm64" }, "sha512-d/J37WtFm4ssVnveSgrV/bzsIaOPc2NjY1T9HLrM7OIcH2NvgM+4CYvwqeUAsJ575toUFLIuwiOaMht7p8zMiw=="],
 
-    "@absolutejs/native-linux-x64": ["@absolutejs/native-linux-x64@0.19.0-beta.653", "", { "os": "linux", "cpu": "x64" }, "sha512-eJAIpbasqNX8bt/qmBre6dNdSG2gxzKVWw2xiJz0LsOgQNnLTO526t2v94D2MBNoW6UfcEwgSjTpg1OARk1SFw=="],
+    "@absolutejs/native-linux-x64": ["@absolutejs/native-linux-x64@0.19.0-beta.1008", "", { "os": "linux", "cpu": "x64" }, "sha512-P2yX7wpvYUp/VKpctYNKBSLiQykYLJu8XNL4DnWdkUzq5WDIUWVKo/2SITP8bB2yJIpvgnC/UaA4+5IQ01bUbw=="],
 
-    "@absolutejs/native-windows-arm64": ["@absolutejs/native-windows-arm64@0.19.0-beta.653", "", { "os": "win32", "cpu": "arm64" }, "sha512-pCjjJruDc+QNKAw7S7nvCAc4URFn0GwNJ3Xjq0Xi99pKciYMRhz1yT3GYH4ZULA/Dt1DaUj9RPZODQTFhmLUYQ=="],
+    "@absolutejs/native-windows-arm64": ["@absolutejs/native-windows-arm64@0.19.0-beta.1008", "", { "os": "win32", "cpu": "arm64" }, "sha512-9jmCGG900P1WIKBZf5BwfVrReHkW5g7dxmx05H8llANQry9+kQYHNavvhZOuyYvymAa5DFOaIVHGg7opBi/MDg=="],
 
-    "@absolutejs/native-windows-x64": ["@absolutejs/native-windows-x64@0.19.0-beta.653", "", { "os": "win32", "cpu": "x64" }, "sha512-xEvo2WbdD0JVb+Kop0LkCSayxjvKaWWJDL28YXys5gYFbFT70krhHHh+SRnoYNnE7AMISXXMMcTqyUii8AXNPw=="],
+    "@absolutejs/native-windows-x64": ["@absolutejs/native-windows-x64@0.19.0-beta.1008", "", { "os": "win32", "cpu": "x64" }, "sha512-mXIL6AzV0gznwXz6gF+dtT4DIwxKMriF+WYxcjAPlf4xWD0S3ZS8jafHwQXi0RJn0pIX4TIIOhRz0JnVlka3zA=="],
 
     "@angular/common": ["@angular/common@21.2.7", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/core": "21.2.7", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-YFdnU5z8JloJjLYa52OyCOULQhqEE/ym7vKfABySWDsiVXZr9FNmKMeZi/lUcg7ZO22UbBihqW9a9D6VSHOo+g=="],
 

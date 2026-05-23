@@ -2,6 +2,10 @@ import { ChangeDetectorRef, Component, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { DEMO_CACHE_URLS, PING_COUNT, SW_STATES } from "../../constants";
 
+// This page has no per-request DI context, so the SSR handler's
+// `requestContext` is an empty object.
+export type Context = Record<string, never>;
+
 type SwState = "unsupported" | "unregistered" | "registering" | "active";
 type PingResult = { index: number; latency: number };
 type FetchResult = {

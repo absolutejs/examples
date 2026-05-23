@@ -1,60 +1,62 @@
 import { Elysia } from "elysia";
 import {
-  handleReactPageRequest,
   handleHTMLPageRequest,
   handleHTMXPageRequest,
   generateHeadElement,
   asset,
 } from "@absolutejs/absolute";
 import { handleAngularPageRequest } from "@absolutejs/absolute/angular";
+import { handleReactPageRequest } from "@absolutejs/absolute/react";
 import { handleSveltePageRequest } from "@absolutejs/absolute/svelte";
 import { handleVuePageRequest } from "@absolutejs/absolute/vue";
+import type * as AngularChatPage from "../../frontend/angular/pages/angular-chat";
+import type SvelteChat from "../../frontend/svelte/pages/SvelteChat.svelte";
+import type VueChat from "../../frontend/vue/pages/VueChat.vue";
 import { ReactChat } from "../../frontend/react/pages/ReactChat";
 
-export const pagesPlugin = (manifest: Record<string, string>) =>
-  new Elysia()
-    .get("/", () =>
-      handleReactPageRequest(ReactChat, asset(manifest, "ReactChatIndex"), {
-        cssPath: asset(manifest, "ChatCSS"),
+export const pagesPlugin = (manifest: Record<string, string>) => {
+  const cssPath = asset(manifest, "ChatCSS");
+
+  return new Elysia()
+    .get("/", ({ request }) =>
+      handleReactPageRequest({
+        index: asset(manifest, "ReactChatIndex"),
+        Page: ReactChat,
+        props: { cssPath },
+        request,
       }),
     )
-    .get("/svelte", async () => {
-      const SvelteChat = (
-        await import("../../frontend/svelte/pages/SvelteChat.svelte")
-      ).default;
-
-      return handleSveltePageRequest(
-        SvelteChat,
-        asset(manifest, "SvelteChat"),
-        asset(manifest, "SvelteChatIndex"),
-        {
-          cssPath: asset(manifest, "ChatCSS"),
-        },
-      );
-    })
-    .get("/vue", async () => {
-      const { VueChat } = (await import("../vueImporter")).vueImports;
-
-      return handleVuePageRequest(
-        VueChat,
-        asset(manifest, "VueChat"),
-        asset(manifest, "VueChatIndex"),
-        generateHeadElement({
-          cssPath: asset(manifest, "ChatCSS"),
+    .get("/svelte", ({ request }) =>
+      handleSveltePageRequest<typeof SvelteChat>({
+        indexPath: asset(manifest, "SvelteChatIndex"),
+        pagePath: asset(manifest, "SvelteChat"),
+        props: { cssPath },
+        request,
+      }),
+    )
+    .get("/vue", ({ request }) =>
+      handleVuePageRequest<typeof VueChat>({
+        headTag: generateHeadElement({
+          cssPath,
           title: "AbsoluteJS AI Chat - Vue",
         }),
-      );
-    })
+        indexPath: asset(manifest, "VueChatIndex"),
+        pagePath: asset(manifest, "VueChat"),
+        request,
+      }),
+    )
     .get("/html", () => handleHTMLPageRequest(asset(manifest, "HtmlChat")))
     .get("/htmx", () => handleHTMXPageRequest(asset(manifest, "HtmxChat")))
-    .get("/angular", async () =>
-      handleAngularPageRequest(
-        () => import("../../frontend/angular/pages/angular-chat"),
-        asset(manifest, "AngularChat"),
-        asset(manifest, "AngularChatIndex"),
-        generateHeadElement({
-          cssPath: asset(manifest, "ChatCSS"),
+    .get("/angular", ({ request }) =>
+      handleAngularPageRequest<AngularChatPage.Context>({
+        headTag: generateHeadElement({
+          cssPath,
           title: "AbsoluteJS AI Chat - Angular",
         }),
-      ),
+        indexPath: asset(manifest, "AngularChatIndex"),
+        pagePath: asset(manifest, "AngularChat"),
+        request,
+        requestContext: {},
+      }),
     );
+};

@@ -12,7 +12,6 @@ import { handleVuePageRequest } from "@absolutejs/absolute/vue";
 import { join } from "node:path";
 import { file } from "bun";
 import { ReactCRMDemo } from "../../frontend/react/pages/ReactCRMDemo";
-import type * as AngularCRMDemoPage from "../../frontend/angular/pages/angular-crm-demo";
 import type SvelteCRMDemo from "../../frontend/svelte/pages/SvelteCRMDemo.svelte";
 import type VueCRMDemo from "../../frontend/vue/pages/VueCRMDemo.vue";
 import { FRAMEWORKS } from "../../shared/demo";
@@ -73,13 +72,12 @@ export const pagesPlugin = (manifest: Record<string, string>) =>
     .get("/html", () => handleHTMLPageRequest(asset(manifest, "HtmlCRMDemo")))
     .get("/htmx", () => handleHTMXPageRequest(asset(manifest, "HtmxCRMDemo")))
     .get("/angular", async () =>
-      handleAngularPageRequest<typeof AngularCRMDemoPage>({
+      handleAngularPageRequest({
         headTag: generateHeadElement({
           cssPath: asset(manifest, "CrmDemoCSS"),
           title: "AbsoluteJS CRM Example — Angular",
         }),
         indexPath: asset(manifest, "AngularCrmDemoIndex"),
         pagePath: asset(manifest, "AngularCrmDemo"),
-        props: {},
       }),
     );

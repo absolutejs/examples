@@ -966,7 +966,7 @@ document.addEventListener("click", (event) => {
   if (!(target instanceof HTMLElement)) {
     return;
   }
-  const workspaceButton = target.closest(
+  const workspaceButton = target.closest<HTMLElement>(
     "[data-release-workspace]",
   );
   if (workspaceButton?.dataset.releaseWorkspace) {
@@ -988,7 +988,7 @@ document.addEventListener("click", (event) => {
 
     return;
   }
-  const actionButton = target.closest(
+  const actionButton = target.closest<HTMLElement>(
     "[data-release-action-id]",
   );
   if (!actionButton) {

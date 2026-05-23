@@ -16,42 +16,47 @@ import { ReactHome } from "../../frontend/react/pages/ReactHome";
 
 export const pagesPlugin = (manifest: Record<string, string>) =>
   new Elysia()
-    .get("/", () =>
+    .get("/", ({ request }) =>
       handleReactPageRequest({
         Page: Landing,
         index: asset(manifest, "LandingIndex"),
         props: { cssPath: asset(manifest, "ErrorDemoCSS") },
+        request,
       }),
     )
-    .get("/react", () =>
+    .get("/react", ({ request }) =>
       handleReactPageRequest({
         Page: ReactHome,
         index: asset(manifest, "ReactHomeIndex"),
         props: { cssPath: asset(manifest, "ErrorDemoCSS") },
+        request,
       }),
     )
-    .get("/broken-react", () =>
+    .get("/broken-react", ({ request }) =>
       handleReactPageRequest({
         Page: ReactBroken,
         index: asset(manifest, "ReactBrokenIndex"),
         props: { cssPath: asset(manifest, "ErrorDemoCSS") },
+        request,
       }),
     )
-    .get("/svelte", () =>
+    .get("/svelte", ({ request }) =>
       handleSveltePageRequest<typeof SvelteHome>({
         indexPath: asset(manifest, "SvelteHomeIndex"),
         pagePath: asset(manifest, "SvelteHome"),
         props: { cssPath: asset(manifest, "ErrorDemoCSS") },
+        request,
       }),
     )
-    .get("/broken-svelte", () =>
+    .get("/broken-svelte", ({ request }) =>
       handleSveltePageRequest<typeof SvelteBroken>({
         indexPath: asset(manifest, "SvelteBrokenIndex"),
         pagePath: asset(manifest, "SvelteBroken"),
         props: { cssPath: asset(manifest, "ErrorDemoCSS") },
+        request,
       }),
     )
-    .get("/vue", () =>
+    .get("/vue", ({ request }) =>
       handleVuePageRequest<typeof VueHome>({
         headTag: generateHeadElement({
           cssPath: asset(manifest, "ErrorDemoCSS"),
@@ -59,9 +64,10 @@ export const pagesPlugin = (manifest: Record<string, string>) =>
         }),
         indexPath: asset(manifest, "VueHomeIndex"),
         pagePath: asset(manifest, "VueHome"),
+        request,
       }),
     )
-    .get("/broken-vue", () =>
+    .get("/broken-vue", ({ request }) =>
       handleVuePageRequest<typeof VueBroken>({
         headTag: generateHeadElement({
           cssPath: asset(manifest, "ErrorDemoCSS"),
@@ -69,25 +75,30 @@ export const pagesPlugin = (manifest: Record<string, string>) =>
         }),
         indexPath: asset(manifest, "VueBrokenIndex"),
         pagePath: asset(manifest, "VueBroken"),
+        request,
       }),
     )
-    .get("/angular", () =>
-      handleAngularPageRequest<typeof AngularHomePage>({
+    .get("/angular", ({ request }) =>
+      handleAngularPageRequest<AngularHomePage.Context>({
         headTag: generateHeadElement({
           cssPath: asset(manifest, "ErrorDemoCSS"),
           title: "AbsoluteJS Error Boundaries - Angular",
         }),
         indexPath: asset(manifest, "AngularHomeIndex"),
         pagePath: asset(manifest, "AngularHome"),
+        request,
+        requestContext: {},
       }),
     )
-    .get("/broken-angular", () =>
-      handleAngularPageRequest<typeof AngularBrokenPage>({
+    .get("/broken-angular", ({ request }) =>
+      handleAngularPageRequest<AngularBrokenPage.Context>({
         headTag: generateHeadElement({
           cssPath: asset(manifest, "ErrorDemoCSS"),
           title: "AbsoluteJS Error Boundaries - Angular (Broken)",
         }),
         indexPath: asset(manifest, "AngularBrokenIndex"),
         pagePath: asset(manifest, "AngularBroken"),
+        request,
+        requestContext: {},
       }),
     );

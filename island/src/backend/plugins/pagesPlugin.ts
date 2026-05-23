@@ -1,12 +1,15 @@
+import type * as AngularHostPage from "../../frontend/angular/pages/angular-host";
+import type SvelteHost from "../../frontend/svelte/pages/SvelteHost.svelte";
+import type VueHost from "../../frontend/vue/pages/VueHost.vue";
 import { Elysia } from "elysia";
 import {
   asset,
   generateHeadElement,
   handleHTMLPageRequest,
   handleHTMXPageRequest,
-  handleReactPageRequest,
 } from "@absolutejs/absolute";
 import { handleAngularPageRequest } from "@absolutejs/absolute/angular";
+import { handleReactPageRequest } from "@absolutejs/absolute/react";
 import { handleSveltePageRequest } from "@absolutejs/absolute/svelte";
 import { handleVuePageRequest } from "@absolutejs/absolute/vue";
 import { IslandsPage } from "../../frontend/react/pages/IslandsPage";
@@ -15,53 +18,45 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
   const sharedCssPath = asset(manifest, "IslandsCSS");
 
   return new Elysia()
-    .get("/", () =>
-      handleReactPageRequest(IslandsPage, asset(manifest, "IslandsPageIndex"), {
-        cssPath: sharedCssPath,
+    .get("/", ({ request }) =>
+      handleReactPageRequest({
+        index: asset(manifest, "IslandsPageIndex"),
+        Page: IslandsPage,
+        props: { cssPath: sharedCssPath },
+        request,
       }),
     )
-    .get("/vue", async () => {
-      const { VueHost } = (await import("../vueImporter")).vueImports;
-
-      return handleVuePageRequest(
-        VueHost,
-        asset(manifest, "VueHost"),
-        asset(manifest, "VueHostIndex"),
-        generateHeadElement({
+    .get("/vue", ({ request }) =>
+      handleVuePageRequest<typeof VueHost>({
+        headTag: generateHeadElement({
           cssPath: sharedCssPath,
           title: "AbsoluteJS Islands - Vue",
         }),
-      );
-    })
-    .get("/svelte", async () => {
-      const SvelteHost = (
-        await import("../../frontend/svelte/pages/SvelteHost.svelte")
-      ).default;
-
-      return handleSveltePageRequest(
-        SvelteHost,
-        asset(manifest, "SvelteHost"),
-        asset(manifest, "SvelteHostIndex"),
-        {
-          cssPath: sharedCssPath,
-        },
-      );
-    })
-    .get("/angular", async () =>
-      handleAngularPageRequest(
-        () => import("../../frontend/angular/pages/angular-host"),
-        asset(manifest, "AngularHost"),
-        asset(manifest, "AngularHostIndex"),
-        generateHeadElement({
+        indexPath: asset(manifest, "VueHostIndex"),
+        pagePath: asset(manifest, "VueHost"),
+        request,
+      }),
+    )
+    .get("/svelte", ({ request }) =>
+      handleSveltePageRequest<typeof SvelteHost>({
+        indexPath: asset(manifest, "SvelteHostIndex"),
+        pagePath: asset(manifest, "SvelteHost"),
+        props: { cssPath: sharedCssPath },
+        request,
+      }),
+    )
+    .get("/angular", ({ request }) =>
+      handleAngularPageRequest<AngularHostPage.Context>({
+        headTag: generateHeadElement({
           cssPath: sharedCssPath,
           title: "AbsoluteJS Islands - Angular",
         }),
-      ),
+        indexPath: asset(manifest, "AngularHostIndex"),
+        pagePath: asset(manifest, "AngularHost"),
+        request,
+        requestContext: {},
+      }),
     )
-    .get("/html", async () =>
-      handleHTMLPageRequest(asset(manifest, "HTMLHost")),
-    )
-    .get("/htmx", async () =>
-      handleHTMXPageRequest(asset(manifest, "HTMXHost")),
-    );
+    .get("/html", () => handleHTMLPageRequest(asset(manifest, "HTMLHost")))
+    .get("/htmx", () => handleHTMXPageRequest(asset(manifest, "HTMXHost")));
 };

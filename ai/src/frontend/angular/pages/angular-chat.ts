@@ -1,6 +1,10 @@
 import { Component, signal } from "@angular/core";
 import { ChatComponent } from "../components/chat.component";
 
+// This page has no per-request DI context, so the SSR handler's
+// `requestContext` is an empty object.
+export type Context = Record<string, never>;
+
 @Component({
   imports: [ChatComponent],
   selector: "angular-page",
