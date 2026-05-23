@@ -1,28 +1,4 @@
-import {
-  buildRAGCitations,
-  buildRAGSourceSummaries,
-  resolveRAGHTMXRenderers,
-} from "@absolutejs/rag/ui";
-import {
-  buildCitationGroups,
-  buildSourceSummarySectionGroups,
-  formatCitationDetails,
-  formatCitationExcerpt,
-  formatCitationLabel,
-  formatCitationSummary,
-  formatSectionDiagnosticAttributionFocus,
-  formatSectionDiagnosticChannels,
-  formatSectionDiagnosticCompetition,
-  formatSectionDiagnosticDistributionRows,
-  formatSectionDiagnosticPipeline,
-  formatSectionDiagnosticReasons,
-  formatSectionDiagnosticStageBounds,
-  formatSectionDiagnosticStageFlow,
-  formatSectionDiagnosticStageWeightReasons,
-  formatSectionDiagnosticStageWeightRows,
-  formatSectionDiagnosticTopEntry,
-  formatSourceSummaryDetails,
-} from "../../../../frontend/demo-backends";
+import { resolveRAGHTMXRenderers } from "@absolutejs/rag/ui";
 
 export type {
   RAGBackendCapabilities,
@@ -88,113 +64,10 @@ export const renderAdminJobCards = htmxRenderers.adminJobCards;
 
 export const renderAdminActionCards = htmxRenderers.adminActionCards;
 
-export const renderSourceSummaries = (sources: RAGSource[]) => {
-  const summaries = buildRAGSourceSummaries(sources);
-  if (summaries.length === 0) {
-    return '<p class="demo-metadata">Retrieved source groups: 0</p>';
-  }
+export const renderSourceSummaries = htmxRenderers.sourceSummaries;
 
-  const groups = buildSourceSummarySectionGroups(summaries);
-  return [
-    `<p class="demo-metadata">Retrieved source groups: ${summaries.length}</p>`,
-    '<div class="demo-result-grid">',
-    groups
-      .map(
-        (group) => `
-          <article class="demo-result-item" id="${escapeHtml(group.targetId)}">
-            <h3>${escapeHtml(group.label)}</h3>
-            <p class="demo-result-source">${escapeHtml(group.summary)}</p>
-            <div class="demo-result-grid">
-              ${group.summaries
-                .map(
-                  (summary) => `
-                    <article class="demo-result-item">
-                      <h4>${escapeHtml(summary.label)}</h4>
-                      ${formatSourceSummaryDetails(summary)
-                        .map(
-                          (line) =>
-                            `<p class="demo-metadata">${escapeHtml(line)}</p>`,
-                        )
-                        .join("")}
-                      <p class="demo-result-text">${escapeHtml(summary.excerpt)}</p>
-                    </article>`,
-                )
-                .join("")}
-            </div>
-          </article>`,
-      )
-      .join(""),
-    "</div>",
-  ].join("");
-};
-
-export const renderCitations = (sources: RAGSource[]) => {
-  const citations = buildRAGCitations(sources);
-  if (citations.length === 0) {
-    return "";
-  }
-
-  return [
-    '<div class="demo-results">',
-    "<h4>Citation Trail</h4>",
-    '<p class="demo-metadata">Each citation maps a concrete retrieved chunk to a stable reference number you can carry into the answer UI.</p>',
-    '<div class="demo-result-grid">',
-    buildCitationGroups(citations)
-      .map(
-        (group) => `
-          <article class="demo-result-item" id="${escapeHtml(group.targetId)}">
-            <h3>${escapeHtml(group.label)}</h3>
-            <p class="demo-result-source">${escapeHtml(group.summary)}</p>
-            <div class="demo-result-grid">
-              ${group.citations
-                .map(
-                  (citation, index) => `
-                    <article class="demo-result-item demo-citation-card">
-                      <p class="demo-citation-badge">[${index + 1}] ${escapeHtml(formatCitationLabel(citation))}</p>
-                      <p class="demo-result-score">${escapeHtml(formatCitationSummary(citation))}</p>
-                      ${formatCitationDetails(citation)
-                        .map(
-                          (line) =>
-                            `<p class="demo-metadata">${escapeHtml(line)}</p>`,
-                        )
-                        .join("")}
-                      <p class="demo-result-text">${escapeHtml(formatCitationExcerpt(citation))}</p>
-                    </article>`,
-                )
-                .join("")}
-            </div>
-          </article>`,
-      )
-      .join(""),
-    "</div>",
-    "</div>",
-  ].join("");
-};
+export const renderCitations = htmxRenderers.citations;
 
 export const renderDetailList = htmxRenderers.detailList;
 
-export const renderSectionDiagnosticCard = (diagnostic: {
-  key: string;
-  label: string;
-  summary: string;
-}) =>
-  [
-    `<article class="demo-result-item">`,
-    `<h4>${escapeHtml(diagnostic.label)}</h4>`,
-    `<p class="demo-result-source">${escapeHtml(diagnostic.summary)}</p>`,
-    `<p class="demo-metadata">${escapeHtml(formatSectionDiagnosticChannels(diagnostic as never))}</p>`,
-    `<p class="demo-metadata">${escapeHtml(formatSectionDiagnosticAttributionFocus(diagnostic as never))}</p>`,
-    `<p class="demo-metadata">${escapeHtml(formatSectionDiagnosticPipeline(diagnostic as never))}</p>`,
-    `${formatSectionDiagnosticStageFlow(diagnostic as never) ? `<p class="demo-metadata">${escapeHtml(formatSectionDiagnosticStageFlow(diagnostic as never) ?? "")}</p>` : ""}`,
-    `${formatSectionDiagnosticStageBounds(diagnostic as never) ? `<p class="demo-metadata">${escapeHtml(formatSectionDiagnosticStageBounds(diagnostic as never) ?? "")}</p>` : ""}`,
-    `${formatSectionDiagnosticStageWeightRows(diagnostic as never)
-      .map((line: string) => `<p class="demo-metadata">${escapeHtml(line)}</p>`)
-      .join("")}`,
-    `<p class="demo-metadata">${escapeHtml(formatSectionDiagnosticTopEntry(diagnostic as never))}</p>`,
-    `${formatSectionDiagnosticCompetition(diagnostic as never) ? `<p class="demo-metadata">${escapeHtml(formatSectionDiagnosticCompetition(diagnostic as never) ?? "")}</p>` : ""}`,
-    `${[...formatSectionDiagnosticReasons(diagnostic as never), ...formatSectionDiagnosticStageWeightReasons(diagnostic as never)].length > 0 ? `<div class="demo-badge-row">${[...formatSectionDiagnosticReasons(diagnostic as never), ...formatSectionDiagnosticStageWeightReasons(diagnostic as never)].map((reason) => `<span class="demo-state-chip">${escapeHtml(reason)}</span>`).join("")}</div>` : ""}`,
-    `${formatSectionDiagnosticDistributionRows(diagnostic as never)
-      .map((line) => `<p class="demo-metadata">${escapeHtml(line)}</p>`)
-      .join("")}`,
-    `</article>`,
-  ].join("");
+export const renderSectionDiagnosticCard = htmxRenderers.sectionDiagnosticCard;
