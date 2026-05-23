@@ -24,25 +24,27 @@ const { removeToast, toasts } = useToast();
 </script>
 
 <template>
-  <Navbar />
-  <main class="auth-main">
-    <RouterView />
-  </main>
-  <div class="toast-stack">
-    <div
-      v-for="toast in toasts"
-      :key="toast.id"
-      :class="toast.tone === 'info' ? 'toast' : `toast toast--${toast.tone}`"
-    >
-      <span>{{ toast.message }}</span>
-      <button
-        class="toast__close"
-        type="button"
-        aria-label="Dismiss notification"
-        @click="removeToast(toast.id)"
+  <div class="auth-shell">
+    <Navbar />
+    <main class="auth-main">
+      <RouterView />
+    </main>
+    <div class="toast-stack">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        :class="toast.tone === 'info' ? 'toast' : `toast toast--${toast.tone}`"
       >
-        ×
-      </button>
+        <span>{{ toast.message }}</span>
+        <button
+          class="toast__close"
+          type="button"
+          aria-label="Dismiss notification"
+          @click="removeToast(toast.id)"
+        >
+          ×
+        </button>
+      </div>
     </div>
   </div>
 </template>

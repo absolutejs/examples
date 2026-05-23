@@ -11,7 +11,7 @@ import { handleSveltePageRequest } from "@absolutejs/absolute/svelte";
 import { handleVuePageRequest } from "@absolutejs/absolute/vue";
 import { file } from "bun";
 import { Elysia } from "elysia";
-import type * as AngularAuthPage from "../../frontend/angular/pages/angular-auth";
+import type * as AngularAuthPage from "../../frontend/angular/pages/angular-auth/angular-auth";
 import type SvelteAuth from "../../frontend/svelte/pages/SvelteAuth.svelte";
 import type VueAuth from "../../frontend/vue/pages/VueAuth.vue";
 import { ReactAuth } from "../../frontend/react/pages/ReactAuth";

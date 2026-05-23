@@ -1,0 +1,28 @@
+@if (auth.loading()) {
+<section class="auth-content">
+  <p class="muted">Checking your session…</p>
+</section>
+} @else if (auth.user(); as user) {
+<section class="auth-section stack">
+  <div>
+    <h1 class="page-heading">Account settings</h1>
+    <p class="muted">Manage the login identities linked to your account.</p>
+  </div>
+
+  <auth-account-overview [user]="user" />
+
+  <div class="card text-left">
+    <h2 class="card__title">Link another login provider</h2>
+    <p class="muted">Adds a new way to sign in to this same account.</p>
+    <div class="login-card">
+      <auth-provider-login [action]="'link'" />
+    </div>
+  </div>
+
+  <auth-linked-auth-identities-panel />
+
+  <auth-delete-account-section (deleted)="onDeleted()" />
+</section>
+} @else {
+<auth-not-authorized />
+}

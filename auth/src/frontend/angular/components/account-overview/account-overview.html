@@ -1,0 +1,25 @@
+<div class="grid-2">
+  <div class="card">
+    <h2 class="card__title">Canonical account</h2>
+    <p class="muted">
+      Absolute Auth keeps one canonical user and links every OAuth identity to
+      it. Conflicting identities raise a merge request.
+    </p>
+  </div>
+  <div class="card text-left">
+    <h2 class="card__title">Profile fields</h2>
+    <div class="spread">
+      <span class="muted">Subject</span><span>{{ user().sub }}</span>
+    </div>
+    <div class="spread">
+      <span class="muted">Name</span><span>{{ fullName(user()) || "—" }}</span>
+    </div>
+    <div class="spread">
+      <span class="muted">Email</span><span>{{ user().email ?? "—" }}</span>
+    </div>
+    <div class="spread">
+      <span class="muted">Primary identity</span>
+      <span>{{ user().primary_auth_identity_id ?? "—" }}</span>
+    </div>
+  </div>
+</div>

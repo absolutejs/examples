@@ -1,0 +1,28 @@
+<header class="navbar">
+  <a class="navbar__brand" routerLink="/">
+    <img alt="" src="/assets/png/absolutejs-temp.png" />
+    Absolute Auth
+  </a>
+  <nav class="navbar__links">
+    @for (item of items; track item.path) {
+    <a
+      class="navbar__link"
+      [routerLink]="linkTo(item.path)"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      {{ item.label }}
+    </a>
+    }
+  </nav>
+  <div class="navbar__user">
+    @if (auth.user(); as user) {
+    <span class="muted">{{ user.email ?? user.first_name ?? "Account" }}</span>
+    <button class="btn btn--ghost btn--sm" type="button" (click)="signOut()">
+      Sign out
+    </button>
+    } @else {
+    <a class="btn btn--primary btn--sm" routerLink="/">Sign in</a>
+    }
+  </div>
+</header>

@@ -1,0 +1,33 @@
+@if (auth.loading()) {
+<section class="auth-content">
+  <p class="muted">Checking your session…</p>
+</section>
+} @else if (auth.user()) {
+<section class="auth-section stack">
+  <div>
+    <h1 class="page-heading">Connectors</h1>
+    <p class="muted">
+      Link external accounts to grant the demo extra data scopes.
+    </p>
+  </div>
+
+  <div class="grid-2">
+    @for (target of targets; track target.provider) {
+    <div class="card text-left">
+      <h2 class="card__title row">
+        <img class="entity__logo" alt="" [src]="logo(target.provider)" />
+        {{ target.label }}
+      </h2>
+      <p class="muted">{{ target.description }}</p>
+      <a class="btn btn--primary" [href]="connectorHref(target.provider)">
+        Link {{ target.label }}
+      </a>
+    </div>
+    }
+  </div>
+
+  <auth-linked-providers-panel />
+</section>
+} @else {
+<auth-not-authorized />
+}

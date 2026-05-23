@@ -23,36 +23,40 @@
   {/if}
 </svelte:head>
 
-<Navbar />
-<main class="auth-main">
-  <Router {url}>
-    <Route path="/svelte">
-      {#snippet content()}<Home />{/snippet}
-    </Route>
-    <Route path="/svelte/protected">
-      {#snippet content()}<Protected />{/snippet}
-    </Route>
-    <Route path="/svelte/settings">
-      {#snippet content()}<Settings />{/snippet}
-    </Route>
-    <Route path="/svelte/connectors">
-      {#snippet content()}<Connectors />{/snippet}
-    </Route>
-  </Router>
-</main>
+<div class="auth-shell">
+  <Navbar />
+  <main class="auth-main">
+    <Router {url}>
+      <Route path="/svelte">
+        {#snippet content()}<Home />{/snippet}
+      </Route>
+      <Route path="/svelte/protected">
+        {#snippet content()}<Protected />{/snippet}
+      </Route>
+      <Route path="/svelte/settings">
+        {#snippet content()}<Settings />{/snippet}
+      </Route>
+      <Route path="/svelte/connectors">
+        {#snippet content()}<Connectors />{/snippet}
+      </Route>
+    </Router>
+  </main>
 
-<div class="toast-stack">
-  {#each toastState.items as toast (toast.id)}
-    <div class={toast.tone === "info" ? "toast" : `toast toast--${toast.tone}`}>
-      <span>{toast.message}</span>
-      <button
-        class="toast__close"
-        type="button"
-        aria-label="Dismiss notification"
-        onclick={() => removeToast(toast.id)}
+  <div class="toast-stack">
+    {#each toastState.items as toast (toast.id)}
+      <div
+        class={toast.tone === "info" ? "toast" : `toast toast--${toast.tone}`}
       >
-        ×
-      </button>
-    </div>
-  {/each}
+        <span>{toast.message}</span>
+        <button
+          class="toast__close"
+          type="button"
+          aria-label="Dismiss notification"
+          onclick={() => removeToast(toast.id)}
+        >
+          ×
+        </button>
+      </div>
+    {/each}
+  </div>
 </div>

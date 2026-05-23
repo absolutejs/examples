@@ -35,6 +35,15 @@
   min-height: 100vh;
 }
 
+/* Single-root shell each framework's page wraps navbar + main + toasts in, so
+   no page needs a fragment / multiple root nodes. */
+.auth-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .auth-main {
   display: flex;
   flex: 1;

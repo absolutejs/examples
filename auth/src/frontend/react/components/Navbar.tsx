@@ -45,17 +45,15 @@ export const Navbar = ({ basePath, onSignOut, user }: NavbarProps) => {
       <nav className="navbar__links">{renderLinks()}</nav>
 
       <div className="navbar__user">
+        {user && <span className="muted">{greeting}</span>}
         {user ? (
-          <>
-            <span className="muted">{greeting}</span>
-            <button
-              className="btn btn--ghost btn--sm"
-              onClick={onSignOut}
-              type="button"
-            >
-              Sign out
-            </button>
-          </>
+          <button
+            className="btn btn--ghost btn--sm"
+            onClick={onSignOut}
+            type="button"
+          >
+            Sign out
+          </button>
         ) : (
           <Link className="btn btn--primary btn--sm" to={basePath}>
             Sign in

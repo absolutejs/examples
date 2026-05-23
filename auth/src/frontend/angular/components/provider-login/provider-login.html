@@ -1,0 +1,29 @@
+<div class="oauth-grid">
+  @for (provider of featured; track provider) {
+  <a class="oauth-button" [href]="href(provider)">
+    <img class="oauth-button__icon" alt="" [src]="logo(provider)" />
+    <span class="oauth-button__text">{{ verb }} {{ name(provider) }}</span>
+  </a>
+  }
+  <div class="separator">
+    <span class="separator__line"></span>
+    <span class="separator__text">or any provider</span>
+    <span class="separator__line"></span>
+  </div>
+  <select class="provider-select" [(ngModel)]="selected">
+    <option value="">Select a provider…</option>
+    @for (provider of allProviders; track provider) {
+    <option [value]="provider">{{ name(provider) }}</option>
+    }
+  </select>
+  @if (selected) {
+  <a class="oauth-button" [href]="href(selected)">
+    <img class="oauth-button__icon" alt="" [src]="logo(selected)" />
+    <span class="oauth-button__text">{{ verb }} {{ name(selected) }}</span>
+  </a>
+  } @else {
+  <span class="oauth-button oauth-button--disabled">
+    <span class="oauth-button__text">Choose a provider above</span>
+  </span>
+  }
+</div>

@@ -1,0 +1,123 @@
+<div class="panel">
+  <div class="panel__header">
+    <div>
+      <h2 class="panel__title">Linked login identities</h2>
+      <p class="muted">Search, set a primary, remove, or resolve merges.</p>
+    </div>
+    <button class="btn btn--ghost btn--sm" type="button" (click)="refresh()">
+      Refresh
+    </button>
+  </div>
+
+  @if (error()) {
+  <div class="error-banner">{{ error() }}</div>
+  } @if (pendingMerges().length > 0) {
+  <div class="stack">
+    <h3 class="provider-heading">Merge requests</h3>
+    <div class="entity-list">
+      @for (req of pendingMerges(); track req.id) {
+      <div class="entity card--danger">
+        <div class="entity__meta">
+          <span class="entity__title">
+            {{ label(req.conflicting_auth_provider) }} conflict
+          </span>
+          <span class="entity__sub">
+            Subject {{ req.conflicting_provider_subject }}
+          </span>
+        </div>
+        <div class="entity__actions">
+          <button
+            class="btn btn--primary btn--sm"
+            [disabled]="busyId() === req.id"
+            type="button"
+            (click)="run(req.id, mergeAccount(req.id), 'Accounts merged')"
+          >
+            Merge
+          </button>
+          <button
+            class="btn btn--ghost btn--sm"
+            [disabled]="busyId() === req.id"
+            type="button"
+            (click)="
+                  run(
+                    req.id,
+                    dismissMergeRequest(req.id),
+                    'Merge request dismissed'
+                  )
+                "
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <input
+    class="search-input"
+    placeholder="Search identities…"
+    [(ngModel)]="query"
+  />
+
+  @if (payload() && groups().length === 0) {
+  <div class="empty-state">No identities match your search.</div>
+  } @for (group of groups(); track group.provider) {
+  <div class="provider-group">
+    <h3 class="provider-heading">
+      @if (logo(group.provider)) {
+      <img class="entity__logo" alt="" [src]="logo(group.provider)" />
+      } {{ label(group.provider) }}
+    </h3>
+    <div class="entity-list">
+      @for (identity of group.identities; track identity.id) {
+      <div class="entity">
+        <div class="entity__main">
+          <div class="entity__meta">
+            <span class="entity__title">
+              {{ identity.provider_subject }} @if (identity.isPrimary) {
+              <span class="pill pill--primary">Primary</span>
+              }
+            </span>
+            <span class="entity__sub">{{ identity.id }}</span>
+          </div>
+        </div>
+        <div class="entity__actions">
+          @if (!identity.isPrimary) {
+          <button
+            class="btn btn--neutral btn--sm"
+            [disabled]="busyId() === identity.id"
+            type="button"
+            (click)="
+                    run(
+                      identity.id,
+                      setPrimaryIdentity(identity.id),
+                      'Primary identity updated'
+                    )
+                  "
+          >
+            Set primary
+          </button>
+          }
+          <button
+            class="btn btn--danger btn--sm"
+            [disabled]="busyId() === identity.id"
+            type="button"
+            (click)="
+                  run(
+                    identity.id,
+                    removeIdentity(identity.id),
+                    'Identity removed'
+                  )
+                "
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+</div>

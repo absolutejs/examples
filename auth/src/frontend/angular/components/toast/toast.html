@@ -1,0 +1,19 @@
+<div class="toast-stack">
+  @for (notice of toast.items(); track notice.id) {
+  <div
+    [class]="
+        notice.tone === 'info' ? 'toast' : 'toast toast--' + notice.tone
+      "
+  >
+    <span>{{ notice.message }}</span>
+    <button
+      class="toast__close"
+      type="button"
+      aria-label="Dismiss notification"
+      (click)="toast.remove(notice.id)"
+    >
+      ×
+    </button>
+  </div>
+  }
+</div>

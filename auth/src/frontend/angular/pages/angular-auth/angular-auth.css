@@ -1,0 +1,5 @@
+/* Drop the component host box so `.auth-shell` becomes a direct child of the
+   `.auth-body` flex column (matching the other frameworks' layout). */
+:host {
+  display: contents;
+}

@@ -1,0 +1,88 @@
+<div class="panel">
+  <div class="panel__header">
+    <div>
+      <h2 class="panel__title">Linked connectors</h2>
+      <p class="muted">OAuth grants and discovered external accounts.</p>
+    </div>
+    <button class="btn btn--ghost btn--sm" type="button" (click)="refresh()">
+      Refresh
+    </button>
+  </div>
+
+  @if (error()) {
+  <div class="error-banner">{{ error() }}</div>
+  }
+
+  <h3 class="provider-heading">External accounts</h3>
+  @if (payload() && payload()!.bindings.length === 0) {
+  <div class="empty-state">No external accounts linked.</div>
+  }
+  <div class="entity-list">
+    @for (binding of payload()?.bindings ?? []; track binding.id) {
+    <div class="entity">
+      <div class="entity__meta">
+        <span class="entity__title">
+          {{ binding.label ?? binding.externalAccountId }}
+          <span class="pill">{{ binding.connectorProvider }}</span>
+        </span>
+        <span class="entity__sub">
+          {{ binding.externalAccountType }} · {{ binding.status }}
+        </span>
+        <div class="scope-list">
+          @for (scope of binding.availableScopes; track scope) {
+          <span class="scope">{{ scope }}</span>
+          }
+        </div>
+      </div>
+      <div class="entity__actions">
+        <button
+          class="btn btn--danger btn--sm"
+          [disabled]="busyId() === binding.id"
+          type="button"
+          (click)="
+              run(binding.id, removeBinding(binding.id), 'Binding removed')
+            "
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+
+  <h3 class="provider-heading">Grants</h3>
+  @if (payload() && payload()!.grants.length === 0) {
+  <div class="empty-state">No connector grants yet.</div>
+  }
+  <div class="entity-list">
+    @for (grant of payload()?.grants ?? []; track grant.id) {
+    <div class="entity">
+      <div class="entity__meta">
+        <span class="entity__title">
+          {{ grant.authProviderKey }}
+          <span class="pill pill--indigo">{{ grant.status }}</span>
+        </span>
+        <span class="entity__sub">
+          Subject {{ grant.providerSubject }} · updated {{
+          formatTime(grant.updatedAt) }}
+        </span>
+        <div class="scope-list">
+          @for (scope of grant.grantedScopes; track scope) {
+          <span class="scope">{{ scope }}</span>
+          }
+        </div>
+      </div>
+      <div class="entity__actions">
+        <button
+          class="btn btn--danger btn--sm"
+          [disabled]="busyId() === grant.id"
+          type="button"
+          (click)="run(grant.id, removeGrant(grant.id), 'Grant removed')"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+</div>

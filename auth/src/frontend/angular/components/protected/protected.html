@@ -1,0 +1,17 @@
+@if (auth.loading()) {
+<section class="auth-content">
+  <p class="muted">Checking your session…</p>
+</section>
+} @else if (!auth.user()) {
+<auth-not-authorized />
+} @else {
+<section class="auth-section stack">
+  <div>
+    <h1 class="page-heading">Protected page</h1>
+    <p class="muted">
+      Your authenticated session resolves to this user record.
+    </p>
+  </div>
+  <auth-json [data]="auth.user()" />
+</section>
+}

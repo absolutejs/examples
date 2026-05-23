@@ -1,0 +1,33 @@
+<div class="card card--danger text-left">
+  <h2 class="card__title">Delete account</h2>
+  <p class="muted">
+    Permanently removes your user, all linked identities, and connector grants.
+    This cannot be undone.
+  </p>
+  <button class="btn btn--danger" type="button" (click)="open.set(true)">
+    Delete account
+  </button>
+
+  <auth-modal [open]="open()" (closed)="close()">
+    <h3 class="auth-modal__title">Delete your account?</h3>
+    <p class="auth-modal__body">Type <strong>DELETE</strong> to confirm.</p>
+    <input
+      class="confirm-input"
+      placeholder="DELETE"
+      [(ngModel)]="confirmText"
+    />
+    <div class="auth-modal__actions">
+      <button class="btn btn--ghost" type="button" (click)="close()">
+        Cancel
+      </button>
+      <button
+        class="btn btn--danger"
+        [disabled]="confirmText !== 'DELETE' || busy()"
+        type="button"
+        (click)="confirmDelete()"
+      >
+        Delete account
+      </button>
+    </div>
+  </auth-modal>
+</div>

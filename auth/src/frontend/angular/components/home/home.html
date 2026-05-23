@@ -1,0 +1,16 @@
+<section class="auth-content">
+  <h1 class="page-heading">Absolute Auth — Angular</h1>
+  @if (auth.user(); as user) {
+  <p class="muted">You are signed in as {{ user.email ?? user.sub }}.</p>
+  <a class="btn btn--primary" routerLink="/protected">
+    View the protected page
+  </a>
+  } @else {
+  <p class="muted">
+    Sign in or sign up with any OAuth2 provider to test the flow.
+  </p>
+  <div class="card login-card text-left">
+    <auth-provider-login />
+  </div>
+  }
+</section>
