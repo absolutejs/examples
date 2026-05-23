@@ -228,37 +228,41 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
   );
   const runBenchmark = async () => {
     if (!benchInput) return;
-    const cases = safe(() => benchInput.cases ?? [], []);
-    if (cases.length === 0) return;
+    const total = safe(() => benchInput.cases.length, 0);
+    if (total === 0) return;
     setBenchRunning(true);
     setBenchSummary(null);
     setBenchCases([]);
     setBenchDone(0);
-    setBenchTotal(cases.length);
-    let passed = 0;
-    for (let i = 0; i < cases.length; i += 1) {
-      const evalCase = cases[i];
-      const label = safe(
-        () => evalCase?.query ?? evalCase?.id ?? `Case ${i + 1}`,
-        `Case ${i + 1}`,
+    setBenchTotal(total);
+    try {
+      // One request: the server runs the suite and streams each case back as it
+      // settles (rag@0.0.18 evaluate/stream), so progress is real and survives
+      // re-renders that a client-side per-case loop could not.
+      const response = await rag.evaluate.evaluateStream(benchInput, {
+        onCase: (event) => {
+          const ok = safe(() => event.caseResult.status === "pass", false);
+          const label = safe(
+            () =>
+              event.caseResult.query ??
+              event.caseResult.label ??
+              `Case ${event.caseIndex + 1}`,
+            `Case ${event.caseIndex + 1}`,
+          );
+          setBenchCases((prev) => [...prev, { label, ok }]);
+          setBenchDone((current) => current + 1);
+        },
+      });
+      const passed = safe(
+        () => response.cases.filter((entry) => entry.status === "pass").length,
+        0,
       );
-      let ok = false;
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        const resp = await rag.evaluate.evaluate({
-          ...benchInput,
-          cases: [evalCase],
-        });
-        ok = safe(() => (resp.passingRate ?? 0) >= 0.999, false);
-      } catch {
-        ok = false;
-      }
-      if (ok) passed += 1;
-      setBenchCases((prev) => [...prev, { label, ok }]);
-      setBenchDone(i + 1);
+      setBenchSummary(`${passed} of ${total} benchmark cases passed`);
+    } catch {
+      setBenchSummary("Could not run the benchmark right now.");
+    } finally {
+      setBenchRunning(false);
     }
-    setBenchSummary(`${passed} of ${cases.length} benchmark cases passed`);
-    setBenchRunning(false);
   };
 
   // ---- chapter 6: production (ops) ----------------------------------------
