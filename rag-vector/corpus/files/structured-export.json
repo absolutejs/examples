@@ -1,5 +1,4 @@
 {
-  "title": "Structured export",
   "sections": [
     {
       "id": "section-1",
@@ -33,5 +32,6 @@
       "id": "section-8",
       "note": "Structured export section 8 says retrieval metadata, evidence locators, and workflow stages should remain inspectable in the React application."
     }
-  ]
+  ],
+  "title": "Structured export"
 }

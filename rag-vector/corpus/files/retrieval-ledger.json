@@ -1,5 +1,4 @@
 {
-  "title": "Retrieval ledger",
   "runs": [
     {
       "id": "run-1",
@@ -41,5 +40,6 @@
       "id": "run-10",
       "note": "Retrieval ledger run 10 says filters, citations, and chunk provenance should remain visible in the review surface."
     }
-  ]
+  ],
+  "title": "Retrieval ledger"
 }

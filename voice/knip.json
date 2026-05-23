@@ -10,6 +10,6 @@
     "src/frontend/html/scripts/**/*.ts",
     "src/frontend/htmx/scripts/**/*.ts"
   ],
-  "project": ["src/**/*.{ts,tsx,vue,svelte,js}"],
-  "ignoreDependencies": ["htmx.org", "svelte-check", "vue-tsc"]
+  "ignoreDependencies": ["htmx.org", "svelte-check", "vue-tsc"],
+  "project": ["src/**/*.{ts,tsx,vue,svelte,js}"]
 }

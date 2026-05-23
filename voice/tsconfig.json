@@ -1,20 +1,23 @@
 {
+  "angularCompilerOptions": {
+    "strictTemplates": true
+  },
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "jsx": "react-jsx",
-    "strict": true,
-    "skipLibCheck": true,
-    "noUncheckedIndexedAccess": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ESNext",
     "tsBuildInfoFile": ".absolutejs/tsconfig.tsbuildinfo",
     "types": ["bun"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "db/**/*", "drizzle.config.ts"]
 }

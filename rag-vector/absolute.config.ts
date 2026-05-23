@@ -7,7 +7,6 @@ const postgresVolumeName = "absolutejs-rag-demo-pg-data";
 
 export default defineConfig({
   postgres: {
-    kind: "command",
     command: [
       "sh",
       "-lc",
@@ -20,9 +19,9 @@ export default defineConfig({
         `while docker ps --filter name=^/${postgresContainerName}$ --filter status=running --format '{{.Names}}' | grep -qx ${postgresContainerName}; do sleep 1; done`,
       ].join("; "),
     ],
+    kind: "command",
     port: postgresPort,
     ready: {
-      type: "command",
       command: [
         "docker",
         "exec",
@@ -35,6 +34,7 @@ export default defineConfig({
       ],
       intervalMs: 500,
       timeoutMs: 60_000,
+      type: "command",
     },
     shutdown: {
       command: ["docker", "stop", postgresContainerName],
@@ -48,8 +48,8 @@ export default defineConfig({
     env: {
       RAG_POSTGRES_URL: postgresUrl,
     },
-    ready: "/health",
     port: 3001,
+    ready: "/health",
     visibility: "internal",
   },
   web: {

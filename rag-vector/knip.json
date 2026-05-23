@@ -12,7 +12,7 @@
     "src/frontend/html/scripts/**/*.ts",
     "tests/**/*.test.ts"
   ],
-  "project": ["src/**/*.{ts,tsx,vue,svelte,js}"],
   "ignore": ["src/frontend/htmx/*.min.js"],
-  "ignoreDependencies": ["svelte-check", "vue-tsc"]
+  "ignoreDependencies": ["svelte-check", "vue-tsc"],
+  "project": ["src/**/*.{ts,tsx,vue,svelte,js}"]
 }

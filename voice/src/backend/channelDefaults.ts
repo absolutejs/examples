@@ -8,7 +8,7 @@ import { createDemoProfileSwitchGuard } from "./observabilityExport";
 import { assistant, liveOpsRuntime } from "./profileSwitch";
 import { contractAwareOnTurn } from "./proofSuite";
 import { rememberSessionRoutingMode } from "./providers";
-import { handoffDeliveryStore, runtimeStorage } from "./stores";
+import { handoffDeliveryStore, runtimeStorage, sessionStore } from "./stores";
 
 // Shared base config for every voice channel (intake, realtime, telephony
 // bridge). Only the profile-switch guard path differs per channel; spread the
