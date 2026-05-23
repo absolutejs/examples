@@ -2,12 +2,15 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, signal } from "@angular/core";
 import type { Routes } from "@angular/router";
 import {
-  provideRouter,
   Router,
   RouterLink,
   RouterLinkActive,
   RouterOutlet,
 } from "@angular/router";
+
+// This page has no per-request DI context, so the SSR handler's
+// `requestContext` is an empty object.
+export type Context = Record<string, never>;
 
 @Component({
   imports: [CommonModule],
@@ -48,18 +51,22 @@ export class ProfileView {};
   template: `
     <h2>Settings</h2>
     <p>
-      Each sub-route is a <code>Route</code> registered via
-      <code>provideRouter</code>. Angular's router handles the dispatch on both
-      server and client.
+      Each sub-route is a <code>Route</code> in the page's exported
+      <code>routes</code> array. AbsoluteJS auto-wires
+      <code>provideRouter</code> so Angular's router handles the dispatch on
+      both server and client.
     </p>
   `,
 })
 export class SettingsView {};
 
-const routes: Routes = [
-  { component: HomeView, path: "angular" },
-  { component: SettingsView, path: "angular/settings" },
-  { component: ProfileView, path: "angular/profile" },
+// Routes are relative to the page's mount. The build statically detects this
+// `export const routes` and auto-wires provideRouter(routes) plus the inferred
+// `{ provide: APP_BASE_HREF, useValue: "/angular/" }` from the /angular/* mount.
+export const routes: Routes = [
+  { component: HomeView, path: "" },
+  { component: SettingsView, path: "settings" },
+  { component: ProfileView, path: "profile" },
 ];
 
 @Component({
@@ -94,8 +101,9 @@ const routes: Routes = [
       <p class="section-desc">
         Refresh on any sub-route — the server renders the right view because the
         page handler forwards <code>request.url</code> into
-        <code>renderApplication</code>, and the page registers
-        <code>provideRouter</code> in its own <code>providers</code> export.
+        <code>renderApplication</code>, and the page exports a
+        <code>routes</code> array that the build auto-wires into
+        <code>provideRouter</code>.
       </p>
 
       <div class="portal-state">
@@ -112,16 +120,16 @@ const routes: Routes = [
       <div class="portal-layout">
         <aside class="portal-sidebar">
           <a
-            routerLink="/angular"
+            routerLink="/"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
           >
             Home
           </a>
-          <a routerLink="/angular/settings" routerLinkActive="active">
+          <a routerLink="/settings" routerLinkActive="active">
             Settings
           </a>
-          <a routerLink="/angular/profile" routerLinkActive="active">
+          <a routerLink="/profile" routerLinkActive="active">
             Profile
           </a>
         </aside>
@@ -146,18 +154,16 @@ const routes: Routes = [
 })
 export class AngularSpaComponent {
   clicks = signal(0);
-  currentPath = signal("/angular");
+  currentPath = signal("/");
 
   private router = inject(Router);
 
   constructor() {
-    this.currentPath.set(this.router.url || "/angular");
+    this.currentPath.set(this.router.url || "/");
     this.router.events.subscribe(() => {
       this.currentPath.set(this.router.url);
     });
   }
 }
-
-export const providers = [provideRouter(routes)];
 
 export default AngularSpaComponent;
