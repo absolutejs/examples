@@ -2,6 +2,7 @@ import { networking } from "@absolutejs/absolute";
 import { Elysia } from "elysia";
 import { buildRagAbsoluteAuth } from "../shared/auth/config";
 import { createWebRuntime } from "./handlers/runtime/createWebRuntime";
+import { renderAuthMenu } from "./handlers/renderAuthMenu";
 import { pagesPlugin } from "./plugins/pagesPlugin";
 import { createRagProxyPlugin } from "./plugins/ragProxyPlugin";
 
@@ -15,6 +16,38 @@ export const server = new Elysia()
     }),
   )
   .use(pagesPlugin(runtime.manifest, { backends: runtime.backendDescriptors }))
+  // Public auth-state fragment for the HTMX page. protectRoute's second arg lets
+  // us answer 200 either way (no 401 in the console); when a session exists we
+  // emit the `ragAuthReady` HX-Trigger so the gated panels load themselves.
+  .get("/demo/auth/htmx", (context) =>
+    context.protectRoute(
+      (user) => {
+        context.set.headers["HX-Trigger"] = "ragAuthReady";
+
+        return renderAuthMenu(user);
+      },
+      () => renderAuthMenu(null),
+    ),
+  )
+  // No-JS sign-out: clear the session + cookies and bounce back to the HTMX
+  // page the user signed out from.
+  .get("/demo/signout", async ({ cookie, request }) => {
+    const sessionId = cookie.user_session_id?.value;
+    if (typeof sessionId === "string" && sessionId.length > 0) {
+      try {
+        await runtime.authSessionStore.removeSession(sessionId);
+        await runtime.authSessionStore.removeUnregisteredSession(sessionId);
+      } catch {}
+    }
+    cookie.user_session_id?.remove();
+    cookie.auth_provider?.remove();
+
+    const referer = request.headers.get("referer");
+    const location =
+      referer && referer.includes("/htmx/") ? referer : "/htmx/sqlite-native";
+
+    return new Response(null, { headers: { Location: location }, status: 303 });
+  })
   .use(createRagProxyPlugin())
   .use(runtime.absolutejs)
   .use(networking)

@@ -29,6 +29,15 @@
         </a>
       </div>
       <nav>
+        <div
+          id="auth-menu"
+          class="demo-auth-bar"
+          hx-get="/demo/auth/htmx"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+        >
+          <span class="demo-auth-state">Checking sign-in...</span>
+        </div>
         <div class="demo-nav-row">
           <span class="demo-nav-row-label">Backend</span
           ><a href="/htmx/sqlite-native" class="active">SQLite Native</a
@@ -134,10 +143,12 @@
           <div
             id="htmx-ops"
             hx-get="/demo/ops/sqlite-native"
-            hx-trigger="load, rag:mutated from:body"
+            hx-trigger="ragAuthReady from:body, rag:mutated from:body"
             hx-swap="innerHTML"
           >
-            <p class="demo-metadata">Loading knowledge-base operations...</p>
+            <p class="demo-metadata">
+              Sign in to view knowledge-base operations.
+            </p>
           </div>
           <div
             id="htmx-release"

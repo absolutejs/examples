@@ -247,6 +247,25 @@ nav {
   justify-content: center;
 }
 
+.demo-auth-bar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  margin-bottom: 0.15rem;
+}
+
+.demo-auth-state {
+  color: #a1a1aa;
+  font-size: 0.78rem;
+}
+
+.demo-auth-state strong {
+  color: #f4f4f5;
+  font-weight: 600;
+}
+
 .demo-nav-row {
   align-items: center;
   display: flex;

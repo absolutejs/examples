@@ -171,35 +171,47 @@ const service = new Elysia()
     }),
   )
   .get("/demo/ops/:mode", (context) =>
-    context.protectRoute(async (user) => {
-      const resolved = resolveDemoBackend(
-        runtime.ragBackends,
-        context.params.mode,
-      );
-      if ("error" in resolved) {
-        return resolved.error;
-      }
+    context.protectRoute(
+      async (user) => {
+        const resolved = resolveDemoBackend(
+          runtime.ragBackends,
+          context.params.mode,
+        );
+        if ("error" in resolved) {
+          return resolved.error;
+        }
 
-      const ragStartup = runtime.startup.getSnapshot();
-      if (ragStartup.status !== "ready") {
-        return runtime.startup.renderWarmupPanel(resolved.mode);
-      }
+        const ragStartup = runtime.startup.getSnapshot();
+        if (ragStartup.status !== "ready") {
+          return runtime.startup.renderWarmupPanel(resolved.mode);
+        }
 
-      const response = await dispatchInternalRequest(
-        new Request(`http://absolute.local${resolved.backend.path}/ops`, {
-          headers: {
-            "x-absolutejs-user-sub": user.sub,
-          },
-          method: "GET",
-        }),
-      );
+        const response = await dispatchInternalRequest(
+          new Request(`http://absolute.local${resolved.backend.path}/ops`, {
+            headers: {
+              "x-absolutejs-user-sub": user.sub,
+            },
+            method: "GET",
+          }),
+        );
 
-      if (!response.ok) {
-        return new Response(await response.text(), { status: response.status });
-      }
+        if (!response.ok) {
+          return new Response(await response.text(), {
+            status: response.status,
+          });
+        }
 
-      return renderHtmxOpsPanel(await response.json(), resolved.mode);
-    }),
+        return renderHtmxOpsPanel(await response.json(), resolved.mode);
+      },
+      // The HTMX page only fires this fetch once `ragAuthReady` confirms a
+      // session, but degrade gracefully (200, not 401) if it is ever hit signed
+      // out so the panel never surfaces a console error.
+      () =>
+        [
+          '<p class="demo-metadata">Sign in to view knowledge-base operations and recent admin jobs.</p>',
+          '<a class="demo-auth-trigger" href="/oauth2/google/authorization?client=login">Sign in with Google</a>',
+        ].join(""),
+    ),
   )
   .post("/demo/sync/:mode", (context) =>
     context.protectRoute(async (user) => {
