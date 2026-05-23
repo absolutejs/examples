@@ -13,7 +13,6 @@ import {
 import { FormsModule } from "@angular/forms";
 import {
   ActivatedRoute,
-  provideRouter,
   Router,
   RouterLink,
   RouterLinkActive,
@@ -103,7 +102,7 @@ export class ToastService {
     <section class="auth-content">
       <h1 class="page-heading">Not authorized</h1>
       <p class="muted">You need to sign in to view this page.</p>
-      <a class="btn btn--primary" routerLink="/angular">Go to sign in</a>
+      <a class="btn btn--primary" routerLink="/">Go to sign in</a>
     </section>
   `,
 })
@@ -191,7 +190,7 @@ export class HighlightedJsonComponent {
       <h1 class="page-heading">Absolute Auth — Angular</h1>
       @if (auth.user(); as user) {
         <p class="muted">You are signed in as {{ user.email ?? user.sub }}.</p>
-        <a class="btn btn--primary" routerLink="/angular/protected">
+        <a class="btn btn--primary" routerLink="/protected">
           View the protected page
         </a>
       } @else {
@@ -506,7 +505,7 @@ export class SettingsComponent {
       this.route.snapshot.queryParams["notice"] === "identity-already-linked"
     ) {
       this.toast.add("That identity is already linked to your account.", "info");
-      this.router.navigate(["/angular/settings"]);
+      this.router.navigate(["/settings"]);
     }
   }
 
@@ -590,7 +589,7 @@ export class SettingsComponent {
       this.toast.add("Account deleted", "success");
       this.closeDelete();
       await this.auth.logout();
-      this.router.navigate(["/angular"]);
+      this.router.navigate(["/"]);
     } catch (caught) {
       this.toast.add(
         caught instanceof Error ? caught.message : "Delete failed",
@@ -787,11 +786,14 @@ export class ConnectorsComponent {
   }
 }
 
-const routes: Routes = [
-  { component: HomeComponent, path: "angular" },
-  { component: ProtectedComponent, path: "angular/protected" },
-  { component: SettingsComponent, path: "angular/settings" },
-  { component: ConnectorsComponent, path: "angular/connectors" },
+// Routes are relative to the page's mount. The build statically detects this
+// `export const routes` and auto-wires provideRouter(routes) plus the inferred
+// `{ provide: APP_BASE_HREF, useValue: "/angular/" }` from the /angular/* mount.
+export const routes: Routes = [
+  { component: HomeComponent, path: "" },
+  { component: ProtectedComponent, path: "protected" },
+  { component: SettingsComponent, path: "settings" },
+  { component: ConnectorsComponent, path: "connectors" },
 ];
 
 @Component({
@@ -800,7 +802,7 @@ const routes: Routes = [
   standalone: true,
   template: `
     <header class="navbar">
-      <a class="navbar__brand" href="/angular">
+      <a class="navbar__brand" routerLink="/">
         <img alt="" src="/assets/png/absolutejs-temp.png" />
         Absolute Auth
       </a>
@@ -823,7 +825,7 @@ const routes: Routes = [
             Sign out
           </button>
         } @else {
-          <a class="btn btn--primary btn--sm" routerLink="/angular">Sign in</a>
+          <a class="btn btn--primary btn--sm" routerLink="/">Sign in</a>
         }
       </div>
     </header>
@@ -864,15 +866,13 @@ export class AngularAuthComponent {
   }
 
   linkTo(path: string) {
-    return path === "" ? "/angular" : `/angular/${path}`;
+    return path === "" ? "/" : `/${path}`;
   }
 
   async signOut() {
     await this.auth.logout();
-    this.router.navigate(["/angular"]);
+    this.router.navigate(["/"]);
   }
 }
-
-export const providers = [provideRouter(routes)];
 
 export default AngularAuthComponent;

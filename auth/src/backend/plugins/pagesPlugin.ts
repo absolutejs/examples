@@ -80,18 +80,6 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
       request,
     });
 
-  const angularHandler = ({ request }: { request: Request }) =>
-    handleAngularPageRequest<AngularAuthPage.Context>({
-      headTag: generateHeadElement({
-        cssPath,
-        title: "AbsoluteJS Auth — Angular",
-      }),
-      indexPath: asset(manifest, "AngularAuthIndex"),
-      pagePath: asset(manifest, "AngularAuth"),
-      request,
-      requestContext: {},
-    });
-
   const htmlHandler = () => handleHTMLPageRequest(asset(manifest, "HtmlAuth"));
 
   return new Elysia()
@@ -108,8 +96,37 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
     .get("/vue/*", vueHandler)
     .get("/svelte", svelteHandler)
     .get("/svelte/*", svelteHandler)
-    .get("/angular", angularHandler)
-    .get("/angular/*", angularHandler)
+    // The Angular handler is inlined into both `.get` calls on purpose: the
+    // build's AST scan walks up from each `handleAngularPageRequest` call to
+    // its enclosing mount, and the `/angular/*` mount is what makes it infer
+    // `APP_BASE_HREF: "/angular/"` and inject it alongside
+    // `provideRouter(routes)` into the page's SSR bundle. Extracting the call
+    // into a shared const would hide the mount from the scanner and break the
+    // inferred base href, so each route keeps its own inline call.
+    .get("/angular", ({ request }) =>
+      handleAngularPageRequest<AngularAuthPage.Context>({
+        headTag: generateHeadElement({
+          cssPath,
+          title: "AbsoluteJS Auth — Angular",
+        }),
+        indexPath: asset(manifest, "AngularAuthIndex"),
+        pagePath: asset(manifest, "AngularAuth"),
+        request,
+        requestContext: {},
+      }),
+    )
+    .get("/angular/*", ({ request }) =>
+      handleAngularPageRequest<AngularAuthPage.Context>({
+        headTag: generateHeadElement({
+          cssPath,
+          title: "AbsoluteJS Auth — Angular",
+        }),
+        indexPath: asset(manifest, "AngularAuthIndex"),
+        pagePath: asset(manifest, "AngularAuth"),
+        request,
+        requestContext: {},
+      }),
+    )
     .get("/html", htmlHandler)
     .get("/html/protected", htmlHandler)
     .get("/html/settings", htmlHandler)
