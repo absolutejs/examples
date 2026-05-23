@@ -1,16 +1,18 @@
 <script lang="ts">
   import {
-    FRAMEWORK_DESCRIPTIONS,
     formatVoiceProfileSwitchGuardLabel,
     formatVoiceProfileSwitchGuardSummary,
     getVoiceModeLabel,
     getVoiceProviderLabel,
     getVoiceRoutingLabel,
-    type VoiceDemoMode,
-    type VoiceModelProvider,
-    type VoiceProfileSwitchGuardClientDecision,
-    type VoiceRoutingMode,
   } from "../../../shared/demo";
+  import { FRAMEWORK_DESCRIPTIONS } from "../../../constants/navigation";
+  import type { VoiceProfileSwitchGuardClientDecision } from "../../../types/domain";
+  import type {
+    VoiceDemoMode,
+    VoiceModelProvider,
+    VoiceRoutingMode,
+  } from "../../../types/voice";
 
   type VoiceHeroCardProps = {
     activeMode: VoiceDemoMode | null;

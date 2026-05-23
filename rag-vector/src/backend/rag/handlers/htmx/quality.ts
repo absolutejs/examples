@@ -38,15 +38,16 @@ export const renderHtmxQualityPanel = ({
   [
     (() => {
       const overview = formatQualityOverviewPresentation({
-        retrievalComparison,
-        rerankerComparison,
         groundingEvaluation,
         groundingProviderOverview: providerGroundingComparison
           ? formatGroundingProviderOverviewPresentation(
               providerGroundingComparison,
             )
           : undefined,
+        rerankerComparison,
+        retrievalComparison,
       });
+
       return [
         `<div class="demo-results demo-quality-card">`,
         `<h3>Retrieval Quality Tooling</h3>`,
@@ -170,6 +171,7 @@ export const renderHtmxQualityPanel = ({
             ? `<div class="demo-result-grid">${providerGroundingComparison.entries
                 .map((entry) => {
                   const history = providerGroundingHistories[entry.providerKey];
+
                   return `<details class="demo-result-item demo-collapsible"><summary><span>${escapeHtml(entry.label)} history</span><strong>${escapeHtml(formatGroundingHistorySummary(history)[0] ?? "No runs yet")}</strong></summary><div class="demo-collapsible-content">${formatGroundingHistoryDetails(
                     history,
                   )

@@ -1,7 +1,5 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
-import type {
-  VoiceCampaignDialerProofService,
-} from "@absolutejs/voice/angular";
+import type { VoiceCampaignDialerProofService } from "@absolutejs/voice/angular";
 
 type CampaignDialerProofConnection = ReturnType<
   VoiceCampaignDialerProofService["connect"]

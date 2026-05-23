@@ -1,6 +1,6 @@
 import { Head } from "@absolutejs/absolute/react/components";
 import type { ReactNode } from "react";
-import { FRAMEWORKS } from "../../../shared/demo";
+import { FRAMEWORKS } from "../../../constants/navigation";
 
 type DemoChromeProps = {
   children: ReactNode;
@@ -27,21 +27,15 @@ export const DemoChrome = (props: DemoChromeProps) => (
         <nav>
           {FRAMEWORKS.map((framework) => (
             <a
-              key={framework.id}
-              className={framework.id === "react" ? "active" : undefined}
-              href={framework.href}
+              className={framework.id === "react" ? "active" : undefined} href={framework.href} key={framework.id}
             >
               {framework.label}
             </a>
           ))}
-          <a href="/reviews">Reviews</a>
-          <a href="/traces">Traces</a>
-          <a href="/carriers">Carriers</a>
-          <a href="/phone-agent">Phone Agent</a>
         </nav>
       </header>
       <main className="voice-shell">
-        <section className="voice-grid">{props.children}</section>
+        {props.children}
         <p className="footer">
           <img alt="" src="/assets/png/absolutejs-temp.png" />
           Powered by{" "}

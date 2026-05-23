@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { VOICE_PROOF_DASHBOARDS } from "../../../shared/demo";
+import { VOICE_PROOF_DASHBOARDS } from "../../../constants/navigation";
 </script>
 
 <template>

@@ -1,6 +1,7 @@
 import { Component, Input } from "@angular/core";
-import { getVoiceModeLabel, type SavedIntake } from "../../../shared/demo";
-import { formatDateTime } from "../../shared/browser";
+import { getVoiceModeLabel } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
+import { formatDateTime } from "../../../shared/browser";
 
 @Component({
   host: {
@@ -25,7 +26,9 @@ import { formatDateTime } from "../../shared/browser";
               <span>{{ formatDateTime(intake.completedAt) }}</span>
             </div>
             <div class="saved-item-meta">
-              <span class="pill">{{ getVoiceModeLabel(intake.scenarioId) }}</span>
+              <span class="pill">{{
+                getVoiceModeLabel(intake.scenarioId)
+              }}</span>
               <span class="pill"
                 >{{ intake.turnCount }} turn{{
                   intake.turnCount === 1 ? "" : "s"

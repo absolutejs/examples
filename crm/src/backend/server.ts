@@ -46,6 +46,7 @@ const demoStubAdapter = (vendor: CRMVendor): CRMAdapter => ({
     supportsWebhooks: true,
     syncDirection: "bidirectional",
   },
+  vendor,
   addNote: async (input) => ({ ...input, id: `note_${nextId++}`, vendor }),
   createContact: async (input) => ({ ...input, id: `c_${nextId++}`, vendor }),
   createDeal: async (input) => ({ ...input, id: `d_${nextId++}`, vendor }),
@@ -58,13 +59,12 @@ const demoStubAdapter = (vendor: CRMVendor): CRMAdapter => ({
   lookupContactByPhone: async () => null,
   searchContacts: async () => [],
   updateContact: async (id, patch) =>
-    ({ emails: [], id, phones: [], vendor, ...patch }) as CRMContact,
+    ({ emails: [], id, phones: [], vendor, ...patch }),
   updateDeal: async (id, patch) => ({
     id,
     title: patch.title ?? "",
     vendor,
   }),
-  vendor,
 });
 
 const runtime = createCRMRuntime({
@@ -81,7 +81,8 @@ const recordToSavedContact = (record: {
   data: Record<string, unknown>;
   localUpdatedAt: number;
 }): SavedContact => {
-  const data = record.data;
+  const {data} = record;
+
   return {
     createdAt: record.localUpdatedAt,
     id: record.entityId,
@@ -105,6 +106,7 @@ const recordToSavedContact = (record: {
 const isValidLead = (input: unknown): input is LeadFormPayload => {
   if (!input || typeof input !== "object") return false;
   const i = input as Record<string, unknown>;
+
   return (
     typeof i.firstName === "string" &&
     typeof i.lastName === "string" &&
@@ -116,18 +118,19 @@ const webhookSigningSecret =
   process.env.HUBSPOT_WEBHOOK_SECRET ?? "demo-webhook-secret";
 
 const webhookReceiver = createCRMWebhookReceiver({
-  onChangeEvent: async (event) => {
-    await runtime.recordInboundChange(event);
-  },
   vendors: [
     createHubSpotCRMWebhookConfig({ signingSecret: webhookSigningSecret }),
   ],
+  onChangeEvent: async (event) => {
+    await runtime.recordInboundChange(event);
+  },
 });
 
 const crmRoutes = new Elysia()
   .post(CRM_LEAD_ROUTE, async ({ body, set }) => {
     if (!isValidLead(body)) {
       set.status = 400;
+
       return { error: "Invalid lead payload", ok: false };
     }
     const lead = await runtime.createLead(DEMO_USER, DEMO_VENDOR, {
@@ -146,6 +149,7 @@ const crmRoutes = new Elysia()
       "lead",
       lead.id,
     );
+
     return {
       contact: stored
         ? recordToSavedContact(stored)
@@ -168,6 +172,7 @@ const crmRoutes = new Elysia()
       .map(recordToSavedContact)
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, 20);
+
     return {
       contacts,
       cursorAt: Date.now(),
@@ -182,8 +187,10 @@ const crmRoutes = new Elysia()
     });
     if (!result.ok) {
       set.status = result.reason === "signature-invalid" ? 401 : 400;
+
       return { ok: false, reason: result.reason };
     }
+
     return { events: result.events.length, ok: true };
   });
 

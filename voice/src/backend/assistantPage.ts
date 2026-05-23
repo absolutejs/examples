@@ -2,7 +2,7 @@ import type {
   VoiceAssistantMemoryRecord,
   VoiceAssistantRunsSummary,
 } from "@absolutejs/voice";
-import { VOICE_ASSISTANT_CONFIG } from "../shared/demo";
+import { VOICE_ASSISTANT_CONFIG } from "../constants/assistant";
 
 type VoiceAssistantPageConfig = Omit<
   typeof VOICE_ASSISTANT_CONFIG,

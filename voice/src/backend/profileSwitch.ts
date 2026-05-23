@@ -1,8 +1,6 @@
-import {
-  VOICE_ASSISTANT_CONFIG,
-  type SavedIntake,
-  type VoiceModelProvider,
-} from "../shared/demo";
+import { VOICE_ASSISTANT_CONFIG } from "../constants/assistant";
+import type { SavedIntake } from "../types/domain";
+import type { VoiceModelProvider } from "../types/voice";
 import { type SavedVoiceIntegrationEvent } from "./integrationsPage";
 import { type SavedVoiceOpsTask } from "./opsPage";
 import { buildSavedVoiceReview } from "./reviewPage";
@@ -85,12 +83,12 @@ const renderReadinessProfilesHTML = () => {
     auditDeliveries: runtimeStorage.auditDeliveries,
     carriers: loadCarrierMatrixInputs,
     deliveryRuntime: deliveryRuntimeControl,
+    traceDeliveries: runtimeStorage.traceDeliveries,
     providerRoutingContracts: async () => [
       await runDemoProviderRoutingContract(),
       await runDemoSTTProviderRoutingContract(),
       await runDemoTTSProviderRoutingContract(),
     ],
-    traceDeliveries: runtimeStorage.traceDeliveries,
   });
   const providerStack = recommendVoiceProviderStack({
     profile: recommendation.profile,
@@ -289,7 +287,7 @@ const getTask = async (taskId: string): Promise<SavedVoiceOpsTask | null> =>
 
 const emitTaskUpdatedEvent = async (task: SavedVoiceOpsTask) => {
   await deliverIntegrationEvent(
-    createVoiceTaskUpdatedEvent(task) as SavedVoiceIntegrationEvent,
+    createVoiceTaskUpdatedEvent(task),
   );
 };
 
@@ -326,6 +324,7 @@ const updateTaskStatus = async (
 
   await runtimeStorage.tasks.set(updatedTask.id, updatedTask);
   await emitTaskUpdatedEvent(updatedTask);
+
   return updatedTask;
 };
 
@@ -339,6 +338,7 @@ const assignTask = async (taskId: string, owner: string) => {
   const updatedTask = assignVoiceOpsTask(task, owner) as SavedVoiceOpsTask;
   await runtimeStorage.tasks.set(updatedTask.id, updatedTask);
   await emitTaskUpdatedEvent(updatedTask);
+
   return updatedTask;
 };
 
@@ -369,18 +369,18 @@ const createDemoAssistant = (
   createVoiceAssistant<unknown, VoiceSessionRecord, SavedIntake>({
     artifactPlan: {
       ops: {
+        events: runtimeStorage.events,
+        reviews: runtimeStorage.reviews as unknown as VoiceCallReviewStore,
+        tasks: runtimeStorage.tasks as unknown as VoiceOpsTaskStore,
         buildReview: ({ result, session }) =>
           buildSavedVoiceReview({
             phraseHints: VOICE_DEMO_PHRASE_HINTS,
             result: result ?? buildSavedIntake(session),
             session,
           }),
-        events: runtimeStorage.events,
         onEvent: async ({ event }) => {
-          await deliverIntegrationEvent(event as SavedVoiceIntegrationEvent);
+          await deliverIntegrationEvent(event);
         },
-        reviews: runtimeStorage.reviews as unknown as VoiceCallReviewStore,
-        tasks: runtimeStorage.tasks as unknown as VoiceOpsTaskStore,
       },
       preset: {
         name: "support-triage",
@@ -408,6 +408,7 @@ const createDemoAssistant = (
       ],
     }),
     guardrails: {
+      afterTurn: demoLiveGuardrails.assistantGuardrails.afterTurn,
       beforeTurn: async (input) => {
         const turn = input.turn ?? {
           id: `guardrail-turn-${Date.now()}`,
@@ -439,12 +440,11 @@ const createDemoAssistant = (
             }
           : undefined;
       },
-      afterTurn: demoLiveGuardrails.assistantGuardrails.afterTurn,
     },
     id: "support",
     memory: {
-      namespace: ({ session }) => session.id,
       store: memoryStore,
+      namespace: ({ session }) => session.id,
     },
     memoryLifecycle: {
       afterTurn: async ({ memory, result, session }) => {
@@ -819,9 +819,9 @@ const ensureDemoIncidentBundleEvidence = async () => {
       ],
       postCall: {
         label: "Billing support follow-up",
+        reason: "billing_request",
         recommendedAction:
           "Create a billing support task and send the summary to the customer-owned workflow sink.",
-        reason: "billing_request",
         summary:
           "Customer asked for billing help and should be routed to billing support.",
         target: "customer-1",

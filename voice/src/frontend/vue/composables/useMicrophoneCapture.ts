@@ -8,11 +8,9 @@ import {
   formatErrorMessage,
   pushVoiceWaveLevel,
   renderDemoLiveTurnLatencyHTML,
-} from "../../shared/browser";
-import {
-  getVoiceSpeechEngineSampleRate,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+} from "../../../shared/browser";
+import { getVoiceSpeechEngineSampleRate } from "../../../shared/demo";
+import type { VoiceSpeechEngine } from "../../../types/voice";
 import type { VueVoiceStream } from "./useVoiceDemoStreams";
 
 type MicrophoneCaptureInput = {
@@ -88,7 +86,9 @@ export const useMicrophoneCapture = (
           waveLevels.value = pushVoiceWaveLevel(waveLevels.value, level);
         },
         {
-          sampleRateHz: getVoiceSpeechEngineSampleRate(input.speechEngine.value),
+          sampleRateHz: getVoiceSpeechEngineSampleRate(
+            input.speechEngine.value,
+          ),
         },
       );
       await microphone.start();

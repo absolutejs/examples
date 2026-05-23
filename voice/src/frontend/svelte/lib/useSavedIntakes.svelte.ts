@@ -1,12 +1,12 @@
 import {
   fetchAgentSquadDemoStatus,
   fetchSavedIntakes,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 import type { VoiceStreamState } from "@absolutejs/voice";
 import type {
   SavedIntake,
   VoiceAgentSquadDemoStatus,
-} from "../../../shared/demo";
+} from "../../../types/domain";
 
 const REFRESH_INTERVAL_MS = 4_000;
 
@@ -54,15 +54,15 @@ export const useSavedIntakes = (input: SavedIntakesInput): SavedIntakes => {
   };
 
   return {
+    refreshAgentSquadStatus,
+    refreshIntakes,
+    start,
+    stop,
     get agentSquadStatus() {
       return agentSquadStatus;
     },
-    refreshAgentSquadStatus,
-    refreshIntakes,
     get savedIntakes() {
       return savedIntakes;
     },
-    start,
-    stop,
   };
 };

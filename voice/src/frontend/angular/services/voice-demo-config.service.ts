@@ -4,12 +4,14 @@ import {
   rememberVoiceProfileId,
   rememberVoiceRoutingMode,
   rememberVoiceSpeechEngine,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
-import { reloadWithVoiceSearchParam } from "../../shared/browser";
+import type {
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
+import { reloadWithVoiceSearchParam } from "../../../shared/browser";
 
 @Injectable({ providedIn: "root" })
 export class VoiceDemoConfigService {

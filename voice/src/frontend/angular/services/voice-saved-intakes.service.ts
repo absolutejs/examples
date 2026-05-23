@@ -2,11 +2,11 @@ import { Injectable, signal } from "@angular/core";
 import {
   fetchAgentSquadDemoStatus,
   fetchSavedIntakes,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 import type {
   SavedIntake,
   VoiceAgentSquadDemoStatus,
-} from "../../../shared/demo";
+} from "../../../types/domain";
 
 @Injectable({ providedIn: "root" })
 export class VoiceSavedIntakesService {

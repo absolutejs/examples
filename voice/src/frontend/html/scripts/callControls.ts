@@ -1,4 +1,4 @@
-import { VOICE_CALL_CONTROL_ACTIONS } from "../../../shared/demo";
+import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
 import { escapeHtml } from "./format";
 import type { VoiceDemoElements } from "./dom";
 import type { VoiceDemoStream } from "./streams";

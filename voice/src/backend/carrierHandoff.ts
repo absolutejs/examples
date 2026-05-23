@@ -1,4 +1,4 @@
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import {
   listVoiceIntegrationEvents,
   type SavedVoiceIntegrationEvent,
@@ -66,6 +66,7 @@ const resolveCarrierStreamUrl = (request: Request, path: string) => {
 
   const origin = resolveCarrierOrigin(request);
   const wsOrigin = origin.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
+
   return joinUrlPath(wsOrigin, path);
 };
 
@@ -322,13 +323,7 @@ const handoffAdapters = handoffWebhookUrl
         id: "voice-demo-handoff-webhook",
         signingSecret: webhookSigningSecret,
         url: handoffWebhookUrl,
-      }) as ReturnType<
-        typeof createVoiceWebhookHandoffAdapter<
-          unknown,
-          VoiceSessionRecord,
-          SavedIntake
-        >
-      >,
+      }),
     ]
   : [];
 
@@ -367,10 +362,11 @@ const deliverIntegrationEvent = async (
     ? ((await deliverVoiceIntegrationEventToSinks({
         event,
         sinks: [webhookSink],
-      })) as SavedVoiceIntegrationEvent)
+      })))
     : { ...event };
 
   await runtimeStorage.events.set(storedEvent.id, storedEvent);
+
   return storedEvent;
 };
 
@@ -385,13 +381,13 @@ const seedTurnLatencyProof = async () => {
   const turnId = `turn-${crypto.randomUUID()}`;
   const startedAt = Date.now() - 820;
   const timestamps = {
-    speechDetected: startedAt,
-    finalTranscript: startedAt + 220,
-    committed: startedAt + 360,
-    assistantTextStarted: startedAt + 430,
-    ttsSendStarted: startedAt + 480,
-    ttsSendCompleted: startedAt + 535,
     assistantAudioReceived: startedAt + 690,
+    assistantTextStarted: startedAt + 430,
+    committed: startedAt + 360,
+    finalTranscript: startedAt + 220,
+    speechDetected: startedAt,
+    ttsSendCompleted: startedAt + 535,
+    ttsSendStarted: startedAt + 480,
   };
   const transcript = {
     confidence: 0.96,
@@ -403,16 +399,26 @@ const seedTurnLatencyProof = async () => {
     vendor: "absolutejs-proof",
   };
   const session: VoiceSessionRecord = {
-    id: sessionId,
+    committedTurnIds: [turnId],
     createdAt: startedAt - 120,
-    lastActivityAt: timestamps.assistantAudioReceived,
-    status: "completed",
-    transcripts: [transcript],
     currentTurn: {
       finalText: "",
       partialText: "",
       transcripts: [],
     },
+    id: sessionId,
+    lastActivityAt: timestamps.assistantAudioReceived,
+    lastCommittedTurn: {
+      committedAt: timestamps.committed,
+      signature: "show me the latency proof.",
+      text: "Show me the latency proof.",
+      transcriptIds: [transcript.id],
+    },
+    reconnect: {
+      attempts: 0,
+    },
+    status: "completed",
+    transcripts: [transcript],
     turns: [
       {
         assistantText: "Latency proof captured.",
@@ -422,16 +428,6 @@ const seedTurnLatencyProof = async () => {
         transcripts: [{ ...transcript, id: `turn-${transcript.id}` }],
       },
     ],
-    committedTurnIds: [turnId],
-    reconnect: {
-      attempts: 0,
-    },
-    lastCommittedTurn: {
-      committedAt: timestamps.committed,
-      signature: "show me the latency proof.",
-      text: "Show me the latency proof.",
-      transcriptIds: [transcript.id],
-    },
   };
   await runtimeStorage.session.set(sessionId, session);
   const stageEntries = [

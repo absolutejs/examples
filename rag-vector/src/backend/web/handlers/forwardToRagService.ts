@@ -22,18 +22,18 @@ export const forwardToRagService = async (
 
   try {
     const response = await fetch(targetUrl, {
-      method: request.method,
-      headers,
       body:
         request.method === "GET" || request.method === "HEAD"
           ? undefined
           : await request.arrayBuffer(),
+      headers,
+      method: request.method,
       redirect: "manual",
     });
 
     return new Response(response.body, {
-      status: response.status,
       headers: response.headers,
+      status: response.status,
     });
   } catch (error) {
     return new Response(

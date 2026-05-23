@@ -7,12 +7,9 @@ import {
   formatErrorMessage,
   pushVoiceWaveLevel,
   renderDemoLiveTurnLatencyHTML,
-} from "../../shared/browser";
-import {
-  getVoiceSpeechEngineSampleRate,
-  type VoiceDemoMode,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+} from "../../../shared/browser";
+import { getVoiceSpeechEngineSampleRate } from "../../../shared/demo";
+import type { VoiceDemoMode, VoiceSpeechEngine } from "../../../types/voice";
 import type { VoiceDemoElements } from "./dom";
 import type { VoiceDemoStream } from "./streams";
 
@@ -102,13 +99,13 @@ export const createCaptureController = (input: CaptureControllerInput) => {
   };
 
   return {
-    getIsCapturing: () => isCapturing,
-    getMicError: () => micError,
     renderLiveLatency,
     renderWave,
     startMode,
     stopMic,
     stopMicrophone,
     syncAssistantOutput,
+    getIsCapturing: () => isCapturing,
+    getMicError: () => micError,
   };
 };

@@ -1,9 +1,9 @@
 import { channelDefaults } from "./channelDefaults";
-import { sttAdapter, telephonyTTS } from "./realCallEvidence";
+import { sttAdapter, ttsAdapter } from "./realCallEvidence";
 
 export const createTelephonyBridgeConfig = () => ({
   ...channelDefaults("/voice/telephony"),
   context: {},
   stt: sttAdapter,
-  tts: telephonyTTS,
+  tts: ttsAdapter,
 });

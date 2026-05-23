@@ -2,8 +2,6 @@
   "fixtures": [
     {
       "description": "Deterministic certification pack for the demo voice workflows.",
-      "id": "demo-certification-pack",
-      "label": "Demo certification pack",
       "events": [
         {
           "at": 1777200000000,
@@ -227,7 +225,9 @@
           "turnId": "transfer-1",
           "type": "workflow.contract"
         }
-      ]
+      ],
+      "id": "demo-certification-pack",
+      "label": "Demo certification pack"
     }
   ]
 }

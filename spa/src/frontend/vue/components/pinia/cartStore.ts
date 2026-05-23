@@ -5,18 +5,15 @@ import { defineStore } from "pinia";
 // without prop-drilling. The store is registered globally on the app
 // when setupApp runs `app.use(createPinia())`.
 export const useCartStore = defineStore("cart", {
-  state: () => ({
-    items: [] as Array<{ id: string; label: string }>,
-  }),
   actions: {
     add(item: { id: string; label: string }) {
       this.items.push(item);
     },
-    remove(id: string) {
-      this.items = this.items.filter((entry) => entry.id !== id);
-    },
     clear() {
       this.items = [];
+    },
+    remove(id: string) {
+      this.items = this.items.filter((entry) => entry.id !== id);
     },
   },
   getters: {
@@ -24,4 +21,7 @@ export const useCartStore = defineStore("cart", {
       return state.items.length;
     },
   },
+  state: () => ({
+    items: [] as Array<{ id: string; label: string }>,
+  }),
 });

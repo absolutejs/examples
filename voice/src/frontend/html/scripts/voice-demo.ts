@@ -9,9 +9,8 @@ import {
   getInitialVoiceProfileId,
   getInitialVoiceRoutingMode,
   getInitialVoiceSpeechEngine,
-  type VoiceDemoMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
+import type { VoiceDemoMode, VoiceSpeechEngine } from "../../../types/voice";
 import { createCaptureController } from "./capture";
 import { wireCallControls } from "./callControls";
 import { wireConfigControls } from "./config";
@@ -57,8 +56,7 @@ let hasStartedModes: Record<VoiceDemoMode, boolean> = {
 };
 const currentVoice = () =>
   activeMode === "general" ? generalVoice : guidedVoice;
-const getHasStarted = () =>
-  activeMode ? hasStartedModes[activeMode] : false;
+const getHasStarted = () => (activeMode ? hasStartedModes[activeMode] : false);
 
 let captureController: ReturnType<typeof createCaptureController>;
 let conversation: ReturnType<typeof createConversationRenderer>;
@@ -75,6 +73,7 @@ captureController = createCaptureController({
   currentVoice,
   elements,
   onRender: render,
+  speechEngine,
   onStarted: (mode) => {
     activeMode = mode;
     hasStartedModes = {
@@ -82,14 +81,12 @@ captureController = createCaptureController({
       [mode]: true,
     };
   },
-  speechEngine,
 });
 
 conversation = createConversationRenderer({
   currentVoice,
   elements,
   framework,
-  getActiveMode: () => activeMode,
   getHasStarted,
   getIsCapturing: captureController.getIsCapturing,
   getMicError: captureController.getMicError,
@@ -98,6 +95,7 @@ conversation = createConversationRenderer({
   renderLiveLatency: captureController.renderLiveLatency,
   renderWave: captureController.renderWave,
   routingMode,
+  getActiveMode: () => activeMode,
 });
 
 wireCallControls({ currentVoice, elements, stopMic });
@@ -105,12 +103,12 @@ wireCallControls({ currentVoice, elements, stopMic });
 wireConfigControls({
   modelProviderSelect: elements.modelProviderSelect,
   onBeforeReload: stopMic,
-  onSpeechEngineChange: (engine: VoiceSpeechEngine) => {
-    speechEngine = engine;
-  },
   routingModeSelect: elements.routingModeSelect,
   speechEngineSelect: elements.speechEngineSelect,
   voiceProfileSelect: elements.voiceProfileSelect,
+  onSpeechEngineChange: (engine: VoiceSpeechEngine) => {
+    speechEngine = engine;
+  },
 });
 
 guidedVoice.subscribe(() => {

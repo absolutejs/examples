@@ -38,23 +38,9 @@ export type RecentContactsResponse = {
   cursorAt: number;
 };
 
+export const CRM_HUBSPOT_WEBHOOK_ROUTE = "/webhooks/hubspot";
 export const CRM_LEAD_ROUTE = "/api/leads";
 export const CRM_RECENT_CONTACTS_ROUTE = "/api/recent-contacts";
-export const CRM_HUBSPOT_WEBHOOK_ROUTE = "/webhooks/hubspot";
-
-export const FRAMEWORKS: Array<{
-  id: FrameworkId;
-  href: string;
-  label: string;
-}> = [
-  { href: "/react", id: "react", label: "React" },
-  { href: "/svelte", id: "svelte", label: "Svelte" },
-  { href: "/vue", id: "vue", label: "Vue" },
-  { href: "/angular", id: "angular", label: "Angular" },
-  { href: "/html", id: "html", label: "HTML" },
-  { href: "/htmx", id: "htmx", label: "HTMX" },
-];
-
 export const FRAMEWORK_DESCRIPTIONS: Record<FrameworkId, string> = {
   angular:
     "Angular uses Signals + HttpClient to call the shared CRM endpoints and re-renders the recent-contacts list on each successful lead submission.",
@@ -66,7 +52,6 @@ export const FRAMEWORK_DESCRIPTIONS: Record<FrameworkId, string> = {
     "Svelte uses runes (`$state`, `$effect`) to bind the form and pull recent contacts from the same endpoint.",
   vue: "Vue uses `ref` + `onMounted` to wire the form to the shared CRM API and refresh the contacts panel.",
 };
-
 export const FRAMEWORK_SNIPPETS: Record<FrameworkId, string> = {
   angular: `import { createCRMRuntime, createInMemoryCRMLocalEntityStore } from "@absolutejs/crm";
 
@@ -109,15 +94,23 @@ const runtime = createCRMRuntime({
   return res.json();
 }`,
 };
-
-export const PAGE_TAGLINE =
-  "Multi-vendor CRM via @absolutejs/crm — same backend, six frameworks.";
-
+export const FRAMEWORKS: Array<{
+  id: FrameworkId;
+  href: string;
+  label: string;
+}> = [
+  { href: "/react", id: "react", label: "React" },
+  { href: "/svelte", id: "svelte", label: "Svelte" },
+  { href: "/vue", id: "vue", label: "Vue" },
+  { href: "/angular", id: "angular", label: "Angular" },
+  { href: "/html", id: "html", label: "HTML" },
+  { href: "/htmx", id: "htmx", label: "HTMX" },
+];
 export const PAGE_HEADLINE = "Capture a lead";
-
 export const PAGE_SUBHEADLINE =
   "Submit the form → @absolutejs/crm runtime creates the contact in the configured vendor and mirrors it to the local entity store. The recent-contacts panel polls the same store.";
-
+export const PAGE_TAGLINE =
+  "Multi-vendor CRM via @absolutejs/crm — same backend, six frameworks.";
 export const formatRelativeTime = (
   ms: number,
   now: number = Date.now(),
@@ -126,5 +119,6 @@ export const formatRelativeTime = (
   if (diff < 60_000) return "just now";
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
   if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+
   return `${Math.floor(diff / 86_400_000)}d ago`;
 };

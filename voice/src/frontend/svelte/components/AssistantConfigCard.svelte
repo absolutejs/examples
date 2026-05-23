@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { VOICE_ASSISTANT_CONFIG } from "../../../shared/demo";
+  import { VOICE_ASSISTANT_CONFIG } from "../../../constants/assistant";
 </script>
 
 <article class="voice-card voice-assistant-config">

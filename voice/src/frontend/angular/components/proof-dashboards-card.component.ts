@@ -1,5 +1,5 @@
 import { Component } from "@angular/core";
-import { VOICE_PROOF_DASHBOARDS } from "../../../shared/demo";
+import { VOICE_PROOF_DASHBOARDS } from "../../../constants/navigation";
 
 @Component({
   host: {

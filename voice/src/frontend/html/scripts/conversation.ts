@@ -3,7 +3,15 @@ import {
   fetchSavedIntakes,
   formatDateTime,
   formatReconnectState,
-} from "../../shared/browser";
+} from "../../../shared/browser";
+import {
+  VOICE_DEMO_GENERAL_LABEL,
+  VOICE_DEMO_GUIDED_LABEL,
+  VOICE_DEMO_MIC_IDLE,
+  VOICE_DEMO_MIC_LIVE,
+  VOICE_DEMO_STOP_LABEL,
+} from "../../../constants/demoCopy";
+import { VOICE_PROFILES } from "../../../constants/voiceOptions";
 import {
   formatVoiceProfileSwitchGuardLabel,
   formatVoiceProfileSwitchGuardSummary,
@@ -14,17 +22,13 @@ import {
   getVoiceProfileSwitchGuardDecision,
   getVoiceProviderLabel,
   getVoiceRoutingLabel,
-  VOICE_DEMO_GENERAL_LABEL,
-  VOICE_DEMO_GUIDED_LABEL,
-  VOICE_DEMO_MIC_IDLE,
-  VOICE_DEMO_MIC_LIVE,
-  VOICE_DEMO_STOP_LABEL,
-  VOICE_PROFILES,
-  type VoiceDemoMode,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
 } from "../../../shared/demo";
+import type {
+  VoiceDemoMode,
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+} from "../../../types/voice";
 import { escapeHtml } from "./format";
 import type { VoiceDemoElements } from "./dom";
 import type { VoiceDemoStream } from "./streams";
@@ -52,7 +56,9 @@ type ConversationRendererInput = {
   routingMode: VoiceRoutingMode;
 };
 
-export const createConversationRenderer = (input: ConversationRendererInput) => {
+export const createConversationRenderer = (
+  input: ConversationRendererInput,
+) => {
   const {
     currentVoice,
     elements,
@@ -227,7 +233,9 @@ export const createConversationRenderer = (input: ConversationRendererInput) => 
       ? getVoiceModeLabel(activeMode)
       : "Choose one";
     elements.voiceStatus.textContent = voice.status;
-    elements.reconnectStatus.textContent = formatReconnectState(voice.reconnect);
+    elements.reconnectStatus.textContent = formatReconnectState(
+      voice.reconnect,
+    );
     renderWave();
     renderChat();
     renderLiveLatency();

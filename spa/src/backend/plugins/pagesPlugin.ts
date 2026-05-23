@@ -16,8 +16,8 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
 
   const reactHandler = ({ request }: { request: Request }) =>
     handleReactPageRequest({
-      Page: ReactSpa,
       index: asset(manifest, "ReactSpaIndex"),
+      Page: ReactSpa,
       props: { cssPath: sharedCssPath },
       request,
     });

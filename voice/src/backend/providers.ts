@@ -1,11 +1,7 @@
-import {
-  VOICE_ASSISTANT_CONFIG,
-  isVoiceModelProvider,
-  isVoiceRoutingMode,
-  type SavedIntake,
-  type VoiceModelProvider,
-  type VoiceRoutingMode,
-} from "../shared/demo";
+import { VOICE_ASSISTANT_CONFIG } from "../constants/assistant";
+import { isVoiceModelProvider, isVoiceRoutingMode } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
+import type { VoiceModelProvider, VoiceRoutingMode } from "../types/voice";
 import { decideIntakeTurn } from "./voiceFlow";
 import { getEnv } from "@absolutejs/absolute";
 import {
@@ -45,13 +41,12 @@ import { deepgram } from "@absolutejs/voice-deepgram";
 import { gemini } from "@absolutejs/voice-gemini";
 import { openai } from "@absolutejs/voice-openai";
 import { createVoiceProviderFailureSimulator } from "@absolutejs/voice/testing";
-import { resolve } from "node:path";
+import { postgresConnectionString } from "../../db/client";
 import {
   base64FromBytes,
   demoGuardrailPolicies,
   guardrailBlockedResult,
   rawDeliveryTraceStore,
-  runtimeDirectory,
 } from "./stores";
 
 const deepgramApiKey = getEnv("DEEPGRAM_API_KEY");
@@ -121,7 +116,7 @@ const runTelephonyWebhookVerificationProof = async () => {
   const telnyxKeyPair = (await crypto.subtle.generateKey("Ed25519", true, [
     "sign",
     "verify",
-  ])) as CryptoKeyPair;
+  ]));
   const telnyxPublicKey = base64FromBytes(
     await crypto.subtle.exportKey("raw", telnyxKeyPair.publicKey),
   );
@@ -144,8 +139,8 @@ const runTelephonyWebhookVerificationProof = async () => {
       authToken: "proof-plivo-secret",
     },
     store: {
-      kind: "sqlite",
-      path: resolve(runtimeDirectory, "telephony-webhook-security.sqlite"),
+      connectionString: postgresConnectionString,
+      kind: "postgres",
     },
     telnyx: {
       publicKey: telnyxPublicKey,
@@ -160,12 +155,12 @@ const runTelephonyWebhookVerificationProof = async () => {
   let twilioDecisions = 0;
   const twilioRoutes = createVoiceTelephonyWebhookRoutes({
     idempotency: proofWebhookSecurity.twilio.idempotency,
-    onDecision: () => {
-      twilioDecisions += 1;
-    },
     path: twilioPath,
     provider: "twilio",
     verify: proofWebhookSecurity.verify.twilio,
+    onDecision: () => {
+      twilioDecisions += 1;
+    },
   });
   const twilioInvalidBefore = twilioDecisions;
   const twilioInvalidResponse = await twilioRoutes.handle(
@@ -215,12 +210,12 @@ const runTelephonyWebhookVerificationProof = async () => {
 
   let telnyxDecisions = 0;
   const telnyxRoutes = createVoiceTelephonyWebhookRoutes({
-    onDecision: () => {
-      telnyxDecisions += 1;
-    },
     path: "/telnyx",
     provider: "telnyx",
     verify: proofWebhookSecurity.verify.telnyx,
+    onDecision: () => {
+      telnyxDecisions += 1;
+    },
   });
   const telnyxInvalidBefore = telnyxDecisions;
   const telnyxInvalidResponse = await telnyxRoutes.handle(
@@ -328,12 +323,12 @@ const runTelephonyWebhookVerificationProof = async () => {
   });
   let plivoDecisions = 0;
   const plivoRoutes = createVoiceTelephonyWebhookRoutes({
-    onDecision: () => {
-      plivoDecisions += 1;
-    },
     path: "/plivo",
     provider: "plivo",
     verify: proofWebhookSecurity.verify.plivo,
+    onDecision: () => {
+      plivoDecisions += 1;
+    },
   });
   const plivoInvalidBefore = plivoDecisions;
   const plivoInvalidResponse = await plivoRoutes.handle(
@@ -422,6 +417,7 @@ const requestedModelProvider = process.env.VOICE_MODEL_PROVIDER?.toLowerCase();
 
 const readPositiveNumberEnv = (name: string, fallback: number) => {
   const value = Number(process.env[name]);
+
   return Number.isFinite(value) && value > 0 ? value : fallback;
 };
 
@@ -470,8 +466,8 @@ const profileTaggedTraceStore = createVoiceProfileTraceTagger({
       label: "Noisy phone call",
     },
   ],
-  resolveProfile: (event) => sessionVoiceProfileIds.get(event.sessionId),
   store: rawDeliveryTraceStore,
+  resolveProfile: (event) => sessionVoiceProfileIds.get(event.sessionId),
 });
 
 const deliveryTraceStore = createVoiceRealCallProfileTraceCollector({
@@ -493,15 +489,15 @@ const demoLiveGuardrails = createVoiceGuardrailRuntime<
   VoiceSessionRecord,
   SavedIntake
 >({
+  name: "absolutejs-voice-example-live",
+  policies: demoGuardrailPolicies,
+  trace: deliveryTraceStore,
   blockResult: ({ context, decision, session }) =>
     guardrailBlockedResult(
       session,
       context,
       `guardrail-blocked-${decision.stage}`,
     ),
-  name: "absolutejs-voice-example-live",
-  policies: demoGuardrailPolicies,
-  trace: deliveryTraceStore,
 });
 
 const configuredModelProviders: VoiceModelProvider[] = [
@@ -521,7 +517,7 @@ const selectedSTTProvider: VoiceSTTProvider = "deepgram";
 const voiceProviderModels = {
   anthropic: process.env.ANTHROPIC_VOICE_MODEL ?? "claude-sonnet-4-5",
   assemblyai: process.env.ASSEMBLYAI_SPEECH_MODEL ?? "u3-rt-pro",
-  deepgram: "flux-general-en",
+  deepgram: process.env.DEEPGRAM_STT_MODEL ?? "nova-3",
   deterministic: "local deterministic support model",
   gemini: process.env.GEMINI_VOICE_MODEL ?? "gemini-2.5-flash",
   openai: process.env.OPENAI_VOICE_MODEL ?? "gpt-4.1-mini",
@@ -559,9 +555,10 @@ const createEmergencyTelephonyTTS = (): TTSAdapter => ({
         }
       },
       on: (event, handler) => {
-        (listeners[event] as Set<typeof handler>).add(handler as never);
+        (listeners[event] as Set<typeof handler>).add(handler);
+
         return () => {
-          (listeners[event] as Set<typeof handler>).delete(handler as never);
+          (listeners[event] as Set<typeof handler>).delete(handler);
         };
       },
       send: async () => {
@@ -616,7 +613,7 @@ const ttsLatencyBudgets = {
 const voiceProviderFeatures = {
   anthropic: ["tool calling", "JSON result shaping", "fallback routing"],
   assemblyai: ["realtime STT", "VAD events", "turn formatting", "fallback STT"],
-  deepgram: ["Flux realtime STT", "VAD events", "smart formatting"],
+  deepgram: ["Nova-3 realtime STT", "VAD events", "smart formatting"],
   deterministic: [
     "tool calling",
     "JSON result shaping",
@@ -866,6 +863,7 @@ const resolveModelProvider = () => {
         "VOICE_MODEL_PROVIDER=gemini requires GEMINI_API_KEY or GOOGLE_API_KEY.",
       );
     }
+
     return requestedModelProvider;
   }
 
@@ -878,6 +876,7 @@ const resolveModelProvider = () => {
   if (geminiApiKey) {
     return "gemini";
   }
+
   return "deterministic";
 };
 
@@ -891,9 +890,9 @@ const buildDemoProviderContractDefinitions = () =>
       assemblyai: Boolean(assemblyAIApiKey),
       deepgram: Boolean(deepgramApiKey),
       deterministic: true,
+      emergency: true,
       gemini: Boolean(geminiApiKey),
       openai: Boolean(openAIApiKey),
-      emergency: true,
     },
     env: {
       ...process.env,
@@ -952,8 +951,8 @@ const providerFallbackOrder = (provider: VoiceModelProvider) => [
 ];
 
 const voiceProfileProviderAliases = {
-  "llm:deterministic+openai": ["openai", "deterministic"],
   "deterministic+openai": ["openai", "deterministic"],
+  "llm:deterministic+openai": ["openai", "deterministic"],
 } satisfies Record<string, readonly VoiceModelProvider[]>;
 
 const queryFromContext = (context: unknown) =>
@@ -975,6 +974,7 @@ const readQueryString = (
       return value.trim();
     }
   }
+
   return undefined;
 };
 
@@ -990,6 +990,7 @@ const resolveVoiceProfileIdFromContext = (context: unknown) => {
   }
 
   const scenarioId = readQueryString(query, ["scenarioId"]);
+
   return scenarioId === "guided" ? "support-agent" : "meeting-recorder";
 };
 
@@ -1004,6 +1005,7 @@ const rememberSessionVoiceProfileId = (input: {
 
   const profileId = resolveVoiceProfileIdFromContext(input.context);
   sessionVoiceProfileIds.set(input.sessionId, profileId);
+
   return profileId;
 };
 
@@ -1070,10 +1072,10 @@ const providerModels: Partial<
     VoiceAgentModel<unknown, VoiceSessionRecord, SavedIntake>
   >
 > = {
-  deterministic: intakeModel,
-  openai: openAIModel,
   anthropic: anthropicModel,
+  deterministic: intakeModel,
   gemini: geminiModel,
+  openai: openAIModel,
 };
 
 const traceProviderEvent = async (
@@ -1094,10 +1096,16 @@ const traceProviderEvent = async (
 const sttProviderAdapters = {
   deepgram: deepgram({
     apiKey: deepgramApiKey,
+    // Finalize an utterance promptly on a short pause. Without endpointing /
+    // utterance-end the stream only finalizes on a ~60s idle timeout, so the
+    // transcript (and the spoken reply) arrives a minute late — the demo reads
+    // as "laggy / never talks back".
+    endpointing: 300,
     interimResults: true,
-    model: "flux-general-en",
+    model: process.env.DEEPGRAM_STT_MODEL ?? "nova-3",
     punctuate: true,
     smartFormat: true,
+    utteranceEndMs: 1_000,
     vadEvents: true,
   }),
   ...(assemblyAIApiKey
@@ -1138,15 +1146,17 @@ const rememberSessionRoutingMode = async (input: {
 
   sessionRoutingModes.set(input.sessionId, routing);
   rememberSessionVoiceProfileId(input);
+
   return routing;
 };
 
 const providerFailureSimulator = createVoiceProviderFailureSimulator({
-  allowProviders: () => configuredModelProviders,
   fallback: providerFallbackOrder,
+  onProviderEvent: traceProviderEvent,
+  providers: configuredModelProviders,
+  allowProviders: () => configuredModelProviders,
   isProviderError: (error, provider) =>
     provider !== "deterministic" && isAssistantProviderError(error),
-  onProviderEvent: traceProviderEvent,
   providerLabel: (provider) =>
     provider === "openai"
       ? "OpenAI"
@@ -1155,7 +1165,6 @@ const providerFailureSimulator = createVoiceProviderFailureSimulator({
         : provider === "gemini"
           ? "Gemini"
           : "Deterministic",
-  providers: configuredModelProviders,
 });
 
 const runDemoProviderRoutingContract = async () => {
@@ -1168,8 +1177,10 @@ const runDemoProviderRoutingContract = async () => {
     (provider) => provider !== requestedProvider,
   );
   const simulator = createVoiceProviderFailureSimulator({
-    allowProviders: () => configuredModelProviders,
     fallback: providerFallbackOrder,
+    providers: configuredModelProviders,
+    replayHref: false,
+    allowProviders: () => configuredModelProviders,
     isProviderError: (error, provider) =>
       provider !== "deterministic" && isAssistantProviderError(error),
     onProviderEvent: async (event, input) => {
@@ -1191,8 +1202,6 @@ const runDemoProviderRoutingContract = async () => {
           : provider === "gemini"
             ? "Gemini"
             : "Deterministic",
-    providers: configuredModelProviders,
-    replayHref: false,
   });
 
   await simulator.run(
@@ -1287,7 +1296,4 @@ export {
   webhookSigningSecret,
   webhookUrl,
 };
-export type {
-  VoiceSTTProvider,
-  VoiceTTSProvider,
-};
+export type { VoiceSTTProvider, VoiceTTSProvider };

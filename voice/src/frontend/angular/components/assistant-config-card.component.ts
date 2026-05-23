@@ -1,5 +1,5 @@
 import { Component, Input } from "@angular/core";
-import type { VOICE_ASSISTANT_CONFIG } from "../../../shared/demo";
+import type { VOICE_ASSISTANT_CONFIG } from "../../../constants/assistant";
 
 @Component({
   host: {

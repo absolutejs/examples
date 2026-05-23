@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { formatReconnectState } from "../../shared/browser";
-  import {
-    VOICE_CALL_CONTROL_ACTIONS,
-    type VoiceDemoMode,
-    type VoiceModelProvider,
-    type VoiceProfileId,
-    type VoiceRoutingMode,
-    type VoiceSpeechEngine,
-  } from "../../../shared/demo";
+  import { formatReconnectState } from "../../../shared/browser";
+  import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
+  import type {
+    VoiceDemoMode,
+    VoiceModelProvider,
+    VoiceProfileId,
+    VoiceRoutingMode,
+    VoiceSpeechEngine,
+  } from "../../../types/voice";
   import AgentSquadCard from "../components/AgentSquadCard.svelte";
   import AssistantConfigCard from "../components/AssistantConfigCard.svelte";
   import CampaignDialerCard from "../components/CampaignDialerCard.svelte";

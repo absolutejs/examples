@@ -34,6 +34,7 @@ const stageIndexFor = (stage: string | undefined, streaming: boolean) => {
   if (stage === "retrieved") return 1;
   if (stage === "streaming") return 2;
   if (stage === "complete") return 3;
+
   return -1;
 };
 
@@ -116,6 +117,7 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
   const groundingNote = useMemo(() => {
     const n = heroCitations.length;
     if (n === 0) return null;
+
     return `Backed by ${n} cited source${n === 1 ? "" : "s"}`;
   }, [heroCitations]);
 
@@ -162,7 +164,7 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
   };
 
   // ---- chapter 2: organize (status numbers) -------------------------------
-  const status = rag.status.status;
+  const {status} = rag.status;
   const caps = rag.status.capabilities;
   const chunkCount = safe(
     () =>
@@ -287,6 +289,7 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
       | { documentCount?: number; lowSignalChunks?: number }
       | undefined;
     if (!health) return null;
+
     return `${health.documentCount ?? docCount} documents indexed · ${health.lowSignalChunks ?? 0} low-signal chunks flagged`;
   }, null);
 
@@ -611,6 +614,7 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
                     6,
                     Math.min(100, Math.round((score / 3) * 100)),
                   );
+
                   return (
                     <div className="j-result" key={i}>
                       <div className="j-result-top">
@@ -795,7 +799,7 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
             {benchSummary ? (
               <p
                 className="j-note"
-                style={{ marginTop: "0.9rem", color: "var(--j-ink)" }}
+                style={{ color: "var(--j-ink)", marginTop: "0.9rem" }}
               >
                 {benchSummary}
               </p>

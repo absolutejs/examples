@@ -8,16 +8,10 @@ import {
   formatErrorMessage,
   pushVoiceWaveLevel,
   renderDemoLiveTurnLatencyHTML,
-} from "../../shared/browser";
-import {
-  getVoiceSpeechEngineSampleRate,
-  type VoiceDemoMode,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
-import {
-  EMPTY_VOICE,
-  type ReactVoiceDemoStream,
-} from "./useVoiceDemoStreams";
+} from "../../../shared/browser";
+import { getVoiceSpeechEngineSampleRate } from "../../../shared/demo";
+import type { VoiceDemoMode, VoiceSpeechEngine } from "../../../types/voice";
+import { EMPTY_VOICE, type ReactVoiceDemoStream } from "./useVoiceDemoStreams";
 
 type MicrophoneCaptureInput = {
   activeModeRef: { current: VoiceDemoMode | null };

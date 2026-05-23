@@ -4,8 +4,6 @@ import {
   createVoiceBargeInMonitor,
   createVoiceLiveTurnLatencyMonitor,
   postVoiceLiveOpsAction as postCoreVoiceLiveOpsAction,
-  type VoiceLiveOpsAction,
-  type VoiceLiveOpsActionResult as CoreVoiceLiveOpsActionResult,
   type VoiceLiveTurnLatencyMonitorOptions,
   type VoiceLiveTurnLatencySnapshot,
 } from "@absolutejs/voice/client";
@@ -18,13 +16,18 @@ import type {
   VoiceReconnectClientState,
   VoiceStreamState,
 } from "@absolutejs/voice";
-import type { SavedIntake, VoiceAgentSquadDemoStatus } from "../../shared/demo";
-
-export type { VoiceLiveOpsAction };
-
-const VOICE_WAVE_POINTS = 48;
-const VOICE_WAVE_WIDTH = 320;
-const VOICE_WAVE_HEIGHT = 88;
+import { VOICE_LIVE_OPS_ACTIONS } from "../constants/demoActions";
+import {
+  VOICE_WAVE_HEIGHT,
+  VOICE_WAVE_POINTS,
+  VOICE_WAVE_WIDTH,
+} from "../constants/waveform";
+import type {
+  SavedIntake,
+  VoiceAgentSquadDemoStatus,
+  VoiceLiveOpsAction,
+  VoiceLiveOpsActionResult,
+} from "../types/domain";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -62,6 +65,7 @@ const getPcmLevel = (audio: Uint8Array | ArrayBuffer) => {
   }
 
   const rms = Math.sqrt(sumSquares / samples.length);
+
   return clamp(rms * 5.5, 0, 1);
 };
 
@@ -78,16 +82,99 @@ const readErrorField = (
   return null;
 };
 
-export const fetchSavedIntakes = async () => {
-  const response = await fetch("/api/intakes");
+export const createDemoMicrophone = (
+  onAudio: (audio: Uint8Array | ArrayBuffer) => void,
+  onLevel?: (level: number) => void,
+  options: { sampleRateHz?: number } = {},
+) => {
+  let capture: ReturnType<typeof createMicrophoneCapture> | null = null;
 
-  if (!response.ok) {
-    return [] as SavedIntake[];
+  return {
+    start: async () => {
+      if (capture) {
+        return;
+      }
+
+      if (typeof createMicrophoneCapture !== "function") {
+        throw new Error(
+          "@absolutejs/voice/client did not provide createMicrophoneCapture. Reinstall @absolutejs/voice and restart the dev server.",
+        );
+      }
+
+      const nextCapture = createMicrophoneCapture({
+        sampleRateHz: options.sampleRateHz ?? 16_000,
+        onAudio: (audio) => {
+          onLevel?.(getPcmLevel(audio));
+          onAudio(audio);
+        },
+      });
+
+      capture = nextCapture;
+
+      try {
+        await capture.start();
+      } catch (error) {
+        capture = null;
+        throw error;
+      }
+    },
+    stop: () => {
+      capture?.stop();
+      capture = null;
+      onLevel?.(0);
+    },
+  };
+};
+export const createInitialVoiceWaveLevels = (count = VOICE_WAVE_POINTS) =>
+  Array.from({ length: count }, () => 0);
+export const createVoiceWavePath = (
+  levels: number[],
+  width = VOICE_WAVE_WIDTH,
+  height = VOICE_WAVE_HEIGHT,
+) => {
+  const samples =
+    levels.length > 1
+      ? levels
+      : createInitialVoiceWaveLevels(VOICE_WAVE_POINTS);
+  const step = width / (samples.length - 1);
+  const center = height / 2;
+  const maxAmplitude = height * 0.34;
+  const peakLevel = Math.max(...samples, 0);
+
+  if (peakLevel <= 0.015) {
+    return `M 0 ${center} L ${width} ${center}`;
   }
 
-  return (await response.json()) as SavedIntake[];
-};
+  const points = samples.map((level, index) => {
+    const phase = index * 0.76;
+    const wobble = Math.sin(phase) * 0.78 + Math.sin(phase * 0.41) * 0.22;
+    const amplitude = level * maxAmplitude;
+    const x = step * index;
+    const y = clamp(center + wobble * amplitude, 8, height - 8);
 
+    return { x, y };
+  });
+
+  if (points.length === 0) {
+    return `M 0 ${center} L ${width} ${center}`;
+  }
+
+  let path = `M ${points[0]?.x ?? 0} ${points[0]?.y ?? center}`;
+
+  for (let index = 1; index < points.length; index += 1) {
+    const previous = points[index - 1];
+    const current = points[index];
+
+    if (!previous || !current) {
+      continue;
+    }
+
+    const controlX = (previous.x + current.x) / 2;
+    path += ` Q ${controlX} ${previous.y} ${current.x} ${current.y}`;
+  }
+
+  return path;
+};
 export const fetchAgentSquadDemoStatus = async (sessionId?: string) => {
   const url = new URL("/api/agent-squad/status", window.location.origin);
   if (sessionId) {
@@ -102,7 +189,6 @@ export const fetchAgentSquadDemoStatus = async (sessionId?: string) => {
 
   return (await response.json()) as VoiceAgentSquadDemoStatus;
 };
-
 export const fetchBargeInReport = async () => {
   const response = await fetch("/api/voice-barge-in");
 
@@ -112,7 +198,15 @@ export const fetchBargeInReport = async () => {
 
   return (await response.json()) as VoiceBargeInReport;
 };
+export const fetchSavedIntakes = async () => {
+  const response = await fetch("/api/intakes");
 
+  if (!response.ok) {
+    return [] as SavedIntake[];
+  }
+
+  return (await response.json()) as SavedIntake[];
+};
 export const fetchVoiceRealCallEvidenceWorkerHealth = async (
   path = "/api/voice/real-call-evidence-runtime/worker",
 ) => {
@@ -124,7 +218,131 @@ export const fetchVoiceRealCallEvidenceWorkerHealth = async (
 
   return (await response.json()) as VoiceRealCallEvidenceRuntimeWorkerHealthReport;
 };
+export const formatDateTime = (value: number) =>
+  new Date(value).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+export const formatErrorMessage = (error: unknown): string => {
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
 
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const direct =
+      readErrorField(record, "message") ??
+      readErrorField(record, "reason") ??
+      readErrorField(record, "description");
+
+    if (direct) {
+      return direct;
+    }
+
+    if ("error" in record) {
+      return formatErrorMessage(record.error);
+    }
+
+    if ("cause" in record) {
+      return formatErrorMessage(record.cause);
+    }
+
+    try {
+      return JSON.stringify(error);
+    } catch {}
+  }
+
+  return "Unexpected error";
+};
+export const formatReconnectState = (reconnect: VoiceReconnectClientState) => {
+  const pieces: string[] = [reconnect.status];
+
+  if (reconnect.attempts > 0 || reconnect.maxAttempts > 0) {
+    pieces.push(`${reconnect.attempts}/${reconnect.maxAttempts} attempts`);
+  }
+
+  if (reconnect.nextAttemptAt) {
+    const waitMs = Math.max(0, reconnect.nextAttemptAt - Date.now());
+    pieces.push(`retry in ${Math.ceil(waitMs / 100) / 10}s`);
+  }
+
+  return pieces.join(" · ");
+};
+export const getOpsStatusLabel = (report?: VoiceOpsStatusReport | null) => {
+  if (!report) {
+    return "Checking";
+  }
+
+  return report.status === "pass" ? "Passing" : "Needs attention";
+};
+export const mountVoiceRealCallEvidenceWorkerHealth = (
+  element: Element | null,
+  path = "/api/voice/real-call-evidence-runtime/worker",
+  options: {
+    description?: string;
+    intervalMs?: number;
+    title?: string;
+  } = {},
+) => {
+  let closed = false;
+  let timer: number | undefined;
+
+  const render = async () => {
+    if (!(element instanceof HTMLElement) || closed) {
+      return;
+    }
+
+    try {
+      const health = await fetchVoiceRealCallEvidenceWorkerHealth(path);
+      element.innerHTML = renderVoiceRealCallEvidenceWorkerHealthHTML(health, {
+        description: options.description,
+        title: options.title,
+      });
+    } catch (error) {
+      element.innerHTML = renderVoiceRealCallEvidenceWorkerHealthHTML(null, {
+        description: options.description,
+        error: formatErrorMessage(error),
+        title: options.title,
+      });
+    }
+  };
+
+  void render();
+  timer = window.setInterval(render, options.intervalMs ?? 10_000);
+
+  return {
+    refresh: render,
+    close: () => {
+      closed = true;
+      if (timer !== undefined) {
+        window.clearInterval(timer);
+      }
+    },
+  };
+};
+export const pushVoiceWaveLevel = (
+  levels: number[],
+  nextLevel: number,
+  count = VOICE_WAVE_POINTS,
+) => {
+  const next = levels.slice(-(count - 1));
+  next.push(clamp(nextLevel, 0, 1));
+
+  while (next.length < count) {
+    next.unshift(0);
+  }
+
+  return next;
+};
+export const reloadWithVoiceSearchParam = (param: string, value: string) => {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set(param, value);
+  window.location.href = nextUrl.toString();
+};
 export const renderVoiceRealCallEvidenceWorkerHealthHTML = (
   health: VoiceRealCallEvidenceRuntimeWorkerHealthReport | null,
   options: {
@@ -189,237 +407,6 @@ export const renderVoiceRealCallEvidenceWorkerHealthHTML = (
 </div>
 ${health.error ? `<p class="voice-footnote">${escapeHtml(health.error)}</p>` : ""}
 <p class="voice-footnote"><a href="/voice/real-call-evidence-runtime">Open evidence runtime</a> · <a href="/api/voice/real-call-evidence-runtime/worker">Worker JSON</a></p>`;
-};
-
-export const mountVoiceRealCallEvidenceWorkerHealth = (
-  element: Element | null,
-  path = "/api/voice/real-call-evidence-runtime/worker",
-  options: {
-    description?: string;
-    intervalMs?: number;
-    title?: string;
-  } = {},
-) => {
-  let closed = false;
-  let timer: number | undefined;
-
-  const render = async () => {
-    if (!(element instanceof HTMLElement) || closed) {
-      return;
-    }
-
-    try {
-      const health = await fetchVoiceRealCallEvidenceWorkerHealth(path);
-      element.innerHTML = renderVoiceRealCallEvidenceWorkerHealthHTML(health, {
-        description: options.description,
-        title: options.title,
-      });
-    } catch (error) {
-      element.innerHTML = renderVoiceRealCallEvidenceWorkerHealthHTML(null, {
-        description: options.description,
-        error: formatErrorMessage(error),
-        title: options.title,
-      });
-    }
-  };
-
-  void render();
-  timer = window.setInterval(render, options.intervalMs ?? 10_000);
-
-  return {
-    close: () => {
-      closed = true;
-      if (timer !== undefined) {
-        window.clearInterval(timer);
-      }
-    },
-    refresh: render,
-  };
-};
-
-export const getOpsStatusLabel = (report?: VoiceOpsStatusReport | null) => {
-  if (!report) {
-    return "Checking";
-  }
-
-  return report.status === "pass" ? "Passing" : "Needs attention";
-};
-
-export const formatDateTime = (value: number) =>
-  new Date(value).toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-
-// Demo config switches (provider/profile/routing/engine) persist the choice and
-// reload the page with the matching search param so the voice route picks it up
-// on the next session. Shared so every framework's settings handlers stay thin.
-export const reloadWithVoiceSearchParam = (param: string, value: string) => {
-  const nextUrl = new URL(window.location.href);
-  nextUrl.searchParams.set(param, value);
-  window.location.href = nextUrl.toString();
-};
-
-export const formatReconnectState = (reconnect: VoiceReconnectClientState) => {
-  const pieces: string[] = [reconnect.status];
-
-  if (reconnect.attempts > 0 || reconnect.maxAttempts > 0) {
-    pieces.push(`${reconnect.attempts}/${reconnect.maxAttempts} attempts`);
-  }
-
-  if (reconnect.nextAttemptAt) {
-    const waitMs = Math.max(0, reconnect.nextAttemptAt - Date.now());
-    pieces.push(`retry in ${Math.ceil(waitMs / 100) / 10}s`);
-  }
-
-  return pieces.join(" · ");
-};
-
-export const formatErrorMessage = (error: unknown): string => {
-  if (typeof error === "string" && error.trim()) {
-    return error;
-  }
-
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  if (error && typeof error === "object") {
-    const record = error as Record<string, unknown>;
-    const direct =
-      readErrorField(record, "message") ??
-      readErrorField(record, "reason") ??
-      readErrorField(record, "description");
-
-    if (direct) {
-      return direct;
-    }
-
-    if ("error" in record) {
-      return formatErrorMessage(record.error);
-    }
-
-    if ("cause" in record) {
-      return formatErrorMessage(record.cause);
-    }
-
-    try {
-      return JSON.stringify(error);
-    } catch {}
-  }
-
-  return "Unexpected error";
-};
-
-export const createInitialVoiceWaveLevels = (count = VOICE_WAVE_POINTS) =>
-  Array.from({ length: count }, () => 0);
-
-export const pushVoiceWaveLevel = (
-  levels: number[],
-  nextLevel: number,
-  count = VOICE_WAVE_POINTS,
-) => {
-  const next = levels.slice(-(count - 1));
-  next.push(clamp(nextLevel, 0, 1));
-
-  while (next.length < count) {
-    next.unshift(0);
-  }
-
-  return next;
-};
-
-export const createVoiceWavePath = (
-  levels: number[],
-  width = VOICE_WAVE_WIDTH,
-  height = VOICE_WAVE_HEIGHT,
-) => {
-  const samples =
-    levels.length > 1
-      ? levels
-      : createInitialVoiceWaveLevels(VOICE_WAVE_POINTS);
-  const step = width / (samples.length - 1);
-  const center = height / 2;
-  const maxAmplitude = height * 0.34;
-  const peakLevel = Math.max(...samples, 0);
-
-  if (peakLevel <= 0.015) {
-    return `M 0 ${center} L ${width} ${center}`;
-  }
-
-  const points = samples.map((level, index) => {
-    const phase = index * 0.76;
-    const wobble = Math.sin(phase) * 0.78 + Math.sin(phase * 0.41) * 0.22;
-    const amplitude = level * maxAmplitude;
-    const x = step * index;
-    const y = clamp(center + wobble * amplitude, 8, height - 8);
-
-    return { x, y };
-  });
-
-  if (points.length === 0) {
-    return `M 0 ${center} L ${width} ${center}`;
-  }
-
-  let path = `M ${points[0]?.x ?? 0} ${points[0]?.y ?? center}`;
-
-  for (let index = 1; index < points.length; index += 1) {
-    const previous = points[index - 1];
-    const current = points[index];
-
-    if (!previous || !current) {
-      continue;
-    }
-
-    const controlX = (previous.x + current.x) / 2;
-    path += ` Q ${controlX} ${previous.y} ${current.x} ${current.y}`;
-  }
-
-  return path;
-};
-
-export const createDemoMicrophone = (
-  onAudio: (audio: Uint8Array | ArrayBuffer) => void,
-  onLevel?: (level: number) => void,
-  options: { sampleRateHz?: number } = {},
-) => {
-  let capture: ReturnType<typeof createMicrophoneCapture> | null = null;
-
-  return {
-    start: async () => {
-      if (capture) {
-        return;
-      }
-
-      if (typeof createMicrophoneCapture !== "function") {
-        throw new Error(
-          "@absolutejs/voice/client did not provide createMicrophoneCapture. Reinstall @absolutejs/voice and restart the dev server.",
-        );
-      }
-
-      const nextCapture = createMicrophoneCapture({
-        onAudio: (audio) => {
-          onLevel?.(getPcmLevel(audio));
-          onAudio(audio);
-        },
-        sampleRateHz: options.sampleRateHz ?? 16_000,
-      });
-
-      capture = nextCapture;
-
-      try {
-        await capture.start();
-      } catch (error) {
-        capture = null;
-        throw error;
-      }
-    },
-    stop: () => {
-      capture?.stop();
-      capture = null;
-      onLevel?.(0);
-    },
-  };
 };
 
 const formatLatency = (value?: number) =>
@@ -490,68 +477,6 @@ const formatBargeInStatus = (status?: VoiceBargeInReport["status"]) => {
   };
 };
 
-export const renderDemoBargeInProofHTML = (
-  report: VoiceBargeInReport | null,
-  input?: string | null | { error?: string | null; testState?: string | null },
-) => {
-  const status = formatBargeInStatus(report?.status);
-  const lastEvent = report?.lastEvent;
-  const sessions = report?.sessions ?? [];
-  const error = typeof input === "string" ? input : input?.error;
-  const testState = typeof input === "string" ? null : input?.testState;
-
-  return `<article class="voice-card voice-barge-in-proof voice-barge-in-proof--${status.className}">
-  <header class="voice-barge-in-proof__header">
-    <span class="voice-framework-pill">Live Barge-in Proof</span>
-    <strong>${escapeHtml(status.label)}</strong>
-  </header>
-  <p class="voice-footnote">${escapeHtml(error || status.copy)}</p>
-  <div class="voice-barge-in-proof__actions">
-    <button type="button" data-barge-in-test>
-      ${testState === "running" ? "Listening - speak now" : "Try barge-in test"}
-    </button>
-    <span>${escapeHtml(testState === "running" ? "A local assistant test clip is playing. Talk over it." : testState === "done" ? "Test submitted. Results refresh automatically." : "Runs locally through the browser audio player.")}</span>
-  </div>
-  <div class="voice-barge-in-proof__grid">
-    <div>
-      <span>Interrupt latency</span>
-      <strong>${escapeHtml(formatLatency(lastEvent?.latencyMs))}</strong>
-    </div>
-    <div>
-      <span>Playback stop</span>
-      <strong>${escapeHtml(formatLatency(lastEvent?.playbackStopLatencyMs))}</strong>
-    </div>
-    <div>
-      <span>Passed</span>
-      <strong>${report?.passed ?? 0}</strong>
-    </div>
-    <div>
-      <span>Failed</span>
-      <strong>${report?.failed ?? 0}</strong>
-    </div>
-  </div>
-  ${
-    lastEvent
-      ? `<p class="voice-footnote">Last ${escapeHtml(lastEvent.status)} event: ${escapeHtml(lastEvent.reason)}${lastEvent.sessionId ? ` · ${escapeHtml(lastEvent.sessionId)}` : ""}</p>`
-      : `<p class="voice-footnote">Start assistant audio, speak over it, then open this card for measured proof.</p>`
-  }
-  ${
-    sessions.length
-      ? `<div class="voice-barge-in-proof__sessions">${sessions
-          .slice(0, 2)
-          .map(
-            (session) => `<div>
-      <strong>${escapeHtml(session.sessionId)}</strong>
-      <span>${session.passed} pass · ${session.failed} fail · ${escapeHtml(formatLatency(session.averageLatencyMs))}</span>
-    </div>`,
-          )
-          .join("")}</div>`
-      : ""
-  }
-  <a href="/barge-in">Open barge-in dashboard</a>
-</article>`;
-};
-
 export const mountDemoBargeInProof = (
   element: HTMLElement,
   options: { intervalMs?: number } = {},
@@ -615,6 +540,7 @@ export const mountDemoBargeInProof = (
 
     try {
       testCapture = createMicrophoneCapture({
+        sampleRateHz: 16_000,
         onAudio: (audio) => {
           if (
             hasInterrupted ||
@@ -641,7 +567,6 @@ export const mountDemoBargeInProof = (
             void refresh();
           });
         },
-        sampleRateHz: 16_000,
       });
 
       await testCapture.start();
@@ -669,7 +594,7 @@ export const mountDemoBargeInProof = (
   };
 
   const onClick = (event: Event) => {
-    const target = event.target;
+    const {target} = event;
     if (
       target instanceof HTMLElement &&
       target.closest("[data-barge-in-test]")
@@ -684,6 +609,7 @@ export const mountDemoBargeInProof = (
   timer = setInterval(refresh, options.intervalMs ?? 3_000);
 
   return {
+    refresh,
     close: () => {
       isClosed = true;
       element.removeEventListener("click", onClick);
@@ -693,8 +619,68 @@ export const mountDemoBargeInProof = (
         clearInterval(timer);
       }
     },
-    refresh,
   };
+};
+export const renderDemoBargeInProofHTML = (
+  report: VoiceBargeInReport | null,
+  input?: string | null | { error?: string | null; testState?: string | null },
+) => {
+  const status = formatBargeInStatus(report?.status);
+  const lastEvent = report?.lastEvent;
+  const sessions = report?.sessions ?? [];
+  const error = typeof input === "string" ? input : input?.error;
+  const testState = typeof input === "string" ? null : input?.testState;
+
+  return `<article class="voice-card voice-barge-in-proof voice-barge-in-proof--${status.className}">
+  <header class="voice-barge-in-proof__header">
+    <span class="voice-framework-pill">Live Barge-in Proof</span>
+    <strong>${escapeHtml(status.label)}</strong>
+  </header>
+  <p class="voice-footnote">${escapeHtml(error || status.copy)}</p>
+  <div class="voice-barge-in-proof__actions">
+    <button type="button" data-barge-in-test>
+      ${testState === "running" ? "Listening - speak now" : "Try barge-in test"}
+    </button>
+    <span>${escapeHtml(testState === "running" ? "A local assistant test clip is playing. Talk over it." : testState === "done" ? "Test submitted. Results refresh automatically." : "Runs locally through the browser audio player.")}</span>
+  </div>
+  <div class="voice-barge-in-proof__grid">
+    <div>
+      <span>Interrupt latency</span>
+      <strong>${escapeHtml(formatLatency(lastEvent?.latencyMs))}</strong>
+    </div>
+    <div>
+      <span>Playback stop</span>
+      <strong>${escapeHtml(formatLatency(lastEvent?.playbackStopLatencyMs))}</strong>
+    </div>
+    <div>
+      <span>Passed</span>
+      <strong>${report?.passed ?? 0}</strong>
+    </div>
+    <div>
+      <span>Failed</span>
+      <strong>${report?.failed ?? 0}</strong>
+    </div>
+  </div>
+  ${
+    lastEvent
+      ? `<p class="voice-footnote">Last ${escapeHtml(lastEvent.status)} event: ${escapeHtml(lastEvent.reason)}${lastEvent.sessionId ? ` · ${escapeHtml(lastEvent.sessionId)}` : ""}</p>`
+      : `<p class="voice-footnote">Start assistant audio, speak over it, then open this card for measured proof.</p>`
+  }
+  ${
+    sessions.length
+      ? `<div class="voice-barge-in-proof__sessions">${sessions
+          .slice(0, 2)
+          .map(
+            (session) => `<div>
+      <strong>${escapeHtml(session.sessionId)}</strong>
+      <span>${session.passed} pass · ${session.failed} fail · ${escapeHtml(formatLatency(session.averageLatencyMs))}</span>
+    </div>`,
+          )
+          .join("")}</div>`
+      : ""
+  }
+  <a href="/barge-in">Open barge-in dashboard</a>
+</article>`;
 };
 
 type DemoBargeInVoice<TResult = unknown> = Pick<
@@ -733,6 +719,7 @@ export const createDemoBargeInEvidence = <TResult = unknown>(
       },
       subscribe: (subscriber) => {
         subscribers.add(subscriber);
+
         return () => {
           subscribers.delete(subscriber);
         };
@@ -805,15 +792,15 @@ export const createDemoBargeInEvidence = <TResult = unknown>(
   };
 
   return {
+    getSnapshot: monitor.getSnapshot,
+    sendAudio,
+    subscribe: monitor.subscribe,
+    syncAssistantOutput,
     close: () => {
       void player?.close();
       player = null;
       subscribers.clear();
     },
-    getSnapshot: monitor.getSnapshot,
-    sendAudio,
-    subscribe: monitor.subscribe,
-    syncAssistantOutput,
   };
 };
 
@@ -825,6 +812,41 @@ type DemoLiveTurnLatencyVoice<TResult = unknown> = Pick<
 const formatLatencyMs = (value?: number) =>
   typeof value === "number" ? `${Math.round(value)}ms` : "n/a";
 
+export const createDemoLiveTurnLatencyEvidence = <TResult = unknown>(
+  getVoice: () => DemoLiveTurnLatencyVoice<TResult>,
+  options: VoiceLiveTurnLatencyMonitorOptions = {},
+) => {
+  const monitor = createVoiceLiveTurnLatencyMonitor({
+    reportPath: "/api/live-turn-latency",
+    ...options,
+  });
+  const syncAssistantOutput = () => {
+    monitor.observe(getVoice());
+  };
+
+  return {
+    getSnapshot: monitor.getSnapshot,
+    subscribe: monitor.subscribe,
+    syncAssistantOutput,
+    recordAudio: (audio: Uint8Array | ArrayBuffer) => {
+      syncAssistantOutput();
+      monitor.recordAudio(audio);
+    },
+  };
+};
+export const postVoiceLiveOpsAction = async (input: {
+  action: VoiceLiveOpsAction;
+  assignee?: string;
+  detail?: string;
+  sessionId: string | null | undefined;
+  tag?: string;
+}) => (await postCoreVoiceLiveOpsAction(
+    {
+      ...input,
+      sessionId: input.sessionId ?? "",
+    },
+    { actionPath: "/api/voice/live-ops/action" },
+  )) as VoiceLiveOpsActionResult;
 export const renderDemoLiveTurnLatencyHTML = (
   snapshot: VoiceLiveTurnLatencySnapshot,
 ) => {
@@ -863,106 +885,6 @@ export const renderDemoLiveTurnLatencyHTML = (
   }
 </article>`;
 };
-
-export const createDemoLiveTurnLatencyEvidence = <TResult = unknown>(
-  getVoice: () => DemoLiveTurnLatencyVoice<TResult>,
-  options: VoiceLiveTurnLatencyMonitorOptions = {},
-) => {
-  const monitor = createVoiceLiveTurnLatencyMonitor({
-    reportPath: "/api/live-turn-latency",
-    ...options,
-  });
-  const syncAssistantOutput = () => {
-    monitor.observe(getVoice());
-  };
-
-  return {
-    getSnapshot: monitor.getSnapshot,
-    recordAudio: (audio: Uint8Array | ArrayBuffer) => {
-      syncAssistantOutput();
-      monitor.recordAudio(audio);
-    },
-    subscribe: monitor.subscribe,
-    syncAssistantOutput,
-  };
-};
-
-export type VoiceLiveOpsActionResult = CoreVoiceLiveOpsActionResult & {
-  incidentBundleHref: string;
-  operationsRecordHref: string;
-  task?: { id: string; title: string };
-  taskHref?: string;
-};
-
-export const VOICE_LIVE_OPS_ACTIONS: Array<{
-  action: VoiceLiveOpsAction;
-  description: string;
-  label: string;
-}> = [
-  {
-    action: "tag",
-    description: "Attach a lightweight audit tag to the active session.",
-    label: "Tag",
-  },
-  {
-    action: "assign",
-    description: "Record which operator owns the live session.",
-    label: "Assign",
-  },
-  {
-    action: "escalate",
-    description: "Create an in-progress escalation task and trace event.",
-    label: "Escalate",
-  },
-  {
-    action: "create-task",
-    description: "Create an open follow-up task from the active call.",
-    label: "Create task",
-  },
-  {
-    action: "pause-assistant",
-    description:
-      "Stop assistant-side automation while the operator intervenes.",
-    label: "Pause assistant",
-  },
-  {
-    action: "resume-assistant",
-    description: "Release the session back to assistant automation.",
-    label: "Resume assistant",
-  },
-  {
-    action: "operator-takeover",
-    description: "Mark the call as human-owned and pause local capture.",
-    label: "Take over",
-  },
-  {
-    action: "force-handoff",
-    description: "Force the session to the queue named by the tag field.",
-    label: "Force handoff",
-  },
-  {
-    action: "inject-instruction",
-    description: "Record an operator instruction for the assistant trace.",
-    label: "Inject instruction",
-  },
-];
-
-export const postVoiceLiveOpsAction = async (input: {
-  action: VoiceLiveOpsAction;
-  assignee?: string;
-  detail?: string;
-  sessionId: string | null | undefined;
-  tag?: string;
-}) => {
-  return (await postCoreVoiceLiveOpsAction(
-    {
-      ...input,
-      sessionId: input.sessionId ?? "",
-    },
-    { actionPath: "/api/voice/live-ops/action" },
-  )) as VoiceLiveOpsActionResult;
-};
-
 export const renderVoiceLiveOpsResultHTML = (
   result: VoiceLiveOpsActionResult | null,
   error?: string | null,
@@ -1112,11 +1034,11 @@ export const mountVoiceLiveOpsPanel = (
   const timer = setInterval(render, 1_000);
 
   return {
+    render,
     close: () => {
       clearInterval(timer);
       element.removeEventListener("click", onClick);
       element.removeEventListener("input", onInput);
     },
-    render,
   };
 };

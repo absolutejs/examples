@@ -1,4 +1,4 @@
-import { mountVoiceLiveOpsPanel } from "../../shared/browser";
+import { mountVoiceLiveOpsPanel } from "../../../shared/browser";
 import type { VoiceDemoElements } from "./dom";
 import type { VoiceDemoStream } from "./streams";
 

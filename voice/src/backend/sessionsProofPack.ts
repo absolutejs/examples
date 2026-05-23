@@ -311,15 +311,15 @@ const buildDemoVoiceSessionSnapshot = async (input: {
 const demoVoiceCallDebuggerOptions = () => ({
   audit: runtimeStorage.audit,
   integrationEvents: runtimeStorage.events,
-  operationsRecordHref: ({ sessionId }: { sessionId: string }) =>
-    `/voice-operations/${encodeURIComponent(sessionId)}`,
   redact: voiceSupportArtifactRedaction,
   reviews: runtimeStorage.reviews as unknown as VoiceCallReviewStore,
-  snapshot: ({ sessionId, turnId }: { sessionId: string; turnId?: string }) =>
-    buildDemoVoiceSessionSnapshot({ sessionId, turnId }),
   store: deliveryTraceStore,
   tasks: runtimeStorage.tasks as unknown as VoiceOpsTaskStore,
   title: "AbsoluteJS Voice Call Debugger",
+  operationsRecordHref: ({ sessionId }: { sessionId: string }) =>
+    `/voice-operations/${encodeURIComponent(sessionId)}`,
+  snapshot: ({ sessionId, turnId }: { sessionId: string; turnId?: string }) =>
+    buildDemoVoiceSessionSnapshot({ sessionId, turnId }),
 });
 
 const buildLatestDemoVoiceSessionSnapshot = async () =>
@@ -350,7 +350,7 @@ const buildHealthyDemoVoiceSupportBundle = async (
   sessionSnapshot: VoiceSessionSnapshot;
   sessionId: string;
 }> => {
-  const context = input.context;
+  const {context} = input;
   const sessionId = context
     ? await context.time("supportBundle:sessionId", () =>
         resolveHealthyDemoSessionId({
@@ -450,8 +450,8 @@ const buildHealthyDemoVoiceSupportBundle = async (
 
   return {
     callDebuggerReport,
-    sessionObservabilityReport,
     sessionId,
+    sessionObservabilityReport,
     sessionSnapshot,
   };
 };
@@ -462,8 +462,6 @@ const observabilityExportOptions = () => ({
     missingSeverity: "warn" as const,
     staleSeverity: "warn" as const,
   },
-  deliveryDestinations: observabilityExportDeliveryDestinations(),
-  deliveryReceipts: observabilityExportDeliveryReceipts,
   artifacts: [
     proofArtifact({
       id: "latest-proof-pack",
@@ -535,9 +533,8 @@ const observabilityExportOptions = () => ({
   ],
   audit: runtimeStorage.audit,
   auditDeliveries: runtimeStorage.auditDeliveries,
-  callDebuggerReports: async () => [
-    await buildLatestDemoVoiceCallDebuggerReport(),
-  ],
+  deliveryDestinations: observabilityExportDeliveryDestinations(),
+  deliveryReceipts: observabilityExportDeliveryReceipts,
   links: {
     callDebugger: (sessionId: string) =>
       `/voice-call-debugger/${encodeURIComponent(sessionId)}`,
@@ -547,9 +544,12 @@ const observabilityExportOptions = () => ({
       `/api/voice/session-snapshot/${encodeURIComponent(sessionId)}`,
   },
   redact: voiceSupportArtifactRedaction,
-  sessionSnapshots: async () => [await buildLatestDemoVoiceSessionSnapshot()],
   store: deliveryTraceStore,
   traceDeliveries: runtimeStorage.traceDeliveries,
+  callDebuggerReports: async () => [
+    await buildLatestDemoVoiceCallDebuggerReport(),
+  ],
+  sessionSnapshots: async () => [await buildLatestDemoVoiceSessionSnapshot()],
 });
 
 const buildDemoObservabilityArtifactIndex =
@@ -769,10 +769,11 @@ const buildDemoVoiceProofPack = async (input: {
   const proofPackInput = await buildVoiceProofPackInput({
     context,
     generatedAt: input.generatedAt,
+    runId: input.runId,
     loadObservabilityExport: async () =>
       context.time("observabilityExport:build", async () => {
         const bundle = await supportBundle;
-        const sessionId = bundle.sessionSnapshot.sessionId;
+        const {sessionId} = bundle.sessionSnapshot;
         const operationsRecord = await context.cache(
           `operationsRecord:${sessionId}`,
           async () =>
@@ -786,6 +787,8 @@ const buildDemoVoiceProofPack = async (input: {
           callDebuggerReports: [bundle.callDebuggerReport],
           context,
           operationsRecords: [operationsRecord],
+          sessionSnapshots: [bundle.sessionSnapshot],
+          snapshot: await proofSnapshot,
           onTiming: (timing) => {
             if (process.env.VOICE_PROOF_PACK_DEBUG_TIMINGS === "1") {
               console.log(
@@ -793,8 +796,6 @@ const buildDemoVoiceProofPack = async (input: {
               );
             }
           },
-          snapshot: await proofSnapshot,
-          sessionSnapshots: [bundle.sessionSnapshot],
         });
       }),
     loadOperationsRecords: ({ supportBundle }) => {
@@ -812,8 +813,19 @@ const buildDemoVoiceProofPack = async (input: {
     loadProductionReadiness: () =>
       buildVoiceProductionReadinessReport(
         productionReadinessOptions({
+          bargeInReport,
+          browserCallProfileReadiness,
+          deliveryRuntimeSummary,
           fast: true,
           includeObservabilityExport: false,
+          proofPackContext: context,
+          providerSloReport,
+          realCallEvidenceRuntimeReadiness,
+          realCallEvidenceRuntimeWorkerReadiness,
+          realCallProfileReadiness,
+          realCallProfileRecoveryReadiness,
+          reconnectReport,
+          refresh: false,
           onTiming: (timing) => {
             if (process.env.VOICE_PROOF_PACK_DEBUG_TIMINGS === "1") {
               console.log(
@@ -821,17 +833,6 @@ const buildDemoVoiceProofPack = async (input: {
               );
             }
           },
-          bargeInReport,
-          browserCallProfileReadiness,
-          deliveryRuntimeSummary,
-          realCallEvidenceRuntimeReadiness,
-          realCallEvidenceRuntimeWorkerReadiness,
-          realCallProfileReadiness,
-          realCallProfileRecoveryReadiness,
-          proofPackContext: context,
-          providerSloReport,
-          reconnectReport,
-          refresh: false,
         }),
       ),
     loadProviderSlo: () => providerSloReport,
@@ -844,10 +845,9 @@ const buildDemoVoiceProofPack = async (input: {
         sessionSnapshots: [bundle.sessionSnapshot],
       };
     },
-    runId: input.runId,
   });
-  const productionReadiness = proofPackInput.productionReadiness;
-  const providerSlo = proofPackInput.providerSlo;
+  const {productionReadiness} = proofPackInput;
+  const {providerSlo} = proofPackInput;
   const operationsRecord = proofPackInput.operationsRecords?.[0];
   const sessionSnapshot = proofPackInput.sessionSnapshots?.[0];
   const callDebuggerReport = proofPackInput.callDebuggerReports?.[0];
@@ -1020,7 +1020,7 @@ const refreshProductionReadinessProof = () =>
             ],
             generatedAt: metadata.generatedAt,
             ok: true,
-            outputDir: ".voice-runtime/proof-trends",
+            outputDir: resolve(runtimeDirectory, "proof-trends"),
             runId: proofPack.proofPack.runId,
             summary: {
               cycles: 1,
@@ -1090,15 +1090,13 @@ const productionReadinessOptions = (
           ),
       );
     }
+
     return mediaPipelineReportPromise;
   };
+
   return {
     ...createVoiceReadinessProfile("phone-agent", {
       auditDeliveries: runtimeStorage.auditDeliveries,
-      campaignReadiness: () =>
-        timeReadinessResolver("campaignReadiness", () =>
-          runVoiceCampaignReadinessProof({ store: campaignStore }),
-        ),
       carriers: loadCarrierMatrixInputs,
       deliveryRuntime: input.deliveryRuntimeSummary
         ? () => input.deliveryRuntimeSummary!
@@ -1111,13 +1109,17 @@ const productionReadinessOptions = (
         maxAgeMs: 2 * 60 * 60 * 1000,
         store: observabilityExportDeliveryReceipts,
       },
+      traceDeliveries: runtimeStorage.traceDeliveries,
+      campaignReadiness: () =>
+        timeReadinessResolver("campaignReadiness", () =>
+          runVoiceCampaignReadinessProof({ store: campaignStore }),
+        ),
       providerRoutingContracts: () =>
         timeReadinessResolver("providerRoutingContracts", async () => [
           await runDemoProviderRoutingContract(),
           await runDemoSTTProviderRoutingContract(),
           await runDemoTTSProviderRoutingContract(),
         ]),
-      traceDeliveries: runtimeStorage.traceDeliveries,
     }),
     additionalChecks: () =>
       timeReadinessResolver("additionalChecks", async () => [
@@ -1277,6 +1279,12 @@ const productionReadinessOptions = (
               ]);
 
               return {
+                auditDeliveries: {
+                  detail: `Backed by the configured ${deliverySinkKind} audit delivery queue.`,
+                  href: "/audit/deliveries",
+                  source: deliverySinkKind,
+                  sourceLabel: "Audit delivery sink evidence",
+                },
                 bargeIn: {
                   detail:
                     bargeInReport.source === "live"
@@ -1286,18 +1294,12 @@ const productionReadinessOptions = (
                   source: bargeInReport.source,
                   sourceLabel: bargeInReport.sourceLabel,
                 },
-                auditDeliveries: {
-                  detail: `Backed by the configured ${deliverySinkKind} audit delivery queue.`,
-                  href: "/audit/deliveries",
-                  source: deliverySinkKind,
-                  sourceLabel: "Audit delivery sink evidence",
-                },
-                liveLatency: {
+                browserMedia: {
                   detail:
-                    "Captured from persisted browser live-latency trace events.",
-                  href: "/live-latency",
-                  source: "browser",
-                  sourceLabel: "Browser live-latency traces",
+                    "Generated from browser WebRTC-style stats and checks live audio tracks, selected candidate pairs, packet loss, RTT, jitter, and byte flow. In production this can be fed directly from collectMediaWebRTCStatsReport(peerConnection.getStats()).",
+                  href: "/voice/browser-media",
+                  source: "webrtc-stats",
+                  sourceLabel: "Browser WebRTC stats proof",
                 },
                 deliveryRuntime: {
                   detail:
@@ -1306,33 +1308,12 @@ const productionReadinessOptions = (
                   source: deliverySinkKind,
                   sourceLabel: "Delivery runtime queue summary",
                 },
-                providerRoutingContracts: {
+                liveLatency: {
                   detail:
-                    "Generated from code-owned LLM, STT, and TTS routing contracts.",
-                  href: "/api/provider-routing-contract",
-                  source: "contract",
-                  sourceLabel: "Provider routing contract reports",
-                },
-                providerContractMatrix: {
-                  detail:
-                    "Generated by createVoiceProviderContractMatrixPreset from the configured LLM, STT, and TTS providers.",
-                  href: "/provider-contracts",
-                  source: "preset",
-                  sourceLabel: "Provider contract matrix preset",
-                },
-                providerOrchestration: {
-                  detail:
-                    "Generated from createVoiceProviderOrchestrationProfile and deploy-gates live-call, STT, TTS, and background-summary provider policy.",
-                  href: "/voice/provider-orchestration",
-                  source: "profile",
-                  sourceLabel: "Provider orchestration profile proof",
-                },
-                providerSlo: {
-                  detail:
-                    "Generated from provider routing traces and checks latency, p95, timeout, fallback, and unresolved-error budgets.",
-                  href: "/voice/provider-slos",
-                  source: "trace",
-                  sourceLabel: "Provider SLO trace evidence",
+                    "Captured from persisted browser live-latency trace events.",
+                  href: "/live-latency",
+                  source: "browser",
+                  sourceLabel: "Browser live-latency traces",
                 },
                 mediaPipeline: {
                   detail:
@@ -1340,34 +1321,6 @@ const productionReadinessOptions = (
                   href: "/voice/media-pipeline",
                   source: "media-report",
                   sourceLabel: "Media pipeline quality proof",
-                },
-                browserMedia: {
-                  detail:
-                    "Generated from browser WebRTC-style stats and checks live audio tracks, selected candidate pairs, packet loss, RTT, jitter, and byte flow. In production this can be fed directly from collectMediaWebRTCStatsReport(peerConnection.getStats()).",
-                  href: "/voice/browser-media",
-                  source: "webrtc-stats",
-                  sourceLabel: "Browser WebRTC stats proof",
-                },
-                telephonyMedia: {
-                  detail:
-                    "Generated from carrier media payload serializers and checks Twilio, Telnyx, and Plivo packet parsing into MediaFrame plus outbound envelope serialization.",
-                  href: "/voice/telephony-media",
-                  source: "carrier-media-serializers",
-                  sourceLabel: "Telephony media serializer proof",
-                },
-                telephonyWebhookSecurity: {
-                  detail:
-                    "Generated from the carrier webhook security preset and validates verification, replay protection, idempotency, and persistent security stores.",
-                  href: "/api/voice/telephony/webhook-security",
-                  source: "security-preset",
-                  sourceLabel: "Carrier webhook security evidence",
-                },
-                proofTrends: {
-                  detail:
-                    "Generated by repeated proof cycles over provider SLOs, turn latency, live latency, ops recovery, and readiness.",
-                  href: "/voice/proof-trends",
-                  source: "trend-artifact",
-                  sourceLabel: "Sustained proof trend evidence",
                 },
                 observabilityExport: {
                   detail:
@@ -1392,6 +1345,41 @@ const productionReadinessOptions = (
                     : "file",
                   sourceLabel: "Observability export replay",
                 },
+                proofTrends: {
+                  detail:
+                    "Generated by repeated proof cycles over provider SLOs, turn latency, live latency, ops recovery, and readiness.",
+                  href: "/voice/proof-trends",
+                  source: "trend-artifact",
+                  sourceLabel: "Sustained proof trend evidence",
+                },
+                providerContractMatrix: {
+                  detail:
+                    "Generated by createVoiceProviderContractMatrixPreset from the configured LLM, STT, and TTS providers.",
+                  href: "/provider-contracts",
+                  source: "preset",
+                  sourceLabel: "Provider contract matrix preset",
+                },
+                providerOrchestration: {
+                  detail:
+                    "Generated from createVoiceProviderOrchestrationProfile and deploy-gates live-call, STT, TTS, and background-summary provider policy.",
+                  href: "/voice/provider-orchestration",
+                  source: "profile",
+                  sourceLabel: "Provider orchestration profile proof",
+                },
+                providerRoutingContracts: {
+                  detail:
+                    "Generated from code-owned LLM, STT, and TTS routing contracts.",
+                  href: "/api/provider-routing-contract",
+                  source: "contract",
+                  sourceLabel: "Provider routing contract reports",
+                },
+                providerSlo: {
+                  detail:
+                    "Generated from provider routing traces and checks latency, p95, timeout, fallback, and unresolved-error budgets.",
+                  href: "/voice/provider-slos",
+                  source: "trace",
+                  sourceLabel: "Provider SLO trace evidence",
+                },
                 reconnectContracts: {
                   detail:
                     reconnectReport.source === "live"
@@ -1400,6 +1388,20 @@ const productionReadinessOptions = (
                   href: "/voice/reconnect-contract",
                   source: reconnectReport.source,
                   sourceLabel: reconnectReport.sourceLabel,
+                },
+                telephonyMedia: {
+                  detail:
+                    "Generated from carrier media payload serializers and checks Twilio, Telnyx, and Plivo packet parsing into MediaFrame plus outbound envelope serialization.",
+                  href: "/voice/telephony-media",
+                  source: "carrier-media-serializers",
+                  sourceLabel: "Telephony media serializer proof",
+                },
+                telephonyWebhookSecurity: {
+                  detail:
+                    "Generated from the carrier webhook security preset and validates verification, replay protection, idempotency, and persistent security stores.",
+                  href: "/api/voice/telephony/webhook-security",
+                  source: "security-preset",
+                  sourceLabel: "Carrier webhook security evidence",
                 },
                 traceDeliveries: {
                   detail: `Backed by the configured ${deliverySinkKind} trace delivery queue.`,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FRAMEWORKS } from "../../../shared/demo";
+import { FRAMEWORKS } from "../../../constants/navigation";
 </script>
 
 <template>

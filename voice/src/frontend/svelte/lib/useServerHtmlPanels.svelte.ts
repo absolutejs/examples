@@ -33,7 +33,7 @@ import {
   fetchVoiceRealCallEvidenceWorkerHealth,
   formatErrorMessage,
   renderVoiceRealCallEvidenceWorkerHealthHTML,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 
 const REAL_CALL_WORKER_INTERVAL_MS = 10_000;
 const REAL_CALL_WORKER_DESCRIPTION =
@@ -301,7 +301,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
   );
 
   const handleTurnLatencyClick = (event: MouseEvent) => {
-    const target = event.target;
+    const {target} = event;
     if (
       target instanceof Element &&
       target.closest("[data-absolute-voice-turn-latency-proof]")
@@ -577,6 +577,12 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
   };
 
   return {
+    handleTurnLatencyClick,
+    providerSimulation,
+    refreshCampaignDialerProof,
+    runCampaignDialerProof,
+    start,
+    stop,
     get callDebuggerHTML() {
       return callDebuggerHTML;
     },
@@ -589,7 +595,6 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     get deliveryRuntimeHTML() {
       return deliveryRuntimeHTML;
     },
-    handleTurnLatencyClick,
     get opsActionCenterHTML() {
       return opsActionCenterHTML;
     },
@@ -614,7 +619,6 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     get providerContractsHTML() {
       return providerContractsHTML;
     },
-    providerSimulation,
     get providerSimulationHTML() {
       return providerSimulationHTML;
     },
@@ -630,8 +634,6 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     get reconnectEvidenceHTML() {
       return reconnectEvidenceHTML;
     },
-    refreshCampaignDialerProof,
-    runCampaignDialerProof,
     get routingStatusHTML() {
       return routingStatusHTML;
     },
@@ -641,8 +643,6 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     get sessionSnapshotHTML() {
       return sessionSnapshotHTML;
     },
-    start,
-    stop,
     get traceTimelineHTML() {
       return traceTimelineHTML;
     },

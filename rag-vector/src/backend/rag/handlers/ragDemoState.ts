@@ -166,6 +166,7 @@ const ACTIVE_BACKEND_COOKIE = "absolute_rag_mode";
 
 const getEnv = (name: string) => {
   const value = process.env[name];
+
   return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : undefined;
@@ -178,6 +179,7 @@ const getEnvNumber = (name: string) => {
   }
 
   const parsed = Number(value);
+
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
@@ -211,6 +213,7 @@ const toMessageTimestamp = (value: unknown) => {
 
   if (typeof value === "string") {
     const parsed = Date.parse(value);
+
     return Number.isFinite(parsed) ? parsed : undefined;
   }
 
@@ -493,6 +496,7 @@ const buildFixtureStorageDocuments = async ({
         const bytes = await Bun.file(
           join(process.cwd(), "corpus", relativePath),
         ).bytes();
+
         return {
           content: Buffer.from(bytes).toString("base64"),
           contentType: "text/markdown",
@@ -523,9 +527,9 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
   ).toString();
   const discoveryCounts = {
     canonical_dedupe_applied: 0,
-    robots_blocked: 0,
     nofollow_skipped: 0,
     noindex_skipped: 0,
+    robots_blocked: 0,
   };
   const blockedPaths = new Set<string>();
   const trackDiagnostic = (code: keyof typeof discoveryCounts) => {
@@ -541,6 +545,7 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
       "fbclid",
       "ref",
     ].forEach((key) => next.searchParams.delete(key));
+
     return next.toString();
   };
   const extractLinks = (html: string, baseUrl: string) =>
@@ -603,9 +608,9 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
   const rootHtml = await rootResponse.text();
   const discovered = new Map<string, Record<string, unknown>>();
   discovered.set(siteRoot, {
-    sourceUrl: siteRoot,
-    siteUrl: siteRoot,
     siteTitle: "Site discovery fixture",
+    siteUrl: siteRoot,
+    sourceUrl: siteRoot,
   });
   for (const url of [...sitemapEntries, ...extractLinks(rootHtml, siteRoot)]) {
     const normalized = normalizeDiscoveryUrl(url);
@@ -613,9 +618,9 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
       trackDiagnostic("canonical_dedupe_applied");
     }
     discovered.set(normalized, {
-      sourceUrl: normalized,
-      siteUrl: siteRoot,
       siteTitle: "Site discovery fixture",
+      siteUrl: siteRoot,
+      sourceUrl: normalized,
     });
   }
 
@@ -668,22 +673,22 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
       trackDiagnostic("nofollow_skipped");
     }
     urlInputs.push({
-      url,
+      metadata,
       source: `sync/site/${urlObject.pathname.replace(/^\//, "") || "index.html"}`,
       title:
         html.match(/<title>([^<]+)<\/title>/i)?.[1] ??
         urlObject.pathname.split("/").filter(Boolean).at(-1) ??
         "Site discovery page",
-      metadata,
+      url,
     });
   }
 
   const loaded = await loadRAGDocumentsFromURLs({ urls: urlInputs });
   const diagnosticLabels: Record<keyof typeof discoveryCounts, string> = {
     canonical_dedupe_applied: "Canonical dedupe applied",
-    robots_blocked: "Robots blocked",
     nofollow_skipped: "Nofollow skipped",
     noindex_skipped: "Noindex skipped",
+    robots_blocked: "Robots blocked",
   };
   const entries = Object.entries(discoveryCounts)
     .filter(([, count]) => count > 0)
@@ -694,7 +699,6 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
     }));
 
   return {
-    documents: loaded.documents,
     diagnostics:
       entries.length > 0
         ? {
@@ -702,6 +706,7 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
             summary: entries.map((entry) => entry.summary).join(" · "),
           }
         : undefined,
+    documents: loaded.documents,
     metadata: {
       discoveredUrlCount: discovered.size,
       loadedUrlCount: urlInputs.length,
@@ -712,8 +717,7 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
 
 const buildEmailSyncFixtureDocuments = async (
   fixture: DemoEmailSyncFixture,
-) => {
-  return buildEmailSyncDocuments({
+) => buildEmailSyncDocuments({
     client: createRAGStaticEmailSyncClient({
       messages: [
         {
@@ -737,7 +741,6 @@ const buildEmailSyncFixtureDocuments = async (
     provider: fixture.provider,
     sourceId: fixture.id,
   });
-};
 
 export const createRagDemoState = ({
   ragDb,
@@ -853,6 +856,7 @@ export const createRagDemoState = ({
 
     try {
       const parsed = JSON.parse(record.value);
+
       return typeof parsed?.bindingId === "string" &&
         parsed.bindingId.trim().length > 0
         ? parsed.bindingId.trim()
@@ -963,10 +967,10 @@ export const createRagDemoState = ({
   `);
 
   const latestSeedMsByMode: Record<DemoBackendMode, number> = {
-    "sqlite-native": 0,
-    "sqlite-fallback": 0,
-    postgres: 0,
     pinecone: 0,
+    postgres: 0,
+    "sqlite-fallback": 0,
+    "sqlite-native": 0,
   };
   const syncStatePath = join(
     process.cwd(),
@@ -977,11 +981,11 @@ export const createRagDemoState = ({
   let syncStateLoaded = false;
   const syncSourceDefinitions: DemoSyncSourceDefinition[] = [
     {
-      id: "sync-directory",
-      label: "Directory sync fixtures",
-      kind: "directory",
       description:
         "Watches a stuffed local folder and reconciles adds, updates, and deletions back into the indexed document set on a scheduler.",
+      id: "sync-directory",
+      kind: "directory",
+      label: "Directory sync fixtures",
       metadata: {
         persistence: syncStatePath,
         schedule: "every 15 seconds",
@@ -1002,11 +1006,11 @@ export const createRagDemoState = ({
       },
     },
     {
-      id: "sync-url",
-      label: "URL sync fixture",
-      kind: "url",
       description:
         "Fetches a local AbsoluteJS route and reindexes it through the same sync contract used by the core RAG plugin.",
+      id: "sync-url",
+      kind: "url",
+      label: "URL sync fixture",
       metadata: {
         persistence: syncStatePath,
         schedule: "manual",
@@ -1014,23 +1018,24 @@ export const createRagDemoState = ({
       target: "/demo/sync-fixtures/workflow-source.md",
       load: async () => {
         const port = process.env.RAG_SERVICE_PORT ?? process.env.PORT ?? "3001";
+
         return loadRAGDocumentsFromURLs({
           urls: [
             {
-              url: `http://127.0.0.1:${port}/demo/sync-fixtures/workflow-source.md`,
               source: "sync/url/workflow-source.md",
               title: "Workflow Sync Source",
+              url: `http://127.0.0.1:${port}/demo/sync-fixtures/workflow-source.md`,
             },
           ],
         });
       },
     },
     {
-      id: "sync-site-discovery",
-      label: "Site discovery fixture",
-      kind: "url",
       description:
         "Discovers local site pages through robots, sitemap, canonical, nofollow, and noindex fixture routes so the ops surface can show discovery diagnostics on the same sync cards as every other source.",
+      id: "sync-site-discovery",
+      kind: "url",
+      label: "Site discovery fixture",
       metadata: {
         persistence: syncStatePath,
         schedule: "manual",
@@ -1039,27 +1044,27 @@ export const createRagDemoState = ({
       load: async () => buildSiteDiscoveryFixtureDocuments(),
     },
     {
-      id: "sync-storage",
-      label:
-        storageMode === "live"
-          ? "Storage sync account"
-          : "Storage sync fixture",
-      kind: "storage",
       description:
         storageMode === "live"
           ? "Runs the real Bun-native S3 client against the configured bucket through the same AbsoluteJS sync surface used by the fixture path."
           : "Simulates Bun-native S3 object sync on the same ops surface used for directories and URLs, so storage-backed knowledge bases stay first-class in the demo.",
+      id: "sync-storage",
+      kind: "storage",
+      label:
+        storageMode === "live"
+          ? "Storage sync account"
+          : "Storage sync fixture",
       metadata: {
         accountMode: storageMode,
+        liveReady:
+          storageMode === "live"
+            ? "Using a real S3-compatible bucket from env configuration."
+            : "Ready for a real S3 or R2 bucket through Bun's native S3 client.",
         persistence: syncStatePath,
         provider: storageEndpoint
           ? "S3-compatible storage"
           : "Amazon S3 / Cloudflare R2",
         schedule: "manual",
-        liveReady:
-          storageMode === "live"
-            ? "Using a real S3-compatible bucket from env configuration."
-            : "Ready for a real S3 or R2 bucket through Bun's native S3 client.",
       },
       target:
         storageMode === "live"
@@ -1101,6 +1106,7 @@ export const createRagDemoState = ({
             resolvedKeys.map(async (key) => {
               const file = client.file(key);
               const bytes = new Uint8Array(await file.arrayBuffer());
+
               return {
                 content: Buffer.from(bytes).toString("base64"),
                 contentType: key.endsWith(".md") ? "text/markdown" : undefined,
@@ -1119,24 +1125,21 @@ export const createRagDemoState = ({
       },
     },
     {
-      id: "sync-email-gmail",
-      label:
-        gmailMode === "fixture"
-          ? "Gmail sync fixture"
-          : gmailMode === "live-linked"
-            ? "Gmail linked sync account"
-            : "Gmail sync account",
-      kind: "email",
       description:
         gmailMode !== "fixture"
           ? gmailMode === "live-linked"
             ? "Runs the Gmail adapter against a durable linked-provider credential resolved through auth, so the demo proves the connector path without handing raw tokens to RAG."
             : "Runs the real Gmail adapter against the configured account through the same AbsoluteJS sync surface used by the fixture path."
           : "Shows the Gmail adapter path with a support mailbox thread and attachment lineage, so switching to a real OAuth-backed Gmail account is a straight adapter swap instead of a different workflow.",
+      id: "sync-email-gmail",
+      kind: "email",
+      label:
+        gmailMode === "fixture"
+          ? "Gmail sync fixture"
+          : gmailMode === "live-linked"
+            ? "Gmail linked sync account"
+            : "Gmail sync account",
       metadata: {
-        persistence: syncStatePath,
-        schedule: "manual",
-        provider: "Gmail",
         accountMode: gmailMode,
         liveReady:
           gmailMode === "live-linked"
@@ -1144,6 +1147,9 @@ export const createRagDemoState = ({
             : gmailMode === "live-token"
               ? "Using a real Gmail OAuth token from env configuration."
               : "Ready for a real Gmail OAuth token and mailbox query.",
+        persistence: syncStatePath,
+        provider: "Gmail",
+        schedule: "manual",
       },
       target: buildEmailSyncTarget(
         "Gmail",
@@ -1169,6 +1175,7 @@ export const createRagDemoState = ({
             getSelectedBindingId(context.userSub, "sync-email-gmail"),
           );
           const resolver = await createGmailLinkedResolver();
+
           return buildEmailSyncDocuments({
             client: createRAGLinkedGmailEmailSyncClient({
               labelIds: gmailLabelIds,
@@ -1214,25 +1221,25 @@ export const createRagDemoState = ({
       },
     },
     {
-      id: "sync-contacts-google",
-      label:
-        googleContactsMode === "live-linked"
-          ? "Google Contacts linked account"
-          : "Google Contacts sync fixture",
-      kind: "custom",
       description:
         googleContactsMode === "live-linked"
           ? "Runs the Google Contacts connector against a durable linked-provider binding resolved through auth-backed storage."
           : "Shows the Google Contacts connector path with fixture contact records so switching to a real linked Google address book is a straight connector swap.",
+      id: "sync-contacts-google",
+      kind: "custom",
+      label:
+        googleContactsMode === "live-linked"
+          ? "Google Contacts linked account"
+          : "Google Contacts sync fixture",
       metadata: {
-        persistence: syncStatePath,
-        schedule: "manual",
-        provider: "Google Contacts",
         accountMode: googleContactsMode,
         liveReady:
           googleContactsMode === "live-linked"
             ? "Using a durable Google Contacts linked-provider binding resolved through auth-backed storage."
             : "Ready for a real linked Google Contacts binding.",
+        persistence: syncStatePath,
+        provider: "Google Contacts",
+        schedule: "manual",
       },
       target: buildConnectorSyncTarget(
         "google_contacts",
@@ -1259,6 +1266,7 @@ export const createRagDemoState = ({
             getSelectedBindingId(context.userSub, "sync-contacts-google"),
           );
           const resolver = await createGoogleContactsLinkedResolver();
+
           return buildLinkedConnectorDocuments({
             currentMetadata: syncSourceRecord("sync-contacts-google")?.metadata,
             requiredScopes: [GOOGLE_CONTACTS_READONLY_SCOPE],
@@ -1273,25 +1281,25 @@ export const createRagDemoState = ({
       },
     },
     {
-      id: "sync-social-facebook",
-      label:
-        facebookMode === "live-linked"
-          ? "Facebook Page linked account"
-          : "Facebook Page sync fixture",
-      kind: "custom",
       description:
         facebookMode === "live-linked"
           ? "Runs the Facebook Page connector against a durable Meta linked-provider binding resolved through auth-backed storage."
           : "Shows the Facebook Page connector path with a fixture post so switching to a real Meta-linked Page is a straight connector swap.",
+      id: "sync-social-facebook",
+      kind: "custom",
+      label:
+        facebookMode === "live-linked"
+          ? "Facebook Page linked account"
+          : "Facebook Page sync fixture",
       metadata: {
-        persistence: syncStatePath,
-        schedule: "manual",
-        provider: "Facebook Page",
         accountMode: facebookMode,
         liveReady:
           facebookMode === "live-linked"
             ? "Using a durable Facebook Page linked-provider binding resolved through auth-backed storage."
             : "Ready for a real Meta-linked Facebook Page binding.",
+        persistence: syncStatePath,
+        provider: "Facebook Page",
+        schedule: "manual",
       },
       target: buildConnectorSyncTarget(
         "facebook",
@@ -1318,6 +1326,7 @@ export const createRagDemoState = ({
             getSelectedBindingId(context.userSub, "sync-social-facebook"),
           );
           const resolver = await createMetaLinkedResolver();
+
           return buildLinkedConnectorDocuments({
             currentMetadata: syncSourceRecord("sync-social-facebook")?.metadata,
             requiredScopes: [...FACEBOOK_PAGE_READ_SCOPES],
@@ -1332,25 +1341,25 @@ export const createRagDemoState = ({
       },
     },
     {
-      id: "sync-social-instagram",
-      label:
-        instagramMode === "live-linked"
-          ? "Instagram business linked account"
-          : "Instagram business sync fixture",
-      kind: "custom",
       description:
         instagramMode === "live-linked"
           ? "Runs the Instagram business connector against a durable Meta linked-provider binding resolved through auth-backed storage."
           : "Shows the Instagram business connector path with fixture media so switching to a real linked business account is a straight connector swap.",
+      id: "sync-social-instagram",
+      kind: "custom",
+      label:
+        instagramMode === "live-linked"
+          ? "Instagram business linked account"
+          : "Instagram business sync fixture",
       metadata: {
-        persistence: syncStatePath,
-        schedule: "manual",
-        provider: "Instagram Business",
         accountMode: instagramMode,
         liveReady:
           instagramMode === "live-linked"
             ? "Using a durable Instagram business linked-provider binding resolved through auth-backed storage."
             : "Ready for a real Meta-linked Instagram business binding.",
+        persistence: syncStatePath,
+        provider: "Instagram Business",
+        schedule: "manual",
       },
       target: buildConnectorSyncTarget(
         "instagram",
@@ -1374,6 +1383,7 @@ export const createRagDemoState = ({
 
           const selection = resolveCurrentUserSelection(context.userSub);
           const resolver = await createMetaLinkedResolver();
+
           return buildLinkedConnectorDocuments({
             currentMetadata: syncSourceRecord("sync-social-instagram")
               ?.metadata,
@@ -1389,22 +1399,22 @@ export const createRagDemoState = ({
       },
     },
     {
-      id: "sync-email-graph",
-      label: graphMode === "live" ? "Graph sync account" : "Graph sync fixture",
-      kind: "email",
       description:
         graphMode === "live"
           ? "Runs the real Microsoft Graph adapter against the configured account through the same AbsoluteJS sync surface used by the fixture path."
           : "Shows the Microsoft Graph adapter path with thread-aware mailbox sync and attachment lineage, so enterprise Outlook/365 mail can use the same AbsoluteJS sync surface.",
+      id: "sync-email-graph",
+      kind: "email",
+      label: graphMode === "live" ? "Graph sync account" : "Graph sync fixture",
       metadata: {
-        persistence: syncStatePath,
-        schedule: "manual",
-        provider: "Microsoft Graph",
         accountMode: graphMode,
         liveReady:
           graphMode === "live"
             ? "Using a real Microsoft Graph OAuth token from env configuration."
             : "Ready for a real Microsoft Graph OAuth token and mailbox query.",
+        persistence: syncStatePath,
+        provider: "Microsoft Graph",
+        schedule: "manual",
       },
       target: buildEmailSyncTarget(
         "Microsoft Graph",
@@ -1448,22 +1458,22 @@ export const createRagDemoState = ({
             }),
     },
     {
-      id: "sync-email-imap",
-      label: imapMode === "live" ? "IMAP sync account" : "IMAP sync fixture",
-      kind: "email",
       description:
         imapMode === "live"
           ? "Runs the real IMAP adapter against the configured mailbox through the same AbsoluteJS sync surface used by the fixture path."
           : "Shows the protocol-level IMAP adapter path, so a generic mailbox can sync through the same AbsoluteJS email workflow without being locked to one hosted provider.",
+      id: "sync-email-imap",
+      kind: "email",
+      label: imapMode === "live" ? "IMAP sync account" : "IMAP sync fixture",
       metadata: {
-        persistence: syncStatePath,
-        schedule: "manual",
-        provider: "IMAP",
         accountMode: imapMode,
         liveReady:
           imapMode === "live"
             ? "Using a real IMAP host and mailbox from env configuration."
             : "Ready for a real IMAP host, mailbox, and credentials.",
+        persistence: syncStatePath,
+        provider: "IMAP",
+        schedule: "manual",
       },
       target: buildEmailSyncTarget(
         "IMAP",
@@ -1511,14 +1521,14 @@ export const createRagDemoState = ({
   let syncSources: RAGSyncSourceRecord[] = syncSourceDefinitions.map(
     (source) =>
       ({
-        id: source.id,
-        label: source.label,
-        kind: source.kind,
         description: source.description,
-        metadata: source.metadata,
-        target: source.target,
-        status: "idle",
         diagnostics: undefined,
+        id: source.id,
+        kind: source.kind,
+        label: source.label,
+        metadata: source.metadata,
+        status: "idle",
+        target: source.target,
       }) satisfies RAGSyncSourceRecord,
   );
 
@@ -1590,7 +1600,7 @@ export const createRagDemoState = ({
     request: Request,
     query?: Record<string, unknown>,
   ): DemoBackendMode => {
-    const searchParams = new URL(request.url).searchParams;
+    const {searchParams} = new URL(request.url);
     const queryMode = query?.mode ?? searchParams.get("mode");
     if (isBackendMode(queryMode) && ragBackends.backends[queryMode].available) {
       return queryMode;
@@ -1625,6 +1635,7 @@ export const createRagDemoState = ({
 
     try {
       const parsed = JSON.parse(value) as Record<string, unknown>;
+
       return parsed && typeof parsed === "object" ? parsed : {};
     } catch {
       return {} as Record<string, unknown>;
@@ -1656,15 +1667,15 @@ export const createRagDemoState = ({
             typeof record.label === "string" && record.label.trim().length > 0
               ? record.label
               : undefined,
-          text:
-            typeof record.text === "string" && record.text.trim().length > 0
-              ? record.text
-              : undefined,
           metadata:
             record.metadata &&
             typeof record.metadata === "object" &&
             !Array.isArray(record.metadata)
               ? (record.metadata as Record<string, unknown>)
+              : undefined,
+          text:
+            typeof record.text === "string" && record.text.trim().length > 0
+              ? record.text
               : undefined,
         } satisfies RagSeedEmbeddingVariant,
       ];
@@ -1683,6 +1694,7 @@ export const createRagDemoState = ({
 
     const nextMetadata = { ...metadata };
     delete nextMetadata[EMBEDDING_VARIANTS_METADATA_KEY];
+
     return {
       embeddingVariants,
       metadata: nextMetadata,
@@ -1720,7 +1732,7 @@ export const createRagDemoState = ({
     const chunkCount = toNumber(
       row.chunk_count,
       countPreparedChunks(
-        { id, text, title, source, format, chunkStrategy, kind },
+        { chunkStrategy, format, id, kind, source, text, title },
         kind,
       ),
     );
@@ -1732,13 +1744,13 @@ export const createRagDemoState = ({
       createdAt,
       embeddingVariants,
       format,
-      updatedAt,
       id,
       kind,
+      metadata,
       source,
       text,
       title,
-      metadata,
+      updatedAt,
     };
   };
 
@@ -1766,15 +1778,15 @@ export const createRagDemoState = ({
   };
 
   const toSeedDocument = (doc: DemoDocument): RagSeedDocument => ({
-    id: doc.id,
-    source: doc.source,
-    title: doc.title,
-    text: doc.text,
-    format: doc.format,
     chunkStrategy: doc.chunkStrategy,
+    embeddingVariants: doc.embeddingVariants,
+    format: doc.format,
+    id: doc.id,
     kind: doc.kind,
     metadata: doc.metadata,
-    embeddingVariants: doc.embeddingVariants,
+    source: doc.source,
+    text: doc.text,
+    title: doc.title,
   });
 
   const upsertDocument = (document: {
@@ -1803,19 +1815,19 @@ export const createRagDemoState = ({
         : toNumber(document.createdAt, now);
 
     documentUpsertStatement.run({
+      $chunkCount: document.chunkCount,
+      $chunkSize: chunkSize,
+      $chunkStrategy: document.chunkStrategy,
+      $createdAt: createdAt,
+      $format: document.format,
       $id: document.id,
       $kind: document.kind,
-      $title: document.title,
-      $source: document.source,
-      $text: document.text,
-      $format: document.format,
-      $chunkStrategy: document.chunkStrategy,
-      $chunkSize: chunkSize,
-      $chunkCount: document.chunkCount,
       $metadataJson: JSON.stringify(
         mergeStoredMetadata(document.metadata, document.embeddingVariants),
       ),
-      $createdAt: createdAt,
+      $source: document.source,
+      $text: document.text,
+      $title: document.title,
       $updatedAt: now,
     });
   };
@@ -1829,6 +1841,8 @@ export const createRagDemoState = ({
   const countPreparedChunksForSync = (document: RAGIngestDocument) =>
     countPreparedChunks(
       {
+        chunkStrategy: toChunkingStrategy(document.chunking?.strategy),
+        format: toContentFormat(document.format),
         id:
           document.id ??
           hashValue(document.source ?? document.title ?? document.text).slice(
@@ -1839,8 +1853,6 @@ export const createRagDemoState = ({
         source: toSafeText(document.source, "sync/document.txt"),
         text: document.text,
         title: toSafeText(document.title, "Synced document"),
-        format: toContentFormat(document.format),
-        chunkStrategy: toChunkingStrategy(document.chunking?.strategy),
       },
       "custom",
     );
@@ -1862,7 +1874,7 @@ export const createRagDemoState = ({
     return value
       .filter(
         (entry): entry is DemoSyncRunHistoryEntry =>
-          !!entry &&
+          Boolean(entry) &&
           typeof entry === "object" &&
           typeof (entry as DemoSyncRunHistoryEntry).trigger === "string" &&
           typeof (entry as DemoSyncRunHistoryEntry).status === "string" &&
@@ -2029,28 +2041,29 @@ export const createRagDemoState = ({
         const existing = persisted.find(
           (record: RAGSyncSourceRecord) => record.id === definition.id,
         );
+
         return {
-          id: definition.id,
-          label: definition.label,
-          kind: definition.kind,
+          chunkCount: existing?.chunkCount,
+          consecutiveFailures: existing?.consecutiveFailures,
           description: definition.description,
-          target: definition.target,
+          diagnostics: existing?.diagnostics,
+          documentCount: existing?.documentCount,
+          id: definition.id,
+          kind: definition.kind,
+          label: definition.label,
+          lastError: existing?.lastError,
+          lastStartedAt: existing?.lastStartedAt,
+          lastSuccessfulSyncAt: existing?.lastSuccessfulSyncAt,
+          lastSyncDurationMs: existing?.lastSyncDurationMs,
+          lastSyncedAt: existing?.lastSyncedAt,
           metadata: await buildSyncMetadataAsync(
             definition,
             existing?.metadata,
           ),
-          status: existing?.status ?? "idle",
-          lastError: existing?.lastError,
-          lastStartedAt: existing?.lastStartedAt,
-          lastSuccessfulSyncAt: existing?.lastSuccessfulSyncAt,
-          lastSyncedAt: existing?.lastSyncedAt,
-          lastSyncDurationMs: existing?.lastSyncDurationMs,
-          consecutiveFailures: existing?.consecutiveFailures,
-          retryAttempts: existing?.retryAttempts,
           nextRetryAt: existing?.nextRetryAt,
-          documentCount: existing?.documentCount,
-          chunkCount: existing?.chunkCount,
-          diagnostics: existing?.diagnostics,
+          retryAttempts: existing?.retryAttempts,
+          status: existing?.status ?? "idle",
+          target: definition.target,
         } satisfies RAGSyncSourceRecord;
       }),
     );
@@ -2071,7 +2084,7 @@ export const createRagDemoState = ({
     await ensureSyncSourcesLoaded();
     const definition = syncSourceDefinitions.find((source) => source.id === id);
     if (!definition) {
-      return { ok: false as const, error: `Unknown sync source ${id}` };
+      return { error: `Unknown sync source ${id}`, ok: false as const };
     }
 
     const startedAt = Date.now();
@@ -2079,10 +2092,10 @@ export const createRagDemoState = ({
     const trigger = resolveSyncTrigger(definition, options);
     replaceSyncSourceRecord({
       ...(currentRecord ?? {
-        id: definition.id,
-        label: definition.label,
-        kind: definition.kind,
         description: definition.description,
+        id: definition.id,
+        kind: definition.kind,
+        label: definition.label,
         metadata: definition.metadata,
         target: definition.target,
       }),
@@ -2136,25 +2149,25 @@ export const createRagDemoState = ({
           existing?.id ??
           `sync-${definition.id}-${hashValue(syncKey).slice(0, 12)}`;
         upsertDocument({
-          id: documentId,
-          kind: "custom",
-          title: toSafeText(
-            document.title,
-            syncKey.split("/").at(-1) ?? documentId,
-          ),
-          source: syncKey,
-          text: document.text,
-          format: toContentFormat(document.format),
-          chunkStrategy,
           chunkCount,
           chunkSize: RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE,
+          chunkStrategy,
           createdAt: existing?.createdAt,
+          format: toContentFormat(document.format),
+          id: documentId,
+          kind: "custom",
           metadata: {
             ...(document.metadata ?? {}),
             syncFingerprint: fingerprint,
             syncKey,
             syncSourceId: definition.id,
           },
+          source: syncKey,
+          text: document.text,
+          title: toSafeText(
+            document.title,
+            syncKey.split("/").at(-1) ?? documentId,
+          ),
         });
         changed = true;
       }
@@ -2178,33 +2191,33 @@ export const createRagDemoState = ({
 
       const finishedAt = Date.now();
       const nextRecord: RAGSyncSourceRecord = {
-        id: definition.id,
-        label: definition.label,
-        kind: definition.kind,
+        chunkCount: totalChunkCount,
+        consecutiveFailures: 0,
         description: definition.description,
+        diagnostics: loaded.diagnostics,
+        documentCount: loaded.documents.length,
+        id: definition.id,
+        kind: definition.kind,
+        label: definition.label,
+        lastSuccessfulSyncAt: finishedAt,
+        lastSyncDurationMs: finishedAt - startedAt,
+        lastSyncedAt: finishedAt,
         metadata: await buildSyncMetadataAsync(
           definition,
           appendSyncHistory(definition, syncSourceRecord(id)?.metadata, {
-            trigger,
-            status: "completed",
-            startedAt,
-            finishedAt,
-            durationMs: finishedAt - startedAt,
-            documentCount: loaded.documents.length,
             chunkCount: totalChunkCount,
+            documentCount: loaded.documents.length,
+            durationMs: finishedAt - startedAt,
+            finishedAt,
+            startedAt,
+            status: "completed",
+            trigger,
           }),
           loaded.metadata ?? {},
           options?.userSub,
         ),
-        target: definition.target,
         status: "completed",
-        diagnostics: loaded.diagnostics,
-        lastSuccessfulSyncAt: finishedAt,
-        consecutiveFailures: 0,
-        lastSyncedAt: finishedAt,
-        lastSyncDurationMs: finishedAt - startedAt,
-        documentCount: loaded.documents.length,
-        chunkCount: totalChunkCount,
+        target: definition.target,
       };
       replaceSyncSourceRecord(nextRecord);
       await persistSyncSources();
@@ -2217,38 +2230,38 @@ export const createRagDemoState = ({
       const message = error instanceof Error ? error.message : "Sync failed";
       const failedAt = Date.now();
       const failedRecord: RAGSyncSourceRecord = {
-        id: definition.id,
-        label: definition.label,
-        kind: definition.kind,
+        consecutiveFailures:
+          (syncSourceRecord(id)?.consecutiveFailures ?? 0) + 1,
         description: definition.description,
+        diagnostics: syncSourceRecord(id)?.diagnostics,
+        id: definition.id,
+        kind: definition.kind,
+        label: definition.label,
+        lastError: message,
+        lastSyncDurationMs: failedAt - startedAt,
+        lastSyncedAt: failedAt,
         metadata: await buildSyncMetadataAsync(
           definition,
           appendSyncHistory(definition, syncSourceRecord(id)?.metadata, {
-            trigger,
-            status: "failed",
-            startedAt,
-            finishedAt: failedAt,
             durationMs: failedAt - startedAt,
             error: message,
+            finishedAt: failedAt,
+            startedAt,
+            status: "failed",
+            trigger,
           }),
           {},
           options?.userSub,
         ),
-        target: definition.target,
         status: "failed",
-        diagnostics: syncSourceRecord(id)?.diagnostics,
-        consecutiveFailures:
-          (syncSourceRecord(id)?.consecutiveFailures ?? 0) + 1,
-        lastError: message,
-        lastSyncedAt: failedAt,
-        lastSyncDurationMs: failedAt - startedAt,
+        target: definition.target,
       };
       replaceSyncSourceRecord(failedRecord);
       await persistSyncSources();
 
       return {
-        ok: false as const,
         error: message,
+        ok: false as const,
       };
     }
   };
@@ -2263,8 +2276,8 @@ export const createRagDemoState = ({
         ok: true as const,
         source: syncSourceRecord(id) ?? {
           id,
-          label: id,
           kind: "directory" as const,
+          label: id,
           status: "running" as const,
         },
       };
@@ -2284,8 +2297,8 @@ export const createRagDemoState = ({
       ok: true as const,
       source: syncSourceRecord(id) ?? {
         id,
-        label: id,
         kind: "directory" as const,
+        label: id,
         status: "running" as const,
       },
     };
@@ -2331,18 +2344,18 @@ export const createRagDemoState = ({
     const now = Date.now();
     const seedDocuments = (await getSeedDocuments()).map(
       (doc: RagSeedDocument) => ({
-        id: doc.id,
-        kind: "seed" as const,
-        title: toSafeText(doc.title, doc.id),
-        source: toSafeText(doc.source, `${doc.id}.md`),
-        text: doc.text,
-        format: doc.format ?? "text",
-        chunkStrategy: doc.chunkStrategy ?? "source_aware",
         chunkCount: countPreparedChunks(doc, "seed"),
         chunkSize: RAG_DEMO_DEFAULT_CHUNK_SIZE,
+        chunkStrategy: doc.chunkStrategy ?? "source_aware",
         createdAt: now,
-        metadata: doc.metadata ?? {},
         embeddingVariants: doc.embeddingVariants,
+        format: doc.format ?? "text",
+        id: doc.id,
+        kind: "seed" as const,
+        metadata: doc.metadata ?? {},
+        source: toSafeText(doc.source, `${doc.id}.md`),
+        text: doc.text,
+        title: toSafeText(doc.title, doc.id),
       }),
     );
 
@@ -2374,20 +2387,20 @@ export const createRagDemoState = ({
 
   const buildPreparedDocument = (document: DemoDocument) =>
     prepareRAGDocument({
-      id: document.id,
-      text: document.text,
-      title: document.title,
-      source: document.source,
+      chunking: {
+        maxChunkLength: document.chunkSize,
+        strategy: document.chunkStrategy,
+      },
       format: document.format,
+      id: document.id,
       metadata: {
         ...(document.metadata ?? {}),
         documentId: document.id,
         kind: document.kind,
       },
-      chunking: {
-        strategy: document.chunkStrategy,
-        maxChunkLength: document.chunkSize,
-      },
+      source: document.source,
+      text: document.text,
+      title: document.title,
     });
 
   const rebuildVectorStores = async () => {
@@ -2409,8 +2422,8 @@ export const createRagDemoState = ({
           backend.id,
           {
             chunkCount,
-            totalDocuments: corpus.length,
             elapsedMs,
+            totalDocuments: corpus.length,
           } satisfies BackendSeedStats,
         ] as const;
       }),
@@ -2424,12 +2437,11 @@ export const createRagDemoState = ({
 
   const getDocumentList = (query: { kind?: unknown }) => {
     const requestedKind = toDocumentKind(query.kind);
+
     return fetchDocumentRows(requestedKind ?? undefined);
   };
 
   const createIndexManager = () => ({
-    listDocuments: ({ kind }: { kind?: string } = {}) =>
-      getDocumentList({ kind }),
     createDocument: async (input: {
       id?: string;
       title?: string;
@@ -2442,7 +2454,7 @@ export const createRagDemoState = ({
       const text = toSafeText(input?.text, "");
 
       if (title.length === 0 || text.length === 0) {
-        return { ok: false as const, error: "title and text are required" };
+        return { error: "title and text are required", ok: false as const };
       }
 
       const rawId = toSafeText(input?.id, crypto.randomUUID());
@@ -2453,73 +2465,51 @@ export const createRagDemoState = ({
           (input as { "chunking.strategy"?: unknown })["chunking.strategy"],
       );
       const sourceDoc: RagSeedDocument = {
+        chunkStrategy,
+        format,
         id: rawId,
+        kind: "custom",
+        source,
         text,
         title,
-        source,
-        format,
-        chunkStrategy,
-        kind: "custom",
       };
 
       const chunkCount = countPreparedChunks(sourceDoc, "custom");
       const now = Date.now();
 
       upsertDocument({
-        id: rawId,
-        kind: "custom",
-        title,
-        source,
-        text,
-        format,
-        chunkStrategy,
         chunkCount,
         chunkSize: RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE,
+        chunkStrategy,
+        format,
+        id: rawId,
+        kind: "custom",
         metadata: {},
+        source,
+        text,
+        title,
       });
 
       const backendStats = await rebuildVectorStores();
 
       return {
-        ok: true as const,
-        inserted: rawId,
+        backendStats,
         document: {
+          chunkCount,
+          chunkSize: RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE,
+          chunkStrategy,
+          createdAt: now,
+          format,
           id: rawId,
           kind: "custom" as const,
-          title,
+          metadata: {},
           source,
           text,
-          format,
-          chunkStrategy,
-          chunkSize: RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE,
-          chunkCount,
-          createdAt: now,
+          title,
           updatedAt: now,
-          metadata: {},
         },
-        backendStats,
-      };
-    },
-    getDocumentChunks: (id: string) => {
-      const document = fetchDocumentById(id);
-      if (!document) {
-        return null;
-      }
-
-      const prepared = buildPreparedDocument(document);
-      return {
-        document: {
-          id: document.id,
-          title: document.title,
-          source: document.source,
-          kind: document.kind,
-          format: document.format,
-          chunkStrategy: document.chunkStrategy,
-          chunkSize: document.chunkSize,
-          metadata: document.metadata,
-        },
-        normalizedText: prepared.normalizedText,
-        chunks: prepared.chunks,
+        inserted: rawId,
+        ok: true as const,
       };
     },
     deleteDocument: async (id: string) => {
@@ -2530,8 +2520,34 @@ export const createRagDemoState = ({
 
       deleteDocumentRow(id);
       await rebuildVectorStores();
+
       return true;
     },
+    getDocumentChunks: (id: string) => {
+      const document = fetchDocumentById(id);
+      if (!document) {
+        return null;
+      }
+
+      const prepared = buildPreparedDocument(document);
+
+      return {
+        chunks: prepared.chunks,
+        document: {
+          chunkSize: document.chunkSize,
+          chunkStrategy: document.chunkStrategy,
+          format: document.format,
+          id: document.id,
+          kind: document.kind,
+          metadata: document.metadata,
+          source: document.source,
+          title: document.title,
+        },
+        normalizedText: prepared.normalizedText,
+      };
+    },
+    listDocuments: ({ kind }: { kind?: string } = {}) =>
+      getDocumentList({ kind }),
     listSyncSources: async (options?: { userSub?: string }) => {
       await ensureSyncSourcesLoaded();
       if (!options?.userSub) {
@@ -2544,28 +2560,15 @@ export const createRagDemoState = ({
         ),
       );
     },
-    syncSource: async (
-      id: string,
-      options?: { background?: boolean; userSub?: string },
-    ) =>
-      options?.background
-        ? queueSyncSource(id, options)
-        : syncSourceById(id, options),
-    syncAllSources: async (options?: {
-      background?: boolean;
-      userSub?: string;
-    }) =>
-      options?.background
-        ? queueSyncAllSources(options)
-        : syncAllSourcesInternal(options),
     reseed: async () => {
       await ensureSeedDocuments();
       const status = await rebuildVectorStores();
+
       return {
-        ok: true as const,
-        status: "seeded",
         backendStats: status,
         documents: buildCorpusFromDb().length,
+        ok: true as const,
+        status: "seeded",
       };
     },
     reset: async () => {
@@ -2578,12 +2581,26 @@ export const createRagDemoState = ({
       const status = await rebuildVectorStores();
 
       return {
-        ok: true as const,
-        status: "reset",
         backendStats: status,
         documents: buildCorpusFromDb().length,
+        ok: true as const,
+        status: "reset",
       };
     },
+    syncAllSources: async (options?: {
+      background?: boolean;
+      userSub?: string;
+    }) =>
+      options?.background
+        ? queueSyncAllSources(options)
+        : syncAllSourcesInternal(options),
+    syncSource: async (
+      id: string,
+      options?: { background?: boolean; userSub?: string },
+    ) =>
+      options?.background
+        ? queueSyncSource(id, options)
+        : syncSourceById(id, options),
   });
 
   const unavailableProvider = () => {
@@ -2595,11 +2612,11 @@ export const createRagDemoState = ({
   const buildSources = (results: RAGQueryResult[]): RAGSource[] =>
     results.map((entry) => ({
       chunkId: entry.chunkId,
+      metadata: entry.metadata,
       score: entry.score,
+      source: entry.source,
       text: entry.chunkText,
       title: entry.title,
-      source: entry.source,
-      metadata: entry.metadata,
     }));
 
   const normalizeSearchPayload = (
@@ -2630,20 +2647,21 @@ export const createRagDemoState = ({
     ]);
 
     return {
+      filter: Object.keys(filter).length > 0 ? filter : undefined,
+      model: typeof payload.model === "string" ? payload.model : undefined,
       query,
-      topK: typeof payload.topK === "number" ? payload.topK : undefined,
       scoreThreshold:
         typeof payload.scoreThreshold === "number"
           ? payload.scoreThreshold
           : undefined,
-      model: typeof payload.model === "string" ? payload.model : undefined,
-      filter: Object.keys(filter).length > 0 ? filter : undefined,
+      topK: typeof payload.topK === "number" ? payload.topK : undefined,
     };
   };
 
   const listBackendDiagnostics = () =>
     ragBackends.list().map((backend) => {
       const runtime = ragBackends.backends[backend.id];
+
       return {
         ...backend,
         lastSeedMs: latestSeedMsByMode[backend.id],
@@ -2677,16 +2695,15 @@ export const createRagDemoState = ({
       (source) => source.id === sourceId,
     );
     if (!definition) {
-      return { ok: false as const, error: `Unknown sync source ${sourceId}` };
+      return { error: `Unknown sync source ${sourceId}`, ok: false as const };
     }
 
     const metadata = await loadDynamicSyncMetadata(definition, userSub);
-    const linkedAvailableBindings = (metadata as Record<string, unknown>)
-      .linkedAvailableBindings;
+    const {linkedAvailableBindings} = (metadata as Record<string, unknown>);
     const availableBindings = Array.isArray(linkedAvailableBindings)
       ? linkedAvailableBindings.filter(
           (entry): entry is { id: string } =>
-            !!entry &&
+            Boolean(entry) &&
             typeof entry === "object" &&
             typeof (entry as { id?: unknown }).id === "string" &&
             (entry as { id: string }).id.length > 0,
@@ -2698,12 +2715,13 @@ export const createRagDemoState = ({
       !availableBindings.some((entry) => entry.id === bindingId)
     ) {
       return {
-        ok: false as const,
         error: `Unknown binding ${bindingId} for ${sourceId}`,
+        ok: false as const,
       };
     }
 
     setSelectedBindingId(userSub, sourceId, bindingId);
+
     return { ok: true as const };
   };
 
@@ -2726,25 +2744,25 @@ export const createRagDemoState = ({
       seedDocs,
       startupStatus,
       timings: {
-        syncSourceLoadMs,
         seedDocumentLoadMs,
-        vectorRebuildMs,
+        syncSourceLoadMs,
         totalRagInitMs: Date.now() - initStart,
+        vectorRebuildMs,
       },
     };
   };
 
   return {
     activeBackendCookie: ACTIVE_BACKEND_COOKIE,
-    listBackends: ragBackends.list,
-    createIndexManager,
-    resolveRequestedBackendMode,
-    getRuntimeBackend,
     buildSources,
-    normalizeSearchPayload,
-    listBackendDiagnostics,
     clearSelectedIndex,
+    createIndexManager,
+    getRuntimeBackend,
     initialize,
+    listBackendDiagnostics,
+    listBackends: ragBackends.list,
+    normalizeSearchPayload,
+    resolveRequestedBackendMode,
     setSyncSourceBindingSelection,
     unavailableProvider,
   };

@@ -1,14 +1,16 @@
-import { reloadWithVoiceSearchParam } from "../../shared/browser";
+import { reloadWithVoiceSearchParam } from "../../../shared/browser";
 import {
   rememberVoiceModelProvider,
   rememberVoiceProfileId,
   rememberVoiceRoutingMode,
   rememberVoiceSpeechEngine,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
+import type {
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 type ConfigControlsInput = {
   modelProviderSelect: HTMLSelectElement;

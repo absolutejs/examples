@@ -5,11 +5,13 @@ import {
   getVoiceModeLabel,
   getVoiceProviderLabel,
   getVoiceRoutingLabel,
-  type VoiceDemoMode,
-  type VoiceModelProvider,
-  type VoiceProfileSwitchGuardClientDecision,
-  type VoiceRoutingMode,
 } from "../../../shared/demo";
+import type {
+  VoiceDemoMode,
+  VoiceModelProvider,
+  VoiceRoutingMode,
+} from "../../../types/voice";
+import type { VoiceProfileSwitchGuardClientDecision } from "../../../types/domain";
 
 @Component({
   host: {

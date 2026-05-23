@@ -17,6 +17,7 @@ export type LinkedGmailSelection = {
 
 const getEnv = (name: string) => {
   const value = process.env[name];
+
   return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : undefined;
@@ -183,8 +184,8 @@ export const loadLinkedGmailStatus = async (
     linkedProviderScopeSummary: summarizeScopes(grantedScopes),
     linkedProviderSelectionMode: resolveSelectionMode(selection),
     linkedProviderSubject: grant?.providerSubject,
-    linkedRequestedExternalAccountId: selection.externalAccountId,
     linkedRequestedBindingId: selection.bindingId,
+    linkedRequestedExternalAccountId: selection.externalAccountId,
     linkedScopes: grantedScopes,
   };
 };

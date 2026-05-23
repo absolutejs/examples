@@ -61,6 +61,7 @@ const inferDocumentExtension = (document: RAGIndexedDocument) => {
   if (document.format === "html") {
     return ".html";
   }
+
   return ".txt";
 };
 
@@ -76,6 +77,7 @@ const getChunkIndexText = (
     typeof chunk.metadata?.chunkCount === "number"
       ? chunk.metadata.chunkCount
       : fallbackCount;
+
   return `chunk index: ${String(chunkIndex)} / count: ${String(chunkCount)}`;
 };
 
@@ -93,7 +95,7 @@ export const renderHtmxChunkPreviewFragment = (
     preview as Parameters<typeof buildRAGChunkPreviewNavigation>[0],
     options?.selectedChunkId,
   );
-  const activeChunkId = navigation.activeChunkId;
+  const {activeChunkId} = navigation;
   const query = options?.query ?? "";
   const fileType = options?.fileType ?? "all";
   const page = options?.page ?? 1;
@@ -207,6 +209,7 @@ export const renderHtmxDocumentsPanel = ({
         .includes(normalizedQuery) === true;
     const matchesType =
       fileType === "all" || inferDocumentExtension(document) === fileType;
+
     return matchesQuery && matchesType;
   });
   const totalPages = Math.max(
@@ -275,8 +278,8 @@ export const renderHtmxDocumentsPanel = ({
             );
             const searchByDocumentVals = escapeHtml(
               JSON.stringify({
-                query: `Explain ${doc.title}`,
                 documentId: doc.id,
+                query: `Explain ${doc.title}`,
                 topK: 6,
               }),
             );

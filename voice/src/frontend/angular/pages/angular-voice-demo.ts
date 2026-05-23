@@ -40,7 +40,6 @@ import {
   VoiceTurnQualityService,
 } from "@absolutejs/voice/angular";
 import {
-  FRAMEWORK_DESCRIPTIONS,
   getVoiceLeadMessage,
   getVoiceModePrompt,
   getVoiceProfileLabel,
@@ -48,7 +47,10 @@ import {
   getVoiceRoutingLabel,
   getVoiceRoutePath,
   getVoiceSpeechEngineSampleRate,
-  VOICE_ASSISTANT_CONFIG,
+} from "../../../shared/demo";
+import { FRAMEWORK_DESCRIPTIONS } from "../../../constants/navigation";
+import { VOICE_ASSISTANT_CONFIG } from "../../../constants/assistant";
+import {
   VOICE_DEMO_GUIDE_STEPS,
   VOICE_DEMO_GUIDE_TITLE,
   VOICE_DEMO_GENERAL_LABEL,
@@ -56,23 +58,27 @@ import {
   VOICE_DEMO_MIC_IDLE,
   VOICE_DEMO_MIC_LIVE,
   VOICE_DEMO_STOP_LABEL,
+} from "../../../constants/demoCopy";
+import {
   VOICE_CALL_CONTROL_ACTIONS,
-  VOICE_PROFILES,
-  type SavedIntake,
-  type VoiceDemoMode,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+  VOICE_LIVE_OPS_ACTIONS,
+} from "../../../constants/demoActions";
+import { VOICE_PROFILES } from "../../../constants/voiceOptions";
+import type { SavedIntake } from "../../../types/domain";
+import type {
+  VoiceDemoMode,
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 import {
   createDemoBargeInEvidence,
   createDemoLiveTurnLatencyEvidence,
   getOpsStatusLabel,
   renderDemoLiveTurnLatencyHTML,
-  VOICE_LIVE_OPS_ACTIONS,
-  type VoiceLiveOpsAction,
-} from "../../shared/browser";
+} from "../../../shared/browser";
+import type { VoiceLiveOpsAction } from "../../../types/domain";
 import { AgentSquadCardComponent } from "../components/agent-squad-card.component";
 import { AssistantConfigCardComponent } from "../components/assistant-config-card.component";
 import { CampaignDialerCardComponent } from "../components/campaign-dialer-card.component";
@@ -121,8 +127,8 @@ export type Context = {
     ServerHtmlCardComponent,
     VoiceHeroCardComponent,
   ],
-  selector: "angular-voice-demo-page",
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  selector: "angular-voice-demo-page",
   standalone: true,
   template: `
     <div voiceDemoChrome>
@@ -290,8 +296,8 @@ export type Context = {
         </h2>
         <p class="voice-footnote">
           Angular reads structured gate explanations from production readiness
-          JSON so deploy blockers show observed values, thresholds, evidence, and
-          remediation.
+          JSON so deploy blockers show observed values, thresholds, evidence,
+          and remediation.
         </p>
         @if (readinessFailures.explanations().length > 0) {
           <div class="voice-routing-grid">
@@ -403,7 +409,10 @@ export type Context = {
         }
         @if (sessionObservabilityModel().turns.length > 0) {
           <div class="absolute-voice-session-observability__turns">
-            @for (turn of sessionObservabilityModel().turns; track turn.turnId) {
+            @for (
+              turn of sessionObservabilityModel().turns;
+              track turn.turnId
+            ) {
               <article class="absolute-voice-session-observability__turn">
                 <header>
                   <strong>{{ turn.turnId }}</strong>
@@ -538,7 +547,9 @@ export type Context = {
             </div>
             <div>
               <span>Default routes</span>
-              <strong>{{ formatProviderRoutes(decision.providerRoutes) }}</strong>
+              <strong>{{
+                formatProviderRoutes(decision.providerRoutes)
+              }}</strong>
             </div>
             <div>
               <span>Latency budget</span>
@@ -597,7 +608,9 @@ export type Context = {
             }
           </div>
         } @else {
-          <p class="empty-copy">Run assistant traffic to see provider health.</p>
+          <p class="empty-copy">
+            Run assistant traffic to see provider health.
+          </p>
         }
       </article>
 
@@ -680,7 +693,9 @@ export type Context = {
             }
           </div>
         } @else {
-          <p class="empty-copy">Configure provider contracts to see coverage.</p>
+          <p class="empty-copy">
+            Configure provider contracts to see coverage.
+          </p>
         }
       </article>
 
@@ -718,8 +733,7 @@ export type Context = {
                 <span>{{ turn.status }}</span>
                 <small>
                   {{ turn.source || "unknown" }} ·
-                  {{ turn.fallbackUsed ? "fallback" : "primary" }} ·
-                  confidence
+                  {{ turn.fallbackUsed ? "fallback" : "primary" }} · confidence
                   {{
                     turn.averageConfidence === undefined
                       ? "n/a"
@@ -786,8 +800,12 @@ export type Context = {
           and handoffs.
         </p>
         <div class="voice-workflow-summary">
-          <span class="pill">{{ opsStatus.report()?.passed ?? 0 }} passing</span>
-          <span class="pill">{{ opsStatus.report()?.failed ?? 0 }} failing</span>
+          <span class="pill"
+            >{{ opsStatus.report()?.passed ?? 0 }} passing</span
+          >
+          <span class="pill"
+            >{{ opsStatus.report()?.failed ?? 0 }} failing</span
+          >
           <span class="pill">{{ opsStatus.report()?.total ?? 0 }} checks</span>
         </div>
         <p class="voice-footnote">
@@ -882,11 +900,16 @@ export type Context = {
         </p>
         <div class="voice-live-ops-panel__session">
           <span>Active session</span>
-          <strong>{{ currentVoice().sessionId() || "No active session" }}</strong>
+          <strong>{{
+            currentVoice().sessionId() || "No active session"
+          }}</strong>
         </div>
         <label class="voice-provider-select">
           <span>Operator</span>
-          <input [value]="liveOpsAssignee()" (input)="setLiveOpsAssignee($event)" />
+          <input
+            [value]="liveOpsAssignee()"
+            (input)="setLiveOpsAssignee($event)"
+          />
         </label>
         <label class="voice-provider-select">
           <span>Tag</span>
@@ -929,7 +952,9 @@ export type Context = {
         "
       >
         <header class="absolute-voice-trace-timeline__header">
-          <span class="absolute-voice-trace-timeline__eyebrow">Voice Traces</span>
+          <span class="absolute-voice-trace-timeline__eyebrow"
+            >Voice Traces</span
+          >
           <strong class="absolute-voice-trace-timeline__label">
             {{ traceTimeline.report()?.total ?? 0 }} recent
           </strong>
@@ -1016,10 +1041,7 @@ export type Context = {
         (stopMic)="stopMic()"
       ></article>
 
-      <article
-        voiceSavedCapturesCard
-        [savedIntakes]="savedIntakes()"
-      ></article>
+      <article voiceSavedCapturesCard [savedIntakes]="savedIntakes()"></article>
     </div>
   `,
 })
@@ -1337,8 +1359,8 @@ class AngularVoiceDemoComponent {
     return {
       assistantAudio: voice.assistantAudio(),
       assistantTexts: voice.assistantTexts(),
-      sendAudio: (audio) => voice.sendAudio(audio),
       sessionId: voice.sessionId(),
+      sendAudio: (audio) => voice.sendAudio(audio),
     };
   });
   liveLatencyEvidence = createDemoLiveTurnLatencyEvidence(() => {
@@ -1375,7 +1397,8 @@ class AngularVoiceDemoComponent {
     });
     if (typeof window !== "undefined") {
       const demoWindow: VoiceDemoWindow = window;
-      demoWindow.__absoluteVoiceDemoSimulateDisconnect = this.simulateDisconnect;
+      demoWindow.__absoluteVoiceDemoSimulateDisconnect =
+        this.simulateDisconnect;
       window.addEventListener(
         "absolute-voice-simulate-disconnect",
         this.simulateDisconnect,
@@ -1404,12 +1427,12 @@ class AngularVoiceDemoComponent {
 
   startMic() {
     return this.microphoneService.start({
+      sampleRateHz: getVoiceSpeechEngineSampleRate(this.speechEngine()),
       onAudio: (audio) => {
         this.liveLatencyEvidence.recordAudio(audio);
         this.syncLiveLatencyProof();
         this.bargeInEvidence.sendAudio(audio);
       },
-      sampleRateHz: getVoiceSpeechEngineSampleRate(this.speechEngine()),
     });
   }
 
@@ -1477,6 +1500,7 @@ class AngularVoiceDemoComponent {
 
   runLiveOpsAction(action: VoiceLiveOpsAction) {
     return this.liveOps.runLiveOpsAction(action, {
+      sessionId: this.currentVoice().sessionId(),
       applySideEffects: ({ action: appliedAction, detail, tag }) => {
         if (appliedAction === "force-handoff") {
           this.currentVoice().callControl({
@@ -1503,7 +1527,6 @@ class AngularVoiceDemoComponent {
           this.stopMic();
         }
       },
-      sessionId: this.currentVoice().sessionId(),
     });
   }
 

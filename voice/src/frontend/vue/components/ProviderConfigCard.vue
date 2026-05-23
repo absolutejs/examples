@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import { getVoiceProfileLabel } from "../../../shared/demo";
 import {
-  getVoiceProfileLabel,
   VOICE_MODEL_PROVIDERS,
   VOICE_PROFILES,
   VOICE_ROUTING_MODES,
   VOICE_SPEECH_ENGINES,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+} from "../../../constants/voiceOptions";
+import type {
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 type ProviderConfigCardProps = {
   modelProvider: VoiceModelProvider;

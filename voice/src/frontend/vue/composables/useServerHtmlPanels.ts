@@ -14,7 +14,7 @@ import {
   fetchVoiceRealCallEvidenceWorkerHealth,
   formatErrorMessage,
   renderVoiceRealCallEvidenceWorkerHealthHTML,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 
 const PROFILE_SWITCH_INTERVAL_MS = 10_000;
 const REAL_CALL_WORKER_INTERVAL_MS = 10_000;
@@ -103,7 +103,9 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
   const refreshCampaignDialerProof = async () => {
     const response = await fetch("/api/voice/campaigns/dialer-proof");
     if (!response.ok) {
-      throw new Error(`Campaign dialer proof status failed: ${response.status}`);
+      throw new Error(
+        `Campaign dialer proof status failed: ${response.status}`,
+      );
     }
     campaignDialerProof.value = {
       ...campaignDialerProof.value,

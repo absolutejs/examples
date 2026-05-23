@@ -1,15 +1,17 @@
 import { type Ref, ref } from "vue";
-import { reloadWithVoiceSearchParam } from "../../shared/browser";
+import { reloadWithVoiceSearchParam } from "../../../shared/browser";
 import {
   rememberVoiceModelProvider,
   rememberVoiceProfileId,
   rememberVoiceRoutingMode,
   rememberVoiceSpeechEngine,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
+import type {
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 type DemoConfigInput = {
   initialModelProvider: VoiceModelProvider;
@@ -65,28 +67,28 @@ export const useDemoConfig = (input: DemoConfigInput): DemoConfig => {
   };
 
   const changeModelProviderFromEvent = (event: Event) => {
-    const target = event.target;
+    const {target} = event;
     if (target instanceof HTMLSelectElement) {
       changeModelProvider(target.value as VoiceModelProvider);
     }
   };
 
   const changeProfileIdFromEvent = (event: Event) => {
-    const target = event.target;
+    const {target} = event;
     if (target instanceof HTMLSelectElement) {
       changeProfileId(target.value as VoiceProfileId);
     }
   };
 
   const changeRoutingModeFromEvent = (event: Event) => {
-    const target = event.target;
+    const {target} = event;
     if (target instanceof HTMLSelectElement) {
       changeRoutingMode(target.value as VoiceRoutingMode);
     }
   };
 
   const changeSpeechEngineFromEvent = (event: Event) => {
-    const target = event.target;
+    const {target} = event;
     if (target instanceof HTMLSelectElement) {
       changeSpeechEngine(target.value as VoiceSpeechEngine);
     }

@@ -1,4 +1,4 @@
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import {
   buildVoiceFailureReplay,
   buildVoiceProductionReadinessGate,
@@ -199,12 +199,13 @@ console.log("Voice deploy gate open");`);
 const readLatestDemoVoiceProofPack =
   createVoiceProofPackStaleWhileRefreshSource({
     maxAgeMs: 5 * 60_000,
+    read: readLatestDemoVoiceProofPackFile,
     onRefreshError: (error) => {
       console.warn("Failed to refresh demo voice proof pack", error);
     },
-    read: readLatestDemoVoiceProofPackFile,
     refresh: async () => {
       await refreshProductionReadinessProof();
+
       return readLatestDemoVoiceProofPackFile();
     },
   });
@@ -396,6 +397,7 @@ const failureReplayRoutes = new Elysia()
     async ({ params }) => {
       const sessionId = params.sessionId ?? demoIncidentSessionId;
       const record = await buildDemoOperationsRecord(sessionId);
+
       return buildVoiceFailureReplay(record, {
         operationsRecordHref: `/voice-operations/${encodeURIComponent(sessionId)}`,
       });
@@ -428,24 +430,6 @@ const failureReplayRoutes = new Elysia()
     });
   }) as unknown as Elysia;
 
-const contractAwareOnTurnBase = createVoiceWorkflowContractHandler({
-  handler: assistant.onTurn,
-  resolveContract: ({ result, session }) => {
-    if (result.transfer) {
-      return transferWorkflowContract;
-    }
-
-    if (!result.complete) {
-      return undefined;
-    }
-
-    return session.scenarioId === "general"
-      ? generalWorkflowContract
-      : guidedWorkflowContract;
-  },
-  store: deliveryTraceStore,
-}) as VoiceOnTurnObjectHandler<unknown, VoiceSessionRecord, SavedIntake>;
-
 const isSpecialistBillingTurn = (text: string) =>
   /\b(billing|invoice|refund|payment|subscription|charge|receipt)\b/i.test(
     text,
@@ -462,8 +446,8 @@ const createDemoLiveAgentSquad = () => {
       generate: ({ turn }) => ({
         handoff: {
           metadata: {
-            detectedIntent: "billing",
             demoSurface: "agent-squad",
+            detectedIntent: "billing",
           },
           reason: `Billing specialist requested for: ${turn.text}`,
           targetAgentId: "billing",
@@ -492,6 +476,9 @@ const createDemoLiveAgentSquad = () => {
 
   return createVoiceAgentSquad<unknown, VoiceSessionRecord, SavedIntake>({
     agents: [supportAgent, billingAgent],
+    defaultAgentId: "front-desk",
+    id: "demo-agent-squad",
+    trace: deliveryTraceStore,
     contextPolicy: ({ summaryMessage, turn }) => ({
       messages: [
         summaryMessage,
@@ -507,7 +494,6 @@ const createDemoLiveAgentSquad = () => {
       system:
         "Use only the handoff summary and current caller turn. Do not inspect unrelated prior turns.",
     }),
-    defaultAgentId: "front-desk",
     handoffPolicy: ({ handoff }) => ({
       metadata: {
         certifiedRoute: "front-desk-to-billing",
@@ -516,8 +502,6 @@ const createDemoLiveAgentSquad = () => {
       summary:
         "The front desk detected a billing/account question and routed this caller to billing.",
     }),
-    id: "demo-agent-squad",
-    trace: deliveryTraceStore,
   });
 };
 
@@ -543,26 +527,49 @@ const runDemoLiveAgentSquad = demoLiveAgentSquad.run as (
   voicemail?: { metadata?: Record<string, unknown> };
 }>;
 
-const contractAwareOnTurn: VoiceOnTurnObjectHandler<
+// One contract-aware turn handler: the billing-specialist branch lives inside
+// the handler passed to createVoiceWorkflowContractHandler so the contract
+// wrapper invokes it with the correct ({ session, turn, api, context }) shape.
+// (Wrapping the contract handler in a second object-style handler silently
+// dropped the turn — the wrapper returns a positional handler — and crashed
+// every non-billing turn on `input.turn.id`.)
+const contractAwareOnTurn = createVoiceWorkflowContractHandler<
   unknown,
   VoiceSessionRecord,
   SavedIntake
-> = async (input) => {
-  if (isSpecialistBillingTurn(input.turn.text)) {
-    const result = await runDemoLiveAgentSquad(input);
-    return {
-      assistantText: result.assistantText,
-      complete: result.complete,
-      escalate: result.escalate,
-      noAnswer: result.noAnswer,
-      result: result.result,
-      transfer: result.transfer,
-      voicemail: result.voicemail,
-    };
-  }
+>({
+  store: deliveryTraceStore,
+  handler: async (input: DemoVoiceTurnInput) => {
+    if (isSpecialistBillingTurn(input.turn.text)) {
+      const result = await runDemoLiveAgentSquad(input);
 
-  return contractAwareOnTurnBase(input);
-};
+      return {
+        assistantText: result.assistantText,
+        complete: result.complete,
+        escalate: result.escalate,
+        noAnswer: result.noAnswer,
+        result: result.result,
+        transfer: result.transfer,
+        voicemail: result.voicemail,
+      };
+    }
+
+    return assistant.onTurn(input);
+  },
+  resolveContract: ({ result, session }) => {
+    if (result.transfer) {
+      return transferWorkflowContract;
+    }
+
+    if (!result.complete) {
+      return undefined;
+    }
+
+    return session.scenarioId === "general"
+      ? generalWorkflowContract
+      : guidedWorkflowContract;
+  },
+});
 
 export {
   contractAwareOnTurn,

@@ -43,6 +43,7 @@ export const createDemoUiStatePlugin = ({
         }
 
         uiState.setRecentQueries(params.framework, params.mode, payload);
+
         return { ok: true };
       },
     )
@@ -76,6 +77,7 @@ export const createDemoUiStatePlugin = ({
           params.mode,
           payload as Record<string, unknown>,
         );
+
         return { ok: true };
       },
     )

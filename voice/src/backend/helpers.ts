@@ -1,11 +1,5 @@
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import { type VoiceReviewFilterInput } from "./reviewPage";
-import {
-  type StoredVoiceHandoffDelivery,
-  type VoiceHandoffDeliveryStore,
-} from "@absolutejs/voice";
-import { mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
 
 const escapeHtml = (value: string) =>
   value
@@ -17,43 +11,6 @@ const escapeHtml = (value: string) =>
 
 const stringifyForHtml = (value: unknown) =>
   escapeHtml(JSON.stringify(value, null, 2) ?? "");
-
-const createJsonHandoffDeliveryStore = <
-  TDelivery extends StoredVoiceHandoffDelivery,
->(
-  filePath: string,
-): VoiceHandoffDeliveryStore<TDelivery> => {
-  const read = async () => {
-    const file = Bun.file(filePath);
-    if (!(await file.exists())) {
-      return [];
-    }
-
-    const text = await file.text();
-    return text.trim() ? (JSON.parse(text) as TDelivery[]) : [];
-  };
-  const write = async (deliveries: TDelivery[]) => {
-    await mkdir(dirname(filePath), { recursive: true });
-    await Bun.write(filePath, JSON.stringify(deliveries, null, 2));
-  };
-
-  return {
-    get: async (id) => (await read()).find((delivery) => delivery.id === id),
-    list: async () =>
-      (await read()).sort(
-        (left, right) =>
-          left.createdAt - right.createdAt || left.id.localeCompare(right.id),
-      ),
-    remove: async (id) => {
-      await write((await read()).filter((delivery) => delivery.id !== id));
-    },
-    set: async (id, delivery) => {
-      const deliveries = (await read()).filter((item) => item.id !== id);
-      deliveries.push(delivery);
-      await write(deliveries);
-    },
-  };
-};
 
 const createDemoLeaseCoordinator = () => {
   const leases = new Map<string, string>();
@@ -69,10 +26,12 @@ const createDemoLeaseCoordinator = () => {
       }
 
       leases.set(input.taskId, input.workerId);
+
       return true;
     },
     get: async (taskId: string) => {
       const workerId = leases.get(taskId);
+
       return workerId
         ? {
             expiresAt: Date.now() + 30_000,
@@ -87,6 +46,7 @@ const createDemoLeaseCoordinator = () => {
       }
 
       leases.delete(input.taskId);
+
       return true;
     },
     renew: async (input: {
@@ -156,7 +116,6 @@ const normalizeReviewFilters = (
 
 export {
   createDemoLeaseCoordinator,
-  createJsonHandoffDeliveryStore,
   escapeHtml,
   formatCallDisposition,
   normalizeReviewFilters,

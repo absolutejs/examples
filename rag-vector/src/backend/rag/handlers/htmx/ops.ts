@@ -64,7 +64,7 @@ const readSyncBindingOptions = (
 ): SyncBindingOption[] => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata as Record<string, unknown>)
+      ? (source.metadata)
       : {};
   const raw = metadata.linkedAvailableBindings;
   if (!Array.isArray(raw)) {
@@ -98,8 +98,9 @@ const readSyncBindingOptions = (
 const readSelectedBindingId = (source: RAGSyncSourceRecord) => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata as Record<string, unknown>)
+      ? (source.metadata)
       : {};
+
   return typeof metadata.linkedBindingId === "string"
     ? metadata.linkedBindingId
     : undefined;
@@ -115,28 +116,30 @@ const renderSyncBindingSelector = (
   }
 
   const selectedBindingId = readSelectedBindingId(source);
+
   return [
-    '<form class="demo-actions" hx-post="/demo/sync-selection/' +
-      escapeHtml(mode ?? "sqlite-native") +
-      "/" +
-      encodeURIComponent(source.id) +
-      '" hx-target="#ops-panel" hx-swap="outerHTML">',
-    '<label class="demo-section-caption" for="binding-' +
-      escapeHtml(source.id) +
-      '">Linked binding</label>',
-    '<select id="binding-' + escapeHtml(source.id) + '" name="bindingId">',
+    `<form class="demo-actions" hx-post="/demo/sync-selection/${ 
+      escapeHtml(mode ?? "sqlite-native") 
+      }/${ 
+      encodeURIComponent(source.id) 
+      }" hx-target="#ops-panel" hx-swap="outerHTML">`,
+    `<label class="demo-section-caption" for="binding-${ 
+      escapeHtml(source.id) 
+      }">Linked binding</label>`,
+    `<select id="binding-${  escapeHtml(source.id)  }" name="bindingId">`,
     '<option value="">Auto select first binding</option>',
     ...options.map((option) => {
       const optionLabel =
         option.label ?? option.email ?? option.externalAccountId ?? option.id;
+
       return (
-        '<option value="' +
-        escapeHtml(option.id) +
-        '"' +
-        (option.id === selectedBindingId ? " selected" : "") +
-        ">" +
-        escapeHtml(optionLabel) +
-        "</option>"
+        `<option value="${ 
+        escapeHtml(option.id) 
+        }"${ 
+        option.id === selectedBindingId ? " selected" : "" 
+        }>${ 
+        escapeHtml(optionLabel) 
+        }</option>`
       );
     }),
     "</select>",
@@ -278,6 +281,7 @@ export const renderHtmxOpsPanel = (
                   : "";
                 const inspect = entry.documentId ? "inspect=true" : "";
                 const href = `/demo/documents/${targetMode}${query || documentId || inspect ? `?${[query, documentId, inspect].filter(Boolean).join("&")}` : ""}`;
+
                 return `<a class="demo-release-action demo-release-action-neutral" href="${href}">${escapeHtml(entry.documentId ? `Inspect ${entry.kind}` : "Open documents")} · ${escapeHtml(entry.label)}</a>`;
               })
               .join("")}</div>`
@@ -321,8 +325,8 @@ export const renderHtmxOpsPanel = (
         ].join("")
       : "",
     '<div class="demo-result-grid">',
-    '<article class="demo-result-item"><h4>Sync Sources</h4>' +
-      ((ops.syncSources?.length ?? 0) > 0
+    `<article class="demo-result-item"><h4>Sync Sources</h4>${ 
+      (ops.syncSources?.length ?? 0) > 0
         ? [
             `<div class="demo-actions"><button type="button" hx-post="/demo/sync/${escapeHtml(mode ?? "sqlite-native")}" hx-vals='{"background":"true"}' hx-target="#ops-panel" hx-swap="outerHTML">Start source sync</button><button type="button" hx-post="/demo/sync/${escapeHtml(mode ?? "sqlite-native")}" hx-vals='{"background":"true"}' hx-target="#ops-panel" hx-swap="outerHTML">Queue background sync</button></div>`,
             '<div class="demo-stat-grid">',
@@ -384,14 +388,14 @@ export const renderHtmxOpsPanel = (
             ),
             "</div>",
           ].join("")
-        : renderDetailList([], "No sync sources configured yet.")) +
-      "</article>",
-    '<article class="demo-result-item"><h4>Admin Jobs</h4>' +
-      renderAdminJobCards(ops.adminJobs) +
-      "</article>",
-    '<article class="demo-result-item"><h4>Recent Admin Actions</h4>' +
-      renderAdminActionCards(ops.adminActions) +
-      "</article>",
+        : renderDetailList([], "No sync sources configured yet.") 
+      }</article>`,
+    `<article class="demo-result-item"><h4>Admin Jobs</h4>${ 
+      renderAdminJobCards(ops.adminJobs) 
+      }</article>`,
+    `<article class="demo-result-item"><h4>Recent Admin Actions</h4>${ 
+      renderAdminActionCards(ops.adminActions) 
+      }</article>`,
     "</div>",
     "</div>",
   ].join("");

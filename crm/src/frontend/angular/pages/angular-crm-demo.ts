@@ -204,8 +204,7 @@ export class AngularCRMDemo implements OnInit, OnDestroy {
   }
 
   updateField(key: keyof LeadFormPayload, event: Event) {
-    const value = (event.target as HTMLInputElement | HTMLTextAreaElement)
-      .value;
+    const {value} = (event.target as HTMLInputElement | HTMLTextAreaElement);
     this.form.update((current) => ({ ...current, [key]: value }));
   }
 
@@ -224,6 +223,7 @@ export class AngularCRMDemo implements OnInit, OnDestroy {
         kind: "error",
         message: result.error ?? "Submission failed",
       });
+
       return;
     }
     this.status.set({

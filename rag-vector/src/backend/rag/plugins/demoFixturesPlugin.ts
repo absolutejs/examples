@@ -42,7 +42,8 @@ export const createDemoFixturesPlugin = () =>
         ),
     )
     .get("/demo/sync-fixtures/site/robots.txt", ({ request }) => {
-      const origin = new URL(request.url).origin;
+      const {origin} = new URL(request.url);
+
       return new Response(
         [
           "User-agent: *",
@@ -57,7 +58,8 @@ export const createDemoFixturesPlugin = () =>
       );
     })
     .get("/demo/sync-fixtures/site/sitemap.xml", ({ request }) => {
-      const origin = new URL(request.url).origin;
+      const {origin} = new URL(request.url);
+
       return new Response(
         [
           '<?xml version="1.0" encoding="UTF-8"?>',

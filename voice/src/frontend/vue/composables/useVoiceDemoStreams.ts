@@ -13,13 +13,15 @@ import {
   getVoiceModePrompt,
   getVoiceProfileSwitchGuardDecision,
   getVoiceRoutePath,
-  type SavedIntake,
-  type VoiceDemoMode,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
+import type {
+  VoiceDemoMode,
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 const RECONNECT_REPORT_PATH = "/api/voice/reconnect-traces";
 const TRACE_TIMELINE_INTERVAL_MS = 5_000;

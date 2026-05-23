@@ -202,6 +202,7 @@ const seedDemoRealCallProfileHistory = async () => {
     status: "pass",
     updatedAt: new Date(now + profiles.length * 10).toISOString(),
   });
+
   return report;
 };
 
@@ -331,6 +332,7 @@ const readLongProofWindowCalibrationSamples = async (): Promise<
   }
 
   const latestTrends = await readLatestProofTrends();
+
   return [
     {
       liveP95Ms: latestTrends.summary.maxLiveP95Ms,
@@ -522,9 +524,7 @@ const readLatestVapiCoverageSummary =
     }
   };
 
-const readLatestVapiCoverage = async () => {
-  return (await readLatestVapiCoverageSummary()).coverage;
-};
+const readLatestVapiCoverage = async () => (await readLatestVapiCoverageSummary()).coverage;
 
 const renderCoverageStatus = (coverage: VapiCoverageResult | undefined) => {
   if (!coverage) {

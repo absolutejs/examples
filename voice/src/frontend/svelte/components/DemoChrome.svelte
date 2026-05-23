@@ -1,6 +1,6 @@
 <script lang="ts">
   import Head from "@absolutejs/absolute/svelte/components/Head.js";
-  import { FRAMEWORKS } from "../../../shared/demo";
+  import { FRAMEWORKS } from "../../../constants/navigation";
 
   type DemoChromeProps = {
     children: import("svelte").Snippet;

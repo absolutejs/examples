@@ -157,6 +157,7 @@ const service = new Elysia()
       }
 
       const startup = runtime.startup.getSnapshot();
+
       return {
         mode: resolved.mode,
         startup: {
@@ -274,6 +275,7 @@ const service = new Elysia()
       const summary = background
         ? "Queued background sync for all sources."
         : "Synced all configured sources.";
+
       return [
         '<div id="mutation-status" hx-swap-oob="innerHTML">',
         '<div class="demo-results">',
@@ -326,6 +328,7 @@ const service = new Elysia()
 
       if (context.request.headers.get("accept")?.includes("application/json")) {
         const startup = runtime.startup.getSnapshot();
+
         return {
           mode: resolved.mode,
           startup: {
@@ -357,6 +360,7 @@ const service = new Elysia()
       const summary = bindingId
         ? "Updated linked binding selection for this source."
         : "Cleared linked binding selection for this source.";
+
       return [
         '<div id="mutation-status" hx-swap-oob="innerHTML">',
         '<div class="demo-results">',
@@ -425,6 +429,7 @@ const service = new Elysia()
       const summary = background
         ? `Queued ${context.params.id} for background sync.`
         : `Synced ${context.params.id}.`;
+
       return [
         '<div id="mutation-status" hx-swap-oob="innerHTML">',
         '<div class="demo-results">',

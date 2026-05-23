@@ -1,5 +1,5 @@
 import { Component, Input } from "@angular/core";
-import type { VoiceAgentSquadDemoStatus } from "../../../shared/demo";
+import type { VoiceAgentSquadDemoStatus } from "../../../types/domain";
 
 @Component({
   host: {

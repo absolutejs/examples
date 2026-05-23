@@ -1,12 +1,11 @@
 import { projectRoot } from "@absolutejs/absolute";
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 
 import {
   buildVoiceMediaPipelineIncidentEvents,
   buildVoiceOperationalStatusReport,
   buildVoiceProductionReadinessReport,
   createVoiceConfiguration,
-  createVoiceFileEvalBaselineStore,
   createVoiceFileScenarioFixtureStore,
   renderVoiceOperationsRecordHTML,
   renderVoiceSessionObservabilityHTML,
@@ -17,8 +16,11 @@ import {
   type VoiceSessionRecord,
   voiceComplianceRedactionDefaults,
 } from "@absolutejs/voice";
+import { createVoiceDrizzleEvalBaselineStore } from "@absolutejs/voice/drizzle";
 
 import { resolve } from "node:path";
+
+import { db } from "../../db/client";
 
 import { receivedWebhookEnvelopes } from "./carrierHandoff";
 import { channelDefaults } from "./channelDefaults";
@@ -92,6 +94,7 @@ import {
   runPhoneSmokeRecoveryProof,
   sloCalibrationMinRuns,
   sttAdapter,
+  ttsAdapter,
 } from "./realCallEvidence";
 import { renderSavedIntakeHtmx } from "./savedIntakeHtmx";
 import {
@@ -107,7 +110,6 @@ import {
   demoIncidentSessionId,
   handoffDeliveryStore,
   renderVoiceSessionsWithSupportActions,
-  runtimeDirectory,
   runtimeStorage,
   voiceSupportArtifactRedaction,
 } from "./stores";
@@ -120,6 +122,7 @@ export const voiceConfig = createVoiceConfiguration<
   ...channelDefaults("/voice/intake"),
   path: "/voice/intake",
   stt: sttAdapter,
+  tts: ttsAdapter,
   htmx: renderSavedIntakeHtmx,
   opsStatus: {
     deliverySinks: {
@@ -139,8 +142,8 @@ export const voiceConfig = createVoiceConfiguration<
     links: opsSurfaceLinks,
     llmProviders: configuredModelProviders,
     preferFixtureWorkflows: true,
-    sttProviders: configuredSTTProviders,
     store: deliveryTraceStore,
+    sttProviders: configuredSTTProviders,
   },
   opsConsole: {
     deliverySinks: {
@@ -166,9 +169,7 @@ export const voiceConfig = createVoiceConfiguration<
     store: deliveryTraceStore,
   },
   eval: {
-    baselineStore: createVoiceFileEvalBaselineStore(
-      resolve(runtimeDirectory, "eval-baseline.json"),
-    ),
+    baselineStore: createVoiceDrizzleEvalBaselineStore({ db }),
     fixtureStore: createVoiceFileScenarioFixtureStore(
       resolve(
         projectRoot,
@@ -212,9 +213,9 @@ export const voiceConfig = createVoiceConfiguration<
   sessionList: {
     htmlPath: "/sessions",
     operationsRecordHref: "/voice-operations/:sessionId",
-    replayHref: (session) => "/sessions/" + session.sessionId,
     render: renderVoiceSessionsWithSupportActions,
     store: deliveryTraceStore,
+    replayHref: (session) => `/sessions/${  session.sessionId}`,
   },
   sessionReplay: {
     htmlPath: "/sessions/:sessionId",
@@ -231,21 +232,24 @@ export const voiceConfig = createVoiceConfiguration<
     incidentPath: "/voice-observability/:sessionId/incident.md",
     operationsRecordHref: "/voice-operations/:sessionId",
     redact: voiceSupportArtifactRedaction,
+    store: deliveryTraceStore,
+    traceTimelineHref: "/traces/:sessionId",
     render: (report) =>
       renderVoiceSessionObservabilityHTML(report, {
         title: "AbsoluteJS Voice Session Observability",
       }),
-    store: deliveryTraceStore,
-    traceTimelineHref: "/traces/:sessionId",
   },
   operationsRecord: {
     audit: runtimeStorage.audit,
     htmlPath: "/voice-operations/:sessionId",
-    mediaPipeline: () => buildDemoIncidentTimelineMediaPipelineReport(),
     redact: voiceSupportArtifactRedaction,
+    store: deliveryTraceStore,
+    title: "AbsoluteJS Voice Operations Record",
+    mediaPipeline: () => buildDemoIncidentTimelineMediaPipelineReport(),
     render: (record) => {
       const failureReplayHref = `/voice-operations/${encodeURIComponent(record.sessionId)}/failure-replay`;
       const failureReplayLink = `<a href="${escapeHtml(failureReplayHref)}">Failure replay</a>`;
+
       return renderVoiceOperationsRecordHTML(record, {
         incidentHref: `/voice-operations/${encodeURIComponent(record.sessionId)}/incident.md`,
         title: "AbsoluteJS Voice Operations Record",
@@ -254,8 +258,6 @@ export const voiceConfig = createVoiceConfiguration<
         `<a href="#incident-handoff">Incident handoff</a>${failureReplayLink}`,
       );
     },
-    store: deliveryTraceStore,
-    title: "AbsoluteJS Voice Operations Record",
   },
   incidentBundle: {
     audit: runtimeStorage.audit,
@@ -293,8 +295,8 @@ export const voiceConfig = createVoiceConfiguration<
     title: "AbsoluteJS Voice Demo Provider Orchestration",
   } as unknown as VoiceProviderOrchestrationRoutesOptions,
   providerDecisionTrace: {
-    minDegraded: 1,
     minDecisions: 4,
+    minDegraded: 1,
     minFallbacks: 1,
     name: "absolutejs-voice-example-provider-decisions",
     requiredFallbackProviders: ["deterministic"],
@@ -449,6 +451,7 @@ export const voiceConfig = createVoiceConfiguration<
       productionReadiness: "/production-readiness",
       proofPack: "/voice/proof-pack",
     },
+    title: "AbsoluteJS Voice Demo Operational Status",
     productionReadiness: () =>
       buildVoiceProductionReadinessReport(
         productionReadinessOptions({
@@ -458,7 +461,6 @@ export const voiceConfig = createVoiceConfiguration<
         }),
       ),
     proofPack: () => readLatestDemoVoiceProofPack.getStatus(),
-    title: "AbsoluteJS Voice Demo Operational Status",
   },
   incidentTimeline: {
     actionHandlers: {
@@ -512,6 +514,23 @@ export const voiceConfig = createVoiceConfiguration<
       },
     },
     audit: runtimeStorage.audit,
+    links: {
+      deliveryRuntime: "/delivery-runtime",
+      operationalStatus: "/voice/operational-status",
+      productionReadiness: "/production-readiness",
+      proofPack: "/voice/proof-pack",
+      callDebugger: (sessionId) =>
+        `/voice-call-debugger/${encodeURIComponent(sessionId)}`,
+      failureReplay: (sessionId) =>
+        `/voice-operations/${encodeURIComponent(sessionId)}/failure-replay`,
+      operationsRecords: (sessionId) =>
+        `/voice-operations/${encodeURIComponent(sessionId)}`,
+      supportBundle: (sessionId) =>
+        `/voice-incidents/${encodeURIComponent(sessionId)}/markdown`,
+    },
+    opsRecovery: buildDemoOpsRecoveryReport,
+    title: "AbsoluteJS Voice Demo Incident Timeline",
+    trace: deliveryTraceStore,
     extraEvents: async () =>
       buildVoiceMediaPipelineIncidentEvents(
         await buildDemoIncidentTimelineMediaPipelineReport(),
@@ -520,20 +539,6 @@ export const voiceConfig = createVoiceConfiguration<
     failureReplays: async () => [
       await buildDemoIncidentTimelineFailureReplay(),
     ],
-    links: {
-      callDebugger: (sessionId) =>
-        `/voice-call-debugger/${encodeURIComponent(sessionId)}`,
-      deliveryRuntime: "/delivery-runtime",
-      failureReplay: (sessionId) =>
-        `/voice-operations/${encodeURIComponent(sessionId)}/failure-replay`,
-      operationalStatus: "/voice/operational-status",
-      operationsRecords: (sessionId) =>
-        `/voice-operations/${encodeURIComponent(sessionId)}`,
-      productionReadiness: "/production-readiness",
-      proofPack: "/voice/proof-pack",
-      supportBundle: (sessionId) =>
-        `/voice-incidents/${encodeURIComponent(sessionId)}/markdown`,
-    },
     operationalStatus: () =>
       buildVoiceOperationalStatusReport({
         deliveryRuntime: deliveryRuntimeControl,
@@ -555,9 +560,6 @@ export const voiceConfig = createVoiceConfiguration<
     operationsRecords: async () => [
       await buildDemoIncidentTimelineOperationsRecord(),
     ],
-    opsRecovery: buildDemoOpsRecoveryReport,
-    title: "AbsoluteJS Voice Demo Incident Timeline",
-    trace: deliveryTraceStore,
   },
   opsActionAudit: {
     audit: runtimeStorage.audit,
@@ -585,13 +587,6 @@ export const voiceConfig = createVoiceConfiguration<
       sessions: "/quality",
       tools: "/tool-contracts",
     },
-    htmlPath: "/voice/simulations",
-    operationsRecordHref: "/voice-operations/:sessionId",
-    store: deliveryTraceStore,
-    thresholds: {
-      maxProviderAverageLatencyMs: 5_000,
-    },
-    scenarios: workflowScenarios,
     fixtureStore: createVoiceFileScenarioFixtureStore(
       resolve(
         projectRoot,
@@ -601,7 +596,8 @@ export const voiceConfig = createVoiceConfiguration<
         "voice-scenario-fixtures.json",
       ),
     ),
-    tools: demoToolContracts,
+    htmlPath: "/voice/simulations",
+    operationsRecordHref: "/voice-operations/:sessionId",
     outcomes: {
       contracts: demoOutcomeContracts,
       events: runtimeStorage.events,
@@ -610,7 +606,13 @@ export const voiceConfig = createVoiceConfiguration<
       sessions: runtimeStorage.session,
       tasks: runtimeStorage.tasks,
     },
+    scenarios: workflowScenarios,
+    store: deliveryTraceStore,
+    thresholds: {
+      maxProviderAverageLatencyMs: 5_000,
+    },
     title: "AbsoluteJS Voice Demo Simulation Suite",
+    tools: demoToolContracts,
   },
   liveLatency: {
     htmlPath: "/live-latency",
@@ -646,16 +648,15 @@ export const voiceConfig = createVoiceConfiguration<
     title: "AbsoluteJS Voice Demo Campaigns",
   },
   opsWebhookReceiver: {
+    signingSecret: webhookSigningSecret,
     onEnvelope: ({ envelope }) => {
       receivedWebhookEnvelopes.unshift(envelope);
       receivedWebhookEnvelopes.splice(12);
     },
-    signingSecret: webhookSigningSecret,
   },
   profileSwitchPolicyProof: {
     allowedProfileIds: [...demoVoiceProfileIds],
     audit: runtimeStorage.audit,
-    defaults: () => readRealCallProfileDefaultsReport(),
     metadata: {
       source: "absolutejs-voice-example",
     },
@@ -666,6 +667,7 @@ export const voiceConfig = createVoiceConfiguration<
       turnWarnings: 3,
     },
     title: "Voice Profile Switch Policy Proof",
+    defaults: () => readRealCallProfileDefaultsReport(),
   },
   profileSwitchLiveDecision: {
     audit: runtimeStorage.audit,
@@ -681,7 +683,6 @@ export const voiceConfig = createVoiceConfiguration<
     policyProof: {
       allowedProfileIds: [...demoVoiceProfileIds],
       audit: runtimeStorage.audit,
-      defaults: () => readRealCallProfileDefaultsReport(),
       metadata: {
         source: "absolutejs-voice-example",
       },
@@ -691,6 +692,7 @@ export const voiceConfig = createVoiceConfiguration<
         providerP95Ms: 950,
         turnWarnings: 3,
       },
+      defaults: () => readRealCallProfileDefaultsReport(),
     },
     title: "Voice Profile Switch Readiness",
     trace: deliveryTraceStore,
@@ -723,14 +725,14 @@ export const voiceConfig = createVoiceConfiguration<
         const runtimeReport =
           await refreshRealCallEvidenceRuntimeAfterRecovery();
         const report = runtimeReport.history;
-        const actionableProfiles = report.defaults.summary.actionableProfiles;
+        const {actionableProfiles} = report.defaults.summary;
         const passing = actionableProfiles >= 2;
 
         return {
+          message: `${actionableProfiles}/${report.defaults.summary.profileCount} real-call profiles have actionable provider defaults.`,
           ok: passing,
           report,
           status: passing ? "pass" : "fail",
-          message: `${actionableProfiles}/${report.defaults.summary.profileCount} real-call profiles have actionable provider defaults.`,
         };
       },
       refresh: async () => {

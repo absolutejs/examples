@@ -128,6 +128,10 @@ const DEMO_STABLE_GATE_POLICY = {
 };
 
 const DEMO_RELEASE_POLICIES = {
+  "docs-release-completed": {
+    approvalMaxAgeMs: 1000 * 60 * 60 * 24,
+    requireApprovalBeforePromotion: true,
+  },
   "docs-release-general": {
     approvalMaxAgeMs: 1000 * 60 * 60 * 24,
     requireApprovalBeforePromotion: true,
@@ -140,10 +144,6 @@ const DEMO_RELEASE_POLICIES = {
     approvalMaxAgeMs: 1000 * 60 * 60 * 24,
     requireApprovalBeforePromotion: true,
   },
-  "docs-release-completed": {
-    approvalMaxAgeMs: 1000 * 60 * 60 * 24,
-    requireApprovalBeforePromotion: true,
-  },
 } as const;
 
 const DEMO_RELEASE_SCENARIOS: Record<
@@ -151,45 +151,45 @@ const DEMO_RELEASE_SCENARIOS: Record<
   DemoReleaseScenario
 > = {
   "blocked-general": {
-    id: "blocked-general",
-    label: "Blocked stable lane · general",
+    canaryRunId: "demo-release-run-canary-general",
+    classification: "general",
     description:
       "Stable lane is blocked by a classic passing-rate gate regression.",
     groupKey: "docs-release-general",
-    canaryRunId: "demo-release-run-canary-general",
-    stableRunId: "demo-release-run-stable-general",
+    id: "blocked-general",
+    label: "Blocked stable lane · general",
     laneState: "blocked",
-    classification: "general",
+    stableRunId: "demo-release-run-stable-general",
   },
   "blocked-multivector": {
-    id: "blocked-multivector",
-    label: "Blocked stable lane · multivector",
+    canaryRunId: "demo-release-run-canary-multivector",
+    classification: "multivector",
     description:
       "Stable lane is blocked by multivector coverage and collapsed-parent recovery regressions.",
     groupKey: "docs-release-multivector",
-    canaryRunId: "demo-release-run-canary-multivector",
-    stableRunId: "demo-release-run-stable-multivector",
+    id: "blocked-multivector",
+    label: "Blocked stable lane · multivector",
     laneState: "blocked",
-    classification: "multivector",
-  },
-  ready: {
-    id: "ready",
-    label: "Promotable stable lane",
-    description: "Stable lane is promotable from the current candidate.",
-    groupKey: "docs-release-ready",
-    canaryRunId: "demo-release-run-canary-ready",
-    stableRunId: "demo-release-run-stable-ready",
-    laneState: "ready",
+    stableRunId: "demo-release-run-stable-multivector",
   },
   completed: {
-    id: "completed",
-    label: "Completed stable handoff",
+    canaryRunId: "demo-release-run-canary-completed",
     description:
       "Stable already received the canary handoff and is running the promoted candidate.",
     groupKey: "docs-release-completed",
-    canaryRunId: "demo-release-run-canary-completed",
-    stableRunId: "demo-release-run-stable-completed",
+    id: "completed",
+    label: "Completed stable handoff",
     laneState: "completed",
+    stableRunId: "demo-release-run-stable-completed",
+  },
+  ready: {
+    canaryRunId: "demo-release-run-canary-ready",
+    description: "Stable lane is promotable from the current candidate.",
+    groupKey: "docs-release-ready",
+    id: "ready",
+    label: "Promotable stable lane",
+    laneState: "ready",
+    stableRunId: "demo-release-run-stable-ready",
   },
 };
 
@@ -202,6 +202,7 @@ const readJsonResponse = async (response: Response) => {
   if (!response.ok) {
     throw new Error(await response.text());
   }
+
   return response.json();
 };
 
@@ -247,6 +248,7 @@ export const createDemoReleaseController = ({
       "blocked-multivector",
       Date.now(),
     );
+
     return "blocked-multivector";
   };
 
@@ -317,10 +319,10 @@ export const createDemoReleaseController = ({
   });
 
   const storesByMode: Record<DemoBackendMode, DemoReleaseStores> = {
-    "sqlite-native": createStores("sqlite-native"),
-    "sqlite-fallback": createStores("sqlite-fallback"),
-    postgres: createStores("postgres"),
     pinecone: createStores("pinecone"),
+    postgres: createStores("postgres"),
+    "sqlite-fallback": createStores("sqlite-fallback"),
+    "sqlite-native": createStores("sqlite-native"),
   };
 
   const seedRun = async ({
@@ -387,7 +389,6 @@ export const createDemoReleaseController = ({
           }
         : null;
     await persistRAGRetrievalComparisonRun({
-      store: storesByMode[mode].comparisonHistoryStore,
       run: {
         id: runId,
         label,
@@ -402,6 +403,8 @@ export const createDemoReleaseController = ({
         comparison: {
           entries: [],
           leaderboard: [],
+          suiteId,
+          suiteLabel: label,
           summary: {
             bestByAverageF1: "hybrid",
             bestByPassingRate:
@@ -419,8 +422,6 @@ export const createDemoReleaseController = ({
                 }
               : {}),
           },
-          suiteId,
-          suiteLabel: label,
         },
         decisionSummary: {
           baseline: {
@@ -452,12 +453,12 @@ export const createDemoReleaseController = ({
           candidateRetrievalId: "hybrid",
           delta: { ...delta, ...(multivectorSnapshot?.delta ?? {}) },
           gate: {
-            status: gateStatus,
-            reasons: gateReasons,
             policy:
               targetRolloutLabel === "stable"
                 ? DEMO_STABLE_GATE_POLICY
                 : DEMO_CANARY_GATE_POLICY,
+            reasons: gateReasons,
+            status: gateStatus,
           },
           winnerByAverageF1: "hybrid",
           winnerByPassingRate:
@@ -476,25 +477,26 @@ export const createDemoReleaseController = ({
             : {}),
         },
         releaseVerdict: {
-          status: gateStatus,
-          summary:
-            gateStatus === "pass"
-              ? "Candidate passed the active baseline gate."
-              : "Candidate failed the active baseline gate.",
           baselineGroupKey: groupKey,
           baselineRetrievalId: "vector",
           candidateRetrievalId: "hybrid",
           delta: { ...delta, ...(multivectorSnapshot?.delta ?? {}) },
           gate: {
-            status: gateStatus,
-            reasons: gateReasons,
             policy:
               targetRolloutLabel === "stable"
                 ? DEMO_STABLE_GATE_POLICY
                 : DEMO_CANARY_GATE_POLICY,
+            reasons: gateReasons,
+            status: gateStatus,
           },
+          status: gateStatus,
+          summary:
+            gateStatus === "pass"
+              ? "Candidate passed the active baseline gate."
+              : "Candidate failed the active baseline gate.",
         },
       },
+      store: storesByMode[mode].comparisonHistoryStore,
     });
   };
 
@@ -525,9 +527,9 @@ export const createDemoReleaseController = ({
       : [];
     const stableGateDelta = isBlockedScenario
       ? isMultivectorScenario
-        ? { averageF1Delta: 0, passingRateDelta: -1, elapsedMsDelta: 8 }
-        : { averageF1Delta: 0.02, passingRateDelta: -4, elapsedMsDelta: 8 }
-      : { averageF1Delta: 0.02, passingRateDelta: 3, elapsedMsDelta: 8 };
+        ? { averageF1Delta: 0, elapsedMsDelta: 8, passingRateDelta: -1 }
+        : { averageF1Delta: 0.02, elapsedMsDelta: 8, passingRateDelta: -4 }
+      : { averageF1Delta: 0.02, elapsedMsDelta: 8, passingRateDelta: 3 };
     const corpusGroupKey = getDemoCorpusGroupKey(workspace);
     const canaryRunId = getQualifiedReleaseRunId(
       scenario.canaryRunId,
@@ -539,52 +541,52 @@ export const createDemoReleaseController = ({
     );
     const stores = storesByMode[mode];
     const existingRuns = await loadRAGRetrievalComparisonHistory({
-      store: stores.comparisonHistoryStore,
-      groupKey: scenario.groupKey,
       corpusGroupKey,
+      groupKey: scenario.groupKey,
       limit: 10,
+      store: stores.comparisonHistoryStore,
       tag: "demo-release",
     });
 
     if (existingRuns.length === 0) {
       await seedRun({
-        mode,
-        groupKey: scenario.groupKey,
         corpusGroupKey,
-        runId: canaryRunId,
-        gateStatus: "pass",
-        gateReasons: [],
         delta: {
           averageF1Delta: 0.03,
-          passingRateDelta: 4,
           elapsedMsDelta: -2,
+          passingRateDelta: 4,
         },
+        gateReasons: [],
+        gateStatus: "pass",
+        groupKey: scenario.groupKey,
         label: `${scenario.label} canary benchmark`,
+        mode,
+        runId: canaryRunId,
         suiteId: `demo-release-suite-${mode}-${scenario.id}-canary`,
-        targetRolloutLabel: "canary",
         tags: ["demo-release", scenario.id, "canary"],
+        targetRolloutLabel: "canary",
       });
       await seedRun({
-        mode,
-        groupKey: scenario.groupKey,
-        corpusGroupKey,
-        runId: stableRunId,
-        gateStatus: isBlockedScenario ? "fail" : "pass",
-        gateReasons: stableGateReasons,
-        delta: stableGateDelta,
         classification: scenario.classification,
+        corpusGroupKey,
+        delta: stableGateDelta,
+        gateReasons: stableGateReasons,
+        gateStatus: isBlockedScenario ? "fail" : "pass",
+        groupKey: scenario.groupKey,
         label: `${scenario.label} stable benchmark`,
+        mode,
+        runId: stableRunId,
         suiteId: `demo-release-suite-${mode}-${scenario.id}-stable`,
-        targetRolloutLabel: "stable",
         tags: ["demo-release", scenario.id, "stable"],
+        targetRolloutLabel: "stable",
       });
     }
 
     const baselines = await loadRAGRetrievalBaselines({
-      store: stores.baselineStore,
-      groupKey: scenario.groupKey,
       corpusGroupKey,
+      groupKey: scenario.groupKey,
       limit: 12,
+      store: stores.baselineStore,
     });
 
     const hasCanaryBaseline = baselines.some(
@@ -596,7 +598,6 @@ export const createDemoReleaseController = ({
 
     if (!hasCanaryBaseline) {
       await persistRAGRetrievalBaseline({
-        store: stores.baselineStore,
         record: {
           id: getQualifiedReleaseEntityId(
             `demo-release-baseline-canary-${mode}-${scenario.id}`,
@@ -618,12 +619,12 @@ export const createDemoReleaseController = ({
           policy: DEMO_CANARY_GATE_POLICY,
           tags: ["demo-release", scenario.id, "canary"],
         },
+        store: stores.baselineStore,
       });
     }
 
     if (!hasStableBaseline) {
       await persistRAGRetrievalBaseline({
-        store: stores.baselineStore,
         record: {
           id: getQualifiedReleaseEntityId(
             `demo-release-baseline-stable-${mode}-${scenario.id}`,
@@ -645,14 +646,15 @@ export const createDemoReleaseController = ({
           policy: DEMO_STABLE_GATE_POLICY,
           tags: ["demo-release", scenario.id, "stable"],
         },
+        store: stores.baselineStore,
       });
     }
 
     const decisions = await loadRAGRetrievalReleaseDecisions({
-      store: stores.releaseDecisionStore,
-      groupKey: scenario.groupKey,
       corpusGroupKey,
+      groupKey: scenario.groupKey,
       limit: 12,
+      store: stores.releaseDecisionStore,
     });
 
     if (
@@ -665,32 +667,32 @@ export const createDemoReleaseController = ({
       )
     ) {
       await persistRAGRetrievalReleaseDecision({
-        store: stores.releaseDecisionStore,
         record: {
+          corpusGroupKey,
+          decidedAt: Date.now() - 1_000,
+          decidedBy: "demo-operator",
+          freshnessStatus: "fresh",
+          gateStatus: "pass",
+          groupKey: scenario.groupKey,
           id: getQualifiedReleaseEntityId(
             `demo-release-approve-${mode}-${scenario.id}`,
             workspace,
           ),
           kind: "approve",
-          groupKey: scenario.groupKey,
-          corpusGroupKey,
-          targetRolloutLabel: "stable",
+          notes: "Approved for the promotable stable-lane scenario.",
           retrievalId: "hybrid",
           sourceRunId: stableRunId,
-          decidedAt: Date.now() - 1_000,
-          decidedBy: "demo-operator",
-          notes: "Approved for the promotable stable-lane scenario.",
-          gateStatus: "pass",
-          freshnessStatus: "fresh",
+          targetRolloutLabel: "stable",
         },
+        store: stores.releaseDecisionStore,
       });
     }
 
     const incidents = await loadRAGRetrievalReleaseIncidents({
-      store: stores.releaseIncidentStore,
-      groupKey: scenario.groupKey,
       corpusGroupKey,
+      groupKey: scenario.groupKey,
       limit: 12,
+      store: stores.releaseIncidentStore,
     });
 
     if (
@@ -705,50 +707,49 @@ export const createDemoReleaseController = ({
       )
     ) {
       await persistRAGRetrievalReleaseIncident({
-        store: stores.releaseIncidentStore,
         record: {
+          baselineRetrievalId: "vector",
+          candidateRetrievalId: "hybrid",
+          classification: scenario.classification ?? "general",
+          corpusGroupKey,
+          groupKey: scenario.groupKey,
           id: getQualifiedReleaseEntityId(
             `demo-release-incident-stable-${mode}`,
             workspace,
           ),
-          groupKey: scenario.groupKey,
-          targetRolloutLabel: "stable",
-          severity: "critical",
-          status: "open",
           kind: "gate_failure",
           message: isMultivectorScenario
             ? "stable multivector coverage regressed for the current candidate"
             : "stable gate failed for the current candidate",
-          triggeredAt: Date.now() - 750,
-          baselineRetrievalId: "vector",
-          candidateRetrievalId: "hybrid",
+          severity: "critical",
           sourceRunId: stableRunId,
-          classification: scenario.classification ?? "general",
-          corpusGroupKey,
+          status: "open",
+          targetRolloutLabel: "stable",
+          triggeredAt: Date.now() - 750,
         },
+        store: stores.releaseIncidentStore,
       });
     }
 
     const handoffDecisions = await loadRAGRetrievalLaneHandoffDecisions({
-      store: stores.laneHandoffDecisionStore,
-      groupKey: scenario.groupKey,
       corpusGroupKey,
-      targetRolloutLabel: "stable",
+      groupKey: scenario.groupKey,
       limit: 12,
+      store: stores.laneHandoffDecisionStore,
+      targetRolloutLabel: "stable",
     });
     if (isCompletedScenario && handoffDecisions.length === 0) {
       await persistRAGRetrievalLaneHandoffDecision({
-        store: stores.laneHandoffDecisionStore,
         record: {
+          candidateRetrievalId: "hybrid",
+          corpusGroupKey,
+          decidedAt: Date.now() - 900,
+          decidedBy: "demo-operator",
+          groupKey: scenario.groupKey,
           id: getQualifiedReleaseEntityId(
             `demo-release-handoff-approve-${mode}-${scenario.id}`,
             workspace,
           ),
-          candidateRetrievalId: "hybrid",
-          decidedAt: Date.now() - 900,
-          decidedBy: "demo-operator",
-          groupKey: scenario.groupKey,
-          corpusGroupKey,
           kind: "approve",
           notes: "Seeded approved handoff for completed scenario.",
           sourceBaselineRetrievalId: "hybrid",
@@ -757,19 +758,19 @@ export const createDemoReleaseController = ({
           targetBaselineRetrievalId: "vector",
           targetRolloutLabel: "stable",
         },
+        store: stores.laneHandoffDecisionStore,
       });
       await persistRAGRetrievalLaneHandoffDecision({
-        store: stores.laneHandoffDecisionStore,
         record: {
+          candidateRetrievalId: "hybrid",
+          corpusGroupKey,
+          decidedAt: Date.now() - 800,
+          decidedBy: "demo-operator",
+          groupKey: scenario.groupKey,
           id: getQualifiedReleaseEntityId(
             `demo-release-handoff-complete-${mode}-${scenario.id}`,
             workspace,
           ),
-          candidateRetrievalId: "hybrid",
-          decidedAt: Date.now() - 800,
-          decidedBy: "demo-operator",
-          groupKey: scenario.groupKey,
-          corpusGroupKey,
           kind: "complete",
           notes: "Seeded completed handoff for completed scenario.",
           sourceBaselineRetrievalId: "hybrid",
@@ -778,35 +779,85 @@ export const createDemoReleaseController = ({
           targetBaselineRetrievalId: "hybrid",
           targetRolloutLabel: "stable",
         },
+        store: stores.laneHandoffDecisionStore,
       });
     }
   };
 
   const pluginConfig = (mode: DemoBackendMode) => {
     const stores = storesByMode[mode];
+
     return {
-      retrievalComparisonHistoryStore: stores.comparisonHistoryStore,
-      retrievalBaselineStore: stores.baselineStore,
-      retrievalReleaseDecisionStore: stores.releaseDecisionStore,
-      retrievalReleaseIncidentStore: stores.releaseIncidentStore,
-      retrievalLaneHandoffDecisionStore: stores.laneHandoffDecisionStore,
-      retrievalLaneHandoffIncidentStore: stores.laneHandoffIncidentStore,
-      retrievalLaneHandoffIncidentHistoryStore:
-        stores.laneHandoffIncidentHistoryStore,
-      retrievalLaneHandoffAutoCompletePolicyHistoryStore:
-        stores.laneHandoffAutoCompletePolicyHistoryStore,
-      retrievalReleaseLanePolicyHistoryStore:
-        stores.releaseLanePolicyHistoryStore,
+      retrievalBaselineGatePoliciesByGroupAndRolloutLabel: {
+        "docs-release-completed": {
+          canary: DEMO_CANARY_GATE_POLICY,
+          stable: DEMO_STABLE_GATE_POLICY,
+        },
+        "docs-release-general": {
+          canary: DEMO_CANARY_GATE_POLICY,
+          stable: DEMO_STABLE_GATE_POLICY,
+        },
+        "docs-release-multivector": {
+          canary: DEMO_CANARY_GATE_POLICY,
+          stable: DEMO_STABLE_GATE_POLICY,
+        },
+        "docs-release-ready": {
+          canary: DEMO_CANARY_GATE_POLICY,
+          stable: DEMO_STABLE_GATE_POLICY,
+        },
+      },
       retrievalBaselineGatePolicyHistoryStore:
         stores.baselineGatePolicyHistoryStore,
-      retrievalReleaseLaneEscalationPolicyHistoryStore:
-        stores.releaseLaneEscalationPolicyHistoryStore,
+      retrievalBaselineStore: stores.baselineStore,
+      retrievalComparisonHistoryStore: stores.comparisonHistoryStore,
       retrievalIncidentRemediationDecisionStore:
         stores.incidentRemediationDecisionStore,
       retrievalIncidentRemediationExecutionHistoryStore:
         stores.incidentRemediationExecutionHistoryStore,
+      retrievalLaneHandoffAutoCompletePoliciesByGroupAndTargetRolloutLabel: {
+        "docs-release-completed": {
+          stable: {
+            enabled: true,
+            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
+          },
+        },
+        "docs-release-general": {
+          stable: {
+            enabled: true,
+            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
+          },
+        },
+        "docs-release-multivector": {
+          stable: {
+            enabled: true,
+            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
+          },
+        },
+        "docs-release-ready": {
+          stable: {
+            enabled: true,
+            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
+          },
+        },
+      },
+      retrievalLaneHandoffAutoCompletePolicyHistoryStore:
+        stores.laneHandoffAutoCompletePolicyHistoryStore,
+      retrievalLaneHandoffDecisionStore: stores.laneHandoffDecisionStore,
+      retrievalLaneHandoffIncidentHistoryStore:
+        stores.laneHandoffIncidentHistoryStore,
+      retrievalLaneHandoffIncidentStore: stores.laneHandoffIncidentStore,
+      retrievalReleaseDecisionStore: stores.releaseDecisionStore,
+      retrievalReleaseIncidentStore: stores.releaseIncidentStore,
+      retrievalReleaseLaneEscalationPolicyHistoryStore:
+        stores.releaseLaneEscalationPolicyHistoryStore,
+      retrievalReleaseLanePolicyHistoryStore:
+        stores.releaseLanePolicyHistoryStore,
       retrievalReleasePolicies: DEMO_RELEASE_POLICIES,
       retrievalReleasePoliciesByGroupAndRolloutLabel: {
+        "docs-release-completed": {
+          canary: { requireApprovalBeforePromotion: false },
+          stable: DEMO_RELEASE_POLICIES["docs-release-completed"],
+        },
         "docs-release-general": {
           canary: { requireApprovalBeforePromotion: false },
           stable: DEMO_RELEASE_POLICIES["docs-release-general"],
@@ -818,54 +869,6 @@ export const createDemoReleaseController = ({
         "docs-release-ready": {
           canary: { requireApprovalBeforePromotion: false },
           stable: DEMO_RELEASE_POLICIES["docs-release-ready"],
-        },
-        "docs-release-completed": {
-          canary: { requireApprovalBeforePromotion: false },
-          stable: DEMO_RELEASE_POLICIES["docs-release-completed"],
-        },
-      },
-      retrievalBaselineGatePoliciesByGroupAndRolloutLabel: {
-        "docs-release-general": {
-          canary: DEMO_CANARY_GATE_POLICY,
-          stable: DEMO_STABLE_GATE_POLICY,
-        },
-        "docs-release-multivector": {
-          canary: DEMO_CANARY_GATE_POLICY,
-          stable: DEMO_STABLE_GATE_POLICY,
-        },
-        "docs-release-ready": {
-          canary: DEMO_CANARY_GATE_POLICY,
-          stable: DEMO_STABLE_GATE_POLICY,
-        },
-        "docs-release-completed": {
-          canary: DEMO_CANARY_GATE_POLICY,
-          stable: DEMO_STABLE_GATE_POLICY,
-        },
-      },
-      retrievalLaneHandoffAutoCompletePoliciesByGroupAndTargetRolloutLabel: {
-        "docs-release-general": {
-          stable: {
-            enabled: true,
-            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
-          },
-        },
-        "docs-release-multivector": {
-          stable: {
-            enabled: true,
-            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
-          },
-        },
-        "docs-release-ready": {
-          stable: {
-            enabled: true,
-            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
-          },
-        },
-        "docs-release-completed": {
-          stable: {
-            enabled: true,
-            maxApprovedDecisionAgeMs: 1000 * 60 * 60 * 24,
-          },
         },
       },
     };
@@ -929,32 +932,32 @@ export const createDemoReleaseController = ({
       baselines,
     ] = await Promise.all([
       loadRAGRetrievalReleaseDecisions({
-        store: stores.releaseDecisionStore,
-        groupKey: scenario.groupKey,
         corpusGroupKey,
+        groupKey: scenario.groupKey,
         limit: 12,
+        store: stores.releaseDecisionStore,
       }),
       loadRAGRetrievalReleaseIncidents({
-        store: stores.releaseIncidentStore,
-        groupKey: scenario.groupKey,
         corpusGroupKey,
+        groupKey: scenario.groupKey,
         limit: 12,
+        store: stores.releaseIncidentStore,
       }),
       loadRAGRetrievalIncidentRemediationDecisions({
-        store: stores.incidentRemediationDecisionStore,
         incidentId: undefined,
         limit: 24,
+        store: stores.incidentRemediationDecisionStore,
       }),
       loadRAGRetrievalIncidentRemediationExecutionHistory({
-        store: stores.incidentRemediationExecutionHistoryStore,
         incidentId: undefined,
         limit: 24,
+        store: stores.incidentRemediationExecutionHistoryStore,
       }),
       loadRAGRetrievalBaselines({
-        store: stores.baselineStore,
-        groupKey: scenario.groupKey,
         corpusGroupKey,
+        groupKey: scenario.groupKey,
         limit: 12,
+        store: stores.baselineStore,
       }),
     ]);
 
@@ -1017,6 +1020,7 @@ export const createDemoReleaseController = ({
       if (normalized.includes("approval") || normalized.includes("approve")) {
         return "handoff_auto_complete_approval_missing";
       }
+
       return "handoff_auto_complete_policy_drift";
     };
 
@@ -1057,11 +1061,11 @@ export const createDemoReleaseController = ({
       const driftKind = inferHandoffDriftKind(entry.reasons ?? []);
       const existing = handoffDriftCountsByLaneAccumulator[laneKey] ?? {
         countsByKind: {
-          handoff_auto_complete_policy_drift: 0,
-          handoff_auto_complete_stale_approval: 0,
-          handoff_auto_complete_source_lane_missing: 0,
-          handoff_auto_complete_gate_blocked: 0,
           handoff_auto_complete_approval_missing: 0,
+          handoff_auto_complete_gate_blocked: 0,
+          handoff_auto_complete_policy_drift: 0,
+          handoff_auto_complete_source_lane_missing: 0,
+          handoff_auto_complete_stale_approval: 0,
         },
         targetRolloutLabel: entry.targetRolloutLabel,
         totalCount: 0,
@@ -1078,12 +1082,6 @@ export const createDemoReleaseController = ({
         kind: driftKind,
         remediationHints: entry.reasons ?? [],
         remediationSteps: (entry.reasons ?? []).map((reason: string) => ({
-          kind: driftKind.includes("approval")
-            ? "record_approval"
-            : driftKind.includes("gate")
-              ? "inspect_gate"
-              : "review_readiness",
-          label: reason,
           actions: [
             {
               kind: "view_release_status",
@@ -1092,6 +1090,12 @@ export const createDemoReleaseController = ({
               path: `${backend.path}/status/release`,
             },
           ],
+          kind: driftKind.includes("approval")
+            ? "record_approval"
+            : driftKind.includes("gate")
+              ? "inspect_gate"
+              : "review_readiness",
+          label: reason,
         })),
         severity: driftKind.includes("gate") ? "critical" : "warning",
         targetRolloutLabel: entry.targetRolloutLabel,
@@ -1191,10 +1195,10 @@ export const createDemoReleaseController = ({
     const actions = [
       scenario.id !== "blocked-general"
         ? {
-            id: "switch-to-blocked-general-scenario",
-            label: "Load blocked general regression",
             description:
               "Switch the demo to a blocked stable-lane scenario driven by a general passing-rate regression.",
+            id: "switch-to-blocked-general-scenario",
+            label: "Load blocked general regression",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "switch-to-blocked-general-scenario" },
@@ -1203,10 +1207,10 @@ export const createDemoReleaseController = ({
         : null,
       scenario.id !== "blocked-multivector"
         ? {
-            id: "switch-to-blocked-multivector-scenario",
-            label: "Load blocked multivector regression",
             description:
               "Switch the demo to a blocked stable-lane scenario driven by multivector coverage regression.",
+            id: "switch-to-blocked-multivector-scenario",
+            label: "Load blocked multivector regression",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "switch-to-blocked-multivector-scenario" },
@@ -1215,10 +1219,10 @@ export const createDemoReleaseController = ({
         : null,
       scenario.id !== "ready"
         ? {
-            id: "switch-to-ready-scenario",
-            label: "Load promotable stable lane",
             description:
               "Switch the demo to a promotable stable-lane scenario so promotion and handoff completion paths become available.",
+            id: "switch-to-ready-scenario",
+            label: "Load promotable stable lane",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "switch-to-ready-scenario" },
@@ -1227,10 +1231,10 @@ export const createDemoReleaseController = ({
         : null,
       scenario.id !== "completed"
         ? {
-            id: "switch-to-completed-scenario",
-            label: "Load completed stable handoff",
             description:
               "Switch the demo to a completed handoff scenario so the promoted stable-lane outcome is visible immediately.",
+            id: "switch-to-completed-scenario",
+            label: "Load completed stable handoff",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "switch-to-completed-scenario" },
@@ -1238,50 +1242,50 @@ export const createDemoReleaseController = ({
           }
         : null,
       {
-        id: "reset-release-demo",
-        label: "Reset release demo",
         description:
           "Clear the release-control files for this backend mode and reseed the blocked multivector stable-lane scenario.",
+        id: "reset-release-demo",
+        label: "Reset release demo",
         method: "POST" as const,
         path: `/demo/release/${mode}/action`,
         payload: { actionId: "reset-release-demo" },
         tone: "danger" as const,
       },
       {
-        id: "inspect-release-status",
-        label: "Inspect release status",
         description:
           "Execute the published release status workflow and record the inspection in remediation history.",
+        id: "inspect-release-status",
+        label: "Inspect release status",
         method: "POST" as const,
         path: `/demo/release/${mode}/action`,
         payload: { actionId: "inspect-release-status" },
         tone: "neutral" as const,
       },
       {
-        id: "inspect-release-drift",
-        label: "Inspect release drift",
         description:
           "Execute the published release drift workflow and record the inspection in remediation history.",
+        id: "inspect-release-drift",
+        label: "Inspect release drift",
         method: "POST" as const,
         path: `/demo/release/${mode}/action`,
         payload: { actionId: "inspect-release-drift" },
         tone: "neutral" as const,
       },
       {
-        id: "run-remediation-drill",
-        label: "Run remediation drill",
         description:
           "Execute real remediation workflows to create execution history, an idempotent replay, and a guardrail-blocked bulk mutation.",
+        id: "run-remediation-drill",
+        label: "Run remediation drill",
         method: "POST" as const,
         path: `/demo/release/${mode}/action`,
         payload: { actionId: "run-remediation-drill" },
         tone: "neutral" as const,
       },
       {
-        id: "run-policy-history-drill",
-        label: "Run policy history drill",
         description:
           "Load the published release, gate, escalation, and handoff policy history routes so recent policy snapshots are visible in the demo.",
+        id: "run-policy-history-drill",
+        label: "Run policy history drill",
         method: "POST" as const,
         path: `/demo/release/${mode}/action`,
         payload: { actionId: "run-policy-history-drill" },
@@ -1289,10 +1293,10 @@ export const createDemoReleaseController = ({
       },
       openIncident
         ? {
-            id: "run-incident-drill",
-            label: "Run incident drill",
             description:
               "Acknowledge and resolve the current release incident through the published incident workflow.",
+            id: "run-incident-drill",
+            label: "Run incident drill",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "run-incident-drill" },
@@ -1301,10 +1305,10 @@ export const createDemoReleaseController = ({
         : null,
       scenario.laneState === "ready"
         ? {
-            id: "run-promote-revert-drill",
-            label: "Run promote/revert drill",
             description:
               "Promote the ready stable candidate and then revert to the previous stable baseline through the published workflows.",
+            id: "run-promote-revert-drill",
+            label: "Run promote/revert drill",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "run-promote-revert-drill" },
@@ -1314,10 +1318,10 @@ export const createDemoReleaseController = ({
       stableHandoff?.readyForHandoff &&
       stableHandoffDecision?.kind !== "complete"
         ? {
-            id: "run-handoff-completion-drill",
-            label: "Run handoff completion drill",
             description:
               "Approve and complete the stable handoff through the published handoff workflows.",
+            id: "run-handoff-completion-drill",
+            label: "Run handoff completion drill",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "run-handoff-completion-drill" },
@@ -1327,10 +1331,10 @@ export const createDemoReleaseController = ({
       stableReadiness?.ready &&
       stableBaseline?.retrievalId !== stableReadiness?.candidateRetrievalId
         ? {
-            id: "promote-stable-candidate",
-            label: "Promote stable candidate",
             description:
               "Promote the current stable candidate through the published promote-from-run workflow.",
+            id: "promote-stable-candidate",
+            label: "Promote stable candidate",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "promote-stable-candidate" },
@@ -1341,10 +1345,10 @@ export const createDemoReleaseController = ({
       stableBaseline?.retrievalId !== "vector" &&
       latestStableBaselineHistory
         ? {
-            id: "revert-stable-baseline",
-            label: "Revert stable baseline",
             description:
               "Revert stable to the previous baseline version through the published rollback workflow.",
+            id: "revert-stable-baseline",
+            label: "Revert stable baseline",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "revert-stable-baseline" },
@@ -1352,20 +1356,20 @@ export const createDemoReleaseController = ({
           }
         : null,
       {
-        id: "approve-stable-override",
-        label: "Approve stable candidate",
         description:
           "Record a stable-lane approval through the real release decision route.",
+        id: "approve-stable-override",
+        label: "Approve stable candidate",
         method: "POST" as const,
         path: `/demo/release/${mode}/action`,
         payload: { actionId: "approve-stable-override" },
         tone: "primary" as const,
       },
       {
-        id: "reject-stable-candidate",
-        label: "Reject stable candidate",
         description:
           "Record a stable-lane rejection through the published release decision workflow.",
+        id: "reject-stable-candidate",
+        label: "Reject stable candidate",
         method: "POST" as const,
         path: `/demo/release/${mode}/action`,
         payload: { actionId: "reject-stable-candidate" },
@@ -1373,9 +1377,9 @@ export const createDemoReleaseController = ({
       },
       openIncident && !openIncident.acknowledgedAt
         ? {
+            description: `Acknowledge the current ${openIncident.targetRolloutLabel ?? "release"} incident through the published release incident workflow.`,
             id: "acknowledge-open-incident",
             label: `Acknowledge ${openIncident.targetRolloutLabel ?? "release"} incident`,
-            description: `Acknowledge the current ${openIncident.targetRolloutLabel ?? "release"} incident through the published release incident workflow.`,
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "acknowledge-open-incident" },
@@ -1384,9 +1388,9 @@ export const createDemoReleaseController = ({
         : null,
       openIncident
         ? {
+            description: `Resolve the current ${openIncident.targetRolloutLabel ?? "release"} incident through the published release incident workflow.`,
             id: "resolve-open-incident",
             label: `Resolve ${openIncident.targetRolloutLabel ?? "release"} incident`,
-            description: `Resolve the current ${openIncident.targetRolloutLabel ?? "release"} incident through the published release incident workflow.`,
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "resolve-open-incident" },
@@ -1395,10 +1399,10 @@ export const createDemoReleaseController = ({
         : null,
       stableHandoff
         ? {
-            id: "inspect-stable-handoffs",
-            label: "Inspect handoffs",
             description:
               "Execute the published handoff status workflow and record the inspection in remediation history.",
+            id: "inspect-stable-handoffs",
+            label: "Inspect handoffs",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "inspect-stable-handoffs" },
@@ -1408,10 +1412,10 @@ export const createDemoReleaseController = ({
       stableHandoff?.readyForHandoff &&
       stableHandoffDecision?.kind !== "complete"
         ? {
-            id: "run-handoff-incident-drill",
-            label: "Run handoff incident drill",
             description:
               "Create a stale handoff incident, then acknowledge, unacknowledge, and resolve it through the published handoff incident workflows.",
+            id: "run-handoff-incident-drill",
+            label: "Run handoff incident drill",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "run-handoff-incident-drill" },
@@ -1421,10 +1425,10 @@ export const createDemoReleaseController = ({
       stableHandoff?.readyForHandoff &&
       stableHandoffDecision?.kind !== "complete"
         ? {
-            id: "approve-stable-handoff",
-            label: "Approve stable handoff",
             description:
               "Record a canary-to-stable handoff approval through the published handoff decision workflow.",
+            id: "approve-stable-handoff",
+            label: "Approve stable handoff",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "approve-stable-handoff" },
@@ -1434,10 +1438,10 @@ export const createDemoReleaseController = ({
       stableHandoff?.readyForHandoff &&
       stableHandoffDecision?.kind === "approve"
         ? {
-            id: "complete-stable-handoff",
-            label: "Complete stable handoff",
             description:
               "Complete the canary-to-stable handoff through the published handoff promotion workflow.",
+            id: "complete-stable-handoff",
+            label: "Complete stable handoff",
             method: "POST" as const,
             path: `/demo/release/${mode}/action`,
             payload: { actionId: "complete-stable-handoff" },
@@ -1447,13 +1451,13 @@ export const createDemoReleaseController = ({
     ].filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
     const workspaceInfo = {
-      id: workspace,
-      label: workspace === "beta" ? "Beta workspace" : "Alpha workspace",
+      corpusGroupKey,
       description:
         workspace === "beta"
           ? "Shows the beta corpus group inside the shared release-control group."
           : "Shows the alpha corpus group inside the shared release-control group.",
-      corpusGroupKey,
+      id: workspace,
+      label: workspace === "beta" ? "Beta workspace" : "Alpha workspace",
     };
 
     const actionsWithWorkspace = actions.map((action) => ({
@@ -1491,6 +1495,13 @@ export const createDemoReleaseController = ({
       scenario,
       releaseStatus: {
         retrievalComparisons: {
+          activeBaselines,
+          adaptiveNativePlannerBenchmark:
+            retrievalComparisons.adaptiveNativePlannerBenchmark,
+          alerts: (retrievalComparisons.alerts ?? []).filter(
+            (entry: { groupKey?: string; corpusGroupKey?: string }) =>
+              !entry.groupKey || matchesGovernanceScope(entry),
+          ),
           configured: retrievalComparisons.configured,
           latest:
             retrievalComparisons.latest &&
@@ -1505,45 +1516,38 @@ export const createDemoReleaseController = ({
                       .bestByLowestRuntimeUnderfilledTopKCases,
                 }
               : recentRuns[0],
-          adaptiveNativePlannerBenchmark:
-            retrievalComparisons.adaptiveNativePlannerBenchmark,
-          activeBaselines,
-          alerts: (retrievalComparisons.alerts ?? []).filter(
-            (entry: { groupKey?: string; corpusGroupKey?: string }) =>
-              !entry.groupKey || matchesGovernanceScope(entry),
-          ),
           promotionCandidates: (
             retrievalComparisons.promotionCandidates ?? []
           ).filter((entry: { groupKey?: string; corpusGroupKey?: string }) =>
             matchesGovernanceScope(entry),
           ),
           readyToPromoteByLane,
-          recentDecisions: decisions
-            .filter((entry) => matchesGovernanceScope(entry))
-            .slice(0, 6),
-          recentRuns,
-          recentReleaseLanePolicyHistory: (
-            retrievalComparisons.recentReleaseLanePolicyHistory ?? []
-          ).filter(
-            (entry: { groupKey?: string; corpusGroupKey?: string }) =>
-              !entry.groupKey || matchesGovernanceScope(entry),
-          ),
           recentBaselineGatePolicyHistory: (
             retrievalComparisons.recentBaselineGatePolicyHistory ?? []
           ).filter(
             (entry: { groupKey?: string; corpusGroupKey?: string }) =>
               !entry.groupKey || matchesGovernanceScope(entry),
           ),
-          recentReleaseLaneEscalationPolicyHistory: (
-            retrievalComparisons.recentReleaseLaneEscalationPolicyHistory ?? []
-          ).filter((entry: { groupKey?: string; corpusGroupKey?: string }) =>
-            matchesGovernanceScope(entry),
-          ),
+          recentDecisions: decisions
+            .filter((entry) => matchesGovernanceScope(entry))
+            .slice(0, 6),
           recentHandoffAutoCompletePolicyHistory: (
             retrievalComparisons.recentHandoffAutoCompletePolicyHistory ?? []
           ).filter((entry: { groupKey?: string; corpusGroupKey?: string }) =>
             matchesGovernanceScope(entry),
           ),
+          recentReleaseLaneEscalationPolicyHistory: (
+            retrievalComparisons.recentReleaseLaneEscalationPolicyHistory ?? []
+          ).filter((entry: { groupKey?: string; corpusGroupKey?: string }) =>
+            matchesGovernanceScope(entry),
+          ),
+          recentReleaseLanePolicyHistory: (
+            retrievalComparisons.recentReleaseLanePolicyHistory ?? []
+          ).filter(
+            (entry: { groupKey?: string; corpusGroupKey?: string }) =>
+              !entry.groupKey || matchesGovernanceScope(entry),
+          ),
+          recentRuns,
           releaseLaneRecommendations: (
             retrievalComparisons.releaseLaneRecommendations ?? []
           ).filter((entry: { groupKey?: string; corpusGroupKey?: string }) =>
@@ -1586,10 +1590,10 @@ export const createDemoReleaseController = ({
     );
     const stores = storesByMode[mode];
     const incidents = await loadRAGRetrievalReleaseIncidents({
-      store: stores.releaseIncidentStore,
-      groupKey: scenario.groupKey,
       corpusGroupKey,
+      groupKey: scenario.groupKey,
       limit: 12,
+      store: stores.releaseIncidentStore,
     });
     const stableOpenIncident = incidents.find(
       (entry) =>
@@ -1623,8 +1627,6 @@ export const createDemoReleaseController = ({
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/incidents/remediations/execute`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: {
               kind: "view_release_status",
@@ -1632,9 +1634,9 @@ export const createDemoReleaseController = ({
               method: "GET",
               path: `${backend.path}/status/release`,
             },
+            corpusGroupKey,
             decidedBy: "demo-operator",
             groupKey: scenario.groupKey,
-            corpusGroupKey,
             idempotencyKey: `${actionId}:${mode}`,
             incidentId: openIncident?.id,
             notes:
@@ -1643,14 +1645,14 @@ export const createDemoReleaseController = ({
             remediationKind: "review_readiness",
             targetRolloutLabel: openIncident?.targetRolloutLabel ?? "stable",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "inspect-release-drift") {
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/incidents/remediations/execute`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: {
               kind: "view_release_drift",
@@ -1658,9 +1660,9 @@ export const createDemoReleaseController = ({
               method: "GET",
               path: `${backend.path}/status/release/drift`,
             },
+            corpusGroupKey,
             decidedBy: "demo-operator",
             groupKey: scenario.groupKey,
-            corpusGroupKey,
             idempotencyKey: `${actionId}:${mode}`,
             incidentId: openIncident?.id,
             notes:
@@ -1669,30 +1671,32 @@ export const createDemoReleaseController = ({
             remediationKind: "inspect_gate",
             targetRolloutLabel: openIncident?.targetRolloutLabel ?? "stable",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "promote-stable-candidate") {
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/baselines/promote-run`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            approvedBy: "demo-operator",
             approvalNotes: "Promoted from the demo release-control panel.",
-            groupKey: scenario.groupKey,
+            approvedBy: "demo-operator",
             corpusGroupKey,
+            groupKey: scenario.groupKey,
             rolloutLabel: "stable",
             sourceRunId: stableRunId,
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "revert-stable-baseline") {
       const baselines = await loadRAGRetrievalBaselines({
-        store: stores.baselineStore,
-        groupKey: scenario.groupKey,
         corpusGroupKey,
+        groupKey: scenario.groupKey,
         limit: 12,
+        store: stores.baselineStore,
       });
       const previousStableBaseline = baselines
         .filter(
@@ -1706,27 +1710,25 @@ export const createDemoReleaseController = ({
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/baselines/revert`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            approvedBy: "demo-operator",
             approvalNotes: "Reverted from the demo release-control panel.",
-            groupKey: scenario.groupKey,
+            approvedBy: "demo-operator",
             corpusGroupKey,
+            groupKey: scenario.groupKey,
             version: previousStableBaseline.version,
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "approve-stable-override") {
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/baselines/approve`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            corpusGroupKey,
             decidedBy: "demo-operator",
             groupKey: scenario.groupKey,
-            corpusGroupKey,
             notes: "Approved from the demo release-control panel.",
             overrideGate: scenario.laneState === "blocked",
             overrideReason:
@@ -1736,22 +1738,24 @@ export const createDemoReleaseController = ({
             sourceRunId: stableRunId,
             targetRolloutLabel: "stable",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "reject-stable-candidate") {
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/baselines/reject`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            corpusGroupKey,
             decidedBy: "demo-operator",
             groupKey: scenario.groupKey,
-            corpusGroupKey,
             notes: "Rejected from the demo release-control panel.",
             sourceRunId: stableRunId,
             targetRolloutLabel: "stable",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "acknowledge-open-incident") {
@@ -1761,14 +1765,14 @@ export const createDemoReleaseController = ({
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/incidents/acknowledge`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             acknowledgedBy: "demo-operator",
             acknowledgementNotes:
               "Acknowledged from the demo release-control panel.",
             incidentId: openIncident.id,
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "resolve-open-incident") {
@@ -1778,21 +1782,19 @@ export const createDemoReleaseController = ({
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/incidents/resolve`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             incidentId: openIncident.id,
             resolutionNotes: "Resolved from the demo release-control panel.",
             resolvedBy: "demo-operator",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "inspect-stable-handoffs") {
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/incidents/remediations/execute`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: {
               kind: "view_handoffs",
@@ -1800,9 +1802,9 @@ export const createDemoReleaseController = ({
               method: "GET",
               path: `${backend.path}/status/handoffs`,
             },
+            corpusGroupKey,
             decidedBy: "demo-operator",
             groupKey: scenario.groupKey,
-            corpusGroupKey,
             idempotencyKey: `${actionId}:${mode}`,
             incidentId: stableOpenIncident?.id,
             notes:
@@ -1811,43 +1813,45 @@ export const createDemoReleaseController = ({
             remediationKind: "review_readiness",
             targetRolloutLabel: "stable",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "approve-stable-handoff") {
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/handoffs/decide`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            corpusGroupKey,
             decidedAt: Date.now(),
             decidedBy: "demo-operator",
             groupKey: scenario.groupKey,
-            corpusGroupKey,
             kind: "approve",
             notes: "Approved from the demo release-control panel.",
             sourceRolloutLabel: "canary",
             targetRolloutLabel: "stable",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     } else if (actionId === "complete-stable-handoff") {
       internalRequest = new Request(
         `http://absolute.local${backend.path}/compare/retrieval/handoffs/decide`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            corpusGroupKey,
             decidedAt: Date.now(),
             decidedBy: "demo-operator",
             executePromotion: true,
             groupKey: scenario.groupKey,
-            corpusGroupKey,
             kind: "complete",
             notes: "Completed from the demo release-control panel.",
             sourceRolloutLabel: "canary",
             targetRolloutLabel: "stable",
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         },
       );
     }
@@ -1857,6 +1861,7 @@ export const createDemoReleaseController = ({
       if (!response.ok) {
         throw new Error(await response.text());
       }
+
       return response;
     };
 
@@ -1870,9 +1875,9 @@ export const createDemoReleaseController = ({
           method: "GET",
           path: `${backend.path}/status/release`,
         },
+        corpusGroupKey,
         decidedBy: "demo-operator",
         groupKey: scenario.groupKey,
-        corpusGroupKey,
         idempotencyKey: `inspect-release-status:${mode}:drill`,
         incidentId,
         notes: "Ran the remediation drill from the demo release-control panel.",
@@ -1884,9 +1889,9 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/incidents/remediations/execute`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(inspectStatusBody),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -1894,9 +1899,9 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/incidents/remediations/execute`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(inspectStatusBody),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -1904,8 +1909,6 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/incidents/remediations/execute`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               action: {
                 kind: "view_handoffs",
@@ -1913,9 +1916,9 @@ export const createDemoReleaseController = ({
                 method: "GET",
                 path: `${backend.path}/status/handoffs`,
               },
+              corpusGroupKey,
               decidedBy: "demo-operator",
               groupKey: scenario.groupKey,
-              corpusGroupKey,
               idempotencyKey: `inspect-stable-handoffs:${mode}:drill`,
               incidentId: stableOpenIncident?.id,
               notes:
@@ -1924,6 +1927,8 @@ export const createDemoReleaseController = ({
               remediationKind: "review_readiness",
               targetRolloutLabel: "stable",
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -1931,8 +1936,6 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/incidents/remediations/execute/bulk`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               allowMutationExecution: false,
               items: [
@@ -1943,9 +1946,9 @@ export const createDemoReleaseController = ({
                     method: "POST",
                     path: `${backend.path}/compare/retrieval/incidents/acknowledge`,
                   },
+                  corpusGroupKey,
                   decidedBy: "demo-operator",
                   groupKey: scenario.groupKey,
-                  corpusGroupKey,
                   idempotencyKey: `acknowledge-open-incident:${mode}:drill`,
                   incidentId,
                   notes:
@@ -1957,6 +1960,8 @@ export const createDemoReleaseController = ({
               ],
               stopOnError: true,
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2002,14 +2007,14 @@ export const createDemoReleaseController = ({
           new Request(
             `http://absolute.local${backend.path}/compare/retrieval/incidents/acknowledge`,
             {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 acknowledgedBy: "demo-operator",
                 acknowledgementNotes:
                   "Acknowledged from the demo incident drill.",
                 incidentId: openIncident.id,
               }),
+              headers: { "Content-Type": "application/json" },
+              method: "POST",
             },
           ),
         );
@@ -2018,13 +2023,13 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/incidents/resolve`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               incidentId: openIncident.id,
               resolutionNotes: "Resolved from the demo incident drill.",
               resolvedBy: "demo-operator",
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2033,24 +2038,24 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/baselines/promote-run`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              approvedBy: "demo-operator",
               approvalNotes: "Promoted from the demo promote/revert drill.",
-              groupKey: scenario.groupKey,
+              approvedBy: "demo-operator",
               corpusGroupKey,
+              groupKey: scenario.groupKey,
               rolloutLabel: "stable",
               sourceRunId: stableRunId,
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
       const baselines = await loadRAGRetrievalBaselines({
-        store: stores.baselineStore,
-        groupKey: scenario.groupKey,
         corpusGroupKey,
+        groupKey: scenario.groupKey,
         limit: 12,
+        store: stores.baselineStore,
       });
       const previousStableBaseline = baselines
         .filter(
@@ -2067,15 +2072,15 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/baselines/revert`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              approvedBy: "demo-operator",
               approvalNotes: "Reverted from the demo promote/revert drill.",
-              groupKey: scenario.groupKey,
+              approvedBy: "demo-operator",
               corpusGroupKey,
+              groupKey: scenario.groupKey,
               version: previousStableBaseline.version,
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2084,18 +2089,18 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/handoffs/decide`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              corpusGroupKey,
               decidedAt: Date.now(),
               decidedBy: "demo-operator",
               groupKey: scenario.groupKey,
-              corpusGroupKey,
               kind: "approve",
               notes: "Approved from the demo handoff completion drill.",
               sourceRolloutLabel: "canary",
               targetRolloutLabel: "stable",
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2103,19 +2108,19 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/handoffs/decide`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              corpusGroupKey,
               decidedAt: Date.now(),
               decidedBy: "demo-operator",
               executePromotion: true,
               groupKey: scenario.groupKey,
-              corpusGroupKey,
               kind: "complete",
               notes: "Completed from the demo handoff completion drill.",
               sourceRolloutLabel: "canary",
               targetRolloutLabel: "stable",
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2125,19 +2130,19 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/handoffs/decide`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              corpusGroupKey,
               decidedAt: staleDecisionAt,
               decidedBy: "demo-operator",
               groupKey: scenario.groupKey,
-              corpusGroupKey,
               kind: "approve",
               notes:
                 "Approved from the demo handoff incident drill with an intentionally stale timestamp.",
               sourceRolloutLabel: "canary",
               targetRolloutLabel: "stable",
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2178,14 +2183,14 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/handoffs/incidents/acknowledge`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               acknowledgedBy: "demo-operator",
               acknowledgementNotes:
                 "Acknowledged from the demo handoff incident drill.",
               incidentId: handoffIncident.id,
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2193,9 +2198,9 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/handoffs/incidents/unacknowledge`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ incidentId: handoffIncident.id }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );
@@ -2203,13 +2208,13 @@ export const createDemoReleaseController = ({
         new Request(
           `http://absolute.local${backend.path}/compare/retrieval/handoffs/incidents/resolve`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               incidentId: handoffIncident.id,
               resolutionNotes: "Resolved from the demo handoff incident drill.",
               resolvedBy: "demo-operator",
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           },
         ),
       );

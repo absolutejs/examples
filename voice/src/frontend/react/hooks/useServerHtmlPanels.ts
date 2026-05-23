@@ -4,8 +4,8 @@ import {
   fetchVoiceRealCallEvidenceWorkerHealth,
   formatErrorMessage,
   renderVoiceRealCallEvidenceWorkerHealthHTML,
-} from "../../shared/browser";
-import type { VoiceAgentSquadDemoStatus } from "../../../shared/demo";
+} from "../../../shared/browser";
+import type { VoiceAgentSquadDemoStatus } from "../../../types/domain";
 
 const REAL_CALL_WORKER_INTERVAL_MS = 10_000;
 const AGENT_SQUAD_INTERVAL_MS = 3_000;

@@ -3,8 +3,8 @@ import { mountVoiceOpsActionHistory } from "@absolutejs/voice/client";
 import {
   mountDemoBargeInProof,
   mountVoiceLiveOpsPanel,
-} from "../../shared/browser";
-import type { VoiceDemoMode } from "../../../shared/demo";
+} from "../../../shared/browser";
+import type { VoiceDemoMode } from "../../../types/voice";
 import type { ReactVoiceDemoStream } from "./useVoiceDemoStreams";
 
 const OPS_ACTION_HISTORY_INTERVAL_MS = 5_000;
@@ -36,6 +36,7 @@ export const useImperativePanels = (input: ImperativePanelsInput) => {
       "absolute-voice-simulate-disconnect",
       simulateDisconnect,
     );
+
     return () => {
       window.removeEventListener(
         "absolute-voice-simulate-disconnect",
@@ -55,6 +56,7 @@ export const useImperativePanels = (input: ImperativePanelsInput) => {
     }
 
     const proof = mountDemoBargeInProof(bargeInProofRef.current);
+
     return () => proof.close();
   }, []);
 
@@ -68,6 +70,7 @@ export const useImperativePanels = (input: ImperativePanelsInput) => {
       "/api/voice/ops-actions/history",
       { intervalMs: OPS_ACTION_HISTORY_INTERVAL_MS },
     );
+
     return () => history.close();
   }, []);
 
@@ -109,6 +112,7 @@ export const useImperativePanels = (input: ImperativePanelsInput) => {
         }
       },
     });
+
     return () => panel.close();
   }, []);
 

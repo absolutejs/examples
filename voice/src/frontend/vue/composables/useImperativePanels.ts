@@ -3,7 +3,7 @@ import { mountVoiceOpsActionHistory } from "@absolutejs/voice/client";
 import {
   mountDemoBargeInProof,
   mountVoiceLiveOpsPanel,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 import type { VueVoiceStream } from "./useVoiceDemoStreams";
 
 const REFRESH_INTERVAL_MS = 4_000;
@@ -39,7 +39,8 @@ export const useImperativePanels = (
     null;
   let liveOpsPanel: ReturnType<typeof mountVoiceLiveOpsPanel> | null = null;
 
-  const simulateDisconnect = () => input.currentVoice.value.simulateDisconnect();
+  const simulateDisconnect = () =>
+    input.currentVoice.value.simulateDisconnect();
 
   onMounted(() => {
     const demoWindow = window as VoiceDemoWindow;

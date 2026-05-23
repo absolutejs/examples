@@ -22,55 +22,55 @@ const imageOCR = createRAGOCRProvider({
 
     if (name.includes("receipt")) {
       return {
-        text: "Receipt image OCR shows invoice INV-2048, customer Harbor Outfitters, and a fulfillment note that metadata tags must remain stable during ingest.",
         metadata: {
           extractedFrom: "demo-image",
           imageSubject: "receipt",
           ocrEngine: "Absolute demo OCR",
         },
+        text: "Receipt image OCR shows invoice INV-2048, customer Harbor Outfitters, and a fulfillment note that metadata tags must remain stable during ingest.",
         title: input.title ?? "Receipt OCR",
       };
     }
 
     if (name.includes("warehouse-whiteboard")) {
       return {
-        text: repeatParagraphs(
-          "Warehouse whiteboard OCR",
-          "The whiteboard says shift handoff notes should preserve assignees, issue labels, and retrieval-friendly metadata so operators can verify the source image.",
-          10,
-        ),
         metadata: {
           extractedFrom: "demo-image",
           imageSubject: "whiteboard",
           ocrEngine: "Absolute demo OCR",
         },
+        text: repeatParagraphs(
+          "Warehouse whiteboard OCR",
+          "The whiteboard says shift handoff notes should preserve assignees, issue labels, and retrieval-friendly metadata so operators can verify the source image.",
+          10,
+        ),
         title: input.title ?? "Warehouse whiteboard OCR",
       };
     }
 
     if (name.includes("invoice-scan")) {
       return {
-        text: repeatParagraphs(
-          "Invoice scan OCR",
-          "The scanned invoice says OCR-derived evidence should preserve invoice numbers, customer names, and retrieval-friendly metadata so React operators can verify the source.",
-          10,
-        ),
         metadata: {
           extractedFrom: "demo-image",
           imageSubject: "invoice",
           ocrEngine: "Absolute demo OCR",
         },
+        text: repeatParagraphs(
+          "Invoice scan OCR",
+          "The scanned invoice says OCR-derived evidence should preserve invoice numbers, customer names, and retrieval-friendly metadata so React operators can verify the source.",
+          10,
+        ),
         title: input.title ?? "Invoice scan OCR",
       };
     }
 
     return {
-      text: "Image OCR extracted demo text from a seeded binary asset so the example can prove first-party OCR extraction without external services.",
       metadata: {
         extractedFrom: "demo-image",
         imageSubject: "generic",
         ocrEngine: "Absolute demo OCR",
       },
+      text: "Image OCR extracted demo text from a seeded binary asset so the example can prove first-party OCR extraction without external services.",
       title: input.title ?? "Image OCR",
     };
   },
@@ -83,36 +83,36 @@ const pdfOCR = createRAGOCRProvider({
 
     if (name.includes("scanned-receipt")) {
       return {
-        text: "Scanned PDF OCR recovered invoice INV-7148, warehouse lane C3, and the note that the retrieval benchmark should cite files by page when available.",
         metadata: {
           extractedFrom: "demo-pdf",
           ocrEngine: "Absolute demo PDF OCR",
         },
+        text: "Scanned PDF OCR recovered invoice INV-7148, warehouse lane C3, and the note that the retrieval benchmark should cite files by page when available.",
         title: input.title ?? "Scanned receipt PDF",
       };
     }
 
     if (name.includes("scanned-contract")) {
       return {
+        metadata: {
+          extractedFrom: "demo-pdf",
+          ocrEngine: "Absolute demo PDF OCR",
+        },
         text: repeatParagraphs(
           "Scanned contract OCR",
           "The scanned contract says OCR-backed PDFs should remain page-aware, citation-friendly, and source-identifiable across grounded answer workflows.",
           10,
         ),
-        metadata: {
-          extractedFrom: "demo-pdf",
-          ocrEngine: "Absolute demo PDF OCR",
-        },
         title: input.title ?? "Scanned contract PDF",
       };
     }
 
     return {
-      text: "Demo PDF OCR fallback extracted seeded content from an image-only PDF so the example can show the first-party OCR path.",
       metadata: {
         extractedFrom: "demo-pdf",
         ocrEngine: "Absolute demo PDF OCR",
       },
+      text: "Demo PDF OCR fallback extracted seeded content from an image-only PDF so the example can show the first-party OCR path.",
       title: input.title ?? "OCR PDF",
     };
   },
@@ -125,11 +125,6 @@ const mediaTranscriber = createRAGMediaTranscriber({
 
     if (name.includes("escalation-recap") || name.includes("incident-bridge")) {
       return {
-        text: repeatParagraphs(
-          "Incident audio transcript",
-          "The incident audio says bridge calls should preserve timestamps, speaker turns, escalation context, and source-native evidence for grounded answer review.",
-          10,
-        ),
         metadata: {
           mediaKind: "audio",
           transcriptSource: "Absolute demo media",
@@ -148,17 +143,17 @@ const mediaTranscriber = createRAGMediaTranscriber({
             text: "At timestamp 00:07 to 00:16, the follow-up says grounded answers should preserve source labels and timestamp-aware references.",
           },
         ],
+        text: repeatParagraphs(
+          "Incident audio transcript",
+          "The incident audio says bridge calls should preserve timestamps, speaker turns, escalation context, and source-native evidence for grounded answer review.",
+          10,
+        ),
         title: input.title ?? "Incident bridge audio",
       };
     }
 
     if (name.endsWith(".mp3") || name.endsWith(".wav")) {
       return {
-        text: repeatParagraphs(
-          "Audio transcript",
-          "The audio transcript says segment-aware retrieval should keep timestamps, speakers, citations, evaluation, and ingest workflows aligned across React, Vue, Svelte, Angular, HTML, and HTMX.",
-          10,
-        ),
         metadata: {
           mediaKind: "audio",
           transcriptSource: "Absolute demo media",
@@ -177,17 +172,17 @@ const mediaTranscriber = createRAGMediaTranscriber({
             text: "At timestamp 00:08 to 00:18, the follow-up segment says timestamp-aware evidence should remain visible when React users inspect grounded answers.",
           },
         ],
+        text: repeatParagraphs(
+          "Audio transcript",
+          "The audio transcript says segment-aware retrieval should keep timestamps, speakers, citations, evaluation, and ingest workflows aligned across React, Vue, Svelte, Angular, HTML, and HTMX.",
+          10,
+        ),
         title: input.title ?? "Daily standup audio",
       };
     }
 
     if (name.includes("demo-overview") || name.includes("ops-recap")) {
       return {
-        text: repeatParagraphs(
-          "Ops video transcript",
-          "The ops recap says sync health, admin actions, retrieval scope, and evidence mapping should stay on one route so operators can debug production behavior quickly.",
-          10,
-        ),
         metadata: {
           mediaKind: "video",
           transcriptSource: "Absolute demo media",
@@ -206,16 +201,16 @@ const mediaTranscriber = createRAGMediaTranscriber({
             text: "The second segment says scoped retrieval and citation review should remain directly connected to the document evidence they came from.",
           },
         ],
+        text: repeatParagraphs(
+          "Ops video transcript",
+          "The ops recap says sync health, admin actions, retrieval scope, and evidence mapping should stay on one route so operators can debug production behavior quickly.",
+          10,
+        ),
         title: input.title ?? "Ops recap video",
       };
     }
 
     return {
-      text: repeatParagraphs(
-        "Video transcript",
-        "The workflow walkthrough explains that PDF, OCR, archive, spreadsheet, presentation, email, and legacy document ingest all land in the same retrieval surface.",
-        10,
-      ),
       metadata: {
         mediaKind: "video",
         transcriptSource: "Absolute demo media",
@@ -234,6 +229,11 @@ const mediaTranscriber = createRAGMediaTranscriber({
           text: "The follow-up segment says workflow streaming and evidence inspection should stay on the same React route as sync and admin controls.",
         },
       ],
+      text: repeatParagraphs(
+        "Video transcript",
+        "The workflow walkthrough explains that PDF, OCR, archive, spreadsheet, presentation, email, and legacy document ingest all land in the same retrieval surface.",
+        10,
+      ),
       title: input.title ?? "Workflow walkthrough video",
     };
   },

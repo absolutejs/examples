@@ -156,12 +156,12 @@ import {
 } from "../../demo-backends";
 
 const initialSearchForm: SearchFormState = {
-  query: "",
-  topK: 6,
-  scoreThreshold: "",
-  kind: "",
-  source: "",
   documentId: "",
+  kind: "",
+  query: "",
+  scoreThreshold: "",
+  source: "",
+  topK: 6,
 };
 
 type DemoRagReadinessState = {
@@ -178,12 +178,12 @@ export type Context = {
 };
 
 const initialAddForm: AddFormState = {
-  id: "",
-  title: "",
-  source: "",
-  format: "markdown",
   chunkStrategy: "source_aware",
+  format: "markdown",
+  id: "",
+  source: "",
   text: "",
+  title: "",
 };
 
 const streamStages = [
@@ -3698,51 +3698,51 @@ export class AngularRAGVectorDemoComponent {
   demoFrameworks = demoFrameworks;
   ragExampleSections = [
     {
-      id: "retrieve",
-      kicker: "1 · Retrieval",
-      title: "Search And Verify",
       description:
         "Query the index, inspect sources, and prove metadata filters and attribution.",
+      id: "retrieve",
+      kicker: "1 · Retrieval",
       loadLabel: "Load retrieval",
+      title: "Search And Verify",
     },
     {
-      id: "ingest",
-      kicker: "2 · Ingest",
-      title: "Add Documents",
       description:
         "Upload extracted fixtures or author custom documents, then verify searchability.",
+      id: "ingest",
+      kicker: "2 · Ingest",
       loadLabel: "Load ingest",
+      title: "Add Documents",
     },
     {
-      id: "workflow",
-      kicker: "3 · Workflow",
-      title: "Grounded Streaming",
       description:
         "Run the RAG answer workflow and inspect grounding and citations.",
+      id: "workflow",
+      kicker: "3 · Workflow",
       loadLabel: "Load workflow",
+      title: "Grounded Streaming",
     },
     {
-      id: "connectors",
-      kicker: "4 · Connectors",
-      title: "Auth-Backed Sources",
       description:
         "Inspect sync sources and connector-backed account bindings.",
+      id: "connectors",
+      kicker: "4 · Connectors",
       loadLabel: "Load connectors",
+      title: "Auth-Backed Sources",
     },
     {
+      description: "Run benchmark presets and compare retrieval quality.",
       id: "evaluate",
       kicker: "5 · Quality",
-      title: "Evaluation And Release",
-      description: "Run benchmark presets and compare retrieval quality.",
       loadLabel: "Load quality",
+      title: "Evaluation And Release",
     },
     {
-      id: "ops",
-      kicker: "6 · Operations",
-      title: "Diagnostics And Index Health",
       description:
         "Inspect corpus health, sync state, admin jobs, and backend readiness.",
+      id: "ops",
+      kicker: "6 · Operations",
       loadLabel: "Load ops",
+      title: "Diagnostics And Index Health",
     },
   ] as const;
   activeSection:
@@ -3825,7 +3825,7 @@ export class AngularRAGVectorDemoComponent {
     return currentStage === "complete"
       ? stage === "complete" ||
           streamStages.indexOf(stage) <
-            streamStages.indexOf(currentStage as (typeof streamStages)[number])
+            streamStages.indexOf(currentStage)
       : streamStages.indexOf(stage) <
           streamStages.indexOf(currentStage as (typeof streamStages)[number]);
   }
@@ -3876,14 +3876,14 @@ export class AngularRAGVectorDemoComponent {
     }
 
     return formatQualityOverviewPresentation({
-      retrievalComparison: this.qualityData.retrievalComparison,
-      rerankerComparison: this.qualityData.rerankerComparison,
       groundingEvaluation: this.qualityData.groundingEvaluation,
       groundingProviderOverview: this.qualityData.providerGroundingComparison
         ? formatGroundingProviderOverviewPresentation(
             this.qualityData.providerGroundingComparison,
           )
         : undefined,
+      rerankerComparison: this.qualityData.rerankerComparison,
+      retrievalComparison: this.qualityData.retrievalComparison,
     }).rows;
   }
 
@@ -3910,7 +3910,7 @@ export class AngularRAGVectorDemoComponent {
   }
 
   get releaseStableReadinessSummary() {
-    const stableReadiness = this.releasePanel.stableReadiness;
+    const {stableReadiness} = this.releasePanel;
     if (!stableReadiness) {
       return "No stable lane readiness snapshot available.";
     }
@@ -4046,6 +4046,7 @@ export class AngularRAGVectorDemoComponent {
 
   get filteredDocuments() {
     const query = this.documentSearchTerm.trim().toLowerCase();
+
     return this.documents.filter((document) => {
       const matchesQuery =
         query.length === 0 ||
@@ -4055,6 +4056,7 @@ export class AngularRAGVectorDemoComponent {
       const matchesType =
         this.documentTypeFilter === "all" ||
         this.inferDocumentExtension(document) === this.documentTypeFilter;
+
       return matchesQuery && matchesType;
     });
   }
@@ -4068,6 +4070,7 @@ export class AngularRAGVectorDemoComponent {
 
   get paginatedDocuments() {
     const start = (this.documentPage - 1) * DOCUMENTS_PER_PAGE;
+
     return this.filteredDocuments.slice(start, start + DOCUMENTS_PER_PAGE);
   }
 
@@ -4208,12 +4211,14 @@ export class AngularRAGVectorDemoComponent {
     if (prompt.length === 0) {
       this.message = "Enter a retrieval question before starting the stream.";
       this.flushView();
+
       return;
     }
 
     if (this.selectedAIModelKey.length === 0) {
       this.message = "Configure an AI provider to enable retrieval streaming.";
       this.flushView();
+
       return;
     }
 
@@ -4231,6 +4236,7 @@ export class AngularRAGVectorDemoComponent {
     const query = this.searchForm.query.trim();
     if (query.length === 0) {
       this.searchError = "query is required";
+
       return;
     }
 
@@ -4244,11 +4250,11 @@ export class AngularRAGVectorDemoComponent {
       const response = await fetch(
         `/demo/message/${this.selectedMode}/search`,
         {
-          method: "POST",
+          body: JSON.stringify(payload),
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload),
+          method: "POST",
         },
       );
       const searchResponse = (await response.json()) as {
@@ -4265,9 +4271,9 @@ export class AngularRAGVectorDemoComponent {
       }
       const nextState = { ...this.searchForm, query };
       void saveActiveRetrievalState("angular", this.selectedMode, {
-        searchForm: nextState,
-        scopeDriver: this.scopeDriver,
         retrievalPresetId: this.retrievalPresetId || undefined,
+        scopeDriver: this.scopeDriver,
+        searchForm: nextState,
         streamModelKey: this.selectedAIModelKey || undefined,
         streamPrompt: this.streamPrompt,
       });
@@ -4317,14 +4323,14 @@ export class AngularRAGVectorDemoComponent {
     this.addError = "";
     try {
       const response = await fetch(action.path, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           ...action.payload,
           workspace: this.releaseWorkspace,
         }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
       });
       if (!response.ok) {
         throw new Error(await response.text());
@@ -4391,14 +4397,14 @@ export class AngularRAGVectorDemoComponent {
       this.qualityData = qualityResponse;
       this.releaseData = releaseResponse;
       this.qualitySummaryLines = formatQualityOverviewPresentation({
-        retrievalComparison: qualityResponse.retrievalComparison,
-        rerankerComparison: qualityResponse.rerankerComparison,
         groundingEvaluation: qualityResponse.groundingEvaluation,
         groundingProviderOverview: qualityResponse.providerGroundingComparison
           ? formatGroundingProviderOverviewPresentation(
               qualityResponse.providerGroundingComparison,
             )
           : undefined,
+        rerankerComparison: qualityResponse.rerankerComparison,
+        retrievalComparison: qualityResponse.retrievalComparison,
       }).rows.map((row) => `${row.label}: ${row.value}`);
       this.selectedAIModelKey =
         this.selectedAIModelKey ||
@@ -4516,8 +4522,8 @@ export class AngularRAGVectorDemoComponent {
       documentId: "",
     };
     void saveActiveRetrievalState("angular", this.selectedMode, {
-      searchForm: this.searchForm,
       scopeDriver: this.scopeDriver,
+      searchForm: this.searchForm,
       streamModelKey: this.selectedAIModelKey || undefined,
       streamPrompt: this.streamPrompt,
     });
@@ -4537,8 +4543,8 @@ export class AngularRAGVectorDemoComponent {
       scoreThreshold: "",
     };
     void saveActiveRetrievalState("angular", this.selectedMode, {
-      searchForm: this.searchForm,
       scopeDriver: this.scopeDriver,
+      searchForm: this.searchForm,
       streamModelKey: this.selectedAIModelKey || undefined,
       streamPrompt: this.streamPrompt,
     });
@@ -4585,11 +4591,11 @@ export class AngularRAGVectorDemoComponent {
       topK: options.topK ?? 6,
     };
     void saveActiveRetrievalState("angular", this.selectedMode, {
-      searchForm: this.searchForm,
-      scopeDriver: this.scopeDriver,
+      benchmarkPresetId: this.benchmarkPresetId || undefined,
       lastUpdatedAt: Date.now(),
       retrievalPresetId: this.retrievalPresetId || undefined,
-      benchmarkPresetId: this.benchmarkPresetId || undefined,
+      scopeDriver: this.scopeDriver,
+      searchForm: this.searchForm,
       uploadPresetId: this.uploadPresetId || undefined,
     });
 
@@ -4611,6 +4617,7 @@ export class AngularRAGVectorDemoComponent {
     if (document.format === "html") {
       return ".html";
     }
+
     return ".txt";
   }
 
@@ -4638,11 +4645,11 @@ export class AngularRAGVectorDemoComponent {
     this.scopeDriver = "recent query";
     this.searchForm = state;
     void saveActiveRetrievalState("angular", this.selectedMode, {
-      searchForm: this.searchForm,
-      scopeDriver: this.scopeDriver,
+      benchmarkPresetId: this.benchmarkPresetId || undefined,
       lastUpdatedAt: Date.now(),
       retrievalPresetId: this.retrievalPresetId || undefined,
-      benchmarkPresetId: this.benchmarkPresetId || undefined,
+      scopeDriver: this.scopeDriver,
+      searchForm: this.searchForm,
       uploadPresetId: this.uploadPresetId || undefined,
     });
     void this.executeSearch();
@@ -4710,6 +4717,7 @@ export class AngularRAGVectorDemoComponent {
     if (!this.selectedUploadFile) {
       this.uploadError = "Choose a file before uploading.";
       this.flushView();
+
       return;
     }
 
@@ -4728,19 +4736,19 @@ export class AngularRAGVectorDemoComponent {
           },
           uploads: [
             {
-              name: uploadedName,
-              source: `uploads/${uploadedName}`,
-              title: uploadedName,
-              contentType:
-                this.selectedUploadFile.type || "application/octet-stream",
-              encoding: "base64",
               content: encodeArrayBufferToBase64(
                 await this.selectedUploadFile.arrayBuffer(),
               ),
+              contentType:
+                this.selectedUploadFile.type || "application/octet-stream",
+              encoding: "base64",
               metadata: {
                 kind: "custom",
                 uploadedFrom: "angular-general-upload",
               },
+              name: uploadedName,
+              source: `uploads/${uploadedName}`,
+              title: uploadedName,
             },
           ],
         },
@@ -4779,17 +4787,17 @@ export class AngularRAGVectorDemoComponent {
       const response = await this.ragClient.createDocument(
         getRAGPathForMode(this.selectedMode),
         {
+          chunking: {
+            strategy: this.addForm.chunkStrategy,
+          },
+          format: this.addForm.format,
           id:
             this.addForm.id.trim().length > 0
               ? this.addForm.id.trim()
               : undefined,
-          title: this.addForm.title.trim(),
           source: this.addForm.source.trim(),
-          format: this.addForm.format,
           text: this.addForm.text.trim(),
-          chunking: {
-            strategy: this.addForm.chunkStrategy,
-          },
+          title: this.addForm.title.trim(),
         },
       );
 
@@ -4818,6 +4826,7 @@ export class AngularRAGVectorDemoComponent {
     if (entry.documentId) {
       this.message = `Inspecting ${entry.documentId} from ops inspection.`;
       await this.inspectChunks(entry.documentId);
+
       return;
     }
     if (entry.source) {
@@ -4841,7 +4850,7 @@ export class AngularRAGVectorDemoComponent {
       if (!response.ok) {
         throw new Error(response.error);
       }
-      this.chunkPreview = response as DemoChunkPreview;
+      this.chunkPreview = response;
       this.chunkPreviewActiveChunkId =
         this.chunkPreview.chunks[0]?.chunkId ?? null;
     } catch (error) {
@@ -4867,6 +4876,7 @@ export class AngularRAGVectorDemoComponent {
       typeof chunk.metadata?.chunkCount === "number"
         ? chunk.metadata.chunkCount
         : fallbackCount;
+
     return `chunk index: ${String(indexValue)} / count: ${String(countValue)}`;
   }
 

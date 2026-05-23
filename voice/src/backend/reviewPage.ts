@@ -5,7 +5,7 @@ import type {
   VoiceSessionRecord,
   VoiceTurnRecord,
 } from "@absolutejs/voice";
-import type { SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 
 export type VoiceReviewStatus = "healthy" | "partial" | "failed";
 export type VoiceReviewTimelineEvent = CoreVoiceCallReviewTimelineEvent;
@@ -131,9 +131,9 @@ const buildPostCallSummary = (input: {
     case "transferred":
       return {
         label: input.target ? `Transferred to ${input.target}` : label,
+        reason: input.reason,
         recommendedAction:
           "Verify the downstream queue or agent actually received the handoff.",
-        reason: input.reason,
         summary: input.target
           ? `This call exited the demo flow by transferring to ${input.target}.`
           : "This call exited the demo flow by transferring to another queue or agent.",
@@ -142,43 +142,43 @@ const buildPostCallSummary = (input: {
     case "escalated":
       return {
         label,
+        reason: input.reason,
         recommendedAction:
           "Review the transcript and assign a human follow-up task.",
-        reason: input.reason,
         summary:
           "This call was marked for human escalation instead of finishing in the automated flow.",
       };
     case "voicemail":
       return {
         label,
+        reason: input.reason,
         recommendedAction:
           "Review the message and queue a callback or follow-up task.",
-        reason: input.reason,
         summary:
           "This call was routed to the voicemail path instead of a live resolution.",
       };
     case "no-answer":
       return {
         label,
+        reason: input.reason,
         recommendedAction:
           "Retry the call or move it to the voicemail/retry workflow.",
-        reason: input.reason,
         summary: "This call ended without a successful live contact.",
       };
     case "failed":
       return {
         label,
+        reason: input.reason,
         recommendedAction:
           "Inspect the warnings and timeline before retrying the flow.",
-        reason: input.reason,
         summary: "The call ended in a failure state and needs operator review.",
       };
     case "closed":
       return {
         label,
+        reason: input.reason,
         recommendedAction:
           "Confirm the caller intentionally ended the session and no follow-up is needed.",
-        reason: input.reason,
         summary:
           "The session was closed explicitly without a richer final outcome.",
       };
@@ -186,9 +186,9 @@ const buildPostCallSummary = (input: {
     default:
       return {
         label,
+        reason: input.reason,
         recommendedAction:
           "No manual action is required unless the warnings suggest otherwise.",
-        reason: input.reason,
         summary: "The call completed normally inside the demo flow.",
       };
   }
@@ -270,6 +270,7 @@ export const buildSavedVoiceReview = (input: {
     (left, right) => {
       const leftAt = left.endedAtMs ?? left.startedAtMs ?? 0;
       const rightAt = right.endedAtMs ?? right.startedAtMs ?? 0;
+
       return leftAt - rightAt;
     },
   );
@@ -410,10 +411,6 @@ export const buildSavedVoiceReview = (input: {
     },
   } satisfies SavedVoiceReviewArtifact;
 };
-
-export const listVoiceReviews = (reviews: SavedVoiceReviewArtifact[]) =>
-  [...reviews].sort((left, right) => right.generatedAt - left.generatedAt);
-
 export const filterVoiceReviews = (
   reviews: SavedVoiceReviewArtifact[],
   filters: VoiceReviewFilterInput,
@@ -463,17 +460,109 @@ export const filterVoiceReviews = (
     ].some((value) => includesText(value, search));
   });
 };
-
 export const findVoiceReview = (
   reviews: SavedVoiceReviewArtifact[],
   reviewId: string,
 ) => reviews.find((review) => review.id === reviewId) ?? null;
+export const listVoiceReviews = (reviews: SavedVoiceReviewArtifact[]) =>
+  [...reviews].sort((left, right) => right.generatedAt - left.generatedAt);
 
 const renderWarnings = (warnings: string[]) =>
   warnings.length > 0
     ? `<ul>${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}</ul>`
     : `<p>No warnings.</p>`;
 
+export const renderVoiceReviewComparePage = (
+  left: SavedVoiceReviewArtifact | null,
+  right: SavedVoiceReviewArtifact | null,
+) => {
+  if (!left || !right) {
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbsoluteJS Voice Review Compare</title>
+  <style>
+    body { background: #0b0d10; color: #f4f4f5; font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 32px; }
+    main { max-width: 880px; margin: 0 auto; }
+    section { background: #13161b; border: 1px solid #232833; border-radius: 18px; padding: 20px; }
+    a { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>Compare reviews</h1>
+      <p>Choose two valid reviews to compare.</p>
+      <p><a href="/reviews">Back to reviews</a></p>
+    </section>
+  </main>
+</body>
+</html>`;
+  }
+
+  const leftDerived = deriveVoiceReviewState(left);
+  const rightDerived = deriveVoiceReviewState(right);
+
+  const renderColumn = (
+    artifact: SavedVoiceReviewArtifact,
+    derived: VoiceReviewDerivedState,
+  ) => `
+    <section>
+      <h2>${escapeHtml(artifact.title)}</h2>
+      <p><a href="/reviews/${encodeURIComponent(artifact.id)}">Open full review</a></p>
+      <div class="pill ${getStatusClassName(derived.status)}">${formatReviewStatusLabel(derived.status)}</div>
+      <ul>
+        <li><strong>Scenario:</strong> ${escapeHtml(artifact.scenarioId)}</li>
+        <li><strong>Outcome:</strong> ${artifact.postCall ? escapeHtml(artifact.postCall.label) : artifact.summary.outcome ? escapeHtml(artifact.summary.outcome) : "n/a"}</li>
+        ${artifact.postCall?.summary ? `<li><strong>Summary:</strong> ${escapeHtml(artifact.postCall.summary)}</li>` : ""}
+        ${artifact.postCall?.recommendedAction ? `<li><strong>Recommended action:</strong> ${escapeHtml(artifact.postCall.recommendedAction)}</li>` : ""}
+        <li><strong>First turn:</strong> ${formatMetric(artifact.summary.firstTurnLatencyMs)}</li>
+        <li><strong>Elapsed:</strong> ${formatMetric(artifact.summary.elapsedMs)}</li>
+        <li><strong>Turns:</strong> ${artifact.summary.turnCount}</li>
+      </ul>
+      <h3>Warnings</h3>
+      ${renderWarnings(derived.warnings)}
+      <h3>Transcript</h3>
+      <pre>${escapeHtml(artifact.transcript.actual)}</pre>
+    </section>`;
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbsoluteJS Voice Review Compare</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { background: #0b0d10; color: #f4f4f5; font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 24px; }
+    main { max-width: 1200px; margin: 0 auto; display: grid; gap: 16px; }
+    section { background: #13161b; border: 1px solid #232833; border-radius: 18px; padding: 20px; }
+    .columns { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .pill { display: inline-flex; background: #0f1217; border: 1px solid #232833; border-radius: 999px; padding: 6px 10px; margin-bottom: 12px; }
+    .status-healthy { border-color: #14532d; color: #bbf7d0; }
+    .status-partial { border-color: #854d0e; color: #fde68a; }
+    .status-failed { border-color: #7f1d1d; color: #fecaca; }
+    ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #0f1217; border-radius: 12px; padding: 14px; border: 1px solid #232833; }
+    a { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>Compare reviews</h1>
+      <p><a href="/reviews">Back to reviews</a></p>
+    </section>
+    <div class="columns">
+      ${renderColumn(left, leftDerived)}
+      ${renderColumn(right, rightDerived)}
+    </div>
+  </main>
+</body>
+</html>`;
+};
 export const renderVoiceReviewIndexPage = (
   reviews: SavedVoiceReviewArtifact[],
   filters: VoiceReviewFilterInput = {},
@@ -481,7 +570,7 @@ export const renderVoiceReviewIndexPage = (
   const filteredReviews = filterVoiceReviews(reviews, filters);
   const opsSummary = listVoiceReviews(reviews).reduce(
     (summary, review) => {
-      const outcome = review.summary.outcome;
+      const {outcome} = review.summary;
       if (outcome) {
         summary.outcomes.set(outcome, (summary.outcomes.get(outcome) ?? 0) + 1);
       }
@@ -491,6 +580,7 @@ export const renderVoiceReviewIndexPage = (
           (summary.targets.get(review.postCall.target) ?? 0) + 1,
         );
       }
+
       return summary;
     },
     {
@@ -503,9 +593,10 @@ export const renderVoiceReviewIndexPage = (
       const { status } = deriveVoiceReviewState(review);
       summary.total += 1;
       summary[status] += 1;
+
       return summary;
     },
-    { total: 0, healthy: 0, partial: 0, failed: 0 },
+    { failed: 0, healthy: 0, partial: 0, total: 0 },
   );
 
   const latestId = listVoiceReviews(reviews)[0]?.id;
@@ -654,7 +745,6 @@ export const renderVoiceReviewIndexPage = (
 </body>
 </html>`;
 };
-
 export const renderVoiceReviewPage = (
   artifact: SavedVoiceReviewArtifact | null,
 ) => {
@@ -701,6 +791,7 @@ export const renderVoiceReviewPage = (
       if (typeof entry.confidence === "number") {
         parts.push(`confidence=${Math.round(entry.confidence * 100) / 100}`);
       }
+
       return `<li>${escapeHtml(parts.join(" "))}</li>`;
     })
     .join("");
@@ -797,98 +888,6 @@ export const renderVoiceReviewPage = (
       <h2>Config</h2>
       <pre>${escapeHtml(JSON.stringify(artifact.config, null, 2))}</pre>
     </section>
-  </main>
-</body>
-</html>`;
-};
-
-export const renderVoiceReviewComparePage = (
-  left: SavedVoiceReviewArtifact | null,
-  right: SavedVoiceReviewArtifact | null,
-) => {
-  if (!left || !right) {
-    return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AbsoluteJS Voice Review Compare</title>
-  <style>
-    body { background: #0b0d10; color: #f4f4f5; font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 32px; }
-    main { max-width: 880px; margin: 0 auto; }
-    section { background: #13161b; border: 1px solid #232833; border-radius: 18px; padding: 20px; }
-    a { color: #f59e0b; }
-  </style>
-</head>
-<body>
-  <main>
-    <section>
-      <h1>Compare reviews</h1>
-      <p>Choose two valid reviews to compare.</p>
-      <p><a href="/reviews">Back to reviews</a></p>
-    </section>
-  </main>
-</body>
-</html>`;
-  }
-
-  const leftDerived = deriveVoiceReviewState(left);
-  const rightDerived = deriveVoiceReviewState(right);
-
-  const renderColumn = (
-    artifact: SavedVoiceReviewArtifact,
-    derived: VoiceReviewDerivedState,
-  ) => `
-    <section>
-      <h2>${escapeHtml(artifact.title)}</h2>
-      <p><a href="/reviews/${encodeURIComponent(artifact.id)}">Open full review</a></p>
-      <div class="pill ${getStatusClassName(derived.status)}">${formatReviewStatusLabel(derived.status)}</div>
-      <ul>
-        <li><strong>Scenario:</strong> ${escapeHtml(artifact.scenarioId)}</li>
-        <li><strong>Outcome:</strong> ${artifact.postCall ? escapeHtml(artifact.postCall.label) : artifact.summary.outcome ? escapeHtml(artifact.summary.outcome) : "n/a"}</li>
-        ${artifact.postCall?.summary ? `<li><strong>Summary:</strong> ${escapeHtml(artifact.postCall.summary)}</li>` : ""}
-        ${artifact.postCall?.recommendedAction ? `<li><strong>Recommended action:</strong> ${escapeHtml(artifact.postCall.recommendedAction)}</li>` : ""}
-        <li><strong>First turn:</strong> ${formatMetric(artifact.summary.firstTurnLatencyMs)}</li>
-        <li><strong>Elapsed:</strong> ${formatMetric(artifact.summary.elapsedMs)}</li>
-        <li><strong>Turns:</strong> ${artifact.summary.turnCount}</li>
-      </ul>
-      <h3>Warnings</h3>
-      ${renderWarnings(derived.warnings)}
-      <h3>Transcript</h3>
-      <pre>${escapeHtml(artifact.transcript.actual)}</pre>
-    </section>`;
-
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AbsoluteJS Voice Review Compare</title>
-  <style>
-    :root { color-scheme: dark; }
-    body { background: #0b0d10; color: #f4f4f5; font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 24px; }
-    main { max-width: 1200px; margin: 0 auto; display: grid; gap: 16px; }
-    section { background: #13161b; border: 1px solid #232833; border-radius: 18px; padding: 20px; }
-    .columns { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-    .pill { display: inline-flex; background: #0f1217; border: 1px solid #232833; border-radius: 999px; padding: 6px 10px; margin-bottom: 12px; }
-    .status-healthy { border-color: #14532d; color: #bbf7d0; }
-    .status-partial { border-color: #854d0e; color: #fde68a; }
-    .status-failed { border-color: #7f1d1d; color: #fecaca; }
-    ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
-    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #0f1217; border-radius: 12px; padding: 14px; border: 1px solid #232833; }
-    a { color: #f59e0b; }
-  </style>
-</head>
-<body>
-  <main>
-    <section>
-      <h1>Compare reviews</h1>
-      <p><a href="/reviews">Back to reviews</a></p>
-    </section>
-    <div class="columns">
-      ${renderColumn(left, leftDerived)}
-      ${renderColumn(right, rightDerived)}
-    </div>
   </main>
 </body>
 </html>`;

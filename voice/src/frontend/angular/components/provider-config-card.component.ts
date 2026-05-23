@@ -4,11 +4,13 @@ import {
   VOICE_PROFILES,
   VOICE_ROUTING_MODES,
   VOICE_SPEECH_ENGINES,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+} from "../../../constants/voiceOptions";
+import type {
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 @Component({
   host: {

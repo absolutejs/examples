@@ -147,18 +147,18 @@ export const createDemoQualityController = ({
               suite.input.cases.map(async (caseInput) => {
                 const results = await collection.search({
                   query: caseInput.query,
-                  topK: caseInput.topK ?? suite.input.topK ?? 4,
-                  retrieval: "hybrid",
                   queryTransform: demoQueryTransform,
                   rerank: demoReranker,
+                  retrieval: "hybrid",
                   retrievalStrategy: demoRetrievalStrategy,
+                  topK: caseInput.topK ?? suite.input.topK ?? 4,
                 });
                 const prompt = `Question: ${caseInput.query}\n\n${buildRAGContext(results)}\n\nAnswer in one or two sentences. Use only the provided context. Cite every claim inline with [1], [2].`;
                 let answer = "";
 
                 for await (const chunk of provider.stream({
+                  messages: [{ content: prompt, role: "user" }],
                   model: model.modelId,
-                  messages: [{ role: "user", content: prompt }],
                   systemPrompt:
                     "You are evaluating RAG grounding quality. Use only provided context and keep citations precise.",
                 })) {
@@ -250,6 +250,7 @@ export const createDemoQualityController = ({
         const result = entry.response.cases.find(
           (candidate) => candidate.caseId === caseInput.id,
         );
+
         return {
           answerExcerpt: result?.answer ?? "No provider answer was returned.",
           citationF1: result?.citationF1 ?? 0,
@@ -272,6 +273,7 @@ export const createDemoQualityController = ({
         if (right.citationF1 !== left.citationF1) {
           return right.citationF1 - left.citationF1;
         }
+
         return right.resolvedCitationRate - left.resolvedCitationRate;
       });
       const byCaseCitationF1 = [...caseEntries].sort(
@@ -324,33 +326,33 @@ export const createDemoQualityController = ({
           const suiteId = `${suite.id}:${kind}:${id}`;
           const store = createQualityHistoryStore(mode, kind, id);
           await persistRAGEvaluationSuiteRun({
-            store,
             run: {
-              id: crypto.randomUUID(),
-              suiteId,
-              label: entry.label,
-              startedAt: finishedAt - entry.response.elapsedMs,
-              finishedAt,
               elapsedMs: entry.response.elapsedMs,
-              response: entry.response as never,
+              finishedAt,
+              id: crypto.randomUUID(),
+              label: entry.label,
               metadata: {
                 backendMode: mode,
                 benchmarkKind: kind,
                 candidateId: id,
               },
+              response: entry.response as never,
+              startedAt: finishedAt - entry.response.elapsedMs,
+              suiteId,
             },
+            store,
           });
 
           return [
             id,
             await loadRAGEvaluationHistory({
+              limit: 8,
               store,
               suite: {
                 id: suiteId,
                 input: suite.input,
                 label: `${entry.label} benchmark history`,
               },
-              limit: 8,
             }),
           ] as const;
         }),
@@ -373,15 +375,11 @@ export const createDemoQualityController = ({
             entry.providerKey,
           );
           await persistRAGAnswerGroundingEvaluationRun({
-            store,
             run: {
-              id: crypto.randomUUID(),
-              suiteId,
-              label: entry.label,
-              startedAt: finishedAt - entry.elapsedMs,
-              finishedAt,
               elapsedMs: entry.elapsedMs,
-              response: entry.response,
+              finishedAt,
+              id: crypto.randomUUID(),
+              label: entry.label,
               metadata: {
                 backendMode: mode,
                 benchmarkKind: "provider-grounding",
@@ -389,18 +387,22 @@ export const createDemoQualityController = ({
                 modelId: entry.modelId,
                 providerId: entry.providerId,
               },
+              response: entry.response,
+              startedAt: finishedAt - entry.elapsedMs,
+              suiteId,
             },
+            store,
           });
 
           return [
             entry.providerKey,
             await loadRAGAnswerGroundingEvaluationHistory({
+              limit: 8,
               store,
               suite: {
                 id: suiteId,
                 label: `${entry.label} provider grounding history`,
               },
-              limit: 8,
             }),
           ] as const;
         }),
@@ -416,28 +418,28 @@ export const createDemoQualityController = ({
     const suiteId = `${suite.id}:provider-grounding:difficulty`;
     const store = createGroundingDifficultyHistoryStore(mode, "leaderboard");
     await persistRAGAnswerGroundingCaseDifficultyRun({
-      store,
       run: {
-        id: crypto.randomUUID(),
-        suiteId,
-        label: "Provider grounding difficulty",
-        startedAt: finishedAt,
-        finishedAt,
         entries: comparison.difficultyLeaderboard,
+        finishedAt,
+        id: crypto.randomUUID(),
+        label: "Provider grounding difficulty",
         metadata: {
           backendMode: mode,
           benchmarkKind: "provider-grounding-difficulty",
         },
+        startedAt: finishedAt,
+        suiteId,
       },
+      store,
     });
 
     return loadRAGAnswerGroundingCaseDifficultyHistory({
+      limit: 8,
       store,
       suite: {
         id: suiteId,
         label: "Provider grounding difficulty history",
       },
-      limit: 8,
     });
   };
 
@@ -479,11 +481,11 @@ export const createDemoQualityController = ({
         suite.input.cases.map(async (caseInput) => {
           const results = await collection.search({
             query: caseInput.query,
-            topK: caseInput.topK ?? suite.input.topK ?? 4,
-            retrieval: "hybrid",
             queryTransform: demoQueryTransform,
             rerank: demoReranker,
+            retrieval: "hybrid",
             retrievalStrategy: demoRetrievalStrategy,
+            topK: caseInput.topK ?? suite.input.topK ?? 4,
           });
           const bestResult = results[0];
           const answer = bestResult
@@ -580,6 +582,7 @@ export const createDemoQualityController = ({
           cachedAt: Date.now(),
           response,
         });
+
         return response;
       })
       .catch((error) => {

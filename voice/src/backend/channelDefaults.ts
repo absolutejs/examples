@@ -1,5 +1,5 @@
 import type { VoiceSessionRecord } from "@absolutejs/voice";
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import { VOICE_DEMO_PHRASE_HINTS, buildSavedIntake } from "./voiceFlow";
 import { correctDemoTurn } from "./agentSquad";
 import { handoffAdapters } from "./carrierHandoff";
@@ -23,21 +23,22 @@ export const channelDefaults = (channelPath: string) => ({
         }
       : undefined,
   liveOps: liveOpsRuntime,
+  onTurn: contractAwareOnTurn,
+  ops: assistant.ops,
+  preset: "reliability" as const,
+  profileSwitchGuard: createDemoProfileSwitchGuard(channelPath),
+  session: runtimeStorage.session,
   onComplete: async ({ session }: { session: VoiceSessionRecord }) => {
     const result = session.turns
       .toReversed()
       .find((turn) => turn.result !== undefined)?.result as
       | SavedIntake
       | undefined;
-    persistIntake(result ?? buildSavedIntake(session));
+    await persistIntake(result ?? buildSavedIntake(session));
   },
-  onTurn: contractAwareOnTurn,
-  ops: assistant.ops,
   phraseHints: async (input: { context: unknown; sessionId: string }) => {
     await rememberSessionRoutingMode(input);
+
     return VOICE_DEMO_PHRASE_HINTS;
   },
-  profileSwitchGuard: createDemoProfileSwitchGuard(channelPath),
-  preset: "reliability" as const,
-  session: runtimeStorage.session,
 });

@@ -20,14 +20,14 @@ import {
   VoiceTurnQuality,
 } from "@absolutejs/voice/vue";
 import { createVoiceOpsActionCenterActions } from "@absolutejs/voice/client";
-import {
-  VOICE_CALL_CONTROL_ACTIONS,
-  type VoiceDemoMode,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
+import type {
+  VoiceDemoMode,
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 import AgentSquadCard from "../components/AgentSquadCard.vue";
 import AssistantConfigCard from "../components/AssistantConfigCard.vue";
 import CampaignDialerCard from "../components/CampaignDialerCard.vue";
@@ -138,7 +138,9 @@ const startMode = async (mode: VoiceDemoMode) => {
   await startMic();
 };
 
-const runCallControl = (action: (typeof VOICE_CALL_CONTROL_ACTIONS)[number]) => {
+const runCallControl = (
+  action: (typeof VOICE_CALL_CONTROL_ACTIONS)[number],
+) => {
   currentVoice.value.callControl(action);
   stopMic();
 };
@@ -282,7 +284,10 @@ const runCallControl = (action: (typeof VOICE_CALL_CONTROL_ACTIONS)[number]) => 
       title="Debug Latest Call"
     />
 
-    <VoiceRoutingStatus class="voice-card voice-routing-card" :interval-ms="4000" />
+    <VoiceRoutingStatus
+      class="voice-card voice-routing-card"
+      :interval-ms="4000"
+    />
 
     <AgentSquadCard :agent-squad-status="agentSquadStatus" />
 
@@ -329,7 +334,10 @@ const runCallControl = (action: (typeof VOICE_CALL_CONTROL_ACTIONS)[number]) => 
       :on-run-proof="runCampaignDialerProof"
     />
 
-    <VoiceOpsStatus class="voice-card voice-workflow-card" :interval-ms="5000" />
+    <VoiceOpsStatus
+      class="voice-card voice-workflow-card"
+      :interval-ms="5000"
+    />
 
     <VoiceDeliveryRuntime
       class="voice-card voice-workflow-card"

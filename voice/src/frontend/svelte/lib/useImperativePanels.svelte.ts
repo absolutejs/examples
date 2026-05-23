@@ -2,9 +2,9 @@ import { mountVoiceOpsActionHistory } from "@absolutejs/voice/client";
 import {
   mountDemoBargeInProof,
   mountVoiceLiveOpsPanel,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 import type { VoiceStream, VoiceStreamState } from "@absolutejs/voice";
-import type { SavedIntake } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
 
 const OPS_ACTION_HISTORY_INTERVAL_MS = 5_000;
 

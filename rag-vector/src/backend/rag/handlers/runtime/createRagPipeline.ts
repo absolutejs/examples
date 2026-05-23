@@ -19,7 +19,6 @@ export const createRagPipeline = (ragDb: Database) => {
   const ragBackends = createRAGBackends({
     db: ragDb,
     path: "./rag-store.sqlite",
-    postgresUrl,
     pinecone: {
       apiKey: process.env.PINECONE_API_KEY,
       indexName: process.env.PINECONE_INDEX_NAME,
@@ -29,6 +28,7 @@ export const createRagPipeline = (ragDb: Database) => {
           ? pineconeDimensions
           : undefined,
     },
+    postgresUrl,
   });
   const ragDemoState = createRagDemoState({ ragBackends, ragDb });
   const demoAIProvider = createDemoAIProviderCatalog();

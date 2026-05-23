@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { VoiceAgentSquadDemoStatus } from "../../../shared/demo";
+import type { VoiceAgentSquadDemoStatus } from "../../../types/domain";
 
 type AgentSquadCardProps = {
   agentSquadStatus: VoiceAgentSquadDemoStatus | null;

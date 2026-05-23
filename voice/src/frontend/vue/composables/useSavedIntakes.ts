@@ -2,11 +2,11 @@ import { type ComputedRef, type Ref, ref } from "vue";
 import {
   fetchAgentSquadDemoStatus,
   fetchSavedIntakes,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 import type {
   SavedIntake,
   VoiceAgentSquadDemoStatus,
-} from "../../../shared/demo";
+} from "../../../types/domain";
 import type { VueVoiceStream } from "./useVoiceDemoStreams";
 
 type SavedIntakesInput = {

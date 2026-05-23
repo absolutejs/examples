@@ -4,18 +4,18 @@ import type {
   VoiceSessionStatus,
   VoiceTurnRecord,
 } from "@absolutejs/voice";
-import { formatReconnectState } from "../../shared/browser";
+import { formatReconnectState } from "../../../shared/browser";
+import { getVoiceModeLabel } from "../../../shared/demo";
+import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
 import {
-  getVoiceModeLabel,
-  VOICE_CALL_CONTROL_ACTIONS,
   VOICE_DEMO_GENERAL_LABEL,
   VOICE_DEMO_GUIDED_LABEL,
   VOICE_DEMO_MIC_IDLE,
   VOICE_DEMO_MIC_LIVE,
   VOICE_DEMO_STOP_LABEL,
-  type SavedIntake,
-  type VoiceDemoMode,
-} from "../../../shared/demo";
+} from "../../../constants/demoCopy";
+import type { SavedIntake } from "../../../types/domain";
+import type { VoiceDemoMode } from "../../../types/voice";
 
 type ConversationCardProps = {
   activeMode: VoiceDemoMode | null;
@@ -88,10 +88,7 @@ defineProps<ConversationCardProps>();
           <div class="voice-chat-role">You</div>
           <p class="voice-turn-text">{{ turn.text }}</p>
         </article>
-        <article
-          v-if="turn.assistantText"
-          class="voice-chat-message assistant"
-        >
+        <article v-if="turn.assistantText" class="voice-chat-message assistant">
           <div class="voice-chat-role">
             {{ activeMode ? getVoiceModeLabel(activeMode) : "Guide" }}
           </div>

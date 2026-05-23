@@ -65,14 +65,14 @@ export const createRagBackendPlugin = ({
           ),
         }),
         indexManager,
-        model: (providerName) =>
-          demoAIProvider?.defaultModel(providerName) ?? "gpt-4.1-mini",
         parseProvider: demoAIProvider?.parseMessage,
         path: `${backend.path}-transform`,
         provider: demoAIProvider?.provider ?? ragDemoState.unavailableProvider,
         readinessProviderName: demoAIProvider
           ? "runtime AI provider registry"
           : "demo fallback provider",
+        model: (providerName) =>
+          demoAIProvider?.defaultModel(providerName) ?? "gpt-4.1-mini",
       }),
     );
   }

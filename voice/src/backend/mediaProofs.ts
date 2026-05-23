@@ -1,4 +1,4 @@
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import { type SavedVoiceIntegrationEvent } from "./integrationsPage";
 import { type SavedVoiceOpsTask } from "./opsPage";
 import { buildSavedVoiceReview } from "./reviewPage";
@@ -603,7 +603,7 @@ const buildDemoMediaPipelineReportOptions = async (
           kind: "input-audio",
           metadata: { ...base.metadata, level: 0.52, speechProbability: 0.92 },
           source: "browser",
-        } as MediaFrame);
+        });
       }
 
       if (
@@ -620,7 +620,7 @@ const buildDemoMediaPipelineReportOptions = async (
           latencyMs: 420,
           metadata: { ...base.metadata, jitterMs: 12, level: 0.45 },
           source: "provider",
-        } as MediaFrame);
+        });
       }
 
       if (event.type === "turn.committed") {
@@ -628,7 +628,7 @@ const buildDemoMediaPipelineReportOptions = async (
           ...base,
           kind: "turn-commit",
           source: "voice-runtime",
-        } as MediaFrame);
+        });
       }
 
       if (event.type === "client.reconnect") {
@@ -636,7 +636,7 @@ const buildDemoMediaPipelineReportOptions = async (
           ...base,
           kind: "metadata",
           source: "voice-runtime",
-        } as MediaFrame);
+        });
       }
 
       if (event.type === "client.barge_in") {
@@ -651,7 +651,7 @@ const buildDemoMediaPipelineReportOptions = async (
               ? event.payload.latencyMs
               : undefined,
           source: "voice-runtime",
-        } as MediaFrame);
+        });
       }
 
       return undefined;
@@ -795,21 +795,21 @@ const buildDemoMediaPipelineReportOptions = async (
     inputFormat: realtimeChannelFormat,
     maxBackpressureFrames: 0,
     maxFirstAudioLatencyMs: 800,
+    maxInterruptionLatencyMs: 250,
     maxJitterMs: 40,
     maxMediaBackpressureEvents: 0,
     maxMediaGapMs: 800,
     maxMediaJitterMs: 40,
     maxMediaTimestampDriftMs: 800,
+    maxSilenceFrames: 1,
+    minMediaSpeechRatio: 0.8,
+    minSpeechFrames: 1,
     outputFormat: realtimeChannelFormat,
+    processorGraph: processorGraph.report(),
     requireInterruptionFrame: true,
     requireTraceEvidence: true,
-    processorGraph: processorGraph.report(),
     surface: "direct-realtime-media-pipeline",
     transport: transport.report(),
-    maxSilenceFrames: 1,
-    minSpeechFrames: 1,
-    minMediaSpeechRatio: 0.8,
-    maxInterruptionLatencyMs: 250,
   };
 };
 
@@ -846,7 +846,7 @@ const buildDemoVoiceSessionMediaSnapshot = async (
           kind: "input-audio",
           metadata: { ...base.metadata, speechProbability: 0.9 },
           source: "browser",
-        } as MediaFrame);
+        });
       }
 
       if (event.type === "turn.assistant") {
@@ -855,7 +855,7 @@ const buildDemoVoiceSessionMediaSnapshot = async (
           durationMs: 20,
           kind: "assistant-audio",
           source: "provider",
-        } as MediaFrame);
+        });
       }
 
       if (event.type === "turn.committed") {
@@ -863,7 +863,7 @@ const buildDemoVoiceSessionMediaSnapshot = async (
           ...base,
           kind: "turn-commit",
           source: "voice-runtime",
-        } as MediaFrame);
+        });
       }
 
       return undefined;
@@ -1027,7 +1027,7 @@ const seedDemoOutcomeProof = async () => {
 
   for (const proof of proofSessions) {
     const session = createProofSession(proof);
-    const mode = proof.mode;
+    const {mode} = proof;
     const result = buildSavedIntake(session, mode);
     session.turns = session.turns.map((turn, index) =>
       index === session.turns.length - 1 ? { ...turn, result } : turn,
@@ -1037,6 +1037,9 @@ const seedDemoOutcomeProof = async () => {
     await recordVoiceRuntimeOps({
       api: {} as never,
       config: {
+        events: runtimeStorage.events,
+        reviews: runtimeStorage.reviews as unknown as VoiceCallReviewStore,
+        tasks: runtimeStorage.tasks as unknown as VoiceOpsTaskStore,
         buildReview: ({ result: runtimeResult, session: reviewSession }) =>
           buildSavedVoiceReview({
             phraseHints: VOICE_DEMO_PHRASE_HINTS,
@@ -1045,12 +1048,9 @@ const seedDemoOutcomeProof = async () => {
               buildSavedIntake(reviewSession, mode),
             session: reviewSession,
           }),
-        events: runtimeStorage.events,
         onEvent: async ({ event }) => {
-          await deliverIntegrationEvent(event as SavedVoiceIntegrationEvent);
+          await deliverIntegrationEvent(event);
         },
-        reviews: runtimeStorage.reviews as unknown as VoiceCallReviewStore,
-        tasks: runtimeStorage.tasks as unknown as VoiceOpsTaskStore,
       },
       context: {},
       disposition: proof.disposition,
@@ -1257,7 +1257,7 @@ const formatLiveOpsActionLabel = (action: VoiceLiveOpsAction) => {
 const handleLiveOpsAction = async (body: unknown) => {
   const input =
     body && typeof body === "object" ? (body as Record<string, unknown>) : {};
-  const action = input.action;
+  const {action} = input;
   const sessionId = toStringValue(input.sessionId);
 
   if (!sessionId || !isLiveOpsAction(action)) {
@@ -1326,8 +1326,8 @@ const handleLiveOpsAction = async (body: unknown) => {
       assignee,
       control,
       detail,
-      tag,
       status: "success",
+      tag,
     },
     sessionId,
     type: "operator.action",

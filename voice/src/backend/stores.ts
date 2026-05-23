@@ -1,4 +1,4 @@
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import { type SavedVoiceIntegrationEvent } from "./integrationsPage";
 import { type SavedVoiceOpsTask } from "./opsPage";
 import { type SavedVoiceReviewArtifact } from "./reviewPage";
@@ -7,8 +7,6 @@ import {
   createVoiceAuditEvent,
   createVoiceAuditSinkDeliveryRecord,
   createVoiceDeliverySinkPair,
-  createVoiceFileAssistantMemoryStore,
-  createVoiceFileRuntimeStorage,
   createVoiceProductionReadinessProofRuntime,
   createVoiceTraceSinkDeliveryRecord,
   renderVoiceSessionsHTML,
@@ -21,30 +19,105 @@ import {
   voice,
   voiceGuardrailPolicyPresets,
 } from "@absolutejs/voice";
-import { projectRoot } from "@absolutejs/absolute";
+import {
+  createVoiceDrizzleAssistantMemoryStore,
+  createVoiceDrizzleHandoffDeliveryStore,
+  createVoiceDrizzleRecordStore,
+  createVoiceDrizzleRuntimeStorage,
+} from "@absolutejs/voice/drizzle";
 import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { createJsonHandoffDeliveryStore, escapeHtml } from "./helpers";
+import { db } from "../../db/client";
+import { savedIntakesTable } from "../../db/schema";
+import { escapeHtml } from "./helpers";
 
-const savedIntakes: SavedIntake[] = [];
-
-// Anchor runtime data to projectRoot (the dir holding absolute.config.ts), which
-// is identical under `absolute dev` and `absolute start`. import.meta.dir would
-// point at src/backend in dev but the bundled dist/ in production, so the path
-// would land outside the project and the SQLite stores would fail to open.
-const runtimeDirectory = process.env.VOICE_DEMO_RUNTIME_DIR
-  ? resolve(process.env.VOICE_DEMO_RUNTIME_DIR)
-  : resolve(projectRoot, ".voice-runtime", "voice-demo");
-mkdirSync(runtimeDirectory, { recursive: true });
-
-const runtimeStorage = createVoiceFileRuntimeStorage<
+const runtimeStorage = createVoiceDrizzleRuntimeStorage<
   VoiceSessionRecord,
   SavedVoiceReviewArtifact,
   SavedVoiceOpsTask,
   SavedVoiceIntegrationEvent
 >({
-  directory: runtimeDirectory,
+  db,
 });
+
+// The voice runtime reads and writes the live session on the per-audio-frame hot
+// path (~3 store round-trips every 20ms). Hitting Neon directly there runs the
+// pipeline 10-20x slower than real time, which starves STT and delays turn commit
+// by ~80s. Serve the hot path from memory and persist to Neon write-behind: reads
+// are instant, writes are coalesced (~250ms), and terminal sessions evict from the
+// cache once durable so it stays bounded.
+type SessionStore = typeof runtimeStorage.session;
+
+const createCachedVoiceSessionStore = (inner: SessionStore): SessionStore => {
+  const cache = new Map<string, VoiceSessionRecord>();
+  const timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  const persist = (id: string) => {
+    timers.delete(id);
+    const session = cache.get(id);
+    if (!session) {
+      return;
+    }
+    void inner.set(id, session).catch(() => {});
+    if (session.status === "completed" || session.status === "failed") {
+      cache.delete(id);
+    }
+  };
+
+  const schedulePersist = (id: string) => {
+    if (timers.has(id)) {
+      return;
+    }
+    timers.set(id, setTimeout(() => persist(id), 250));
+  };
+
+  return {
+    get: async (id) => cache.get(id) ?? (await inner.get(id)),
+    getOrCreate: async (id) => {
+      const cached = cache.get(id);
+      if (cached) {
+        return cached;
+      }
+      const session = (await inner.get(id)) ?? (await inner.getOrCreate(id));
+      cache.set(id, session);
+      return session;
+    },
+    list: () => inner.list(),
+    remove: async (id) => {
+      const timer = timers.get(id);
+      if (timer) {
+        clearTimeout(timer);
+        timers.delete(id);
+      }
+      cache.delete(id);
+      await inner.remove(id);
+    },
+    set: async (id, value) => {
+      cache.set(id, value);
+      schedulePersist(id);
+    },
+  };
+};
+
+const sessionStore = createCachedVoiceSessionStore(runtimeStorage.session);
+
+// The demo's captured intakes ("saved captures" in the UI), persisted to Neon
+// and keyed by session id so re-persisting a session replaces its capture.
+const savedIntakesStore = createVoiceDrizzleRecordStore<SavedIntake>({
+  db,
+  table: savedIntakesTable,
+  decorate: (_id, value) => value,
+  getSortAt: (value) => value.completedAt,
+});
+
+// Downloadable proof artifacts (proof-pack exports, screenshots, export
+// archives) are regenerable files, not durable state, so they live in the OS
+// temp dir instead of the project tree. All durable state is in Neon.
+const runtimeDirectory = process.env.VOICE_DEMO_RUNTIME_DIR
+  ? resolve(process.env.VOICE_DEMO_RUNTIME_DIR)
+  : resolve(tmpdir(), "absolutejs-voice-demo");
+mkdirSync(runtimeDirectory, { recursive: true });
 
 const supportedDeliverySinkKinds = [
   "file",
@@ -95,6 +168,7 @@ const parseS3DeliveryTarget = (value: string | undefined) => {
   }
 
   const keyPrefix = prefixParts.join("/") || "voice-demo";
+
   return {
     bucket,
     keyPrefix,
@@ -116,7 +190,7 @@ const deliverySinkTarget =
         ? "postgres://VOICE_DATABASE_URL/voice_delivery"
         : deliverySinkKind === "sqlite"
           ? "sqlite://voice-demo.sqlite/voice_delivery"
-          : "file://.voice-runtime/voice-demo";
+          : `file://${runtimeDirectory}`;
 
 const auditDeliverySinkTarget = `${deliverySinkTarget}/audit-deliveries`;
 
@@ -316,13 +390,11 @@ const base64FromBytes = (bytes: ArrayBuffer | Uint8Array) =>
     bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes),
   ).toString("base64");
 
-const handoffDeliveryStore = createJsonHandoffDeliveryStore<
+const handoffDeliveryStore = createVoiceDrizzleHandoffDeliveryStore<
   StoredVoiceHandoffDelivery<unknown, VoiceSessionRecord, SavedIntake>
->(resolve(runtimeDirectory, "handoff-deliveries.json"));
+>({ db });
 
-const memoryStore = createVoiceFileAssistantMemoryStore({
-  directory: resolve(runtimeDirectory, "memories"),
-});
+const memoryStore = createVoiceDrizzleAssistantMemoryStore({ db });
 
 export {
   auditDeliverySinkId,
@@ -345,7 +417,8 @@ export {
   runtimeDirectory,
   runtimeStorage,
   s3DeliveryTarget,
-  savedIntakes,
+  savedIntakesStore,
+  sessionStore,
   traceDeliverySinkId,
   traceDeliverySinkTarget,
   voiceSupportArtifactRedaction,

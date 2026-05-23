@@ -21,34 +21,6 @@ export const createDemoUIStateController = (ragDb: Database) => {
     `${framework}:${mode}`;
 
   return {
-    getRecentQueries(framework: DemoFrameworkId, mode: DemoBackendMode) {
-      const state = readUIState.get(
-        "recent-queries",
-        getStateId(framework, mode),
-      );
-      if (!state) {
-        return [];
-      }
-
-      try {
-        const parsed = JSON.parse(state.value);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    },
-    setRecentQueries(
-      framework: DemoFrameworkId,
-      mode: DemoBackendMode,
-      payload: unknown[],
-    ) {
-      writeUIState.run(
-        "recent-queries",
-        getStateId(framework, mode),
-        JSON.stringify(payload),
-        Date.now(),
-      );
-    },
     getActiveRetrieval(framework: DemoFrameworkId, mode: DemoBackendMode) {
       const state = readUIState.get(
         "active-retrieval",
@@ -64,6 +36,23 @@ export const createDemoUIStateController = (ragDb: Database) => {
         return null;
       }
     },
+    getRecentQueries(framework: DemoFrameworkId, mode: DemoBackendMode) {
+      const state = readUIState.get(
+        "recent-queries",
+        getStateId(framework, mode),
+      );
+      if (!state) {
+        return [];
+      }
+
+      try {
+        const parsed = JSON.parse(state.value);
+
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    },
     setActiveRetrieval(
       framework: DemoFrameworkId,
       mode: DemoBackendMode,
@@ -71,6 +60,18 @@ export const createDemoUIStateController = (ragDb: Database) => {
     ) {
       writeUIState.run(
         "active-retrieval",
+        getStateId(framework, mode),
+        JSON.stringify(payload),
+        Date.now(),
+      );
+    },
+    setRecentQueries(
+      framework: DemoFrameworkId,
+      mode: DemoBackendMode,
+      payload: unknown[],
+    ) {
+      writeUIState.run(
+        "recent-queries",
         getStateId(framework, mode),
         JSON.stringify(payload),
         Date.now(),

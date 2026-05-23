@@ -5,7 +5,7 @@ import {
   formatErrorMessage,
   renderDemoBargeInProofHTML,
   renderVoiceRealCallEvidenceWorkerHealthHTML,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 
 const REAL_CALL_WORKER_DESCRIPTION =
   "Angular renders whether rolling real-call evidence is automatic or manual, backed by the same worker health route used by readiness.";

@@ -32,6 +32,7 @@ const getAccountLabel = (user: AuthUser | null) => {
     .filter(Boolean)
     .join(" ")
     .trim();
+
   return fullName || user.email || "Account";
 };
 
@@ -51,6 +52,7 @@ export const ReactRAGAuthMenu = () => {
           if (!cancelled) {
             setUser(null);
           }
+
           return;
         }
 

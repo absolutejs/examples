@@ -1,4 +1,4 @@
-import { type VoiceModelProvider } from "../shared/demo";
+import type { VoiceModelProvider } from "../types/voice";
 import {
   appendVoiceIOProviderRouterTraceEvent,
   applyVoiceProfileSwitchGuard,
@@ -7,7 +7,6 @@ import {
   buildVoiceOpsRecoveryReport,
   buildVoiceProfileSwitchReadinessReport,
   buildVoiceProviderSloReport,
-  createVoiceFileObservabilityExportDeliveryReceiptStore,
   createVoiceProofPackBuildContext,
   createVoiceProofRefreshSnapshot,
   createVoiceProofTraceStore,
@@ -25,6 +24,7 @@ import {
   type VoiceProviderHealthSummary,
   voice,
 } from "@absolutejs/voice";
+import { createVoiceDrizzleObservabilityExportDeliveryReceiptStore } from "@absolutejs/voice/drizzle";
 import { assemblyai } from "@absolutejs/voice-assemblyai";
 import { deepgram } from "@absolutejs/voice-deepgram";
 import { gemini } from "@absolutejs/voice-gemini";
@@ -32,6 +32,7 @@ import { openai } from "@absolutejs/voice-openai";
 import { createVoiceIOProviderFailureSimulator } from "@absolutejs/voice/testing";
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+import { db, postgresConnectionString } from "../../db/client";
 import { deliveryRuntimeControl } from "./proofSeeds";
 import {
   configuredModelProviders,
@@ -70,21 +71,21 @@ const productionReadinessLinks = {
   agentSquadContracts: "/agent-squad-contract",
   auditDeliveries: "/audit/deliveries",
   bargeIn: "/barge-in",
+  browserMedia: "/voice/browser-media",
   campaignReadiness: "/api/voice/campaigns/readiness-proof",
   carriers: "/carriers",
   deliveryRuntime: "/delivery-runtime",
   handoffs: "/handoffs",
-  browserMedia: "/voice/browser-media",
   mediaPipeline: "/voice/media-pipeline",
-  opsActions: "/voice/ops-actions",
-  operationsRecords: "/voice-operations/:sessionId",
   observabilityExport: "/voice/observability-export",
   observabilityExportDeliveries: "/api/voice/observability-export/deliveries",
-  proofTrends: "/voice/proof-trends",
+  operationsRecords: "/voice-operations/:sessionId",
+  opsActions: "/voice/ops-actions",
   opsRecovery: "/ops-recovery",
   profileSwitchLiveDecisions: "/voice/profile-switch-live-decisions",
   profileSwitchPolicy: "/voice/profile-switch-policy",
   profileSwitchReadiness: "/voice/profile-switch-readiness",
+  proofTrends: "/voice/proof-trends",
   providerContracts: "/provider-contracts",
   providerOrchestration: "/voice/provider-orchestration",
   providerRoutingContracts: "/api/provider-routing-contract",
@@ -103,8 +104,8 @@ const telephonyWebhookSecurityOptions = () => ({
     authToken: "proof-plivo-secret",
   },
   store: {
-    kind: "sqlite" as const,
-    path: resolve(runtimeDirectory, "telephony-webhook-security.sqlite"),
+    connectionString: postgresConnectionString,
+    kind: "postgres" as const,
   },
   telnyx: {
     publicKey: "proof-telnyx-public-key",
@@ -128,12 +129,12 @@ const opsRecoveryOptions = () => ({
   links: {
     auditDeliveries: "/audit/deliveries",
     handoffs: "/handoffs",
+    providers: "/api/provider-status",
+    traceDeliveries: "/traces/deliveries",
     operationsRecords: (sessionId: string) =>
       `/voice-operations/${encodeURIComponent(sessionId)}`,
-    providers: "/api/provider-status",
     sessions: (sessionId: string) =>
       `/sessions/${encodeURIComponent(sessionId)}`,
-    traceDeliveries: "/traces/deliveries",
     traces: (sessionId: string) => `/traces/${encodeURIComponent(sessionId)}`,
   },
   path: "/api/voice/ops-recovery",
@@ -430,9 +431,7 @@ const observabilityExportDeliveryDestinations = () => [
 ];
 
 const observabilityExportDeliveryReceipts =
-  createVoiceFileObservabilityExportDeliveryReceiptStore({
-    directory: resolve(runtimeDirectory, "observability-export-receipts"),
-  });
+  createVoiceDrizzleObservabilityExportDeliveryReceiptStore({ db });
 
 const cleanupDemoQualityNoise = async () => {
   const traces = await runtimeStorage.traces.list();
@@ -504,7 +503,7 @@ const proofArtifact = (input: {
 };
 
 const proofScreenshotArtifact = (id: string, label: string, file: string) => {
-  const path = `.voice-runtime/proof-pack/screenshots/latest/${file}`;
+  const path = resolve(runtimeDirectory, "proof-pack/screenshots/latest", file);
   const maxScreenshotAgeMs = 2 * 60 * 60 * 1000;
   const isFresh =
     existsSync(path) &&
@@ -539,6 +538,7 @@ const productionReadinessAuditStore = {
       ...filter,
       limit: Math.min(filter?.limit ?? 100, 100),
     });
+
     return events.slice(-100);
   },
 };
@@ -581,11 +581,9 @@ const refreshFastProductionReadinessProof = () =>
     ]);
   });
 
-const summarizeProductionReadinessDeliveryRuntime = () => {
-  return productionReadinessProofRuntime.cache("delivery-runtime", () =>
+const summarizeProductionReadinessDeliveryRuntime = () => productionReadinessProofRuntime.cache("delivery-runtime", () =>
     deliveryRuntimeControl.summarize(),
   );
-};
 
 const timeReadinessResolver = async <T>(
   label: string,
@@ -769,6 +767,7 @@ const getLatestRoutingDecision = async () => {
   const profileId =
     sessionVoiceProfileIds.get(decision.sessionId) ?? "meeting-recorder";
   const profile = await findVoiceProfileDefault(profileId);
+
   return {
     ...decision,
     profileId: profile?.profileId ?? profileId,
@@ -806,8 +805,8 @@ const getProfileSwitchInputs = async () => {
   ]);
 
   return {
-    defaults,
     decision,
+    defaults,
     observed: {
       currentProfileId: decision?.profileId ?? "meeting-recorder",
       fallbackUsed: Boolean(decision?.fallbackProvider),
@@ -834,8 +833,7 @@ const demoVoiceProfileIds = [
   "noisy-phone-call",
 ] as const;
 
-const buildProductionReadinessProfileSwitchReport = () => {
-  return productionReadinessProofRuntime.cache("profile-switch-readiness", () =>
+const buildProductionReadinessProfileSwitchReport = () => productionReadinessProofRuntime.cache("profile-switch-readiness", () =>
     buildVoiceProfileSwitchReadinessReport({
       audit: runtimeStorage.audit,
       autoMode: true,
@@ -844,7 +842,6 @@ const buildProductionReadinessProfileSwitchReport = () => {
       policyProof: {
         allowedProfileIds: [...demoVoiceProfileIds],
         audit: runtimeStorage.audit,
-        defaults: () => readRealCallProfileDefaultsReport(),
         metadata: {
           source: "absolutejs-voice-example",
         },
@@ -854,11 +851,11 @@ const buildProductionReadinessProfileSwitchReport = () => {
           providerP95Ms: 950,
           turnWarnings: 3,
         },
+        defaults: () => readRealCallProfileDefaultsReport(),
       },
       trace: deliveryTraceStore,
     }),
   );
-};
 
 const readQueryNumber = (
   query: Record<PropertyKey, unknown> | undefined,
@@ -866,6 +863,7 @@ const readQueryNumber = (
   fallback: number,
 ) => {
   const value = Number(readQueryString(query, keys) ?? fallback);
+
   return Number.isFinite(value) ? value : fallback;
 };
 
@@ -882,6 +880,7 @@ const readProfileSwitchGuardMode = (
   query: Record<PropertyKey, unknown> | undefined,
 ) => {
   const mode = readQueryString(query, ["profileSwitchMode", "mode"]);
+
   return mode === "off" || mode === "recommend" || mode === "auto"
     ? mode
     : "auto";
@@ -932,37 +931,37 @@ const createDemoProfileSwitchGuard = (endpoint: string) => ({
     name: "AbsoluteJS Voice Example",
   },
   allowedProfileIds: [...demoVoiceProfileIds],
+  audit: runtimeStorage.audit,
+  trace: deliveryTraceStore,
   blockedProfileIds: ({ context }: { context: unknown }) =>
     readQueryList(queryFromContext(context), [
       "blockedProfiles",
       "blockedProfileIds",
     ]),
-  audit: runtimeStorage.audit,
   currentProfileId: ({ context }: { context: unknown }) =>
     resolveVoiceProfileIdFromContext(context),
   defaults: () => readRealCallProfileDefaultsReport(),
-  metadata: ({ context }: { context: unknown }) => ({
-    endpoint,
-    requestedProfileId: resolveVoiceProfileIdFromContext(context),
-    selectedBy: "session-start",
-  }),
-  minConfidence: ({ context }: { context: unknown }) => {
-    return readQueryNumber(
-      queryFromContext(context),
-      ["minProfileConfidence"],
-      0.75,
-    );
-  },
   maxAutoSwitchesPerSession: ({ context }: { context: unknown }) =>
     readQueryNumber(
       queryFromContext(context),
       ["maxAutoSwitchesPerSession", "maxProfileSwitches"],
       1,
     ),
+  metadata: ({ context }: { context: unknown }) => ({
+    endpoint,
+    requestedProfileId: resolveVoiceProfileIdFromContext(context),
+    selectedBy: "session-start",
+  }),
+  minConfidence: ({ context }: { context: unknown }) => readQueryNumber(
+      queryFromContext(context),
+      ["minProfileConfidence"],
+      0.75,
+    ),
   mode: ({ context }: { context: unknown }) =>
     readProfileSwitchGuardMode(queryFromContext(context)),
   observed: async ({ context }: { context: unknown }) => {
     const quality = await getRecentTurnQualitySignals();
+
     return {
       currentProfileId: resolveVoiceProfileIdFromContext(context),
       turnP95Ms: quality.turnP95Ms,
@@ -983,7 +982,6 @@ const createDemoProfileSwitchGuard = (endpoint: string) => ({
       decision.selectedProfileId ?? resolveVoiceProfileIdFromContext(context),
     );
   },
-  trace: deliveryTraceStore,
 });
 
 const sttProviderSimulationStatus = () =>
@@ -995,23 +993,23 @@ const sttProviderSimulationStatus = () =>
 const sttProviderFailureSimulator =
   createVoiceIOProviderFailureSimulator<VoiceSTTProvider>({
     failureElapsedMs: 12,
+    kind: "stt",
+    latencyBudgets: sttLatencyBudgets,
+    providers: configuredSTTProviders,
+    recoveryElapsedMs: {
+      assemblyai: 28,
+      deepgram: 18,
+    },
     failureMessage: ({ provider }) =>
       `Simulated ${provider} websocket open failure.`,
     fallback: (provider) =>
       configuredSTTProviders.filter((candidate) => candidate !== provider),
-    kind: "stt",
-    latencyBudgets: sttLatencyBudgets,
     onProviderEvent: async (event, input) => {
       await appendVoiceIOProviderRouterTraceEvent({
         event,
         sessionId: input.sessionId,
         store: deliveryTraceStore,
       });
-    },
-    providers: configuredSTTProviders,
-    recoveryElapsedMs: {
-      assemblyai: 28,
-      deepgram: 18,
     },
     sessionId: ({ now }) => `stt-sim-${now}`,
   });
@@ -1028,12 +1026,17 @@ const runDemoSTTProviderRoutingContract = async () => {
   );
   const simulator = createVoiceIOProviderFailureSimulator<VoiceSTTProvider>({
     failureElapsedMs: 12,
+    kind: "stt",
+    latencyBudgets: sttLatencyBudgets,
+    providers: configuredSTTProviders,
+    recoveryElapsedMs: {
+      assemblyai: 28,
+      deepgram: 18,
+    },
     failureMessage: ({ provider }) =>
       `Simulated ${provider} websocket open failure.`,
     fallback: (provider) =>
       configuredSTTProviders.filter((candidate) => candidate !== provider),
-    kind: "stt",
-    latencyBudgets: sttLatencyBudgets,
     onProviderEvent: async (event, input) => {
       events.push(
         buildVoiceIOProviderRouterTraceEvent({
@@ -1043,11 +1046,6 @@ const runDemoSTTProviderRoutingContract = async () => {
           sessionId: input.sessionId,
         }),
       );
-    },
-    providers: configuredSTTProviders,
-    recoveryElapsedMs: {
-      assemblyai: 28,
-      deepgram: 18,
     },
     sessionId: ({ now }) => `stt-contract-${now}`,
   });
@@ -1109,12 +1107,17 @@ const runDemoTTSProviderRoutingContract = async () => {
   );
   const simulator = createVoiceIOProviderFailureSimulator<VoiceTTSProvider>({
     failureElapsedMs: 18,
+    kind: "tts",
+    latencyBudgets: ttsLatencyBudgets,
+    providers: configuredTTSProviders,
+    recoveryElapsedMs: {
+      emergency: 8,
+      openai: 45,
+    },
     failureMessage: ({ provider }) =>
       `Simulated ${provider} speech synthesis open failure.`,
     fallback: (provider) =>
       configuredTTSProviders.filter((candidate) => candidate !== provider),
-    kind: "tts",
-    latencyBudgets: ttsLatencyBudgets,
     onProviderEvent: async (event, input) => {
       events.push(
         buildVoiceIOProviderRouterTraceEvent({
@@ -1124,11 +1127,6 @@ const runDemoTTSProviderRoutingContract = async () => {
           sessionId: input.sessionId,
         }),
       );
-    },
-    providers: configuredTTSProviders,
-    recoveryElapsedMs: {
-      emergency: 8,
-      openai: 45,
     },
     sessionId: ({ now }) => `tts-contract-${now}`,
   });

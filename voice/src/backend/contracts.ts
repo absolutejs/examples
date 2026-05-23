@@ -1,8 +1,6 @@
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import {
   createVoiceCampaignTelephonyOutcomeRecorder,
-  createVoiceSQLiteCampaignStore,
-  createVoiceSQLiteTelephonyWebhookIdempotencyStore,
   createVoiceTelephonyOutcomePolicy,
   createVoiceTelephonyWebhookRoutes,
   createVoiceWorkflowContractPreset,
@@ -14,24 +12,25 @@ import {
   voice,
   voiceTelephonyOutcomeToRouteResult,
 } from "@absolutejs/voice";
-import { resolve } from "node:path";
+import {
+  createVoiceDrizzleCampaignStore,
+  createVoiceDrizzleTelephonyWebhookIdempotencyStore,
+} from "@absolutejs/voice/drizzle";
+import { db } from "../../db/client";
 import { escapeHtml, stringifyForHtml } from "./helpers";
-import { runtimeDirectory, savedIntakes } from "./stores";
+import { savedIntakesStore } from "./stores";
 
-const listIntakes = (): SavedIntake[] => [...savedIntakes];
+const SAVED_INTAKE_LIMIT = 12;
 
-const persistIntake = (intake: SavedIntake) => {
-  const existingIndex = savedIntakes.findIndex(
-    (savedIntake) => savedIntake.id === intake.id,
-  );
+const listIntakes = () => savedIntakesStore.list();
 
-  if (existingIndex >= 0) {
-    savedIntakes.splice(existingIndex, 1, intake);
-    return;
+const persistIntake = async (intake: SavedIntake) => {
+  await savedIntakesStore.set(intake.id, intake);
+
+  const all = await savedIntakesStore.list();
+  for (const stale of all.slice(SAVED_INTAKE_LIMIT)) {
+    await savedIntakesStore.remove(stale.id);
   }
-
-  savedIntakes.unshift(intake);
-  savedIntakes.splice(12);
 };
 
 const guidedWorkflowContract = createVoiceWorkflowContractPreset<SavedIntake>(
@@ -183,13 +182,9 @@ const telephonyOutcomePolicy = createVoiceTelephonyOutcomePolicy({
 });
 
 const telephonyWebhookIdempotencyStore =
-  createVoiceSQLiteTelephonyWebhookIdempotencyStore<SavedIntake>({
-    path: resolve(runtimeDirectory, "telephony-webhook-idempotency.sqlite"),
-  });
+  createVoiceDrizzleTelephonyWebhookIdempotencyStore<SavedIntake>({ db });
 
-const campaignStore = createVoiceSQLiteCampaignStore({
-  path: resolve(runtimeDirectory, "campaigns.sqlite"),
-});
+const campaignStore = createVoiceDrizzleCampaignStore({ db });
 
 const telephonyOutcomeRecorder = createVoiceCampaignTelephonyOutcomeRecorder({
   maxSnapshots: 20,
@@ -255,23 +250,22 @@ const renderCampaignDialerProofHTML = () => `<!doctype html>
 
 const telephonyOutcomeSamples = [
   {
-    label: "Carrier no-answer",
     event: {
       provider: "twilio",
       sipCode: 486,
       status: "busy",
     },
+    label: "Carrier no-answer",
   },
   {
-    label: "Machine detection voicemail",
     event: {
       answeredBy: "machine_start",
       provider: "twilio",
       status: "completed",
     },
+    label: "Machine detection voicemail",
   },
   {
-    label: "Warm transfer bridge",
     event: {
       metadata: {
         queue: "billing",
@@ -280,6 +274,7 @@ const telephonyOutcomeSamples = [
       reason: "warm-transfer",
       status: "bridged",
     },
+    label: "Warm transfer bridge",
   },
 ] satisfies Array<{
   event: VoiceTelephonyOutcomeProviderEvent;

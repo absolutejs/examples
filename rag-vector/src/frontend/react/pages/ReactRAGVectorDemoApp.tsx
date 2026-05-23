@@ -220,52 +220,52 @@ const ragExampleSections: Array<{
   loadLabel: string;
 }> = [
   {
-    id: "retrieve",
-    kicker: "1 · Retrieval",
-    title: "Search And Verify",
     description:
       "Query the index, inspect sources, and prove metadata filters and chunk attribution.",
+    id: "retrieve",
+    kicker: "1 · Retrieval",
     loadLabel: "Load retrieval",
+    title: "Search And Verify",
   },
   {
-    id: "ingest",
-    kicker: "2 · Ingest",
-    title: "Add Documents",
     description:
       "Upload extracted fixtures or author custom documents, then verify they are searchable.",
+    id: "ingest",
+    kicker: "2 · Ingest",
     loadLabel: "Load ingest",
+    title: "Add Documents",
   },
   {
-    id: "workflow",
-    kicker: "3 · Workflow",
-    title: "Grounded Streaming",
     description:
       "Run the RAG answer workflow and inspect citations, grounding, and retrieval trace.",
+    id: "workflow",
+    kicker: "3 · Workflow",
     loadLabel: "Load workflow",
+    title: "Grounded Streaming",
   },
   {
-    id: "connectors",
-    kicker: "4 · Connectors",
-    title: "Auth-Backed Sources",
     description:
       "Connect Gmail, Google Contacts, and Meta grants through AbsoluteJS auth-backed bindings.",
+    id: "connectors",
+    kicker: "4 · Connectors",
     loadLabel: "Load connectors",
+    title: "Auth-Backed Sources",
   },
   {
-    id: "evaluate",
-    kicker: "5 · Quality",
-    title: "Evaluation And Release",
     description:
       "Run benchmark presets, compare retrieval quality, and inspect release-control state.",
+    id: "evaluate",
+    kicker: "5 · Quality",
     loadLabel: "Load quality",
+    title: "Evaluation And Release",
   },
   {
-    id: "ops",
-    kicker: "6 · Operations",
-    title: "Diagnostics And Index Health",
     description:
       "Inspect corpus health, sync status, admin jobs, and backend readiness.",
+    id: "ops",
+    kicker: "6 · Operations",
     loadLabel: "Load ops",
+    title: "Diagnostics And Index Health",
   },
 ];
 
@@ -274,7 +274,7 @@ const readSyncBindingOptions = (
 ): SyncBindingOption[] => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata as Record<string, unknown>)
+      ? (source.metadata)
       : {};
   const raw = metadata.linkedAvailableBindings;
   if (!Array.isArray(raw)) {
@@ -309,8 +309,9 @@ const readSyncBindingOptions = (
 const readSelectedBindingId = (source: RAGSyncSourceRecord) => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata as Record<string, unknown>)
+      ? (source.metadata)
       : {};
+
   return typeof metadata.linkedBindingId === "string"
     ? metadata.linkedBindingId
     : "";
@@ -373,21 +374,21 @@ const updateConnectorBinding = async (
 };
 
 const initialSearch: SearchFormState = {
-  query: "",
-  topK: 6,
-  scoreThreshold: "",
-  kind: "",
-  source: "",
   documentId: "",
+  kind: "",
+  query: "",
+  scoreThreshold: "",
+  source: "",
+  topK: 6,
 };
 
 const initialAddForm: AddFormState = {
-  id: "",
-  title: "",
-  source: "",
-  format: "markdown",
   chunkStrategy: "source_aware",
+  format: "markdown",
+  id: "",
+  source: "",
   text: "",
+  title: "",
 };
 
 const streamStages = [
@@ -560,6 +561,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
     if (document.format === "html") {
       return ".html";
     }
+
     return ".txt";
   };
 
@@ -567,6 +569,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
   const documents = rag.documents.documents as DemoDocument[];
   const filteredDocuments = useMemo(() => {
     const query = documentSearchTerm.trim().toLowerCase();
+
     return documents.filter((document) => {
       const matchesQuery =
         query.length === 0 ||
@@ -576,10 +579,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
       const matchesType =
         documentTypeFilter === "all" ||
         inferDocumentExtension(document) === documentTypeFilter;
+
       return matchesQuery && matchesType;
     });
   }, [documentSearchTerm, documentTypeFilter, documents]);
-  const chunkPreview = rag.chunkPreview.preview as DemoChunkPreview | null;
+  const chunkPreview = rag.chunkPreview.preview;
   const chunkPreviewNavigation = rag.chunkPreview.navigation;
   const activeChunkPreviewId = rag.chunkPreview.activeChunkId;
   const activeChunkPreviewSectionDiagnostic = useMemo(
@@ -590,8 +594,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
       ),
     [chunkPreview, activeChunkPreviewId],
   );
-  const evaluation = rag.evaluate.lastResponse as RAGEvaluationResponse | null;
-  const workflow = rag.workflow;
+  const evaluation = rag.evaluate.lastResponse;
+  const {workflow} = rag;
   const workflowState = workflow.state;
   const streamLatestMessage = workflow.latestAssistantMessage;
   const streamRetrieval = workflow.retrieval;
@@ -629,6 +633,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
     const sourceLabel =
       sortedSyncSources.find((source) => source.id === syncPending.sourceId)
         ?.label ?? syncPending.sourceId;
+
     return syncPending.background
       ? `Queueing ${sourceLabel} in the background...`
       : `Syncing ${sourceLabel}...`;
@@ -651,6 +656,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
   );
   const paginatedDocuments = useMemo(() => {
     const start = (documentPage - 1) * DOCUMENTS_PER_PAGE;
+
     return filteredDocuments.slice(start, start + DOCUMENTS_PER_PAGE);
   }, [documentPage, filteredDocuments]);
 
@@ -745,6 +751,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
           : action?.id.includes("canary")
             ? "canary"
             : "release";
+
         return `Pending ${lane} action · ${action?.label ?? releaseActionBusyId}`;
       })()
     : null;
@@ -771,14 +778,14 @@ export const ReactRAGVectorDemoFullLabApp = ({
     setAddError("");
     try {
       const response = await fetch(action.path, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           ...action.payload,
           workspace: releaseWorkspace,
         }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
       });
       if (!response.ok) {
         throw new Error(await response.text());
@@ -1109,7 +1116,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
   }, [filteredDocuments.length]);
 
   useEffect(() => {
-    const state: DemoActiveRetrievalState = { searchForm, scopeDriver };
+    const state: DemoActiveRetrievalState = { scopeDriver, searchForm };
     state.lastUpdatedAt = Date.now();
     state.retrievalPresetId = retrievalPresetId || undefined;
     state.benchmarkPresetId = benchmarkPresetId || undefined;
@@ -1139,6 +1146,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
     const { name, value } = evt.target;
     if (name === "topK") {
       setSearchForm((prev) => ({ ...prev, topK: Number(value) || prev.topK }));
+
       return;
     }
 
@@ -1147,6 +1155,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
         ...prev,
         kind: value === "seed" || value === "custom" ? value : "",
       }));
+
       return;
     }
 
@@ -1168,6 +1177,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
     const query = searchValues.query.trim();
     if (query.length === 0) {
       setSearchError("query is required");
+
       return;
     }
 
@@ -1206,6 +1216,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
               JSON.stringify({ ...searchValues, query }),
           ),
         ];
+
         return next.slice(0, 4);
       });
       setSearchResults(
@@ -1238,6 +1249,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
     if (entry.documentId) {
       setMessage(`Inspecting ${entry.documentId} from ops inspection.`);
       await inspectChunks(entry.documentId);
+
       return;
     }
     if (entry.source) {
@@ -1246,7 +1258,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
         source: entry.source,
         documentId: "",
         query: `Source search for ${entry.source}`,
-      } as SearchFormState;
+      };
       setSearchForm(nextState);
       setScopeDriver(`ops inspection: ${entry.source}`);
       setPendingScrollTarget("search-results");
@@ -1310,10 +1322,12 @@ export const ReactRAGVectorDemoFullLabApp = ({
     const prompt = streamPrompt.trim();
     if (prompt.length === 0) {
       setMessage("Enter a retrieval question before starting the stream.");
+
       return;
     }
     if (selectedAIModelKey.length === 0) {
       setMessage("Configure an AI provider to enable retrieval streaming.");
+
       return;
     }
 
@@ -1410,6 +1424,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
   const uploadSelectedFile = async () => {
     if (!selectedUploadFile) {
       setUploadError("Choose a file before uploading.");
+
       return;
     }
 
@@ -1423,18 +1438,18 @@ export const ReactRAGVectorDemoFullLabApp = ({
         },
         uploads: [
           {
-            name: selectedUploadFile.name,
-            source: `uploads/${selectedUploadFile.name}`,
-            title: selectedUploadFile.name,
-            contentType: selectedUploadFile.type || "application/octet-stream",
-            encoding: "base64",
             content: encodeArrayBufferToBase64(
               await selectedUploadFile.arrayBuffer(),
             ),
+            contentType: selectedUploadFile.type || "application/octet-stream",
+            encoding: "base64",
             metadata: {
               kind: "custom",
               uploadedFrom: "react-general-upload",
             },
+            name: selectedUploadFile.name,
+            source: `uploads/${selectedUploadFile.name}`,
+            title: selectedUploadFile.name,
           },
         ],
       });
@@ -1504,14 +1519,14 @@ export const ReactRAGVectorDemoFullLabApp = ({
     setSearchError("");
     try {
       const response = await rag.index.createDocument({
-        id: addForm.id.trim().length > 0 ? addForm.id.trim() : undefined,
-        title: addForm.title.trim(),
-        source: addForm.source.trim(),
-        format: addForm.format,
-        text: addForm.text.trim(),
         chunking: {
           strategy: addForm.chunkStrategy,
         },
+        format: addForm.format,
+        id: addForm.id.trim().length > 0 ? addForm.id.trim() : undefined,
+        source: addForm.source.trim(),
+        text: addForm.text.trim(),
+        title: addForm.title.trim(),
       });
 
       setMessage(`Inserted ${response.inserted ?? addForm.title.trim()}`);
@@ -1802,6 +1817,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
               liveConnectorSources.map((source) => {
                 const bindingOptions = readSyncBindingOptions(source);
                 const selectedBindingId = readSelectedBindingId(source);
+
                 return (
                   <article
                     className={
@@ -1909,13 +1925,13 @@ export const ReactRAGVectorDemoFullLabApp = ({
         {message && <p className="demo-banner">{message}</p>}
         {syncPendingLabel && (
           <p className="demo-release-pending">
-            <span className="demo-inline-spinner" aria-hidden="true" />
+            <span aria-hidden="true" className="demo-inline-spinner" />
             {syncPendingLabel}
           </p>
         )}
         {syncWatchLabel && (
           <p className="demo-release-pending demo-sync-watch">
-            <span className="demo-inline-spinner" aria-hidden="true" />
+            <span aria-hidden="true" className="demo-inline-spinner" />
             {syncWatchLabel}
           </p>
         )}
@@ -2000,10 +2016,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       key={`release-workspace-${entry.id}`}
                     >
                       <button
-                        type="button"
-                        onClick={() => setReleaseWorkspace(entry.id)}
-                        disabled={releaseWorkspace === entry.id}
-                        title={entry.description}
+                        disabled={releaseWorkspace === entry.id} onClick={() => setReleaseWorkspace(entry.id)} title={entry.description} type="button"
                       >
                         Workspace · {entry.label}
                       </button>
@@ -2023,10 +2036,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       {releaseHeroPills.map((pill) =>
                         pill.targetCardId || pill.targetActivityId ? (
                           <a
-                            className={`demo-release-pill demo-release-pill-${pill.tone}`}
-                            key={pill.label}
-                            href={`#${pill.targetActivityId ?? pill.targetCardId}`}
-                            onClick={() =>
+                            className={`demo-release-pill demo-release-pill-${pill.tone}`} href={`#${pill.targetActivityId ?? pill.targetCardId}`} key={pill.label} onClick={() =>
                               openReleaseDiagnosticsTarget(pill.targetCardId)
                             }
                           >
@@ -2060,13 +2070,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                         >
                           {entry.action ? (
                             <button
-                              type="button"
-                              onClick={() => runReleaseAction(entry.action!)}
                               disabled={
                                 entry.active ||
                                 releaseActionBusyId === entry.action.id
-                              }
-                              title={entry.action.description}
+                              } onClick={() => runReleaseAction(entry.action!)} title={entry.action.description} type="button"
                             >
                               {releaseActionBusyId === entry.action.id
                                 ? `Running ${entry.action.label}...`
@@ -2098,10 +2105,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                           </p>
                           {step.action ? (
                             <button
-                              className="demo-release-path-action"
-                              type="button"
-                              onClick={() => runReleaseAction(step.action!)}
-                              disabled={releaseActionBusyId === step.action.id}
+                              className="demo-release-path-action" disabled={releaseActionBusyId === step.action.id} onClick={() => runReleaseAction(step.action!)} type="button"
                             >
                               {releaseActionBusyId === step.action.id
                                 ? `Running ${step.action.label}...`
@@ -2210,11 +2214,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                         </span>
                         {recentReleaseActivity.map((entry, index) => (
                           <a
-                            id={entry.id}
-                            key={`${entry.laneLabel}-${entry.title}-${index}`}
-                            className={`demo-release-activity demo-release-activity-${entry.tone}`}
-                            href={`#${entry.targetCardId}`}
-                            onClick={() =>
+                            className={`demo-release-activity demo-release-activity-${entry.tone}`} href={`#${entry.targetCardId}`} id={entry.id} key={`${entry.laneLabel}-${entry.title}-${index}`} onClick={() =>
                               openReleaseDiagnosticsTarget(entry.targetCardId)
                             }
                           >
@@ -2236,12 +2236,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       <div className="demo-release-actions">
                         {primaryReleaseActions.map((action) => (
                           <button
-                            key={action.id}
-                            className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`}
-                            type="button"
-                            onClick={() => runReleaseAction(action)}
-                            disabled={releaseActionBusyId === action.id}
-                            title={action.description}
+                            className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`} disabled={releaseActionBusyId === action.id} key={action.id} onClick={() => runReleaseAction(action)} title={action.description} type="button"
                           >
                             {releaseActionBusyId === action.id
                               ? `Running ${action.label}...`
@@ -2255,12 +2250,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                           <div className="demo-release-actions">
                             {secondaryReleaseActions.map((action) => (
                               <button
-                                key={action.id}
-                                className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`}
-                                type="button"
-                                onClick={() => runReleaseAction(action)}
-                                disabled={releaseActionBusyId === action.id}
-                                title={action.description}
+                                className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`} disabled={releaseActionBusyId === action.id} key={action.id} onClick={() => runReleaseAction(action)} title={action.description} type="button"
                               >
                                 {releaseActionBusyId === action.id
                                   ? `Running ${action.label}...`
@@ -2279,12 +2269,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                         <div className="demo-release-actions">
                           {handoffActions.map((action) => (
                             <button
-                              key={action.id}
-                              className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`}
-                              type="button"
-                              onClick={() => runReleaseAction(action)}
-                              disabled={releaseActionBusyId === action.id}
-                              title={action.description}
+                              className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`} disabled={releaseActionBusyId === action.id} key={action.id} onClick={() => runReleaseAction(action)} title={action.description} type="button"
                             >
                               {releaseActionBusyId === action.id
                                 ? `Running ${action.label}...`
@@ -2349,10 +2334,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                     <div className="demo-release-actions">
                       {releaseEvidenceDrills.map((drill) => (
                         <button
-                          key={drill.id}
-                          className={`demo-release-action demo-release-action-${drill.active ? "primary" : "neutral"}`}
-                          type="button"
-                          onClick={() => runReleaseEvidenceDrill(drill)}
+                          className={`demo-release-action demo-release-action-${drill.active ? "primary" : "neutral"}`} key={drill.id} onClick={() => runReleaseEvidenceDrill(drill)} type="button"
                         >
                           {drill.label}
                         </button>
@@ -2843,7 +2825,6 @@ export const ReactRAGVectorDemoFullLabApp = ({
               </p>
               <div className="demo-preset-grid">
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "How do metadata filters change retrieval quality?",
@@ -2851,12 +2832,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: filter behavior",
                       "filter-behavior",
                     )
-                  }
+                  } type="button"
                 >
                   Filter behavior
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "What should I verify after ingesting a new source?",
@@ -2864,12 +2844,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: verify ingestion",
                       "verify-ingestion",
                     )
-                  }
+                  } type="button"
                 >
                   Verify ingestion
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "List support policies for shipping and returns.",
@@ -2877,12 +2856,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: source filter",
                       "source-filter",
                     )
-                  }
+                  } type="button"
                 >
                   Source filter
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "Why should metadata be stable?",
@@ -2890,12 +2868,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: metadata discipline",
                       "metadata-discipline",
                     )
-                  }
+                  } type="button"
                 >
                   Metadata discipline
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "Which aurora launch packet phrase shows late interaction can match precise wording without splitting the parent document?",
@@ -2903,12 +2880,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: late interaction",
                       "hybrid",
                     )
-                  }
+                  } type="button"
                 >
                   Late interaction / multivector
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "Which synced site discovery guide says discovery diagnostics stay visible on the same sync surface as every other source?",
@@ -2918,12 +2894,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: site discovery",
                       "site-discovery",
                     )
-                  }
+                  } type="button"
                 >
                   Site discovery (sync first)
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "release",
@@ -2931,12 +2906,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: planner profile latency",
                       "planner-profile-latency",
                     )
-                  }
+                  } type="button"
                 >
                   Planner profile · latency
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "release",
@@ -2944,12 +2918,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: planner profile balanced",
                       "planner-profile-balanced",
                     )
-                  }
+                  } type="button"
                 >
                   Planner profile · balanced
                 </button>
                 <button
-                  type="button"
                   onClick={() =>
                     runPresetSearch(
                       "release",
@@ -2957,7 +2930,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: planner profile recall",
                       "planner-profile-recall",
                     )
-                  }
+                  } type="button"
                 >
                   Planner profile · recall
                 </button>
@@ -2985,15 +2958,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                 />
                 <label htmlFor="scoreThreshold">Minimum score (0-1)</label>
                 <input
-                  id="scoreThreshold"
-                  name="scoreThreshold"
-                  onChange={onSearchFieldChange}
-                  placeholder="optional"
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  max={1}
-                  value={searchForm.scoreThreshold}
+                  id="scoreThreshold" max={1} min={0} name="scoreThreshold" onChange={onSearchFieldChange} placeholder="optional" step="0.01" type="number" value={searchForm.scoreThreshold}
                 />
                 <label htmlFor="kind">Kind filter</label>
                 <select
@@ -3394,17 +3359,14 @@ export const ReactRAGVectorDemoFullLabApp = ({
                 <div className="demo-preset-grid">
                   {demoEvaluationPresets.map((preset) => (
                     <button
-                      key={preset.id}
-                      type="button"
-                      title={preset.description}
-                      onClick={() =>
+                      key={preset.id} onClick={() =>
                         runPresetSearch(
                           preset.query,
                           { source: preset.expectedSources[0] ?? "" },
                           `benchmark preset: ${preset.label}`,
                           preset.id,
                         )
-                      }
+                      } title={preset.description} type="button"
                     >
                       {preset.label}
                     </button>
@@ -3498,14 +3460,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                     ["overview", "strategies", "grounding", "history"] as const
                   ).map((view) => (
                     <button
-                      key={view}
                       className={
                         qualityView === view
                           ? "demo-tab demo-tab-active"
                           : "demo-tab"
-                      }
-                      onClick={() => setQualityView(view)}
-                      type="button"
+                      } key={view} onClick={() => setQualityView(view)} type="button"
                     >
                       {view[0].toUpperCase() + view.slice(1)}
                     </button>
@@ -3590,10 +3549,6 @@ export const ReactRAGVectorDemoFullLabApp = ({
                           <h4>Winners at a glance</h4>
                           <div className="demo-key-value-grid">
                             {formatQualityOverviewPresentation({
-                              retrievalComparison:
-                                qualityData.retrievalComparison,
-                              rerankerComparison:
-                                qualityData.rerankerComparison,
                               groundingEvaluation:
                                 qualityData.groundingEvaluation,
                               groundingProviderOverview:
@@ -3602,6 +3557,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                                       qualityData.providerGroundingComparison,
                                     )
                                   : undefined,
+                              rerankerComparison:
+                                qualityData.rerankerComparison,
+                              retrievalComparison:
+                                qualityData.retrievalComparison,
                             }).rows.map((row) => (
                               <div
                                 className="demo-key-value-row"
@@ -4668,7 +4627,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                         ? stage === "complete" ||
                           streamStages.indexOf(stage) <
                             streamStages.indexOf(
-                              currentStage as (typeof streamStages)[number],
+                              currentStage,
                             )
                         : streamStages.indexOf(stage) <
                           streamStages.indexOf(

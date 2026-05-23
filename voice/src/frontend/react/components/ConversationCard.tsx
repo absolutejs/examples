@@ -1,15 +1,15 @@
 import type { useVoiceStream } from "@absolutejs/voice/react";
+import { getVoiceModeLabel } from "../../../shared/demo";
+import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
 import {
-  getVoiceModeLabel,
-  VOICE_CALL_CONTROL_ACTIONS,
   VOICE_DEMO_GENERAL_LABEL,
   VOICE_DEMO_GUIDED_LABEL,
   VOICE_DEMO_MIC_IDLE,
   VOICE_DEMO_MIC_LIVE,
   VOICE_DEMO_STOP_LABEL,
-  type SavedIntake,
-  type VoiceDemoMode,
-} from "../../../shared/demo";
+} from "../../../constants/demoCopy";
+import type { SavedIntake } from "../../../types/domain";
+import type { VoiceDemoMode } from "../../../types/voice";
 
 type ConversationVoice = ReturnType<typeof useVoiceStream<SavedIntake>>;
 
@@ -147,9 +147,7 @@ export const ConversationCard = (props: ConversationCardProps) => (
     <div className="voice-actions">
       {VOICE_CALL_CONTROL_ACTIONS.map((action) => (
         <button
-          key={action.action}
-          type="button"
-          onClick={() => props.runCallControl(action)}
+          key={action.action} onClick={() => props.runCallControl(action)} type="button"
         >
           {action.label}
         </button>

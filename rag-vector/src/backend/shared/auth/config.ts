@@ -94,6 +94,7 @@ const normalizeOptionalString = (value: unknown) => {
   }
 
   const trimmed = value.trim();
+
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
@@ -109,6 +110,7 @@ const buildProviderSubjectFromIdentity = ({
   }
 
   const providerConfiguration = providers[authProvider];
+
   return String(
     extractPropFromIdentity(
       userIdentity,
@@ -257,6 +259,7 @@ export const buildRagAbsoluteAuth = ({
 
   return absoluteAuth<AuthUser>({
     authSessionStore,
+    providersConfiguration,
     onCallbackSuccess: async ({
       authProvider,
       cookie: { user_session_id },
@@ -267,6 +270,11 @@ export const buildRagAbsoluteAuth = ({
     }) =>
       instantiateUserSession<AuthUser>({
         authProvider,
+        providerInstance,
+        session,
+        tokenResponse,
+        unregisteredSession,
+        user_session_id,
         getUser: async (userIdentity) =>
           getUserByIdentity({
             authProvider,
@@ -279,13 +287,7 @@ export const buildRagAbsoluteAuth = ({
             db,
             userIdentity,
           }),
-        providerInstance,
-        session,
-        tokenResponse,
-        unregisteredSession,
-        user_session_id,
       }),
-    providersConfiguration,
     resolveAuthIntent: () => "login",
   });
 };

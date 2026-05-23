@@ -7,13 +7,11 @@ import {
   formatErrorMessage,
   pushVoiceWaveLevel,
   renderDemoLiveTurnLatencyHTML,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 import type { VoiceStream, VoiceStreamState } from "@absolutejs/voice";
-import {
-  getVoiceSpeechEngineSampleRate,
-  type SavedIntake,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+import { getVoiceSpeechEngineSampleRate } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
+import type { VoiceSpeechEngine } from "../../../types/voice";
 
 type MicrophoneCaptureInput = {
   getActiveVoice: () => VoiceStream<SavedIntake> | null;
@@ -47,8 +45,8 @@ export const useMicrophoneCapture = (
     return {
       assistantAudio: currentVoice.assistantAudio,
       assistantTexts: currentVoice.assistantTexts,
-      sendAudio: (audio) => activeVoice?.sendAudio(audio),
       sessionId: currentVoice.sessionId,
+      sendAudio: (audio) => activeVoice?.sendAudio(audio),
     };
   });
   const liveLatencyEvidence = createDemoLiveTurnLatencyEvidence(() => {
@@ -110,6 +108,9 @@ export const useMicrophoneCapture = (
   };
 
   return {
+    startMic,
+    stopMic,
+    syncAssistantOutput,
     get error() {
       return error;
     },
@@ -119,9 +120,6 @@ export const useMicrophoneCapture = (
     get liveLatencyHTML() {
       return liveLatencyHTML;
     },
-    startMic,
-    stopMic,
-    syncAssistantOutput,
     get wavePath() {
       return wavePath;
     },

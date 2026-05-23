@@ -62,6 +62,7 @@ type FullLabSection = Exclude<RagExampleSection, "overview" | "connectors">;
 
 const ReactRAGVectorDemoFullLabApp = lazy(async () => {
   const module = await import("../pages/ReactRAGVectorDemoApp");
+
   return {
     default: module.ReactRAGVectorDemoFullLabApp,
   };
@@ -94,52 +95,52 @@ const ragExampleSections: Array<{
   loadLabel: string;
 }> = [
   {
-    id: "retrieve",
-    kicker: "1 · Retrieval",
-    title: "Search And Verify",
     description:
       "Query the index, inspect sources, and prove metadata filters and chunk attribution.",
+    id: "retrieve",
+    kicker: "1 · Retrieval",
     loadLabel: "Load retrieval",
+    title: "Search And Verify",
   },
   {
-    id: "ingest",
-    kicker: "2 · Ingest",
-    title: "Add Documents",
     description:
       "Upload extracted fixtures or author custom documents, then verify they are searchable.",
+    id: "ingest",
+    kicker: "2 · Ingest",
     loadLabel: "Load ingest",
+    title: "Add Documents",
   },
   {
-    id: "workflow",
-    kicker: "3 · Workflow",
-    title: "Grounded Streaming",
     description:
       "Run the RAG answer workflow and inspect citations, grounding, and retrieval trace.",
+    id: "workflow",
+    kicker: "3 · Workflow",
     loadLabel: "Load workflow",
+    title: "Grounded Streaming",
   },
   {
-    id: "connectors",
-    kicker: "4 · Connectors",
-    title: "Auth-Backed Sources",
     description:
       "Connect Gmail, Google Contacts, and Meta grants through AbsoluteJS auth-backed bindings.",
+    id: "connectors",
+    kicker: "4 · Connectors",
     loadLabel: "Load connectors",
+    title: "Auth-Backed Sources",
   },
   {
-    id: "evaluate",
-    kicker: "5 · Quality",
-    title: "Evaluation And Release",
     description:
       "Run benchmark presets, compare retrieval quality, and inspect release-control state.",
+    id: "evaluate",
+    kicker: "5 · Quality",
     loadLabel: "Load quality",
+    title: "Evaluation And Release",
   },
   {
-    id: "ops",
-    kicker: "6 · Operations",
-    title: "Diagnostics And Index Health",
     description:
       "Inspect corpus health, sync status, admin jobs, and backend readiness.",
+    id: "ops",
+    kicker: "6 · Operations",
     loadLabel: "Load ops",
+    title: "Diagnostics And Index Health",
   },
 ];
 
@@ -148,7 +149,7 @@ const readSyncBindingOptions = (
 ): SyncBindingOption[] => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata as Record<string, unknown>)
+      ? (source.metadata)
       : {};
   const raw = metadata.linkedAvailableBindings;
   if (!Array.isArray(raw)) {
@@ -183,8 +184,9 @@ const readSyncBindingOptions = (
 const readSelectedBindingId = (source: RAGSyncSourceRecord) => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata as Record<string, unknown>)
+      ? (source.metadata)
       : {};
+
   return typeof metadata.linkedBindingId === "string"
     ? metadata.linkedBindingId
     : "";
@@ -533,7 +535,7 @@ export const ReactRAGVectorDemoShell = ({ mode }: DemoProps) => {
                 </p>
                 {syncSourcesLoading ? (
                   <p className="demo-release-pending">
-                    <span className="demo-inline-spinner" aria-hidden="true" />
+                    <span aria-hidden="true" className="demo-inline-spinner" />
                     Loading linked connector state...
                   </p>
                 ) : linkedConnectorAccounts.length > 0 ? (
@@ -624,6 +626,7 @@ export const ReactRAGVectorDemoShell = ({ mode }: DemoProps) => {
                 liveConnectorSources.map((source) => {
                   const bindingOptions = readSyncBindingOptions(source);
                   const selectedBindingId = readSelectedBindingId(source);
+
                   return (
                     <article
                       className={
@@ -761,7 +764,7 @@ export const ReactRAGVectorDemoShell = ({ mode }: DemoProps) => {
           }
         >
           <ReactRAGVectorDemoFullLabApp
-            activeSection={activeSection as FullLabSection}
+            activeSection={activeSection}
             mode={selectedMode}
             showConnectorFocus={false}
           />

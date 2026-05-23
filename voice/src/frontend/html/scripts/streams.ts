@@ -1,12 +1,12 @@
 import { createVoiceStream } from "@absolutejs/voice/client";
-import {
-  getVoiceRoutePath,
-  type SavedIntake,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
-} from "../../../shared/demo";
+import { getVoiceRoutePath } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
+import type {
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 export type VoiceDemoStream = ReturnType<typeof createVoiceStream<SavedIntake>>;
 

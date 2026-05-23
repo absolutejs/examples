@@ -4,13 +4,11 @@ import type {
   VoiceSessionStatus,
   VoiceTurnRecord,
 } from "@absolutejs/voice";
-import {
-  VOICE_CALL_CONTROL_ACTIONS,
-  getVoiceModeLabel,
-  type SavedIntake,
-  type VoiceDemoMode,
-} from "../../../shared/demo";
-import { formatReconnectState } from "../../shared/browser";
+import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
+import { getVoiceModeLabel } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
+import type { VoiceDemoMode } from "../../../types/voice";
+import { formatReconnectState } from "../../../shared/browser";
 
 type CallControlAction = (typeof VOICE_CALL_CONTROL_ACTIONS)[number];
 
@@ -106,7 +104,11 @@ type CallControlAction = (typeof VOICE_CALL_CONTROL_ACTIONS)[number];
           {{ stopLabel }}
         </button>
       } @else {
-        <button class="primary" type="button" (click)="startMode.emit('guided')">
+        <button
+          class="primary"
+          type="button"
+          (click)="startMode.emit('guided')"
+        >
           {{ guidedLabel }}
         </button>
         <button type="button" (click)="startMode.emit('general')">

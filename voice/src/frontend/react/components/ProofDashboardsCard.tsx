@@ -1,4 +1,4 @@
-import { VOICE_PROOF_DASHBOARDS } from "../../../shared/demo";
+import { VOICE_PROOF_DASHBOARDS } from "../../../constants/navigation";
 
 export const ProofDashboardsCard = () => (
   <article className="voice-card voice-proof-dashboard-card">

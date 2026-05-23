@@ -1,7 +1,4 @@
-import {
-  type SavedIntake,
-  type VoiceAgentSquadDemoStatus,
-} from "../shared/demo";
+import type { SavedIntake, VoiceAgentSquadDemoStatus } from "../types/domain";
 import { resolveScenarioFromContext } from "./voiceFlow";
 import {
   applyPhraseHintCorrections,
@@ -28,10 +25,10 @@ const intakeClassifierTool = createVoiceAgentTool<
 >({
   description:
     "Classify whether the caller is in guided or general intake mode.",
+  name: "intake_classifier",
   execute: ({ context }) => ({
     mode: resolveScenarioFromContext(context),
   }),
-  name: "intake_classifier",
 });
 
 const lifecycleRouterTool = createVoiceAgentTool<
@@ -43,10 +40,10 @@ const lifecycleRouterTool = createVoiceAgentTool<
 >({
   description:
     "Route transfer, escalation, voicemail, and no-answer phrases into call outcomes.",
+  name: "lifecycle_router",
   execute: ({ turn }) => ({
     text: turn.text,
   }),
-  name: "lifecycle_router",
 });
 
 const reviewTaskRecorderTool = createVoiceAgentTool<
@@ -58,12 +55,12 @@ const reviewTaskRecorderTool = createVoiceAgentTool<
 >({
   description:
     "Expose the runtime stores that record reviews, tasks, and integration events.",
+  name: "review_task_recorder",
   execute: () => ({
     events: true,
     reviews: true,
     tasks: true,
   }),
-  name: "review_task_recorder",
 });
 
 const runDemoAgentSquadContract = async () => {
@@ -123,6 +120,8 @@ const runDemoAgentSquadContract = async () => {
   >({
     agents: [supportAgent, billingAgent],
     defaultAgentId: "support",
+    id: "demo-front-desk",
+    trace,
     handoffPolicy: ({ handoff }) =>
       handoff.targetAgentId === "billing"
         ? {
@@ -139,8 +138,6 @@ const runDemoAgentSquadContract = async () => {
             },
             reason: `No certified route for ${handoff.targetAgentId}.`,
           },
-    id: "demo-front-desk",
-    trace,
   });
 
   return runVoiceAgentSquadContract({
@@ -280,6 +277,7 @@ const readPayloadString = (
   key: string,
 ) => {
   const value = payload?.[key];
+
   return typeof value === "string" ? value : undefined;
 };
 
@@ -288,6 +286,7 @@ const readPayloadNumber = (
   key: string,
 ) => {
   const value = payload?.[key];
+
   return typeof value === "number" ? value : undefined;
 };
 
@@ -305,13 +304,13 @@ const buildAgentSquadDemoStatus = async (
 
   const [contextEvents, handoffEvents] = await Promise.all([
     deliveryTraceStore.list({
-      sessionId,
       limit: 25,
+      sessionId,
       type: "agent.context",
     }),
     deliveryTraceStore.list({
-      sessionId,
       limit: 25,
+      sessionId,
       type: "agent.handoff",
     }),
   ]);
@@ -321,12 +320,8 @@ const buildAgentSquadDemoStatus = async (
   const latestHandoff = [...handoffEvents].sort(
     (left, right) => right.at - left.at,
   )[0];
-  const contextPayload = latestContext?.payload as
-    | Record<string, unknown>
-    | undefined;
-  const handoffPayload = latestHandoff?.payload as
-    | Record<string, unknown>
-    | undefined;
+  const contextPayload = latestContext?.payload;
+  const handoffPayload = latestHandoff?.payload;
   const latestEvent = [latestContext, latestHandoff]
     .filter(Boolean)
     .sort((left, right) => (right?.at ?? 0) - (left?.at ?? 0))[0];

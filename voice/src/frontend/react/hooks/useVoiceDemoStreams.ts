@@ -6,13 +6,15 @@ import {
   getVoiceModePrompt,
   getVoiceProfileSwitchGuardDecision,
   getVoiceRoutePath,
-  type SavedIntake,
-  type VoiceDemoMode,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
+import type {
+  VoiceDemoMode,
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 const RECONNECT_REPORT_PATH = "/api/voice/reconnect-traces";
 
@@ -21,7 +23,6 @@ export type ReactVoiceDemoStream = ReturnType<
 >;
 
 export const EMPTY_VOICE: ReactVoiceDemoStream = {
-  assistantTexts: [] as string[],
   assistantAudio: [] as Array<{
     chunk: Uint8Array;
     format: {
@@ -33,10 +34,8 @@ export const EMPTY_VOICE: ReactVoiceDemoStream = {
     receivedAt: number;
     turnId?: string;
   }>,
+  assistantTexts: [] as string[],
   call: null,
-  callControl: () => {},
-  close: () => {},
-  endTurn: () => {},
   error: null as string | null,
   isConnected: false,
   partial: "",
@@ -46,12 +45,15 @@ export const EMPTY_VOICE: ReactVoiceDemoStream = {
     status: "idle",
   },
   scenarioId: null as string | null,
-  sendAudio: (_audio: Uint8Array | ArrayBuffer) => {},
-  sessionMetadata: null,
   sessionId: "",
-  simulateDisconnect: () => {},
+  sessionMetadata: null,
   status: "idle" as const,
   turns: [] as VoiceTurnRecord<SavedIntake>[],
+  callControl: () => {},
+  close: () => {},
+  endTurn: () => {},
+  sendAudio: (_audio: Uint8Array | ArrayBuffer) => {},
+  simulateDisconnect: () => {},
 };
 
 type VoiceDemoStreamsInput = {
@@ -63,6 +65,13 @@ type VoiceDemoStreamsInput = {
 
 export const useVoiceDemoStreams = (input: VoiceDemoStreamsInput) => {
   const activeModeRef = useRef<VoiceDemoMode | null>(null);
+  const sessionIdsRef = useRef<{ general: string; guided: string } | null>(null);
+  if (!sessionIdsRef.current) {
+    sessionIdsRef.current = {
+      general: crypto.randomUUID(),
+      guided: crypto.randomUUID(),
+    };
+  }
   const voicesRef = useRef({ general: EMPTY_VOICE, guided: EMPTY_VOICE });
   const startMicRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const [activeMode, setActiveMode] = useState<VoiceDemoMode | null>(null);
@@ -80,6 +89,7 @@ export const useVoiceDemoStreams = (input: VoiceDemoStreamsInput) => {
         input.routingMode,
         input.speechEngine,
         input.profileId,
+        sessionIdsRef.current.guided,
       ),
       { reconnectReportPath: RECONNECT_REPORT_PATH },
     ) ?? EMPTY_VOICE;

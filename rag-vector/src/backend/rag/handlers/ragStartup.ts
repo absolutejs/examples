@@ -67,9 +67,9 @@ export const createRagStartupController = ({
 }) => {
   let ragStartupStartedAt = Date.now();
   let ragStartupSnapshot: RagStartupSnapshot = {
-    status: "warming",
-    startedAt: ragStartupStartedAt,
     elapsedMs: 0,
+    startedAt: ragStartupStartedAt,
+    status: "warming",
   };
   let ragStartupPromise: Promise<RagStartupResult | null> | null = null;
   let ragStartupScheduled = false;
@@ -81,9 +81,9 @@ export const createRagStartupController = ({
 
     ragStartupStartedAt = Date.now();
     ragStartupSnapshot = {
-      status: "warming",
-      startedAt: ragStartupStartedAt,
       elapsedMs: 0,
+      startedAt: ragStartupStartedAt,
+      status: "warming",
     };
 
     ragStartupPromise = ragDemoState
@@ -91,15 +91,16 @@ export const createRagStartupController = ({
       .then(async (startup) => {
         const completedAt = Date.now();
         ragStartupSnapshot = {
-          status: "ready",
-          startedAt: ragStartupStartedAt,
           completedAt,
           elapsedMs: completedAt - ragStartupStartedAt,
+          startedAt: ragStartupStartedAt,
           startup,
+          status: "ready",
         };
         console.log(formatRagStartupLog(startup));
 
         await syncScheduler.start();
+
         return startup;
       })
       .catch((error) => {
@@ -107,15 +108,16 @@ export const createRagStartupController = ({
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         ragStartupSnapshot = {
-          status: "failed",
-          startedAt: ragStartupStartedAt,
           completedAt,
           elapsedMs: completedAt - ragStartupStartedAt,
           errorMessage,
+          startedAt: ragStartupStartedAt,
+          status: "failed",
         };
         console.error(
           `RAG init failed after ${formatDuration(completedAt - ragStartupStartedAt)}: ${errorMessage}`,
         );
+
         return null;
       });
 

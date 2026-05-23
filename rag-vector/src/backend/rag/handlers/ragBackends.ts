@@ -78,9 +78,9 @@ export type DemoRAGBackend = DemoBackendDescriptor & {
 };
 
 export const DEFAULT_BACKEND_MODE: DemoBackendMode = "sqlite-native";
-export const RAG_DEMO_DOCUMENT_TABLE_NAME = "rag_demo_documents";
 export const RAG_DEMO_DEFAULT_CHUNK_SIZE = 420;
 export const RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE = 320;
+export const RAG_DEMO_DOCUMENT_TABLE_NAME = "rag_demo_documents";
 const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
   "sqlite-native",
   "sqlite-fallback",
@@ -129,6 +129,7 @@ const toPreparedDocument = (
       : RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE;
 
   return prepareRAGDocument({
+    chunking: createChunkingDefaults(strategy, maxChunkLength),
     format,
     id: doc.id,
     metadata: {
@@ -139,7 +140,6 @@ const toPreparedDocument = (
     source: doc.source,
     text: doc.text,
     title: doc.title,
-    chunking: createChunkingDefaults(strategy, maxChunkLength),
   });
 };
 
@@ -150,48 +150,49 @@ export const countPreparedChunks = (
 
 const loadSeedCorpusInput = async (): Promise<RAGDocumentIngestInput> =>
   loadRAGDocumentsFromDirectory({
-    directory: DEMO_CORPUS_DIR,
-    defaultChunking: createChunkingDefaults(
-      DEFAULT_SEED_STRATEGY,
-      RAG_DEMO_DEFAULT_CHUNK_SIZE,
-    ),
     baseMetadata: {
       kind: "seed",
       sourceKind: "corpus",
     },
+    defaultChunking: createChunkingDefaults(
+      DEFAULT_SEED_STRATEGY,
+      RAG_DEMO_DEFAULT_CHUNK_SIZE,
+    ),
+    directory: DEMO_CORPUS_DIR,
     extractors: ragDemoExtractors,
   });
 
 const multivectorSeedDocument: RagSeedDocument = {
-  id: "multivector-release-guide",
-  title: "Late interaction release guide",
-  source: "guide/multivector-release-guide.md",
-  format: "markdown",
   chunkStrategy: "source_aware",
-  text: "AbsoluteJS late interaction retrieval keeps one parent chunk while indexing phrase-level embeddings for release-readiness callouts, operator recovery drills, and follow-up diagnostics. The demo should prove that exact sub-span wording can win retrieval without splitting the parent document into separate source chunks.",
+  embeddingVariants: [
+    {
+      id: "launch-checklist",
+      label: "Launch checklist",
+      metadata: { phraseFamily: "launch" },
+      text: "aurora launch packet sign-off checklist",
+    },
+    {
+      id: "rollback-steps",
+      label: "Rollback steps",
+      metadata: { phraseFamily: "rollback" },
+      text: "tungsten recovery drill for operators",
+    },
+  ],
+  format: "markdown",
+  id: "multivector-release-guide",
   metadata: {
     feature: "multivector",
     retrievalFocus: "late-interaction",
     sourceKind: "virtual-demo-doc",
   },
-  embeddingVariants: [
-    {
-      id: "launch-checklist",
-      label: "Launch checklist",
-      text: "aurora launch packet sign-off checklist",
-      metadata: { phraseFamily: "launch" },
-    },
-    {
-      id: "rollback-steps",
-      label: "Rollback steps",
-      text: "tungsten recovery drill for operators",
-      metadata: { phraseFamily: "rollback" },
-    },
-  ],
+  source: "guide/multivector-release-guide.md",
+  text: "AbsoluteJS late interaction retrieval keeps one parent chunk while indexing phrase-level embeddings for release-readiness callouts, operator recovery drills, and follow-up diagnostics. The demo should prove that exact sub-span wording can win retrieval without splitting the parent document into separate source chunks.",
+  title: "Late interaction release guide",
 };
 
 export const getSeedDocuments = async (): Promise<RagSeedDocument[]> => {
   const loaded = await loadSeedCorpusInput();
+
   return [
     ...loaded.documents.map((doc) => {
       const prepared = prepareRAGDocument(
@@ -201,15 +202,16 @@ export const getSeedDocuments = async (): Promise<RagSeedDocument[]> => {
           RAG_DEMO_DEFAULT_CHUNK_SIZE,
         ),
       );
+
       return {
         chunkStrategy: DEFAULT_SEED_STRATEGY,
         format: prepared.format,
         id: prepared.documentId,
+        kind: "seed",
+        metadata: prepared.metadata,
         source: prepared.source,
         text: doc.text,
         title: prepared.title,
-        kind: "seed",
-        metadata: prepared.metadata,
       } satisfies RagSeedDocument;
     }),
     multivectorSeedDocument,
@@ -224,16 +226,16 @@ type RAGStoreOptions = {
 const createSQLiteNativeRAG = (opts: RAGStoreOptions = {}): SQLiteRagAdapter =>
   createSQLiteRAG({
     storeOptions: {
-      dimensions: 24,
-      path: opts.path,
       db: opts.db,
-      tableName: SQLITE_NATIVE_CHUNK_TABLE_NAME,
+      dimensions: 24,
       native: {
-        mode: "vec0",
         distanceMetric: "cosine",
-        tableName: SQLITE_NATIVE_TABLE_NAME,
+        mode: "vec0",
         requireAvailable: false,
+        tableName: SQLITE_NATIVE_TABLE_NAME,
       },
+      path: opts.path,
+      tableName: SQLITE_NATIVE_CHUNK_TABLE_NAME,
     },
   });
 
@@ -242,9 +244,9 @@ const createSQLiteFallbackRAG = (
 ): SQLiteRagAdapter =>
   createSQLiteRAG({
     storeOptions: {
+      db: opts.db,
       dimensions: 24,
       path: opts.path,
-      db: opts.db,
       tableName: SQLITE_FALLBACK_TABLE_NAME,
     },
   });
@@ -264,9 +266,9 @@ const createPostgresDemoRAG = (
 
   return {
     collection,
+    store,
     getCapabilities: () => store.getCapabilities!(),
     getStatus: () => store.getStatus!(),
-    store,
   };
 };
 
@@ -286,16 +288,16 @@ const createPineconeDemoRAG = (
     indexName: options.indexName,
     namespace: options.namespace,
     vector: {
-      provider: "pinecone",
       dimensions: options.dimensions ?? RAG_DEMO_PINECONE_DIMENSIONS,
       distanceMetric: "cosine",
+      provider: "pinecone",
     },
   });
 
   return {
     collection: rag.collection,
-    getCapabilities: () => rag.store.getCapabilities!(),
     store: rag.store,
+    getCapabilities: () => rag.store.getCapabilities!(),
   };
 };
 
@@ -338,54 +340,54 @@ export const createRAGBackends = (
 
   const backends: Record<DemoBackendMode, DemoRAGBackend> = {
     "sqlite-native": {
+      available: true,
       id: "sqlite-native",
       label: "SQLite Native",
       path: getBackendPath("sqlite-native"),
-      available: true,
       rag: sqliteNative,
     },
     "sqlite-fallback": {
+      available: true,
       id: "sqlite-fallback",
       label: "SQLite Fallback",
       path: getBackendPath("sqlite-fallback"),
-      available: true,
       rag: sqliteFallback,
     },
     postgres:
       postgresUrl.length > 0
         ? {
+            available: true,
             id: "postgres",
             label: "PostgreSQL",
             path: getBackendPath("postgres"),
-            available: true,
             rag: createPostgresDemoRAG(postgresUrl),
           }
         : {
+            available: false,
             id: "postgres",
             label: "PostgreSQL",
             path: getBackendPath("postgres"),
-            available: false,
             reason:
               "Set RAG_POSTGRES_URL to enable the PostgreSQL pgvector backend.",
           },
     pinecone: pineconeReady
       ? {
+          available: true,
           id: "pinecone",
           label: "Pinecone",
           path: getBackendPath("pinecone"),
-          available: true,
           rag: createPineconeDemoRAG({
             apiKey: opts.pinecone!.apiKey!.trim(),
+            dimensions: opts.pinecone?.dimensions,
             indexName: opts.pinecone!.indexName!.trim(),
             namespace: opts.pinecone?.namespace,
-            dimensions: opts.pinecone?.dimensions,
           }),
         }
       : {
+          available: false,
           id: "pinecone",
           label: "Pinecone",
           path: getBackendPath("pinecone"),
-          available: false,
           reason: PINECONE_DISABLED_REASON,
         },
   };
@@ -393,11 +395,12 @@ export const createRAGBackends = (
   const list = (): DemoBackendDescriptor[] =>
     RAG_DEMO_BACKEND_ORDER.map((id) => {
       const backend = backends[id];
+
       return {
+        available: backend.available,
         id: backend.id,
         label: backend.label,
         path: backend.path,
-        available: backend.available,
         reason: backend.reason,
       };
     });
@@ -405,14 +408,15 @@ export const createRAGBackends = (
   const active = (): DemoRAGBackend[] =>
     list().flatMap((descriptor) => {
       const backend = backends[descriptor.id];
+
       return backend.available && backend.rag ? [backend] : [];
     });
 
   return {
+    active,
     backends,
     defaultMode: DEFAULT_BACKEND_MODE,
     list,
-    active,
   };
 };
 
@@ -430,6 +434,7 @@ export const seedRAGStore = async (
         ? RAG_DEMO_DEFAULT_CHUNK_SIZE
         : RAG_DEMO_DEFAULT_CUSTOM_CHUNK_SIZE;
     const prepared = prepareRAGDocument({
+      chunking: createChunkingDefaults(strategy, maxChunkLength),
       format: document.format,
       id: document.id,
       metadata: {
@@ -440,7 +445,6 @@ export const seedRAGStore = async (
       source: document.source,
       text: document.text,
       title: document.title,
-      chunking: createChunkingDefaults(strategy, maxChunkLength),
     });
 
     return prepared.chunks.map((chunk, index) =>

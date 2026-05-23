@@ -18,7 +18,7 @@ import {
 import {
   mountDemoBargeInProof,
   mountVoiceRealCallEvidenceWorkerHealth,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 import { escapeHtml } from "./format";
 import type { VoiceDemoElements } from "./dom";
 

@@ -193,8 +193,8 @@ const seedDemoDeliveryProof = async () => {
       source: "demo",
     },
     payload: {
-      surface: "production-readiness",
       status: "delivered",
+      surface: "production-readiness",
     },
     sessionId: "readiness-delivery-proof",
     traceId: "readiness-trace-delivery-proof",
@@ -262,6 +262,7 @@ const createDemoAuditDeliveryWorker = () => ({
       deliveries.map(async (delivery) => {
         if (delivery.deliveryStatus === "delivered") {
           result.alreadyProcessed += 1;
+
           return;
         }
 
@@ -308,6 +309,7 @@ const createDemoTraceDeliveryWorker = () => ({
       deliveries.map(async (delivery) => {
         if (delivery.deliveryStatus === "delivered") {
           result.alreadyProcessed += 1;
+
           return;
         }
 
@@ -449,15 +451,16 @@ const summarizeDemoDeliveryRuntime = () => {
 
 const deliveryRuntimeControl = deliveryWorkerRuntime ?? {
   audit: demoAuditDeliveryWorker,
+  summarize: summarizeDemoDeliveryRuntime,
+  trace: demoTraceDeliveryWorker,
   isRunning: () => false,
-  start: () => undefined,
-  stop: () => undefined,
   requeueDeadLetters: async () => ({
     audit: 0,
-    trace: 0,
     total: 0,
+    trace: 0,
   }),
-  summarize: summarizeDemoDeliveryRuntime,
+  start: () => undefined,
+  stop: () => undefined,
   tick: async () => {
     const [audit, trace] = await Promise.all([
       demoAuditDeliveryWorker.drain(),
@@ -466,7 +469,6 @@ const deliveryRuntimeControl = deliveryWorkerRuntime ?? {
 
     return { audit, trace };
   },
-  trace: demoTraceDeliveryWorker,
 };
 
 const createAuditDeliveryWorker = () =>

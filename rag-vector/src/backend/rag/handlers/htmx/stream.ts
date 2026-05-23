@@ -194,85 +194,14 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
   let latestRetrievedSources: RAGSource[] = [];
 
   return {
-    messageStart: ({ cancelUrl, content, messageId, sseUrl }) => {
+    canceled: () => {
       latestRetrievedSources = [];
 
       return [
-        `<div id="msg-${escapeHtml(messageId)}" class="message user">`,
-        `<div>${escapeHtml(content)}</div>`,
-        "</div>",
-        `<div id="response-${escapeHtml(messageId)}" hx-ext="sse" sse-connect="${escapeHtml(sseUrl)}" hx-swap="innerHTML">`,
-        `<div id="sse-retrieval-${escapeHtml(messageId)}" sse-swap="retrieval" hx-swap="innerHTML"></div>`,
-        `<div id="sse-sources-${escapeHtml(messageId)}" sse-swap="sources" hx-swap="innerHTML"></div>`,
-        `<div id="sse-content-${escapeHtml(messageId)}" sse-swap="content" hx-swap="innerHTML"></div>`,
-        `<div id="sse-thinking-${escapeHtml(messageId)}" sse-swap="thinking" hx-swap="innerHTML"></div>`,
-        `<div id="sse-tools-${escapeHtml(messageId)}" sse-swap="tools" hx-swap="innerHTML"></div>`,
-        `<div id="sse-images-${escapeHtml(messageId)}" sse-swap="images" hx-swap="innerHTML"></div>`,
-        `<div id="sse-status-${escapeHtml(messageId)}" sse-swap="status" hx-swap="innerHTML"></div>`,
-        "</div>",
-        renderWorkflowSummary({
-          stage: "submitting",
-          sourceCount: 0,
-          isRunning: true,
-          hasRetrieved: false,
-          citationCount: 0,
-          coverage: "ungrounded",
-        }),
-        renderActiveStreamQueryField(content),
-        renderActiveStreamControls(cancelUrl),
-      ].join("");
-    },
-    ragRetrieving: (input) => {
-      const retrievalStartedAt = input?.retrievalStartedAt;
-
-      return [
-        renderWorkflowSummary({
-          stage: "retrieving",
-          sourceCount: 0,
-          isRunning: true,
-          hasRetrieved: false,
-          citationCount: 0,
-          coverage: "ungrounded",
-        }),
-        '<div class="demo-stream-block">',
-        "<h4>Retrieval status</h4>",
-        renderStageRow("retrieving"),
-        '<dl class="demo-stream-stats">',
-        `<div><dt>Retrieval started</dt><dd>${escapeHtml(formatTime(retrievalStartedAt))}</dd></div>`,
-        "</dl>",
-        '<p class="demo-metadata">Retrieving sources...</p>',
-        "</div>",
-      ].join("");
-    },
-    ragRetrieved: (sources, details) => {
-      latestRetrievedSources = sources;
-
-      return [
-        renderWorkflowSummary({
-          stage: "retrieved",
-          sourceCount: sources.length,
-          isRunning: true,
-          hasRetrieved: true,
-          citationCount: buildRAGSourceGroups(sources).length,
-          coverage: "ungrounded",
-        }),
-        '<div class="demo-stream-block">',
-        "<h4>Retrieved sources</h4>",
-        renderStageRow("retrieved"),
-        '<dl class="demo-stream-stats">',
-        `<div><dt>Retrieval started</dt><dd>${escapeHtml(formatTime(details?.retrievalStartedAt))}</dd></div>`,
-        `<div><dt>Retrieval duration</dt><dd>${escapeHtml(formatDuration(details?.retrievalDurationMs))}</dd></div>`,
-        `<div><dt>Source groups</dt><dd>${buildRAGSourceGroups(sources).length}</dd></div>`,
-        "</dl>",
-        renderSourceSummaries(sources),
-        renderTracePanel({
-          summary:
-            "This is the first-class retrieval trace from AbsoluteJS for the streamed workflow path. It shows how retrieval executed before answer generation.",
-          title: "Workflow Retrieval Trace",
-          trace: details?.trace,
-        }),
-        renderCitations(sources),
-        "</div>",
+        renderIdleWorkflowSummary(),
+        '<div class="ai-canceled">Canceled.</div>',
+        renderIdleStreamQueryField(),
+        renderIdleStreamControls(),
       ].join("");
     },
     chunk: (_text, fullContent) => {
@@ -286,12 +215,12 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
 
       return [
         renderWorkflowSummary({
-          stage: "streaming",
-          sourceCount: latestRetrievedSources.length,
-          isRunning: true,
-          hasRetrieved: latestRetrievedSources.length > 0,
           citationCount: latestRetrievedSources.length,
           coverage: groundedAnswer.coverage,
+          hasRetrieved: latestRetrievedSources.length > 0,
+          isRunning: true,
+          sourceCount: latestRetrievedSources.length,
+          stage: "streaming",
         }),
         '<div class="demo-stream-block">',
         "<h4>Answer</h4>",
@@ -308,7 +237,7 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
         groundedAnswer.parts.some(
           (part: RAGGroundedAnswerPart) => part.type === "citation",
         )
-          ? '<div class="demo-result-grid">' +
+          ? `<div class="demo-result-grid">${ 
             groundedAnswer.parts
               .map((part: RAGGroundedAnswerPart) =>
                 part.type === "citation"
@@ -324,12 +253,12 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
                       )}<p class="demo-result-text">${escapeHtml(formatGroundedAnswerPartExcerpt(part))}</p></article>`
                   : "",
               )
-              .join("") +
-            "</div>"
+              .join("") 
+            }</div>`
           : "",
         "</div>",
         groundedAnswer.sectionSummaries.length > 0
-          ? '<div class="demo-results"><h4>Grounding by Section</h4><div class="demo-result-grid">' +
+          ? `<div class="demo-results"><h4>Grounding by Section</h4><div class="demo-result-grid">${ 
             groundedAnswer.sectionSummaries
               .map(
                 (summary: RAGGroundedAnswerSectionSummary) =>
@@ -344,11 +273,11 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
                       "",
                     )}<p class="demo-result-text">${escapeHtml(formatGroundedAnswerSectionSummaryExcerpt(summary))}</p></article>`,
               )
-              .join("") +
-            "</div></div>"
+              .join("") 
+            }</div></div>`
           : "",
         groundingReferences.length > 0
-          ? '<div class="demo-results"><h4>Grounding Reference Map</h4><p class="demo-metadata">Each reference resolves answer citations back to concrete evidence with page, sheet, slide, archive, or thread context when available.</p><div class="demo-result-grid">' +
+          ? `<div class="demo-results"><h4>Grounding Reference Map</h4><p class="demo-metadata">Each reference resolves answer citations back to concrete evidence with page, sheet, slide, archive, or thread context when available.</p><div class="demo-result-grid">${ 
             groundingReferences
               .map(
                 (reference) =>
@@ -363,8 +292,8 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
                       "",
                     )}<p class="demo-result-text">${escapeHtml(formatGroundingReferenceExcerpt(reference))}</p></article>`,
               )
-              .join("") +
-            "</div></div>"
+              .join("") 
+            }</div></div>`
           : "",
       ].join("");
     },
@@ -390,27 +319,6 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
         renderIdleStreamControls(),
       ].join("");
     },
-    thinking: (text) =>
-      [
-        '<details class="demo-stream-block">',
-        "<summary>Thinking</summary>",
-        `<p class="demo-result-text">${escapeHtml(text)}</p>`,
-        "</details>",
-      ].join(""),
-    toolRunning: (name) =>
-      `<div class="demo-stream-block"><h4>Tool</h4><p class="demo-metadata">Running ${escapeHtml(name)}...</p></div>`,
-    toolComplete: (name, result) =>
-      `<details class="demo-stream-block"><summary>Tool complete: ${escapeHtml(name)}</summary><pre class="demo-result-text">${escapeHtml(result)}</pre></details>`,
-    canceled: () => {
-      latestRetrievedSources = [];
-
-      return [
-        renderIdleWorkflowSummary(),
-        '<div class="ai-canceled">Canceled.</div>',
-        renderIdleStreamQueryField(),
-        renderIdleStreamControls(),
-      ].join("");
-    },
     error: (message) => {
       latestRetrievedSources = [];
 
@@ -423,6 +331,98 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
         renderIdleStreamControls(),
       ].join("");
     },
+    messageStart: ({ cancelUrl, content, messageId, sseUrl }) => {
+      latestRetrievedSources = [];
+
+      return [
+        `<div id="msg-${escapeHtml(messageId)}" class="message user">`,
+        `<div>${escapeHtml(content)}</div>`,
+        "</div>",
+        `<div id="response-${escapeHtml(messageId)}" hx-ext="sse" sse-connect="${escapeHtml(sseUrl)}" hx-swap="innerHTML">`,
+        `<div id="sse-retrieval-${escapeHtml(messageId)}" sse-swap="retrieval" hx-swap="innerHTML"></div>`,
+        `<div id="sse-sources-${escapeHtml(messageId)}" sse-swap="sources" hx-swap="innerHTML"></div>`,
+        `<div id="sse-content-${escapeHtml(messageId)}" sse-swap="content" hx-swap="innerHTML"></div>`,
+        `<div id="sse-thinking-${escapeHtml(messageId)}" sse-swap="thinking" hx-swap="innerHTML"></div>`,
+        `<div id="sse-tools-${escapeHtml(messageId)}" sse-swap="tools" hx-swap="innerHTML"></div>`,
+        `<div id="sse-images-${escapeHtml(messageId)}" sse-swap="images" hx-swap="innerHTML"></div>`,
+        `<div id="sse-status-${escapeHtml(messageId)}" sse-swap="status" hx-swap="innerHTML"></div>`,
+        "</div>",
+        renderWorkflowSummary({
+          citationCount: 0,
+          coverage: "ungrounded",
+          hasRetrieved: false,
+          isRunning: true,
+          sourceCount: 0,
+          stage: "submitting",
+        }),
+        renderActiveStreamQueryField(content),
+        renderActiveStreamControls(cancelUrl),
+      ].join("");
+    },
+    ragRetrieved: (sources, details) => {
+      latestRetrievedSources = sources;
+
+      return [
+        renderWorkflowSummary({
+          citationCount: buildRAGSourceGroups(sources).length,
+          coverage: "ungrounded",
+          hasRetrieved: true,
+          isRunning: true,
+          sourceCount: sources.length,
+          stage: "retrieved",
+        }),
+        '<div class="demo-stream-block">',
+        "<h4>Retrieved sources</h4>",
+        renderStageRow("retrieved"),
+        '<dl class="demo-stream-stats">',
+        `<div><dt>Retrieval started</dt><dd>${escapeHtml(formatTime(details?.retrievalStartedAt))}</dd></div>`,
+        `<div><dt>Retrieval duration</dt><dd>${escapeHtml(formatDuration(details?.retrievalDurationMs))}</dd></div>`,
+        `<div><dt>Source groups</dt><dd>${buildRAGSourceGroups(sources).length}</dd></div>`,
+        "</dl>",
+        renderSourceSummaries(sources),
+        renderTracePanel({
+          summary:
+            "This is the first-class retrieval trace from AbsoluteJS for the streamed workflow path. It shows how retrieval executed before answer generation.",
+          title: "Workflow Retrieval Trace",
+          trace: details?.trace,
+        }),
+        renderCitations(sources),
+        "</div>",
+      ].join("");
+    },
+    ragRetrieving: (input) => {
+      const retrievalStartedAt = input?.retrievalStartedAt;
+
+      return [
+        renderWorkflowSummary({
+          citationCount: 0,
+          coverage: "ungrounded",
+          hasRetrieved: false,
+          isRunning: true,
+          sourceCount: 0,
+          stage: "retrieving",
+        }),
+        '<div class="demo-stream-block">',
+        "<h4>Retrieval status</h4>",
+        renderStageRow("retrieving"),
+        '<dl class="demo-stream-stats">',
+        `<div><dt>Retrieval started</dt><dd>${escapeHtml(formatTime(retrievalStartedAt))}</dd></div>`,
+        "</dl>",
+        '<p class="demo-metadata">Retrieving sources...</p>',
+        "</div>",
+      ].join("");
+    },
+    thinking: (text) =>
+      [
+        '<details class="demo-stream-block">',
+        "<summary>Thinking</summary>",
+        `<p class="demo-result-text">${escapeHtml(text)}</p>`,
+        "</details>",
+      ].join(""),
+    toolComplete: (name, result) =>
+      `<details class="demo-stream-block"><summary>Tool complete: ${escapeHtml(name)}</summary><pre class="demo-result-text">${escapeHtml(result)}</pre></details>`,
+    toolRunning: (name) =>
+      `<div class="demo-stream-block"><h4>Tool</h4><p class="demo-metadata">Running ${escapeHtml(name)}...</p></div>`,
   };
 };
 
@@ -430,30 +430,151 @@ export const createHtmxWorkflowRenderConfig = (
   ragPath: string,
 ): RAGHTMXWorkflowRenderConfig =>
   createRAGHTMXWorkflowRenderConfig({
-    status: ({ status, capabilities, documents }) => {
-      if (!status) {
-        return '<p class="demo-error">No backend status is available.</p>';
+    chunkPreview: (preview) =>
+      [
+        '<div class="demo-results">',
+        `<p class="demo-metadata">${escapeHtml(preview.document.title)} · ${escapeHtml(preview.document.format ?? "text")} · ${escapeHtml(preview.document.chunkStrategy ?? "paragraphs")} · ${preview.chunks.length} chunk(s)</p>`,
+        '<article class="demo-result-item">',
+        "<h3>Normalized text</h3>",
+        `<p class="demo-result-text">${escapeHtml(preview.normalizedText)}</p>`,
+        "</article>",
+        '<div class="demo-result-grid">',
+        preview.chunks
+          .map(
+            (chunk) => `
+            <article class="demo-result-item">
+              <h3>${escapeHtml(chunk.chunkId)}</h3>
+              <p class="demo-result-source">source: ${escapeHtml(chunk.source ?? preview.document.source)}</p>
+              <p class="demo-metadata">chunk index: ${String((chunk.metadata?.chunkIndex as number | undefined) ?? 0)} / count: ${String((chunk.metadata?.chunkCount as number | undefined) ?? preview.chunks.length)}</p>
+              <p class="demo-result-text">${escapeHtml(chunk.text)}</p>
+            </article>`,
+          )
+          .join(""),
+        "</div>",
+        "</div>",
+      ].join(""),
+    documents: ({ documents }) => {
+      if (documents.length === 0) {
+        return '<ul class="demo-document-list"><li>No documents yet.</li></ul>';
       }
 
       return [
-        '<div class="demo-htmx-status">',
-        '<dl class="demo-stat-grid">',
-        `<div><dt>Backend</dt><dd>${escapeHtml(status.backend)}</dd></div>`,
-        `<div><dt>Vector mode</dt><dd>${escapeHtml(status.vectorMode)}</dd></div>`,
-        `<div><dt>Embedding dimensions</dt><dd>${status.dimensions ?? "n/a"}</dd></div>`,
-        `<div><dt>Vector acceleration</dt><dd>${status.native?.active ? "active" : "inactive"}</dd></div>`,
-        `<div><dt>Native source</dt><dd>${escapeHtml(renderNativeSource(status as RAGVectorStoreStatus))}</dd></div>`,
-        `<div><dt>Documents</dt><dd>${documents?.total ?? "n/a"}</dd></div>`,
-        `<div><dt>Total chunks</dt><dd>${documents?.chunkCount ?? "n/a"}</dd></div>`,
-        `<div><dt>Seed docs</dt><dd>${documents?.byKind.seed ?? 0}</dd></div>`,
-        `<div><dt>Custom docs</dt><dd>${documents?.byKind.custom ?? 0}</dd></div>`,
-        `<div><dt>Reranker</dt><dd>${escapeHtml(DEMO_RERANKER_LABEL)}</dd></div>`,
-        "</dl>",
-        `<p class="demo-note">${escapeHtml(renderStatusSummary(status as RAGVectorStoreStatus))}</p>`,
-        `<p class="demo-metadata">${escapeHtml(renderStatusMessage(status as RAGVectorStoreStatus))}</p>`,
-        `<p class="demo-metadata">${escapeHtml(DEMO_RERANKER_SUMMARY)}</p>`,
-        renderCapabilities(capabilities as RAGBackendCapabilities),
+        '<ul class="demo-document-list">',
+        documents
+          .map((doc) => {
+            const inspectUrl = `${ragPath}/documents/${encodeURIComponent(doc.id)}/chunks`;
+            const deleteButton =
+              doc.kind === "custom"
+                ? `
+                  <button
+                    type="button"
+                    hx-delete="${escapeHtml(`${ragPath}/documents/${encodeURIComponent(doc.id)}`)}"
+                    hx-target="#mutation-status"
+                    hx-swap="innerHTML"
+                    hx-confirm="Delete ${escapeHtml(doc.title)}?"
+                  >delete</button>`
+                : "";
+
+            const mode = escapeHtml(
+              ragPath.split("/").pop() ?? "sqlite-native",
+            );
+            const searchBySourceVals = escapeHtml(
+              JSON.stringify({
+                query: `Source search for ${doc.source}`,
+                source: doc.source,
+                topK: 6,
+              }),
+            );
+            const searchByDocumentVals = escapeHtml(
+              JSON.stringify({
+                documentId: doc.id,
+                query: `Explain ${doc.title}`,
+                topK: 6,
+              }),
+            );
+
+            return `
+              <li class="demo-document-row">
+                <div>
+                  <strong>${escapeHtml(doc.title)}</strong>
+                  <p>${escapeHtml(doc.id)}</p>
+                  <p>source: ${escapeHtml(doc.source)} · kind: ${escapeHtml(doc.kind ?? "unknown")}</p>
+                  <p>${escapeHtml(doc.format ?? "text")} · ${escapeHtml(doc.chunkStrategy ?? "paragraphs")} · target size ${doc.chunkSize ?? 0}</p>
+                  <p>chunks: ${doc.chunkCount ?? 0}</p>
+                  ${formatDemoMetadataSummary(doc.metadata)
+                    .map(
+                      (line) =>
+                        `<p class="demo-metadata">${escapeHtml(line)}</p>`,
+                    )
+                    .join("")}
+                </div>
+                <div class="demo-actions">
+                  <button
+                    type="button"
+                    hx-get="${escapeHtml(inspectUrl)}"
+                    hx-target="#chunk-preview-body"
+                    hx-swap="innerHTML"
+                  >Inspect chunks</button>
+                  <button
+                    type="button"
+                    hx-post="/demo/message/${mode}/search"
+                    hx-vals='${searchBySourceVals}'
+                    hx-target="#search-results"
+                    hx-swap="innerHTML"
+                    hx-on::after-request="document.getElementById('search-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                  >Search source</button>
+                  <button
+                    type="button"
+                    hx-post="/demo/message/${mode}/search"
+                    hx-vals='${searchByDocumentVals}'
+                    hx-target="#search-results"
+                    hx-swap="innerHTML"
+                    hx-on::after-request="document.getElementById('search-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                  >Search document</button>
+                  ${deleteButton}
+                </div>
+              </li>`;
+          })
+          .join(""),
+        "</ul>",
+      ].join("");
+    },
+    error: (message) => `<p class="demo-error">${escapeHtml(message)}</p>`,
+    evaluateResult: ({ cases, summary }) =>
+      [
+        '<div class="demo-results">',
+        "<h3>Benchmark Retrieval</h3>",
+        '<p class="demo-metadata">This section runs the built-in benchmark suite through the server-side HTMX workflow so you can compare expected, retrieved, and missing evidence without client state.</p>',
+        `<div class="demo-badge-row">${benchmarkOutcomeRail.map((entry) => `<span class="demo-state-chip" title="${escapeHtml(entry.summary)}">${escapeHtml(entry.label)}</span>`).join("")}</div>`,
+        renderEvaluationResults(cases, summary),
         "</div>",
+      ].join(""),
+    mutationResult: (result) => {
+      if (!result.ok) {
+        return [
+          `<div class="demo-results"><p class="demo-error">${escapeHtml(result.error ?? "Request failed")}</p><p class="demo-metadata">No demo surfaces were refreshed because the mutation failed.</p></div>`,
+          renderMutationRefreshes(),
+        ].join("");
+      }
+
+      const summary = result.deleted
+        ? `Deleted ${result.deleted}`
+        : result.inserted
+          ? `Indexed ${result.inserted}`
+          : result.status
+            ? result.status
+            : "Request complete";
+
+      return [
+        '<div class="demo-results">',
+        `<p class="demo-banner">${escapeHtml(summary)}</p>`,
+        '<ul class="demo-detail-list">',
+        "<li>Diagnostics and indexed sources refresh automatically on this route.</li>",
+        "<li>Knowledge base operations refresh automatically after mutations.</li>",
+        "<li>Use the document row search actions to immediately verify source-scoped retrieval.</li>",
+        "</ul>",
+        "</div>",
+        renderMutationRefreshes(),
       ].join("");
     },
     searchResults: ({ query, results, trace }) => {
@@ -536,151 +657,30 @@ export const createHtmxWorkflowRenderConfig = (
         "</div>",
       ].join("");
     },
-    documents: ({ documents }) => {
-      if (documents.length === 0) {
-        return '<ul class="demo-document-list"><li>No documents yet.</li></ul>';
+    status: ({ status, capabilities, documents }) => {
+      if (!status) {
+        return '<p class="demo-error">No backend status is available.</p>';
       }
 
       return [
-        '<ul class="demo-document-list">',
-        documents
-          .map((doc) => {
-            const inspectUrl = `${ragPath}/documents/${encodeURIComponent(doc.id)}/chunks`;
-            const deleteButton =
-              doc.kind === "custom"
-                ? `
-                  <button
-                    type="button"
-                    hx-delete="${escapeHtml(`${ragPath}/documents/${encodeURIComponent(doc.id)}`)}"
-                    hx-target="#mutation-status"
-                    hx-swap="innerHTML"
-                    hx-confirm="Delete ${escapeHtml(doc.title)}?"
-                  >delete</button>`
-                : "";
-
-            const mode = escapeHtml(
-              ragPath.split("/").pop() ?? "sqlite-native",
-            );
-            const searchBySourceVals = escapeHtml(
-              JSON.stringify({
-                query: `Source search for ${doc.source}`,
-                source: doc.source,
-                topK: 6,
-              }),
-            );
-            const searchByDocumentVals = escapeHtml(
-              JSON.stringify({
-                query: `Explain ${doc.title}`,
-                documentId: doc.id,
-                topK: 6,
-              }),
-            );
-
-            return `
-              <li class="demo-document-row">
-                <div>
-                  <strong>${escapeHtml(doc.title)}</strong>
-                  <p>${escapeHtml(doc.id)}</p>
-                  <p>source: ${escapeHtml(doc.source)} · kind: ${escapeHtml(doc.kind ?? "unknown")}</p>
-                  <p>${escapeHtml(doc.format ?? "text")} · ${escapeHtml(doc.chunkStrategy ?? "paragraphs")} · target size ${doc.chunkSize ?? 0}</p>
-                  <p>chunks: ${doc.chunkCount ?? 0}</p>
-                  ${formatDemoMetadataSummary(doc.metadata)
-                    .map(
-                      (line) =>
-                        `<p class="demo-metadata">${escapeHtml(line)}</p>`,
-                    )
-                    .join("")}
-                </div>
-                <div class="demo-actions">
-                  <button
-                    type="button"
-                    hx-get="${escapeHtml(inspectUrl)}"
-                    hx-target="#chunk-preview-body"
-                    hx-swap="innerHTML"
-                  >Inspect chunks</button>
-                  <button
-                    type="button"
-                    hx-post="/demo/message/${mode}/search"
-                    hx-vals='${searchBySourceVals}'
-                    hx-target="#search-results"
-                    hx-swap="innerHTML"
-                    hx-on::after-request="document.getElementById('search-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
-                  >Search source</button>
-                  <button
-                    type="button"
-                    hx-post="/demo/message/${mode}/search"
-                    hx-vals='${searchByDocumentVals}'
-                    hx-target="#search-results"
-                    hx-swap="innerHTML"
-                    hx-on::after-request="document.getElementById('search-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
-                  >Search document</button>
-                  ${deleteButton}
-                </div>
-              </li>`;
-          })
-          .join(""),
-        "</ul>",
+        '<div class="demo-htmx-status">',
+        '<dl class="demo-stat-grid">',
+        `<div><dt>Backend</dt><dd>${escapeHtml(status.backend)}</dd></div>`,
+        `<div><dt>Vector mode</dt><dd>${escapeHtml(status.vectorMode)}</dd></div>`,
+        `<div><dt>Embedding dimensions</dt><dd>${status.dimensions ?? "n/a"}</dd></div>`,
+        `<div><dt>Vector acceleration</dt><dd>${status.native?.active ? "active" : "inactive"}</dd></div>`,
+        `<div><dt>Native source</dt><dd>${escapeHtml(renderNativeSource(status))}</dd></div>`,
+        `<div><dt>Documents</dt><dd>${documents?.total ?? "n/a"}</dd></div>`,
+        `<div><dt>Total chunks</dt><dd>${documents?.chunkCount ?? "n/a"}</dd></div>`,
+        `<div><dt>Seed docs</dt><dd>${documents?.byKind.seed ?? 0}</dd></div>`,
+        `<div><dt>Custom docs</dt><dd>${documents?.byKind.custom ?? 0}</dd></div>`,
+        `<div><dt>Reranker</dt><dd>${escapeHtml(DEMO_RERANKER_LABEL)}</dd></div>`,
+        "</dl>",
+        `<p class="demo-note">${escapeHtml(renderStatusSummary(status))}</p>`,
+        `<p class="demo-metadata">${escapeHtml(renderStatusMessage(status))}</p>`,
+        `<p class="demo-metadata">${escapeHtml(DEMO_RERANKER_SUMMARY)}</p>`,
+        renderCapabilities(capabilities),
+        "</div>",
       ].join("");
     },
-    chunkPreview: (preview) =>
-      [
-        '<div class="demo-results">',
-        `<p class="demo-metadata">${escapeHtml(preview.document.title)} · ${escapeHtml(preview.document.format ?? "text")} · ${escapeHtml(preview.document.chunkStrategy ?? "paragraphs")} · ${preview.chunks.length} chunk(s)</p>`,
-        '<article class="demo-result-item">',
-        "<h3>Normalized text</h3>",
-        `<p class="demo-result-text">${escapeHtml(preview.normalizedText)}</p>`,
-        "</article>",
-        '<div class="demo-result-grid">',
-        preview.chunks
-          .map(
-            (chunk) => `
-            <article class="demo-result-item">
-              <h3>${escapeHtml(chunk.chunkId)}</h3>
-              <p class="demo-result-source">source: ${escapeHtml(chunk.source ?? preview.document.source)}</p>
-              <p class="demo-metadata">chunk index: ${String((chunk.metadata?.chunkIndex as number | undefined) ?? 0)} / count: ${String((chunk.metadata?.chunkCount as number | undefined) ?? preview.chunks.length)}</p>
-              <p class="demo-result-text">${escapeHtml(chunk.text)}</p>
-            </article>`,
-          )
-          .join(""),
-        "</div>",
-        "</div>",
-      ].join(""),
-    evaluateResult: ({ cases, summary }) =>
-      [
-        '<div class="demo-results">',
-        "<h3>Benchmark Retrieval</h3>",
-        '<p class="demo-metadata">This section runs the built-in benchmark suite through the server-side HTMX workflow so you can compare expected, retrieved, and missing evidence without client state.</p>',
-        `<div class="demo-badge-row">${benchmarkOutcomeRail.map((entry) => `<span class="demo-state-chip" title="${escapeHtml(entry.summary)}">${escapeHtml(entry.label)}</span>`).join("")}</div>`,
-        renderEvaluationResults(cases, summary),
-        "</div>",
-      ].join(""),
-    mutationResult: (result) => {
-      if (!result.ok) {
-        return [
-          `<div class="demo-results"><p class="demo-error">${escapeHtml(result.error ?? "Request failed")}</p><p class="demo-metadata">No demo surfaces were refreshed because the mutation failed.</p></div>`,
-          renderMutationRefreshes(),
-        ].join("");
-      }
-
-      const summary = result.deleted
-        ? `Deleted ${result.deleted}`
-        : result.inserted
-          ? `Indexed ${result.inserted}`
-          : result.status
-            ? result.status
-            : "Request complete";
-
-      return [
-        '<div class="demo-results">',
-        `<p class="demo-banner">${escapeHtml(summary)}</p>`,
-        '<ul class="demo-detail-list">',
-        "<li>Diagnostics and indexed sources refresh automatically on this route.</li>",
-        "<li>Knowledge base operations refresh automatically after mutations.</li>",
-        "<li>Use the document row search actions to immediately verify source-scoped retrieval.</li>",
-        "</ul>",
-        "</div>",
-        renderMutationRefreshes(),
-      ].join("");
-    },
-    error: (message) => `<p class="demo-error">${escapeHtml(message)}</p>`,
   });

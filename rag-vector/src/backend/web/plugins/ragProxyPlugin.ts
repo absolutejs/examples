@@ -26,6 +26,28 @@ const toFrame = (message: unknown) =>
 export const createRagProxyPlugin = () =>
   new Elysia()
     .ws("/rag/:mode", {
+      close(ws) {
+        const link = links.get(ws.raw);
+        if (!link) {
+          return;
+        }
+        links.delete(ws.raw);
+        try {
+          link.upstream.close();
+        } catch {}
+      },
+      message(ws, message) {
+        const link = links.get(ws.raw);
+        if (!link) {
+          return;
+        }
+        const frame = toFrame(message);
+        if (link.ready) {
+          link.upstream.send(frame);
+        } else {
+          link.queue.push(frame);
+        }
+      },
       open(ws) {
         const upstream = new WebSocket(
           `${ragWebSocketBaseUrl}/rag/${ws.data.params.mode}`,
@@ -55,28 +77,6 @@ export const createRagProxyPlugin = () =>
             ws.close();
           } catch {}
         });
-      },
-      message(ws, message) {
-        const link = links.get(ws.raw);
-        if (!link) {
-          return;
-        }
-        const frame = toFrame(message);
-        if (link.ready) {
-          link.upstream.send(frame);
-        } else {
-          link.queue.push(frame);
-        }
-      },
-      close(ws) {
-        const link = links.get(ws.raw);
-        if (!link) {
-          return;
-        }
-        links.delete(ws.raw);
-        try {
-          link.upstream.close();
-        } catch {}
       },
     })
     .mount("/demo", (request) => forwardToRagService(request, "/demo"))

@@ -159,6 +159,7 @@ type DemoRagReadinessState = {
 
 const toNumber = (value: string, fallback: number) => {
   const next = Number(value);
+
   return Number.isFinite(next) ? next : fallback;
 };
 
@@ -231,12 +232,11 @@ const getElement = <T extends HTMLElement>(id: string) => {
   if (element === null) {
     throw new Error(`Missing demo element: #${id}`);
   }
+
   return element as T;
 };
 
-const getOptionalElement = <T extends HTMLElement>(id: string) => {
-  return document.getElementById(id) as T | null;
-};
+const getOptionalElement = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
 
 const statusBackendEl = getElement<HTMLSpanElement>("status-table");
 const statusModeEl = getElement<HTMLSpanElement>("status-mode");
@@ -411,7 +411,7 @@ const stateSyncRowEl = getElement<HTMLDivElement>("state-sync-row");
 const stateRecentRowEl = getElement<HTMLDivElement>("state-recent-row");
 let ragReadinessTimer: ReturnType<typeof setTimeout> | null = null;
 let ragReadinessRequest = 0;
-let selectedMode: DemoBackendMode = getInitialBackendMode();
+const selectedMode: DemoBackendMode = getInitialBackendMode();
 type RagExampleSection =
   | "overview"
   | "retrieve"
@@ -430,50 +430,50 @@ const ragExampleSections: Array<{
   loadLabel: string;
 }> = [
   {
-    id: "retrieve",
-    kicker: "1 · Retrieval",
-    title: "Search And Verify",
     description:
       "Query the index, inspect sources, and prove metadata filters and attribution.",
+    id: "retrieve",
+    kicker: "1 · Retrieval",
     loadLabel: "Load retrieval",
+    title: "Search And Verify",
   },
   {
-    id: "ingest",
-    kicker: "2 · Ingest",
-    title: "Add Documents",
     description:
       "Upload extracted fixtures or author custom documents, then verify searchability.",
+    id: "ingest",
+    kicker: "2 · Ingest",
     loadLabel: "Load ingest",
+    title: "Add Documents",
   },
   {
-    id: "workflow",
-    kicker: "3 · Workflow",
-    title: "Grounded Streaming",
     description:
       "Run the RAG answer workflow and inspect grounding and citations.",
+    id: "workflow",
+    kicker: "3 · Workflow",
     loadLabel: "Load workflow",
+    title: "Grounded Streaming",
   },
   {
+    description: "Inspect sync sources and connector-backed account bindings.",
     id: "connectors",
     kicker: "4 · Connectors",
-    title: "Auth-Backed Sources",
-    description: "Inspect sync sources and connector-backed account bindings.",
     loadLabel: "Load connectors",
+    title: "Auth-Backed Sources",
   },
   {
+    description: "Run benchmark presets and compare retrieval quality.",
     id: "evaluate",
     kicker: "5 · Quality",
-    title: "Evaluation And Release",
-    description: "Run benchmark presets and compare retrieval quality.",
     loadLabel: "Load quality",
+    title: "Evaluation And Release",
   },
   {
-    id: "ops",
-    kicker: "6 · Operations",
-    title: "Diagnostics And Index Health",
     description:
       "Inspect corpus health, sync state, admin jobs, and backend readiness.",
+    id: "ops",
+    kicker: "6 · Operations",
     loadLabel: "Load ops",
+    title: "Diagnostics And Index Health",
   },
 ];
 let backendOptions: DemoBackendDescriptor[] = getAvailableDemoBackends();
@@ -595,13 +595,13 @@ const renderStateChips = () => {
 
 const clearRetrievalScope = async () => {
   scopeDriver = "chip reset";
-  fillSearchForm({ kind: "", source: "", documentId: "" });
+  fillSearchForm({ documentId: "", kind: "", source: "" });
   void saveActiveRetrievalState("html", selectedMode, {
-    searchForm: readSearchFormState(),
-    scopeDriver,
+    benchmarkPresetId: benchmarkPresetId || undefined,
     lastUpdatedAt: Date.now(),
     retrievalPresetId: retrievalPresetId || undefined,
-    benchmarkPresetId: benchmarkPresetId || undefined,
+    scopeDriver,
+    searchForm: readSearchFormState(),
     uploadPresetId: uploadPresetId || undefined,
   });
   if (readSearchFormState().query.trim().length > 0) {
@@ -614,18 +614,18 @@ const clearRetrievalScope = async () => {
 const clearAllRetrievalState = () => {
   scopeDriver = "clear all state";
   fillSearchForm({
-    query: "",
-    kind: "",
-    source: "",
     documentId: "",
+    kind: "",
+    query: "",
     scoreThreshold: "",
+    source: "",
   });
   void saveActiveRetrievalState("html", selectedMode, {
-    searchForm: readSearchFormState(),
-    scopeDriver,
+    benchmarkPresetId: benchmarkPresetId || undefined,
     lastUpdatedAt: Date.now(),
     retrievalPresetId: retrievalPresetId || undefined,
-    benchmarkPresetId: benchmarkPresetId || undefined,
+    scopeDriver,
+    searchForm: readSearchFormState(),
     uploadPresetId: uploadPresetId || undefined,
   });
   hideSearchResults();
@@ -646,11 +646,11 @@ const rerunRecentQuery = async (state: SearchFormState) => {
   fillSearchForm(state);
   scopeDriver = "recent query";
   void saveActiveRetrievalState("html", selectedMode, {
-    searchForm: readSearchFormState(),
-    scopeDriver,
+    benchmarkPresetId: benchmarkPresetId || undefined,
     lastUpdatedAt: Date.now(),
     retrievalPresetId: retrievalPresetId || undefined,
-    benchmarkPresetId: benchmarkPresetId || undefined,
+    scopeDriver,
+    searchForm: readSearchFormState(),
     uploadPresetId: uploadPresetId || undefined,
   });
   renderSearchScope();
@@ -666,13 +666,11 @@ const isStreamStageComplete = (
   currentStage === "complete"
     ? stage === "complete" ||
       streamStages.indexOf(stage) <
-        streamStages.indexOf(currentStage as (typeof streamStages)[number])
+        streamStages.indexOf(currentStage)
     : streamStages.indexOf(stage) <
       streamStages.indexOf(currentStage as (typeof streamStages)[number]);
 
-const isStreamBusy = () => {
-  return ragWorkflow.isRunning;
-};
+const isStreamBusy = () => ragWorkflow.isRunning;
 
 const setError = (el: HTMLParagraphElement, value: string) => {
   el.textContent = value;
@@ -703,6 +701,7 @@ const renderRagReadinessBadge = (state: DemoRagReadinessState | null) => {
   if (state === null) {
     ragReadinessBadgeEl.className = "demo-metadata";
     ragReadinessBadgeEl.textContent = "Loading RAG readiness...";
+
     return;
   }
   ragReadinessBadgeEl.className = `demo-rag-readiness ${state.className}`;
@@ -760,20 +759,21 @@ const renderQualityState = () => {
 
   if (!qualityData) {
     qualityComparisonGridEl.innerHTML = "";
+
     return;
   }
 
   const nextQualityData = qualityData;
   if (qualityView === "overview") {
     const overview = formatQualityOverviewPresentation({
-      retrievalComparison: nextQualityData.retrievalComparison,
-      rerankerComparison: nextQualityData.rerankerComparison,
       groundingEvaluation: nextQualityData.groundingEvaluation,
       groundingProviderOverview: nextQualityData.providerGroundingComparison
         ? formatGroundingProviderOverviewPresentation(
             nextQualityData.providerGroundingComparison,
           )
         : undefined,
+      rerankerComparison: nextQualityData.rerankerComparison,
+      retrievalComparison: nextQualityData.retrievalComparison,
     });
     qualityComparisonGridEl.innerHTML = [
       `<article class="demo-result-item"><h4>Winners at a glance</h4><div class="demo-key-value-grid">${overview.rows.map((row) => `<div class="demo-key-value-row"><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.value)}</strong></div>`).join("")}</div></article>`,
@@ -784,6 +784,7 @@ const renderQualityState = () => {
         )
         .join("")}</div></article>`,
     ].join("");
+
     return;
   }
   if (qualityView === "strategies") {
@@ -801,6 +802,7 @@ const renderQualityState = () => {
           `<article class="demo-result-item demo-score-card"><h4>${escapeHtml(card.label)}</h4><p class="demo-score-headline">${escapeHtml(card.summary)}</p><div class="demo-key-value-grid demo-trace-summary-grid">${card.traceSummaryRows.map((row) => `<div class="demo-key-value-row"><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.value)}</strong></div>`).join("")}</div><details class="demo-collapsible demo-trace-diff"><summary><span>Trace diff vs leader</span><strong>${escapeHtml(card.diffLabel)}</strong></summary><div class="demo-collapsible-content demo-trace-diff-grid">${card.diffRows.map((row) => `<div class="demo-key-value-row"><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.value)}</strong></div>`).join("")}</div></details></article>`,
       ),
     ].join("");
+
     return;
   }
   if (qualityView === "grounding") {
@@ -835,6 +837,7 @@ const renderQualityState = () => {
           )
         : []),
     ].join("");
+
     return;
   }
   qualityComparisonGridEl.innerHTML = [
@@ -882,6 +885,7 @@ const renderQualityState = () => {
       ? nextQualityData.providerGroundingComparison.entries.map((entry) => {
           const history =
             nextQualityData.providerGroundingHistories[entry.providerKey];
+
           return `<details class="demo-result-item demo-collapsible"><summary><span>${escapeHtml(entry.label)} history</span><strong>${escapeHtml(formatGroundingHistorySummary(history)[0] ?? "No runs yet")}</strong></summary><div class="demo-collapsible-content">${formatGroundingHistoryDetails(
             history,
           )
@@ -922,11 +926,11 @@ const runReleaseAction = async (actionId: string) => {
   renderReleaseState();
   try {
     const response = await fetch(action.path, {
-      method: "POST",
+      body: JSON.stringify({ ...action.payload, workspace: releaseWorkspace }),
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...action.payload, workspace: releaseWorkspace }),
+      method: "POST",
     });
     if (!response.ok) {
       throw new Error(await response.text());
@@ -958,33 +962,35 @@ const runReleaseAction = async (actionId: string) => {
 };
 
 document.addEventListener("click", (event) => {
-  const target = event.target;
+  const {target} = event;
   if (!(target instanceof HTMLElement)) {
     return;
   }
   const workspaceButton = target.closest(
     "[data-release-workspace]",
-  ) as HTMLElement | null;
+  );
   if (workspaceButton?.dataset.releaseWorkspace) {
     releaseWorkspace =
       workspaceButton.dataset.releaseWorkspace === "beta" ? "beta" : "alpha";
     void loadRagReadiness();
     void refreshData();
+
     return;
   }
   const evidenceButton = target.closest(
     "[data-release-evidence-id]",
-  ) as HTMLButtonElement | null;
+  );
   if (evidenceButton) {
     void onPresetSearch({ currentTarget: evidenceButton } as unknown as Event);
     document
       .getElementById("search-results")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+
     return;
   }
   const actionButton = target.closest(
     "[data-release-action-id]",
-  ) as HTMLElement | null;
+  );
   if (!actionButton) {
     return;
   }
@@ -1344,6 +1350,7 @@ const renderAIModelOptions = () => {
     option.value = "";
     option.textContent = "Configure an AI provider";
     streamModelKeyEl.append(option);
+
     return;
   }
 
@@ -1374,17 +1381,18 @@ const readSearchForm = (): SearchFormState => {
   const safeTopK = Math.min(20, Math.max(1, Math.floor(topKValue)));
 
   return {
-    query,
+    documentId,
     kind: kindValue === "seed" || kindValue === "custom" ? kindValue : "",
+    query,
+    scoreThreshold,
     source,
     topK: safeTopK,
-    scoreThreshold,
-    documentId,
   };
 };
 
 const readAddForm = (): AddFormState => {
   const values = new FormData(addForm);
+
   return {
     id: toSafeText(values.get("id")?.toString() ?? "", ""),
     title: toSafeText(values.get("title")?.toString() ?? "", ""),
@@ -1418,7 +1426,7 @@ const readAddForm = (): AddFormState => {
 const renderStreamState = () => {
   const currentStage = ragWorkflow.stage;
   const latestMessage = ragWorkflow.latestAssistantMessage;
-  const retrieval = ragWorkflow.retrieval;
+  const {retrieval} = ragWorkflow;
   const workflowState = ragWorkflow.state;
 
   renderDetailList(
@@ -1478,8 +1486,8 @@ const renderStreamState = () => {
   streamAnswerTextEl.textContent = latestMessage?.content ?? "";
   streamAnswerEl.hidden = !latestMessage?.content;
 
-  const groundedAnswer = ragWorkflow.groundedAnswer;
-  const groundingReferences = ragWorkflow.groundingReferences;
+  const {groundedAnswer} = ragWorkflow;
+  const {groundingReferences} = ragWorkflow;
 
   streamGroundingListEl.innerHTML = "";
   streamGroundingPartsEl.innerHTML = "";
@@ -1594,7 +1602,7 @@ const renderStreamState = () => {
   }
 
   streamCitationsGridEl.innerHTML = "";
-  const citations = ragWorkflow.citations;
+  const {citations} = ragWorkflow;
   if (citations.length > 0) {
     streamCitationsEl.hidden = false;
     for (const group of buildCitationGroups(citations)) {
@@ -1665,12 +1673,14 @@ const inferDocumentExtension = (document: DemoDocument) => {
   if (document.format === "html") {
     return ".html";
   }
+
   return ".txt";
 };
 
 const getFilteredDocuments = () => {
   const query = documentSearchEl.value.trim().toLowerCase();
   const type = documentTypeFilterEl.value;
+
   return documentsCache.filter((document) => {
     const matchesQuery =
       query.length === 0 ||
@@ -1679,6 +1689,7 @@ const getFilteredDocuments = () => {
       document.text.toLowerCase().includes(query);
     const matchesType =
       type === "all" || inferDocumentExtension(document) === type;
+
     return matchesQuery && matchesType;
   });
 };
@@ -1695,6 +1706,7 @@ const getChunkIndexText = (
     typeof chunk.metadata?.chunkCount === "number"
       ? chunk.metadata.chunkCount
       : fallbackCount;
+
   return `chunk index: ${String(chunkIndex)} / count: ${String(chunkCount)}`;
 };
 
@@ -1706,7 +1718,7 @@ const inspectChunks = async (id: string) => {
     if (!preview.ok) {
       throw new Error(preview.error);
     }
-    renderChunkPreview(preview as DemoChunkPreview);
+    renderChunkPreview(preview);
   } catch (error) {
     clearChunkPreview(
       error instanceof Error
@@ -1727,6 +1739,7 @@ const focusInspectionEntry = async (
   if (entry.documentId) {
     showMessage(`Inspecting ${entry.documentId} from ops inspection.`);
     await inspectChunks(entry.documentId);
+
     return;
   }
   if (entry.source) {
@@ -1797,6 +1810,7 @@ const formatDocuments = (
   if (filteredDocuments.length === 0) {
     documentListEl.innerHTML =
       '<p class="demo-metadata">No indexed sources match the current filters.</p>';
+
     return;
   }
 
@@ -2129,8 +2143,24 @@ const setSearchValue = (name: string, value: string) => {
 };
 
 const readSearchFormState = (): SearchFormState => ({
+  documentId: toSafeText(
+    (searchForm.elements.namedItem("documentId") as HTMLInputElement | null)
+      ?.value ?? "",
+  ),
+  kind:
+    (((searchForm.elements.namedItem("kind") as HTMLSelectElement | null)
+      ?.value ?? "") as SearchFormState["kind"]) || "",
+  nativeQueryProfile: activeNativeQueryProfile ?? "",
   query: toSafeText(
     (searchForm.elements.namedItem("query") as HTMLInputElement | null)
+      ?.value ?? "",
+  ),
+  scoreThreshold: toSafeText(
+    (searchForm.elements.namedItem("scoreThreshold") as HTMLInputElement | null)
+      ?.value ?? "",
+  ),
+  source: toSafeText(
+    (searchForm.elements.namedItem("source") as HTMLInputElement | null)
       ?.value ?? "",
   ),
   topK: toNumber(
@@ -2138,22 +2168,6 @@ const readSearchFormState = (): SearchFormState => ({
       "6",
     6,
   ),
-  scoreThreshold: toSafeText(
-    (searchForm.elements.namedItem("scoreThreshold") as HTMLInputElement | null)
-      ?.value ?? "",
-  ),
-  kind:
-    (((searchForm.elements.namedItem("kind") as HTMLSelectElement | null)
-      ?.value ?? "") as SearchFormState["kind"]) || "",
-  source: toSafeText(
-    (searchForm.elements.namedItem("source") as HTMLInputElement | null)
-      ?.value ?? "",
-  ),
-  documentId: toSafeText(
-    (searchForm.elements.namedItem("documentId") as HTMLInputElement | null)
-      ?.value ?? "",
-  ),
-  nativeQueryProfile: activeNativeQueryProfile ?? "",
 });
 
 const renderSearchScope = () => {
@@ -2183,7 +2197,7 @@ const fillSearchForm = (state: Partial<SearchFormState>) => {
     setSearchValue("query", query);
   }
 
-  const topK = state.topK;
+  const {topK} = state;
   if (typeof topK === "number" && topK > 0) {
     setSearchValue("topK", String(topK));
   }
@@ -2198,6 +2212,7 @@ const fillSearchForm = (state: Partial<SearchFormState>) => {
 const runSearchFromValues = async (state: SearchFormState) => {
   if (state.query.length === 0) {
     setError(searchErrorEl, "query is required");
+
     return;
   }
 
@@ -2209,9 +2224,9 @@ const runSearchFromValues = async (state: SearchFormState) => {
   try {
     const start = Date.now();
     const response = await fetch(`/demo/message/${selectedMode}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
     const detailed = (await response.json()) as {
       ok: boolean;
@@ -2233,11 +2248,11 @@ const runSearchFromValues = async (state: SearchFormState) => {
     ].slice(0, 4);
     void saveRecentQueries("html", selectedMode, recentQueries);
     void saveActiveRetrievalState("html", selectedMode, {
-      searchForm: state,
-      scopeDriver,
+      benchmarkPresetId: benchmarkPresetId || undefined,
       lastUpdatedAt: Date.now(),
       retrievalPresetId: retrievalPresetId || undefined,
-      benchmarkPresetId: benchmarkPresetId || undefined,
+      scopeDriver,
+      searchForm: state,
       uploadPresetId: uploadPresetId || undefined,
     });
 
@@ -2281,22 +2296,22 @@ const renderSearchTrace = (trace: RAGRetrievalTrace | undefined) => {
     const card = document.createElement("article");
     card.className = "demo-stat-card";
     card.innerHTML =
-      '<p class="demo-section-caption">' +
-      label +
-      "</p><strong>" +
-      value +
-      "</strong>";
+      `<p class="demo-section-caption">${ 
+      label 
+      }</p><strong>${ 
+      value 
+      }</strong>`;
     stats.append(card);
   });
   const kv = document.createElement("div");
   kv.innerHTML = presentation.details
     .map(
       (row) =>
-        '<p class="demo-key-value-row"><strong>' +
-        row.label +
-        "</strong><span>" +
-        row.value +
-        "</span></p>",
+        `<p class="demo-key-value-row"><strong>${ 
+        row.label 
+        }</strong><span>${ 
+        row.value 
+        }</span></p>`,
     )
     .join("");
   const stepGrid = document.createElement("div");
@@ -2307,23 +2322,24 @@ const renderSearchTrace = (trace: RAGRetrievalTrace | undefined) => {
     if (index === 0) details.open = true;
     const summaryEl = document.createElement("summary");
     summaryEl.innerHTML =
-      "<strong>" + String(index + 1) + ". " + step.label + "</strong>";
+      `<strong>${  String(index + 1)  }. ${  step.label  }</strong>`;
     details.append(summaryEl);
     const meta = document.createElement("div");
     meta.innerHTML = step.rows
       .map(
         (row) =>
-          '<p class="demo-key-value-row"><strong>' +
-          row.label +
-          "</strong><span>" +
-          row.value +
-          "</span></p>",
+          `<p class="demo-key-value-row"><strong>${ 
+          row.label 
+          }</strong><span>${ 
+          row.value 
+          }</span></p>`,
       )
       .join("");
     details.append(meta);
     stepGrid.append(details);
   });
   section.append(title, summary, stats, kv, stepGrid);
+
   return section;
 };
 
@@ -2331,6 +2347,7 @@ const renderWorkflowTrace = (trace: RAGRetrievalTrace | undefined) => {
   streamTraceGridEl.innerHTML = "";
   if (!trace) {
     streamTraceEl.hidden = true;
+
     return;
   }
   const presentation = buildTracePresentation(trace);
@@ -2344,22 +2361,22 @@ const renderWorkflowTrace = (trace: RAGRetrievalTrace | undefined) => {
     presentation.stats
       .map(
         (row) =>
-          '<article class="demo-stat-card"><p class="demo-section-caption">' +
-          row.label +
-          "</p><strong>" +
-          row.value +
-          "</strong></article>",
+          `<article class="demo-stat-card"><p class="demo-section-caption">${ 
+          row.label 
+          }</p><strong>${ 
+          row.value 
+          }</strong></article>`,
       )
       .join(""),
     "</div>",
     presentation.details
       .map(
         (row) =>
-          '<p class="demo-key-value-row"><strong>' +
-          row.label +
-          "</strong><span>" +
-          row.value +
-          "</span></p>",
+          `<p class="demo-key-value-row"><strong>${ 
+          row.label 
+          }</strong><span>${ 
+          row.value 
+          }</span></p>`,
       )
       .join(""),
   ].join("");
@@ -2373,17 +2390,17 @@ const renderWorkflowTrace = (trace: RAGRetrievalTrace | undefined) => {
     }
     const summary = document.createElement("summary");
     summary.innerHTML =
-      "<strong>" + String(index + 1) + ". " + step.label + "</strong>";
+      `<strong>${  String(index + 1)  }. ${  step.label  }</strong>`;
     details.append(summary);
     const meta = document.createElement("div");
     meta.innerHTML = step.rows
       .map(
         (row) =>
-          '<p class="demo-key-value-row"><strong>' +
-          row.label +
-          "</strong><span>" +
-          row.value +
-          "</span></p>",
+          `<p class="demo-key-value-row"><strong>${ 
+          row.label 
+          }</strong><span>${ 
+          row.value 
+          }</span></p>`,
       )
       .join("");
     details.append(meta);
@@ -2450,6 +2467,7 @@ const renderSearchResults = (result: SearchResponse) => {
     if (traceSection) {
       searchResultGrid.append(traceSection);
     }
+
     return;
   }
 
@@ -2544,6 +2562,7 @@ const renderSearchResults = (result: SearchResponse) => {
           const metadataLine = document.createElement("p");
           metadataLine.className = "demo-metadata";
           metadataLine.textContent = line ?? "";
+
           return metadataLine;
         });
       const metadataNodes = formatDemoMetadataSummary(chunk.metadata).map(
@@ -2551,6 +2570,7 @@ const renderSearchResults = (result: SearchResponse) => {
           const metadataLine = document.createElement("p");
           metadataLine.className = "demo-metadata";
           metadataLine.textContent = line;
+
           return metadataLine;
         },
       );
@@ -2758,6 +2778,7 @@ const getAccountLabel = (user: AuthUser | null): string => {
     .filter(Boolean)
     .join(" ")
     .trim();
+
   return fullName || user.email || "Account";
 };
 
@@ -2879,6 +2900,7 @@ const buildAuthMenu = () => {
     );
     if (!state.isOpen) {
       existingDropdown?.remove();
+
       return;
     }
 
@@ -2988,12 +3010,12 @@ const buildAuthMenu = () => {
 
 const runUploadPreset = async (preset: DemoUploadPreset) => {
   uploadStatusEl.innerHTML =
-    '<p class="demo-metadata">Uploading ' + preset.label + "...</p>";
+    `<p class="demo-metadata">Uploading ${  preset.label  }...</p>`;
   try {
     const fixture = await fetch(getDemoUploadFixtureUrl(preset.id));
     if (!fixture.ok) {
       throw new Error(
-        "Failed to load " + preset.fileName + ": " + String(fixture.status),
+        `Failed to load ${  preset.fileName  }: ${  String(fixture.status)}`,
       );
     }
 
@@ -3008,13 +3030,13 @@ const runUploadPreset = async (preset: DemoUploadPreset) => {
     }
 
     uploadStatusEl.innerHTML =
-      '<p class="demo-banner">Uploaded ' +
-      preset.label +
-      ' through the extractor-backed ingest route.</p><p class="demo-metadata">Verification query: ' +
-      preset.query +
-      '</p><p class="demo-metadata">Expected uploaded source: ' +
-      (preset.expectedSources[0] ?? preset.source) +
-      "</p>";
+      `<p class="demo-banner">Uploaded ${ 
+      preset.label 
+      } through the extractor-backed ingest route.</p><p class="demo-metadata">Verification query: ${ 
+      preset.query 
+      }</p><p class="demo-metadata">Expected uploaded source: ${ 
+      preset.expectedSources[0] ?? preset.source 
+      }</p>`;
     uploadPresetId = preset.id;
     fillSearchForm({
       query: preset.query,
@@ -3024,11 +3046,11 @@ const runUploadPreset = async (preset: DemoUploadPreset) => {
     await runSearchFromValues(readSearchForm());
   } catch (error) {
     uploadStatusEl.innerHTML =
-      '<p class="demo-error">' +
-      (error instanceof Error
-        ? "Upload failed: " + error.message
-        : "Upload failed") +
-      "</p>";
+      `<p class="demo-error">${ 
+      error instanceof Error
+        ? `Upload failed: ${  error.message}`
+        : "Upload failed" 
+      }</p>`;
   }
 };
 
@@ -3050,6 +3072,7 @@ const uploadSelectedDocumentFile = async () => {
   if (selectedUploadFile === null) {
     uploadStatusEl.innerHTML =
       '<p class="demo-error">Choose a file before uploading.</p>';
+
     return;
   }
 
@@ -3063,18 +3086,18 @@ const uploadSelectedDocumentFile = async () => {
       },
       uploads: [
         {
-          name: uploadedName,
-          source: `uploads/${uploadedName}`,
-          title: uploadedName,
-          contentType: selectedUploadFile.type || "application/octet-stream",
-          encoding: "base64",
           content: encodeArrayBufferToBase64(
             await selectedUploadFile.arrayBuffer(),
           ),
+          contentType: selectedUploadFile.type || "application/octet-stream",
+          encoding: "base64",
           metadata: {
             kind: "custom",
             uploadedFrom: "html-general-upload",
           },
+          name: uploadedName,
+          source: `uploads/${uploadedName}`,
+          title: uploadedName,
         },
       ],
     });
@@ -3212,8 +3235,8 @@ const refreshData = async () => {
     renderAIModelOptions();
 
     const formatted = buildStatusView(
-      statusData.status as never,
-      statusData.capabilities as never,
+      statusData.status,
+      statusData.capabilities,
       docsData.documents as DemoDocument[],
       selectedMode,
     );
@@ -3288,6 +3311,7 @@ const submitStreamQuery = (event: SubmitEvent) => {
       streamErrorEl,
       "Enter a retrieval question before starting the stream.",
     );
+
     return;
   }
   if (streamModelKeyEl.value.length === 0) {
@@ -3295,6 +3319,7 @@ const submitStreamQuery = (event: SubmitEvent) => {
       streamErrorEl,
       "Configure an AI provider to enable retrieval streaming.",
     );
+
     return;
   }
 
@@ -3332,14 +3357,14 @@ const onPresetSearch = async (event: Event) => {
     "") as SearchFormState["nativeQueryProfile"];
   const topK = Number(button.dataset.topk ?? "6");
   fillSearchForm({
-    query,
-    source,
-    kind: kind === "seed" || kind === "custom" ? kind : "",
     documentId: "",
+    kind: kind === "seed" || kind === "custom" ? kind : "",
     nativeQueryProfile,
+    query,
+    scoreThreshold: "",
+    source,
     topK:
       Number.isFinite(topK) && topK > 0 ? Math.min(20, Math.floor(topK)) : 6,
-    scoreThreshold: "",
   });
   setError(searchErrorEl, "");
   hideSearchResults();
@@ -3352,24 +3377,26 @@ const submitAddDocument = async (event: SubmitEvent) => {
   const addValues = readAddForm();
   if (addValues.title.length === 0 || addValues.text.length === 0) {
     setError(addErrorEl, "title and text are required");
+
     return;
   }
 
   if (addValues.source.length === 0) {
     setError(addErrorEl, "source is required");
+
     return;
   }
 
   try {
     const response = await ragClient.createDocument({
-      id: addValues.id.length > 0 ? addValues.id : undefined,
-      title: addValues.title,
-      source: addValues.source,
-      format: addValues.format,
-      text: addValues.text,
       chunking: {
         strategy: addValues.chunkStrategy,
       },
+      format: addValues.format,
+      id: addValues.id.length > 0 ? addValues.id : undefined,
+      source: addValues.source,
+      text: addValues.text,
+      title: addValues.title,
     });
     if (!response.ok) {
       throw new Error(response.error ?? "Failed to insert document");
@@ -3451,7 +3478,7 @@ qualitySuiteButtonEl.addEventListener("click", () => {
 });
 
 qualityTabRowEl.addEventListener("click", (event) => {
-  const target = event.target;
+  const {target} = event;
   if (!(target instanceof HTMLElement)) return;
   const nextView = target.getAttribute("data-quality-view");
   if (

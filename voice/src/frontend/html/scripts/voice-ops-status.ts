@@ -22,8 +22,8 @@ import {
   mountVoiceReadinessFailures,
   renderVoicePlatformCoverageHTML,
 } from "@absolutejs/voice/client";
-import { mountDemoBargeInProof } from "../../shared/browser";
-import { mountVoiceLiveOpsPanel } from "../../shared/browser";
+import { mountDemoBargeInProof } from "../../../shared/browser";
+import { mountVoiceLiveOpsPanel } from "../../../shared/browser";
 
 defineVoiceCallDebuggerLaunchElement();
 defineVoiceDeliveryRuntimeElement();
@@ -129,6 +129,7 @@ for (const liveOpsPanel of document.querySelectorAll("#live-ops-panel")) {
         if (!route) {
           return undefined;
         }
+
         return new URL(route, window.location.origin).searchParams.get(
           "sessionId",
         );

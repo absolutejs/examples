@@ -26,23 +26,7 @@ import {
     </p>
   `,
 })
-export class HomeView {}
-
-@Component({
-  imports: [CommonModule],
-  selector: "spa-settings",
-  standalone: true,
-  template: `
-    <h2>Settings</h2>
-    <p>
-      Each sub-route is a <code>Route</code> registered via
-      <code>provideRouter</code>. Angular's router handles the dispatch on both
-      server and client.
-    </p>
-  `,
-})
-export class SettingsView {}
-
+export class HomeView {};
 @Component({
   imports: [CommonModule],
   selector: "spa-profile",
@@ -56,7 +40,21 @@ export class SettingsView {}
     </p>
   `,
 })
-export class ProfileView {}
+export class ProfileView {};
+@Component({
+  imports: [CommonModule],
+  selector: "spa-settings",
+  standalone: true,
+  template: `
+    <h2>Settings</h2>
+    <p>
+      Each sub-route is a <code>Route</code> registered via
+      <code>provideRouter</code>. Angular's router handles the dispatch on both
+      server and client.
+    </p>
+  `,
+})
+export class SettingsView {};
 
 const routes: Routes = [
   { component: HomeView, path: "angular" },

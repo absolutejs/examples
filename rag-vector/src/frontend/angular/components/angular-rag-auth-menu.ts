@@ -37,6 +37,7 @@ function getAccountLabel(user: AuthUser | null): string {
     .filter(Boolean)
     .join(" ")
     .trim();
+
   return fullName || user.email || "Account";
 }
 
@@ -157,6 +158,7 @@ export class AngularRAGAuthMenuComponent implements OnInit, OnDestroy {
       const response = await fetch("/oauth2/status");
       if (!response.ok) {
         this.user = null;
+
         return;
       }
       const payload = (await response.json()) as { user?: AuthUser | null };

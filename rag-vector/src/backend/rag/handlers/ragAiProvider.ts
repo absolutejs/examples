@@ -32,6 +32,7 @@ export type DemoAIProviderCatalog = {
 
 const getEnv = (name: string) => {
   const value = process.env[name];
+
   return typeof value === "string" ? value.trim() : "";
 };
 
@@ -46,10 +47,10 @@ const createModelOption = (
   label = modelId,
 ): DemoAIModelOption => ({
   key: `${providerId}:${modelId}`,
+  label,
+  modelId,
   providerId,
   providerLabel,
-  modelId,
-  label,
 });
 
 const parsePrefixedMessage = (
@@ -102,9 +103,9 @@ export const createDemoAIProviderCatalog = (): DemoAIProviderCatalog | null => {
       models: models.map((modelId) =>
         createModelOption("openai", "OpenAI", modelId),
       ),
-      provider: () =>
-        openaiResponses({ apiKey: openaiApiKey }) as DemoAIProviderFactory,
       providerId: "openai",
+      provider: () =>
+        openaiResponses({ apiKey: openaiApiKey }),
     });
   }
 
@@ -123,8 +124,8 @@ export const createDemoAIProviderCatalog = (): DemoAIProviderCatalog | null => {
       models: models.map((modelId) =>
         createModelOption("google", "Google", modelId),
       ),
-      provider: () => gemini({ apiKey: googleApiKey }),
       providerId: "google",
+      provider: () => gemini({ apiKey: googleApiKey }),
     });
   }
 
@@ -143,12 +144,12 @@ export const createDemoAIProviderCatalog = (): DemoAIProviderCatalog | null => {
           defaultModel,
         ),
       ],
+      providerId: "openai-compatible",
       provider: () =>
         openaiCompatible({
           apiKey: openaiCompatibleApiKey,
           baseUrl: openaiCompatibleBaseUrl,
-        }) as DemoAIProviderFactory,
-      providerId: "openai-compatible",
+        }),
     });
   }
 
@@ -163,10 +164,10 @@ export const createDemoAIProviderCatalog = (): DemoAIProviderCatalog | null => {
   );
 
   return {
-    defaultModel: (providerName: string) =>
-      providerMap.get(providerName)?.defaultModel ?? fallbackModel,
     defaultModelKey: entries[0]?.models[0]?.key ?? null,
     models: entries.flatMap((entry) => entry.models),
+    defaultModel: (providerName: string) =>
+      providerMap.get(providerName)?.defaultModel ?? fallbackModel,
     parseMessage: (raw: string) =>
       parsePrefixedMessage(raw, fallbackProvider, fallbackModel),
     provider: (providerName: string) => {
@@ -175,6 +176,7 @@ export const createDemoAIProviderCatalog = (): DemoAIProviderCatalog | null => {
       if (!entry) {
         throw new Error(`Unknown provider: ${providerName}`);
       }
+
       return entry.provider();
     },
   };

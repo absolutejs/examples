@@ -65,16 +65,16 @@ export const listDemoBackends = (
     if (id === "postgres") {
       return postgresUrl.length > 0
         ? {
+            available: true,
             id: "postgres",
             label: "PostgreSQL",
             path: getBackendPath("postgres"),
-            available: true,
           }
         : {
+            available: false,
             id: "postgres",
             label: "PostgreSQL",
             path: getBackendPath("postgres"),
-            available: false,
             reason:
               "Set RAG_POSTGRES_URL to enable the PostgreSQL pgvector backend.",
           };
@@ -83,25 +83,25 @@ export const listDemoBackends = (
     if (id === "pinecone") {
       return pineconeReady
         ? {
+            available: true,
             id: "pinecone",
             label: "Pinecone",
             path: getBackendPath("pinecone"),
-            available: true,
           }
         : {
+            available: false,
             id: "pinecone",
             label: "Pinecone",
             path: getBackendPath("pinecone"),
-            available: false,
             reason: PINECONE_DISABLED_REASON,
           };
     }
 
     return {
+      available: true,
       id,
       label: id === "sqlite-native" ? "SQLite Native" : "SQLite Fallback",
       path: getBackendPath(id),
-      available: true,
     };
   });
 };

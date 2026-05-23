@@ -1,8 +1,5 @@
-import {
-  type SavedIntake,
-  type VoiceModelProvider,
-  type VoiceRoutingMode,
-} from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
+import type { VoiceModelProvider, VoiceRoutingMode } from "../types/voice";
 import {
   appendVoiceIOProviderRouterTraceEvent,
   appendVoiceRealCallProfileRecoveryEvidence,
@@ -16,8 +13,6 @@ import {
   createVoiceRealCallEvidenceRuntime,
   createVoiceRealCallEvidenceRuntimeRoutes,
   createVoiceRealCallEvidenceRuntimeWorkerLoop,
-  createVoiceSQLiteRealCallProfileEvidenceStore,
-  createVoiceSQLiteRealCallProfileRecoveryJobStore,
   createVoiceSTTProviderRouter,
   createVoiceTTSProviderRouter,
   resolveVoiceRealCallProfileProviderRoute,
@@ -33,12 +28,17 @@ import {
   type VoiceSessionRecord,
   voice,
 } from "@absolutejs/voice";
+import {
+  createVoiceDrizzleRealCallProfileEvidenceStore,
+  createVoiceDrizzleRealCallProfileRecoveryJobStore,
+} from "@absolutejs/voice/drizzle";
 import { assemblyai } from "@absolutejs/voice-assemblyai";
 import { deepgram } from "@absolutejs/voice-deepgram";
 import { gemini } from "@absolutejs/voice-gemini";
 import { openai } from "@absolutejs/voice-openai";
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
+import { db } from "../../db/client";
 import {
   configuredModelProviders,
   configuredSTTProviders,
@@ -380,26 +380,16 @@ const realCallProfilesRoot =
   process.env.VOICE_REAL_CALL_PROFILES_ROOT ??
   resolve(runtimeDirectory, "real-call-profiles");
 
-const realCallProfileRecoveryJobsPath = resolve(
-  runtimeDirectory,
-  "real-call-recovery/jobs.sqlite",
-);
-
-const realCallProfileEvidencePath = resolve(
-  runtimeDirectory,
-  "real-call-profile-evidence.sqlite",
-);
-
 const realCallProfileRecoveryJobStore =
-  createVoiceSQLiteRealCallProfileRecoveryJobStore({
+  createVoiceDrizzleRealCallProfileRecoveryJobStore({
+    db,
     idPrefix: "voice-profile-recovery",
-    path: realCallProfileRecoveryJobsPath,
   });
 
 const realCallProfileEvidenceStore =
-  createVoiceSQLiteRealCallProfileEvidenceStore({
+  createVoiceDrizzleRealCallProfileEvidenceStore({
+    db,
     idPrefix: "voice-profile-evidence",
-    path: realCallProfileEvidencePath,
   });
 
 const latestProofTrendsJsonPath = resolve(
@@ -565,7 +555,7 @@ const realCallEvidenceRuntime = createVoiceRealCallEvidenceRuntime({
   existingEvidenceLimit: 5000,
   history: {
     maxAgeMs: proofTrendsMaxAgeMs,
-    source: ".voice-runtime/real-call-evidence-runtime",
+    source: "real-call-evidence-runtime",
   },
   phoneEvidence: readRealCallEvidenceRuntimePhoneEvidence,
   providerRoleEvidence: readRealCallEvidenceRuntimeProviderRoleEvidence,
@@ -574,11 +564,11 @@ const realCallEvidenceRuntime = createVoiceRealCallEvidenceRuntime({
 
 const realCallEvidenceRuntimeWorkerLoop =
   createVoiceRealCallEvidenceRuntimeWorkerLoop({
+    pollIntervalMs: realCallEvidenceRuntimeAutocollectIntervalMs,
+    runtime: realCallEvidenceRuntime,
     onError: (error) => {
       console.error("Real-call evidence auto-collector failed:", error);
     },
-    pollIntervalMs: realCallEvidenceRuntimeAutocollectIntervalMs,
-    runtime: realCallEvidenceRuntime,
   });
 
 const realCallEvidenceRuntimeRoutes = createVoiceRealCallEvidenceRuntimeRoutes({
@@ -638,9 +628,7 @@ const runRecoveryProofScript = async (
   }
 };
 
-const refreshRealCallEvidenceRuntimeAfterRecovery = async () => {
-  return await realCallEvidenceRuntime.collect();
-};
+const refreshRealCallEvidenceRuntimeAfterRecovery = async () => await realCallEvidenceRuntime.collect();
 
 const getRecoveryProofChromePort = (profileId?: string) => {
   if (profileId === "meeting-recorder") {
@@ -654,6 +642,7 @@ const getRecoveryProofChromePort = (profileId?: string) => {
     (sum, char) => sum + char.charCodeAt(0),
     0,
   );
+
   return String(9326 + (hash % 200));
 };
 
@@ -702,11 +691,11 @@ const runBrowserCallProfileRecoveryProof = async (input?: {
   }
 
   return {
-    ok: passing,
-    status: passing ? "pass" : "fail",
     message: passing
       ? "Browser profile proof completed and latest artifact is passing."
       : "Browser profile proof completed but latest artifact is not passing.",
+    ok: passing,
+    status: passing ? "pass" : "fail",
   } as const;
 };
 
@@ -723,9 +712,10 @@ const runPhoneSmokeRecoveryProof = async (input?: { profileId?: string }) => {
         `${baseUrl}/api/voice/phone/smoke-contract?provider=${provider}&sessionId=${sessionId}`,
         { headers: { accept: "application/json" } },
       );
+
       return {
-        provider,
         ok: response.ok,
+        provider,
         status: response.status,
       };
     }),
@@ -733,11 +723,11 @@ const runPhoneSmokeRecoveryProof = async (input?: { profileId?: string }) => {
   const failing = results.filter((result) => !result.ok);
   if (failing.length > 0) {
     return {
-      ok: false,
-      status: "fail",
       message: `Phone smoke proof failed for ${failing
         .map((result) => `${result.provider} (${result.status})`)
         .join(", ")}.`,
+      ok: false,
+      status: "fail",
     } as const;
   }
 
@@ -772,11 +762,11 @@ const runPhoneSmokeRecoveryProof = async (input?: { profileId?: string }) => {
   }
 
   return {
-    ok: true,
-    status: "pass",
     message: `Phone smoke proof completed for ${results
       .map((result) => result.provider)
       .join(", ")}.`,
+    ok: true,
+    status: "pass",
   } as const;
 };
 
@@ -843,6 +833,7 @@ const readRealCallProfileHistory = async () => {
     reportPaths.map(async (path) => {
       try {
         const parsed = (await Bun.file(path).json()) as Record<string, unknown>;
+
         return buildVoiceProofTrendReport({
           ...parsed,
           maxAgeMs: proofTrendsMaxAgeMs,
@@ -868,11 +859,9 @@ const readRealCallProfileHistory = async () => {
   };
 };
 
-const readRealCallProfileDefaultsReport = async () => {
-  return buildVoiceRealCallProfileHistoryReport(
+const readRealCallProfileDefaultsReport = async () => buildVoiceRealCallProfileHistoryReport(
     await readRealCallProfileHistory(),
   );
-};
 
 const resolveProfileProviderRoute = async <TProvider extends string>(input: {
   availableProviders: readonly TProvider[];
@@ -890,7 +879,7 @@ const resolveProfileProviderRoute = async <TProvider extends string>(input: {
     role: input.role,
   });
 
-const telephonyTTS = createVoiceTTSProviderRouter<VoiceTTSProvider>({
+const ttsAdapter = createVoiceTTSProviderRouter<VoiceTTSProvider>({
   adapters: {
     ...(openAITelephonyTTS ? { openai: openAITelephonyTTS } : {}),
     emergency: createEmergencyTelephonyTTS(),
@@ -902,6 +891,7 @@ const telephonyTTS = createVoiceTTSProviderRouter<VoiceTTSProvider>({
       profileId: sessionVoiceProfileIds.get(input.sessionId),
       role: "tts",
     });
+
     return [
       profileProvider,
       ...(openAITelephonyTTS ? ["openai", "emergency"] : ["emergency"]),
@@ -946,6 +936,7 @@ const telephonyTTS = createVoiceTTSProviderRouter<VoiceTTSProvider>({
 
 const findVoiceProfileDefault = async (profileId?: string) => {
   const report = await readRealCallProfileDefaultsReport();
+
   return (
     report.defaults.profiles.find(
       (profile) => profile.profileId === profileId,
@@ -961,6 +952,41 @@ const assistantModel = createVoiceProviderRouter<
   SavedIntake,
   VoiceModelProvider
 >({
+  fallbackMode: "provider-error",
+  onProviderEvent: traceProviderEvent,
+  policy: "prefer-selected",
+  providerHealth: {
+    cooldownMs: 30_000,
+    failureThreshold: 1,
+    rateLimitCooldownMs: 120_000,
+  },
+  providerProfiles: {
+    anthropic: {
+      cost: 3,
+      latencyMs: 700,
+      priority: 2,
+      timeoutMs: providerLatencyBudgets.anthropic,
+    },
+    deterministic: {
+      cost: 0,
+      latencyMs: 5,
+      priority: 4,
+      timeoutMs: providerLatencyBudgets.deterministic,
+    },
+    gemini: {
+      cost: 1,
+      latencyMs: 650,
+      priority: 3,
+      timeoutMs: providerLatencyBudgets.gemini,
+    },
+    openai: {
+      cost: 2,
+      latencyMs: 500,
+      priority: 1,
+      timeoutMs: providerLatencyBudgets.openai,
+    },
+  },
+  providers: providerModels,
   allowProviders: () => configuredModelProviders,
   fallback: async ({ context, session }) =>
     providerFallbackOrder(
@@ -974,43 +1000,8 @@ const assistantModel = createVoiceProviderRouter<
         role: "llm",
       })) ?? resolveRequestedProvider(context),
     ),
-  fallbackMode: "provider-error",
   isProviderError: (error, provider) =>
     provider !== "deterministic" && isAssistantProviderError(error),
-  onProviderEvent: traceProviderEvent,
-  policy: "prefer-selected",
-  providerHealth: {
-    cooldownMs: 30_000,
-    failureThreshold: 1,
-    rateLimitCooldownMs: 120_000,
-  },
-  providerProfiles: {
-    deterministic: {
-      cost: 0,
-      latencyMs: 5,
-      priority: 4,
-      timeoutMs: providerLatencyBudgets.deterministic,
-    },
-    openai: {
-      cost: 2,
-      latencyMs: 500,
-      priority: 1,
-      timeoutMs: providerLatencyBudgets.openai,
-    },
-    anthropic: {
-      cost: 3,
-      latencyMs: 700,
-      priority: 2,
-      timeoutMs: providerLatencyBudgets.anthropic,
-    },
-    gemini: {
-      cost: 1,
-      latencyMs: 650,
-      priority: 3,
-      timeoutMs: providerLatencyBudgets.gemini,
-    },
-  },
-  providers: providerModels,
   selectProvider: async ({ context, session }) =>
     resolveProfileProviderRoute({
       availableProviders: configuredModelProviders,
@@ -1026,17 +1017,6 @@ const assistantModel = createVoiceProviderRouter<
 const createDemoSTTRouter = (routing: VoiceRoutingMode): STTAdapter =>
   createVoiceSTTProviderRouter<VoiceSTTProvider>({
     adapters: sttProviderAdapters,
-    fallback: async (input) => {
-      const profileProvider = await resolveProfileProviderRoute({
-        availableProviders: configuredSTTProviders,
-        fallbackProvider: selectedSTTProvider,
-        profileId: sessionVoiceProfileIds.get(input.sessionId),
-        role: "stt",
-      });
-      return [profileProvider, ...configuredSTTProviders].filter(
-        Boolean,
-      ) as VoiceSTTProvider[];
-    },
     onProviderEvent: traceSTTProviderEvent,
     policy:
       routing === "fastest"
@@ -1051,13 +1031,6 @@ const createDemoSTTRouter = (routing: VoiceRoutingMode): STTAdapter =>
       failureThreshold: 1,
     },
     providerProfiles: {
-      deepgram: {
-        cost: 4,
-        latencyMs: 250,
-        priority: 1,
-        quality: 0.94,
-        timeoutMs: sttLatencyBudgets.deepgram,
-      },
       assemblyai: {
         cost: 2,
         latencyMs: 450,
@@ -1065,6 +1038,25 @@ const createDemoSTTRouter = (routing: VoiceRoutingMode): STTAdapter =>
         quality: 0.88,
         timeoutMs: sttLatencyBudgets.assemblyai,
       },
+      deepgram: {
+        cost: 4,
+        latencyMs: 250,
+        priority: 1,
+        quality: 0.94,
+        timeoutMs: sttLatencyBudgets.deepgram,
+      },
+    },
+    fallback: async (input) => {
+      const profileProvider = await resolveProfileProviderRoute({
+        availableProviders: configuredSTTProviders,
+        fallbackProvider: selectedSTTProvider,
+        profileId: sessionVoiceProfileIds.get(input.sessionId),
+        role: "stt",
+      });
+
+      return [profileProvider, ...configuredSTTProviders].filter(
+        Boolean,
+      ) as VoiceSTTProvider[];
     },
     selectProvider: (input) =>
       resolveProfileProviderRoute({
@@ -1086,6 +1078,7 @@ const sttAdapter: STTAdapter = {
   kind: "stt",
   open: (input) => {
     const routing = sessionRoutingModes.get(input.sessionId) ?? "balanced";
+
     return sttRouters[routing].open(input);
   },
 };
@@ -1112,10 +1105,8 @@ export {
   realCallEvidenceRuntimeAutocollectIntervalMs,
   realCallEvidenceRuntimeRoutes,
   realCallEvidenceRuntimeWorkerLoop,
-  realCallProfileEvidencePath,
   realCallProfileEvidenceStore,
   realCallProfileRecoveryJobStore,
-  realCallProfileRecoveryJobsPath,
   realCallProfilesRoot,
   refreshRealCallEvidenceRuntimeAfterRecovery,
   renderRealCallProfileRecoveryHTML,
@@ -1123,6 +1114,6 @@ export {
   runPhoneSmokeRecoveryProof,
   sloCalibrationMinRuns,
   sttAdapter,
-  telephonyTTS,
+  ttsAdapter,
 };
 export type { VapiCoverageResult, VapiCoverageSummary };

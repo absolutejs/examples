@@ -1,8 +1,6 @@
-import { formatDateTime } from "../../shared/browser";
-import {
-  getVoiceModeLabel,
-  type SavedIntake,
-} from "../../../shared/demo";
+import { formatDateTime } from "../../../shared/browser";
+import { getVoiceModeLabel } from "../../../shared/demo";
+import type { SavedIntake } from "../../../types/domain";
 
 type SavedCapturesCardProps = {
   savedIntakes: SavedIntake[];

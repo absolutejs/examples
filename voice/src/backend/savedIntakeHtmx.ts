@@ -1,5 +1,5 @@
 import type { VoiceHTMXRenderer, VoiceSessionRecord } from "@absolutejs/voice";
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import {
   escapeHtml,
   formatCallDisposition,

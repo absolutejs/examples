@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchSavedIntakes } from "../../shared/browser";
-import type { SavedIntake } from "../../../shared/demo";
+import { fetchSavedIntakes } from "../../../shared/browser";
+import type { SavedIntake } from "../../../types/domain";
 
 const SAVED_INTAKES_INTERVAL_MS = 4_000;
 

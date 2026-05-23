@@ -1,4 +1,5 @@
-import { reloadWithVoiceSearchParam } from "../../shared/browser";
+import { reloadWithVoiceSearchParam } from "../../../shared/browser";
+import { VOICE_PROFILES } from "../../../constants/voiceOptions";
 import {
   getInitialVoiceModelProvider,
   getInitialVoiceProfileId,
@@ -12,12 +13,13 @@ import {
   rememberVoiceProfileId,
   rememberVoiceRoutingMode,
   rememberVoiceSpeechEngine,
-  VOICE_PROFILES,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
+import type {
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 export const syncVoiceConfig = () => {
   const provider = getInitialVoiceModelProvider();

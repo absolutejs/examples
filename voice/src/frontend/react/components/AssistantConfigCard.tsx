@@ -1,12 +1,12 @@
-import { VOICE_ASSISTANT_CONFIG } from "../../../shared/demo";
+import { VOICE_ASSISTANT_CONFIG } from "../../../constants/assistant";
 
 export const AssistantConfigCard = () => (
   <article className="voice-card voice-assistant-config">
     <span className="voice-framework-pill">Assistant API</span>
     <h2>{VOICE_ASSISTANT_CONFIG.id}</h2>
     <p className="voice-footnote">
-      Powered by createVoiceAssistant with a{" "}
-      {VOICE_ASSISTANT_CONFIG.recipe} artifact plan.
+      Powered by createVoiceAssistant with a {VOICE_ASSISTANT_CONFIG.recipe}{" "}
+      artifact plan.
     </p>
     <div className="voice-config-grid">
       <div>
@@ -43,9 +43,8 @@ export const AssistantConfigCard = () => (
       </div>
     </div>
     <p className="voice-footnote">
-      <a href="/assistant">Open analytics</a> ·{" "}
-      <a href="/tasks">Open tasks</a> ·{" "}
-      <a href="/integrations">Open integration events</a>
+      <a href="/assistant">Open analytics</a> · <a href="/tasks">Open tasks</a>{" "}
+      · <a href="/integrations">Open integration events</a>
       {" · "}
       <a href="/barge-in">Open barge-in proof</a>
     </p>

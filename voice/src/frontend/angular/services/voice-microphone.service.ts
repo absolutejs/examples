@@ -5,7 +5,7 @@ import {
   createVoiceWavePath,
   formatErrorMessage,
   pushVoiceWaveLevel,
-} from "../../shared/browser";
+} from "../../../shared/browser";
 
 type StartMicrophoneOptions = {
   onAudio: (audio: Uint8Array | ArrayBuffer) => void;

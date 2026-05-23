@@ -2,7 +2,7 @@
 import {
   VOICE_DEMO_GUIDE_STEPS,
   VOICE_DEMO_GUIDE_TITLE,
-} from "../../../shared/demo";
+} from "../../../constants/demoCopy";
 </script>
 
 <template>

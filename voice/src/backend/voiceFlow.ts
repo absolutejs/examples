@@ -5,12 +5,9 @@ import type {
   VoiceSessionRecord,
   VoiceTurnRecord,
 } from "@absolutejs/voice";
-import {
-  type SavedIntake,
-  type VoiceDemoMode,
-  type VoiceScenarioId,
-  VOICE_TEST_QUESTIONS,
-} from "../shared/demo";
+import { VOICE_TEST_QUESTIONS } from "../constants/demoCopy";
+import type { SavedIntake } from "../types/domain";
+import type { VoiceDemoMode, VoiceScenarioId } from "../types/voice";
 
 const cleanText = (value: string) => value.trim().replace(/\s+/g, " ");
 
@@ -40,6 +37,7 @@ const clipWords = (value: string, maxWords: number) => {
   }
 
   const clipped = words.slice(0, maxWords).join(" ");
+
   return words.length > maxWords ? `${clipped}...` : clipped;
 };
 
@@ -87,11 +85,13 @@ const buildTitle = (input: {
         input.scenarioId === "guided"
           ? `${input.detectedName}'s guided test`
           : `${input.detectedName}'s recording`;
+
       return dispositionLabel ? `${base} (${dispositionLabel})` : base;
     }
 
     const base =
       input.scenarioId === "guided" ? "Guided voice test" : "General recording";
+
     return dispositionLabel ? `${base} (${dispositionLabel})` : base;
   }
 
@@ -143,8 +143,8 @@ const detectLifecycleIntent = (text: string) => {
 
     return {
       assistantText: `Transferring this call to ${target}.`,
-      type: "transfer" as const,
       target,
+      type: "transfer" as const,
     };
   }
 
@@ -181,22 +181,22 @@ const detectLifecycleIntent = (text: string) => {
 };
 
 export const VOICE_DEMO_PHRASE_HINTS: VoicePhraseHint[] = [
-  { text: "AbsoluteJS", aliases: ["absolute js"] },
-  { text: "Deepgram", aliases: ["deep gram"] },
-  { text: "Elysia", aliases: ["elisia"] },
-  { text: "HTMX", aliases: ["html x", "h t m x"] },
-  { text: "Vue", aliases: ["view"] },
-  { text: "Svelte", aliases: ["svelt"] },
-  { text: "voice intake", aliases: ["voice in take"] },
-  { text: "guided test", aliases: ["guide test"] },
-  { text: "general recording", aliases: ["general recordin"] },
-  { text: "billing", aliases: ["bill ing"] },
-  { text: "support", aliases: ["supp ort"] },
+  { aliases: ["absolute js"], text: "AbsoluteJS" },
+  { aliases: ["deep gram"], text: "Deepgram" },
+  { aliases: ["elisia"], text: "Elysia" },
+  { aliases: ["html x", "h t m x"], text: "HTMX" },
+  { aliases: ["view"], text: "Vue" },
+  { aliases: ["svelt"], text: "Svelte" },
+  { aliases: ["voice in take"], text: "voice intake" },
+  { aliases: ["guide test"], text: "guided test" },
+  { aliases: ["general recordin"], text: "general recording" },
+  { aliases: ["bill ing"], text: "billing" },
+  { aliases: ["supp ort"], text: "support" },
   { text: "sales" },
-  { text: "human agent", aliases: ["human", "agent"] },
-  { text: "voicemail", aliases: ["voice mail"] },
-  { text: "no answer", aliases: ["no one answered"] },
-  { text: "escalation", aliases: ["escalate"] },
+  { aliases: ["human", "agent"], text: "human agent" },
+  { aliases: ["voice mail"], text: "voicemail" },
+  { aliases: ["no one answered"], text: "no answer" },
+  { aliases: ["escalate"], text: "escalation" },
 ];
 
 export const buildSavedIntake = <
@@ -250,8 +250,8 @@ export const buildSavedIntake = <
     title: buildTitle({
       detectedName,
       disposition,
-      scenarioId: mode,
       promptAnswers,
+      scenarioId: mode,
       transcript,
     }),
     transcript: transcript || "No transcript captured",

@@ -19,6 +19,7 @@ export const ReactRAGVectorDemo = ({
   mode,
 }: DemoProps) => {
   const activeMode = mode ?? "sqlite-native";
+
   return (
     <html lang="en">
       <Head
@@ -40,8 +41,7 @@ export const ReactRAGVectorDemo = ({
           </div>
           <div className="demo-header-actions">
             <ReactRAGVectorDemoNav
-              availableBackends={availableBackends}
-              activeMode={activeMode}
+              activeMode={activeMode} availableBackends={availableBackends}
             />
             <ReactRAGAuthMenu />
           </div>

@@ -3,9 +3,11 @@ import {
   formatErrorMessage,
   postVoiceLiveOpsAction,
   renderVoiceLiveOpsResultHTML,
-  type VoiceLiveOpsAction,
-  type VoiceLiveOpsActionResult,
-} from "../../shared/browser";
+} from "../../../shared/browser";
+import type {
+  VoiceLiveOpsAction,
+  VoiceLiveOpsActionResult,
+} from "../../../types/domain";
 
 type LiveOpsActionContext = {
   applySideEffects: (input: {

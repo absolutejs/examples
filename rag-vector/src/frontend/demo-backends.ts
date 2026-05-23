@@ -290,16 +290,16 @@ export const demoReleaseWorkspaces: Array<{
   description: string;
 }> = [
   {
-    id: "alpha",
-    label: "Alpha workspace",
     description:
       "Shows the alpha corpus group inside the shared release-control group.",
+    id: "alpha",
+    label: "Alpha workspace",
   },
   {
-    id: "beta",
-    label: "Beta workspace",
     description:
       "Shows the beta corpus group inside the same shared release-control group.",
+    id: "beta",
+    label: "Beta workspace",
   },
 ];
 
@@ -776,9 +776,6 @@ export const buildDemoReleasePanelState = (
 
   const policyHistoryEntries = [
     ...releasePolicyHistory.map((entry, index) => ({
-      id: `release-policy-${entry.rolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
-      recordedAt: entry.recordedAt ?? 0,
-      title: `release ${entry.rolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
       detail: [
         entry.requireApprovalBeforePromotion === true
           ? "approval required"
@@ -793,11 +790,11 @@ export const buildDemoReleasePanelState = (
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `release-policy-${entry.rolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
+      recordedAt: entry.recordedAt ?? 0,
+      title: `release ${entry.rolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
     })),
     ...baselineGatePolicyHistory.map((entry, index) => ({
-      id: `gate-policy-${entry.rolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
-      recordedAt: entry.recordedAt ?? 0,
-      title: `gate ${entry.rolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
       detail: [
         entry.policy?.severity ? `${entry.policy.severity} gate` : undefined,
         typeof entry.policy?.minAverageF1Delta === "number"
@@ -811,11 +808,11 @@ export const buildDemoReleasePanelState = (
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `gate-policy-${entry.rolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
+      recordedAt: entry.recordedAt ?? 0,
+      title: `gate ${entry.rolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
     })),
     ...releaseEscalationPolicyHistory.map((entry, index) => ({
-      id: `escalation-policy-${entry.targetRolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
-      recordedAt: entry.recordedAt ?? 0,
-      title: `escalation ${entry.targetRolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
       detail: [
         entry.openIncidentSeverity
           ? `open ${entry.openIncidentSeverity}`
@@ -828,11 +825,11 @@ export const buildDemoReleasePanelState = (
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `escalation-policy-${entry.targetRolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
+      recordedAt: entry.recordedAt ?? 0,
+      title: `escalation ${entry.targetRolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
     })),
     ...handoffPolicyHistory.map((entry, index) => ({
-      id: `handoff-policy-${entry.targetRolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
-      recordedAt: entry.recordedAt ?? 0,
-      title: `handoff ${entry.targetRolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
       detail: [
         entry.enabled ? "enabled" : "disabled",
         typeof entry.maxApprovedDecisionAgeMs === "number"
@@ -843,6 +840,9 @@ export const buildDemoReleasePanelState = (
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `handoff-policy-${entry.targetRolloutLabel ?? "lane"}-${entry.recordedAt ?? index}-${index}`,
+      recordedAt: entry.recordedAt ?? 0,
+      title: `handoff ${entry.targetRolloutLabel ?? "lane"} · ${entry.changeKind ?? "snapshot"}`,
     })),
   ]
     .filter((entry) => entry.recordedAt > 0)
@@ -915,10 +915,10 @@ export const buildDemoReleasePanelState = (
     blockedMultivector: actions.find(
       (entry) => entry.id === "switch-to-blocked-multivector-scenario",
     ),
-    ready: actions.find((entry) => entry.id === "switch-to-ready-scenario"),
     completed: actions.find(
       (entry) => entry.id === "switch-to-completed-scenario",
     ),
+    ready: actions.find((entry) => entry.id === "switch-to-ready-scenario"),
   };
   const recentReleaseDecisions = releaseData?.recentReleaseDecisions ?? [];
   const recentReleaseRuns =
@@ -936,8 +936,6 @@ export const buildDemoReleasePanelState = (
 
   const auditSurfaceEntries = [
     ...activeBaselines.slice(0, 2).map((entry, index) => ({
-      id: `audit-baseline-${entry.rolloutLabel ?? "lane"}-${entry.id ?? index}`,
-      title: `baseline ${entry.rolloutLabel ?? "lane"} · ${entry.retrievalId}`,
       detail: [
         `v${entry.version}`,
         entry.label,
@@ -946,10 +944,10 @@ export const buildDemoReleasePanelState = (
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `audit-baseline-${entry.rolloutLabel ?? "lane"}-${entry.id ?? index}`,
+      title: `baseline ${entry.rolloutLabel ?? "lane"} · ${entry.retrievalId}`,
     })),
     ...recentReleaseDecisions.slice(0, 2).map((entry, index) => ({
-      id: `audit-decision-${entry.targetRolloutLabel ?? "lane"}-${entry.decidedAt ?? index}`,
-      title: `decision ${entry.targetRolloutLabel ?? "lane"} · ${(entry.kind ?? "decision").replaceAll("_", " ")}`,
       detail: [
         entry.notes,
         formatCorpusGroupLabel(entry.corpusGroupKey),
@@ -957,23 +955,25 @@ export const buildDemoReleasePanelState = (
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `audit-decision-${entry.targetRolloutLabel ?? "lane"}-${entry.decidedAt ?? index}`,
+      title: `decision ${entry.targetRolloutLabel ?? "lane"} · ${(entry.kind ?? "decision").replaceAll("_", " ")}`,
     })),
     ...recentReleaseRuns.slice(0, 2).map((entry, index) => ({
-      id: `audit-history-${entry.groupKey ?? "group"}-${entry.finishedAt ?? index}`,
-      title: `history ${entry.groupKey ?? "group"} · ${(entry.label ?? entry.id ?? "run").replaceAll("_", " ")}`,
       detail: [
         formatCorpusGroupLabel(entry.corpusGroupKey),
         entry.finishedAt ? formatDate(entry.finishedAt) : undefined,
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `audit-history-${entry.groupKey ?? "group"}-${entry.finishedAt ?? index}`,
+      title: `history ${entry.groupKey ?? "group"} · ${(entry.label ?? entry.id ?? "run").replaceAll("_", " ")}`,
     })),
     ...recentIncidentRemediationDecisions.slice(0, 2).map((entry, index) => ({
-      id: `audit-remediation-${entry.remediationKind ?? "decision"}-${entry.decidedAt ?? index}`,
-      title: `remediation ${(entry.remediationKind ?? "decision").replaceAll("_", " ")} · ${entry.status ?? "recorded"}`,
       detail: [entry.decidedAt ? formatDate(entry.decidedAt) : undefined]
         .filter(Boolean)
         .join(" · "),
+      id: `audit-remediation-${entry.remediationKind ?? "decision"}-${entry.decidedAt ?? index}`,
+      title: `remediation ${(entry.remediationKind ?? "decision").replaceAll("_", " ")} · ${entry.status ?? "recorded"}`,
     })),
   ]
     .filter((entry) => entry.detail || entry.title)
@@ -985,26 +985,26 @@ export const buildDemoReleasePanelState = (
 
   const pollingSurfaceEntries = [
     {
-      id: "poll-release-incidents",
-      title: "GET /status/release/incidents",
       detail: incidentSummary
         ? `${incidentSummary.openCount} open · ${incidentSummary.acknowledgedOpenCount} acknowledged · ${incidentSummary.resolvedCount ?? 0} resolved`
         : "No release incidents",
+      id: "poll-release-incidents",
+      title: "GET /status/release/incidents",
     },
     {
-      id: "poll-release-remediations",
-      title: "GET /status/release/remediations",
       detail: releaseData?.remediationStatus
         ?.incidentRemediationExecutionSummary
         ? `${releaseData.remediationStatus.incidentRemediationExecutionSummary.guardrailBlockedCount} blocked · ${releaseData.remediationStatus.incidentRemediationExecutionSummary.replayCount} replays · ${(releaseData.remediationStatus.recentIncidentRemediationExecutions ?? []).length} executions`
         : `${(releaseData?.remediationStatus?.recentIncidentRemediationExecutions ?? []).length} executions`,
+      id: "poll-release-remediations",
+      title: "GET /status/release/remediations",
     },
     {
-      id: "poll-handoff-incidents",
-      title: "GET /status/handoffs/incidents",
       detail: stableHandoffIncidentSummary
         ? `${stableHandoffIncidentSummary.openCount ?? 0} open · ${stableHandoffIncidentSummary.acknowledgedOpenCount ?? 0} acknowledged · ${stableHandoffIncidentSummary.resolvedCount ?? 0} resolved`
         : "No handoff incidents",
+      id: "poll-handoff-incidents",
+      title: "GET /status/handoffs/incidents",
     },
   ];
   const latestReleaseDecision = recentReleaseDecisions
@@ -1191,6 +1191,7 @@ export const buildDemoReleasePanelState = (
           rows.push(`${run.label ?? "run"} · ${runtimeReasons[0]}`);
         }
       }
+
       return rows;
     }),
   ].filter((entry): entry is string => Boolean(entry));
@@ -1217,45 +1218,43 @@ export const buildDemoReleasePanelState = (
 
   const releaseEvidenceDrills = [
     {
-      id: "general-regression-evidence",
-      label: "Run general evidence",
-      summary:
-        "Launches the support-policy benchmark query so the trace shows a classic stable gate regression path.",
-      query: "List support policies for shipping and returns.",
-      topK: 6,
+      active: scenarioClassification === "general",
       benchmarkPresetId: "support-policy-source",
-      retrievalPresetId: "",
       classification: "general" as const,
       classificationLabel: formatGovernanceClassificationLabel("general"),
+      driver: "benchmark preset: Support policy benchmark",
       expectedSource: "guide/demo.md",
+      id: "general-regression-evidence",
+      label: "Run general evidence",
+      query: "List support policies for shipping and returns.",
+      retrievalPresetId: "",
+      summary:
+        "Launches the support-policy benchmark query so the trace shows a classic stable gate regression path.",
+      topK: 6,
       traceExpectation:
         "Trace expectation · gate reason stays general, support-policy source wins, and no multivector cue is required.",
-      driver: "benchmark preset: Support policy benchmark",
-      active: scenarioClassification === "general",
     },
     {
-      id: "multivector-regression-evidence",
-      label: "Run multivector evidence",
-      summary:
-        "Launches the late-interaction benchmark query so the trace shows collapsed-parent and variant-hit evidence directly.",
-      query:
-        "Which aurora launch packet phrase shows late interaction can match precise wording without splitting the parent document?",
-      topK: 4,
+      active: scenarioClassification === "multivector",
       benchmarkPresetId: "multivector-late-interaction",
-      retrievalPresetId: "hybrid",
       classification: "multivector" as const,
       classificationLabel: formatGovernanceClassificationLabel("multivector"),
+      driver: "benchmark preset: Late interaction benchmark",
       expectedSource: "guide/multivector-release-guide.md",
+      id: "multivector-regression-evidence",
+      label: "Run multivector evidence",
+      query:
+        "Which aurora launch packet phrase shows late interaction can match precise wording without splitting the parent document?",
+      retrievalPresetId: "hybrid",
+      summary:
+        "Launches the late-interaction benchmark query so the trace shows collapsed-parent and variant-hit evidence directly.",
+      topK: 4,
       traceExpectation:
         "Trace expectation · collapsedParents, lexicalVariantHits, and the lead multivector cue all stay visible.",
-      driver: "benchmark preset: Late interaction benchmark",
-      active: scenarioClassification === "multivector",
     },
   ];
   const releaseBlockerComparisonCards = [
     {
-      id: "general",
-      label: "General regression",
       active: scenarioClassification === "general",
       detailLines: [
         "Signal · passing-rate and stable gate regressions block promotion.",
@@ -1263,10 +1262,10 @@ export const buildDemoReleasePanelState = (
         "Expected source · guide/demo.md",
         "Inspect · release alerts, readiness history, and gate deltas.",
       ],
+      id: "general",
+      label: "General regression",
     },
     {
-      id: "multivector",
-      label: "Multivector regression",
       active: scenarioClassification === "multivector",
       detailLines: [
         "Signal · collapsed-parent and variant-hit coverage regressions block promotion.",
@@ -1274,6 +1273,8 @@ export const buildDemoReleasePanelState = (
         "Expected source · guide/multivector-release-guide.md",
         "Inspect · lead multivector cue, lexicalVariantHits, and collapsedParents in the trace.",
       ],
+      id: "multivector",
+      label: "Multivector regression",
     },
   ];
   const releaseHeroSummary =
@@ -1290,117 +1291,111 @@ export const buildDemoReleasePanelState = (
               : incidentSummaryLabel;
   const releaseScenarioActions = [
     {
-      id: "blocked-general",
-      label: "General block",
       action: actions.find(
         (entry) => entry.id === "switch-to-blocked-general-scenario",
       ),
       active: scenarioId === "blocked-general",
+      id: "blocked-general",
+      label: "General block",
     },
     {
-      id: "blocked-multivector",
-      label: "Multivector block",
       action: actions.find(
         (entry) => entry.id === "switch-to-blocked-multivector-scenario",
       ),
       active: scenarioId === "blocked-multivector",
+      id: "blocked-multivector",
+      label: "Multivector block",
     },
     {
-      id: "ready",
-      label: "Ready",
       action: scenarioSwitchActions.ready,
       active: scenarioId === "ready",
+      id: "ready",
+      label: "Ready",
     },
     {
-      id: "completed",
-      label: "Completed",
       action: scenarioSwitchActions.completed,
       active: scenarioId === "completed",
+      id: "completed",
+      label: "Completed",
     },
   ];
   const releasePathSteps = [
     {
-      id: "blocked-general",
-      label: "General block",
-      summary: "Passing-rate gate fails and opens a classic rollout incident.",
+      action: actions.find(
+        (entry) => entry.id === "switch-to-blocked-general-scenario",
+      ),
       detail:
         "Use this branch to show generic gate regression handling without multivector-specific cues.",
+      id: "blocked-general",
+      label: "General block",
       status:
         scenarioId === "blocked-general"
           ? "current"
           : scenarioId === "ready" || scenarioId === "completed"
             ? "complete"
             : "available",
-      action: actions.find(
-        (entry) => entry.id === "switch-to-blocked-general-scenario",
-      ),
+      summary: "Passing-rate gate fails and opens a classic rollout incident.",
     },
     {
-      id: "blocked-multivector",
-      label: "Multivector block",
-      summary:
-        "Collapsed-parent and variant-hit coverage regress so stable promotion blocks.",
+      action: actions.find(
+        (entry) => entry.id === "switch-to-blocked-multivector-scenario",
+      ),
       detail:
         "Use this branch to show multivector-specific release governance and remediation steps.",
+      id: "blocked-multivector",
+      label: "Multivector block",
       status:
         scenarioId === "blocked-multivector"
           ? "current"
           : scenarioId === "ready" || scenarioId === "completed"
             ? "complete"
             : "available",
-      action: actions.find(
-        (entry) => entry.id === "switch-to-blocked-multivector-scenario",
-      ),
+      summary:
+        "Collapsed-parent and variant-hit coverage regress so stable promotion blocks.",
     },
     {
-      id: "ready",
-      label: "Ready",
-      summary: "Candidate passes stable checks and can be promoted.",
+      action: scenarioSwitchActions.ready,
       detail:
         "Stable is clear to promote because the candidate passes the lane gate and approval policy for this seeded scenario.",
+      id: "ready",
+      label: "Ready",
       status:
         scenarioId === "ready"
           ? "current"
           : scenarioId === "completed"
             ? "complete"
             : "available",
-      action: scenarioSwitchActions.ready,
+      summary: "Candidate passes stable checks and can be promoted.",
     },
     {
-      id: "completed",
-      label: "Completed",
-      summary: "Canary handoff already landed in stable.",
+      action: scenarioSwitchActions.completed,
       detail:
         "The handoff decision already completed and the stable baseline now points at the promoted candidate.",
+      id: "completed",
+      label: "Completed",
       status: scenarioId === "completed" ? "current" : "available",
-      action: scenarioSwitchActions.completed,
+      summary: "Canary handoff already landed in stable.",
     },
   ];
 
   const releaseRailCallout =
     scenarioId === "completed"
       ? {
-          tone: "ready",
-          title: "Current success",
-          message: stableBaseline?.retrievalId
-            ? "Stable is already serving " + stableBaseline.retrievalId + "."
-            : "Stable is already serving the promoted candidate.",
           detail: stableHandoffDecision?.decidedAt
             ? `Completed handoff · ${formatDate(stableHandoffDecision.decidedAt)}`
             : stableBaseline?.approvedAt
               ? `Active stable baseline · ${formatDate(stableBaseline.approvedAt)}`
               : undefined,
+          message: stableBaseline?.retrievalId
+            ? `Stable is already serving ${  stableBaseline.retrievalId  }.`
+            : "Stable is already serving the promoted candidate.",
           nextStep:
             "Next step · inspect release status or reset the demo to replay the rollout path.",
+          title: "Current success",
+          tone: "ready",
         }
       : stableReadiness?.ready
         ? {
-            tone: "watch",
-            title: "Current success",
-            message: stableReadiness.candidateRetrievalId
-              ? stableReadiness.candidateRetrievalId +
-                " is ready for stable promotion."
-              : "Stable is ready for promotion.",
             detail: [
               stableReadiness.gateStatus
                 ? `gate ${stableReadiness.gateStatus}`
@@ -1414,13 +1409,16 @@ export const buildDemoReleasePanelState = (
             ]
               .filter(Boolean)
               .join(" · "),
+            message: stableReadiness.candidateRetrievalId
+              ? `${stableReadiness.candidateRetrievalId 
+                } is ready for stable promotion.`
+              : "Stable is ready for promotion.",
             nextStep:
               "Next step · promote the stable candidate or complete the canary handoff.",
+            title: "Current success",
+            tone: "watch",
           }
         : {
-            tone: "blocked",
-            title: "Current blocker",
-            message: stableReadiness?.reasons?.[0] ?? releaseHero,
             detail: [
               stableReadiness?.candidateRetrievalId
                 ? `candidate ${stableReadiness.candidateRetrievalId}`
@@ -1434,8 +1432,11 @@ export const buildDemoReleasePanelState = (
             ]
               .filter(Boolean)
               .join(" · "),
+            message: stableReadiness?.reasons?.[0] ?? releaseHero,
             nextStep:
               "Next step · inspect the blocker, then approve, reject, or inspect drift.",
+            title: "Current blocker",
+            tone: "blocked",
           };
 
   const releaseStateBadge = {
@@ -1450,9 +1451,6 @@ export const buildDemoReleasePanelState = (
   const latestReleaseActionKind = latestReleaseDecision?.kind ?? "";
   const latestReleaseAction = latestReleaseDecision
     ? {
-        title: `${latestReleaseDecision.targetRolloutLabel ?? "lane"} ${(
-          latestReleaseDecision.kind ?? "decision"
-        ).replaceAll("_", " ")}`,
         detail: [
           latestReleaseDecision.notes,
           latestReleaseDecision.decidedAt
@@ -1480,6 +1478,9 @@ export const buildDemoReleasePanelState = (
                       : scenarioId === "ready"
                         ? "Next step · promote the stable candidate or complete the canary handoff."
                         : "Next step · inspect release status to confirm the finished lane state.",
+        title: `${latestReleaseDecision.targetRolloutLabel ?? "lane"} ${(
+          latestReleaseDecision.kind ?? "decision"
+        ).replaceAll("_", " ")}`,
         tone:
           latestReleaseDecision.kind === "promote" ||
           latestReleaseDecision.kind === "approve"
@@ -1496,20 +1497,20 @@ export const buildDemoReleasePanelState = (
 
   const recentReleaseActivity = [
     ...recentReleaseDecisions.map((entry) => ({
-      id: `release-activity-${entry.targetRolloutLabel ?? "lane"}-${entry.kind ?? "decision"}-${entry.decidedAt ?? 0}`,
-      sortAt: entry.decidedAt ?? 0,
-      laneLabel: entry.targetRolloutLabel ?? "lane",
-      title: (entry.kind ?? "decision").replaceAll("_", " "),
       detail: [
         entry.notes,
         entry.decidedAt ? formatDate(entry.decidedAt) : undefined,
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `release-activity-${entry.targetRolloutLabel ?? "lane"}-${entry.kind ?? "decision"}-${entry.decidedAt ?? 0}`,
+      laneLabel: entry.targetRolloutLabel ?? "lane",
+      sortAt: entry.decidedAt ?? 0,
       targetCardId:
         entry.kind === "complete"
           ? "release-stable-handoff-card"
           : "release-lane-readiness-card",
+      title: (entry.kind ?? "decision").replaceAll("_", " "),
       tone:
         entry.kind === "promote" || entry.kind === "approve"
           ? "watch"
@@ -1520,16 +1521,6 @@ export const buildDemoReleasePanelState = (
               : "muted",
     })),
     ...(releaseData?.incidentStatus?.recentIncidents ?? []).map((entry) => ({
-      id: `release-activity-${entry.targetRolloutLabel ?? "lane"}-${entry.kind}-${entry.acknowledgedAt ?? entry.resolvedAt ?? entry.triggeredAt ?? 0}`,
-      sortAt:
-        entry.acknowledgedAt ?? entry.resolvedAt ?? entry.triggeredAt ?? 0,
-      laneLabel: entry.targetRolloutLabel ?? "lane",
-      title:
-        typeof entry.acknowledgedAt === "number"
-          ? "incident acknowledged"
-          : entry.status === "resolved"
-            ? "incident resolved"
-            : entry.kind.replaceAll("_", " "),
       detail: [
         entry.message,
         typeof entry.acknowledgedAt === "number"
@@ -1542,7 +1533,17 @@ export const buildDemoReleasePanelState = (
       ]
         .filter(Boolean)
         .join(" · "),
+      id: `release-activity-${entry.targetRolloutLabel ?? "lane"}-${entry.kind}-${entry.acknowledgedAt ?? entry.resolvedAt ?? entry.triggeredAt ?? 0}`,
+      laneLabel: entry.targetRolloutLabel ?? "lane",
+      sortAt:
+        entry.acknowledgedAt ?? entry.resolvedAt ?? entry.triggeredAt ?? 0,
       targetCardId: "release-open-incidents-card",
+      title:
+        typeof entry.acknowledgedAt === "number"
+          ? "incident acknowledged"
+          : entry.status === "resolved"
+            ? "incident resolved"
+            : entry.kind.replaceAll("_", " "),
       tone:
         typeof entry.acknowledgedAt === "number"
           ? "watch"
@@ -1561,6 +1562,8 @@ export const buildDemoReleasePanelState = (
     stableReadiness?.ready === canaryReadiness?.ready
       ? {
           label: "Lane delta",
+          targetActivityId: undefined,
+          targetCardId: undefined,
           tone: stableReadiness?.ready
             ? "ready"
             : stableReadiness || canaryReadiness
@@ -1571,23 +1574,21 @@ export const buildDemoReleasePanelState = (
             : stableReadiness || canaryReadiness
               ? "both blocked"
               : "idle",
-          targetCardId: undefined,
-          targetActivityId: undefined,
         }
       : stableReadiness?.ready
         ? {
             label: "Lane delta",
+            targetActivityId: undefined,
+            targetCardId: undefined,
             tone: "watch",
             value: "stable ahead",
-            targetCardId: undefined,
-            targetActivityId: undefined,
           }
         : {
             label: "Lane delta",
+            targetActivityId: undefined,
+            targetCardId: undefined,
             tone: "blocked",
             value: "stable behind canary",
-            targetCardId: undefined,
-            targetActivityId: undefined,
           };
 
   const latestOperationalEvent = recentReleaseActivity[0];
@@ -1610,8 +1611,8 @@ export const buildDemoReleasePanelState = (
     Array.from(latestIncidentByLane.values())[0];
   const severityRank: Record<string, number> = {
     critical: 3,
-    warning: 2,
     info: 1,
+    warning: 2,
   };
   const activeIncidentPostureByLane = new Map<
     string,
@@ -1652,6 +1653,13 @@ export const buildDemoReleasePanelState = (
     latestReleaseActionKind && transitionPillKinds.has(latestReleaseActionKind)
       ? {
           label: "Latest transition",
+          targetActivityId: latestReleaseDecision
+            ? `release-activity-${latestReleaseDecision.targetRolloutLabel ?? "lane"}-${latestReleaseDecision.kind ?? "decision"}-${latestReleaseDecision.decidedAt ?? 0}`
+            : undefined,
+          targetCardId:
+            latestReleaseActionKind === "complete"
+              ? "release-stable-handoff-card"
+              : "release-lane-readiness-card",
           tone:
             latestReleaseActionKind === "complete"
               ? "ready"
@@ -1660,33 +1668,25 @@ export const buildDemoReleasePanelState = (
                 ? "blocked"
                 : "watch",
           value: `${latestReleaseDecision?.targetRolloutLabel ?? "lane"} ${latestReleaseActionKind}`,
-          targetCardId:
-            latestReleaseActionKind === "complete"
-              ? "release-stable-handoff-card"
-              : "release-lane-readiness-card",
-          targetActivityId: latestReleaseDecision
-            ? `release-activity-${latestReleaseDecision.targetRolloutLabel ?? "lane"}-${latestReleaseDecision.kind ?? "decision"}-${latestReleaseDecision.decidedAt ?? 0}`
-            : undefined,
         }
       : prioritizedIncidentEvent &&
           operationalPillTitles.has(prioritizedIncidentEvent.title)
         ? {
             label: "Latest incident",
+            targetActivityId: prioritizedIncidentEvent.id,
+            targetCardId: prioritizedIncidentEvent.targetCardId,
             tone: prioritizedIncidentEvent.tone,
             value: `${prioritizedIncidentEvent.laneLabel} ${prioritizedIncidentEvent.title}`,
-            targetCardId: prioritizedIncidentEvent.targetCardId,
-            targetActivityId: prioritizedIncidentEvent.id,
           }
         : {
             label: "Open incidents",
+            targetActivityId: undefined,
+            targetCardId: "release-open-incidents-card",
             tone: (incidentSummary?.openCount ?? 0) > 0 ? "blocked" : "ready",
             value: `${incidentSummary?.openCount ?? 0} open`,
-            targetCardId: "release-open-incidents-card",
-            targetActivityId: undefined,
           };
 
   const releaseRailDeltaChip = {
-    tone: laneDeltaPill.tone,
     label:
       laneDeltaPill.value === "lanes aligned"
         ? "Stable matches canary"
@@ -1697,8 +1697,10 @@ export const buildDemoReleasePanelState = (
             : laneDeltaPill.value === "both blocked"
               ? "Stable and canary blocked"
               : "Lane delta idle",
+    tone: laneDeltaPill.tone,
   };
   const railIncidentPostureChip = {
+    label: `stable ${activeIncidentPostureByLane.get("stable")?.severity ?? "clear"} · canary ${activeIncidentPostureByLane.get("canary")?.severity ?? "clear"}`,
     tone:
       (activeIncidentPostureByLane.get("stable")?.severity ?? "clear") ===
       "critical"
@@ -1713,9 +1715,9 @@ export const buildDemoReleasePanelState = (
                   "clear") === "warning"
               ? "watch"
               : "ready",
-    label: `stable ${activeIncidentPostureByLane.get("stable")?.severity ?? "clear"} · canary ${activeIncidentPostureByLane.get("canary")?.severity ?? "clear"}`,
   };
   const railGateChip = {
+    label: `stable ${stableReadiness?.gateStatus ?? (stableReadiness?.ready ? "pass" : "idle")} · canary ${canaryReadiness?.gateStatus ?? (canaryReadiness?.ready ? "pass" : "idle")}`,
     tone:
       stableReadiness?.ready && canaryReadiness?.ready
         ? "ready"
@@ -1724,17 +1726,9 @@ export const buildDemoReleasePanelState = (
           : stableReadiness || canaryReadiness
             ? "blocked"
             : "muted",
-    label: `stable ${stableReadiness?.gateStatus ?? (stableReadiness?.ready ? "pass" : "idle")} · canary ${canaryReadiness?.gateStatus ?? (canaryReadiness?.ready ? "pass" : "idle")}`,
   };
 
   const railApprovalChip = {
-    tone: stableReadiness?.requiresApproval
-      ? "blocked"
-      : stableReadiness?.requiresOverride
-        ? "watch"
-        : stableReadiness
-          ? "ready"
-          : "muted",
     label: stableReadiness
       ? [
           stableReadiness.requiresApproval
@@ -1745,9 +1739,22 @@ export const buildDemoReleasePanelState = (
           .filter(Boolean)
           .join(" · ")
       : "idle",
+    tone: stableReadiness?.requiresApproval
+      ? "blocked"
+      : stableReadiness?.requiresOverride
+        ? "watch"
+        : stableReadiness
+          ? "ready"
+          : "muted",
   };
 
   const railRemediationChip = {
+    label: releaseData?.remediationStatus?.incidentRemediationExecutionSummary
+      ? `${releaseData.remediationStatus.incidentRemediationExecutionSummary.guardrailBlockedCount} blocked · ${releaseData.remediationStatus.incidentRemediationExecutionSummary.replayCount} replays`
+      : releaseData?.remediationStatus?.recentIncidentRemediationExecutions
+            ?.length
+        ? `${releaseData.remediationStatus.recentIncidentRemediationExecutions.length} executions`
+        : "idle",
     tone: releaseData?.remediationStatus?.incidentRemediationExecutionSummary
       ?.guardrailBlockedCount
       ? "blocked"
@@ -1758,12 +1765,6 @@ export const buildDemoReleasePanelState = (
               ?.length
           ? "watch"
           : "muted",
-    label: releaseData?.remediationStatus?.incidentRemediationExecutionSummary
-      ? `${releaseData.remediationStatus.incidentRemediationExecutionSummary.guardrailBlockedCount} blocked · ${releaseData.remediationStatus.incidentRemediationExecutionSummary.replayCount} replays`
-      : releaseData?.remediationStatus?.recentIncidentRemediationExecutions
-            ?.length
-        ? `${releaseData.remediationStatus.recentIncidentRemediationExecutions.length} executions`
-        : "idle",
   };
 
   const latestReleaseUpdateAt = Math.max(
@@ -1797,6 +1798,11 @@ export const buildDemoReleasePanelState = (
     latestReleaseDecision?.decidedAt === latestReleaseUpdateAt
       ? {
           label: `Decision: ${latestReleaseDecision?.targetRolloutLabel ?? "lane"} ${latestReleaseActionKind ?? "update"}`,
+          targetActivityId: latestDecisionActivityId,
+          targetCardId:
+            latestReleaseActionKind === "complete"
+              ? "release-stable-handoff-card"
+              : "release-lane-readiness-card",
           tone:
             latestReleaseActionKind === "reject" ||
             latestReleaseActionKind === "revert"
@@ -1804,11 +1810,6 @@ export const buildDemoReleasePanelState = (
               : latestReleaseActionKind === "complete"
                 ? "ready"
                 : "watch",
-          targetCardId:
-            latestReleaseActionKind === "complete"
-              ? "release-stable-handoff-card"
-              : "release-lane-readiness-card",
-          targetActivityId: latestDecisionActivityId,
         }
       : (releaseData?.incidentStatus?.recentIncidents ?? []).some(
             (entry) =>
@@ -1819,14 +1820,14 @@ export const buildDemoReleasePanelState = (
           )
         ? {
             label: `Incident: ${latestIncidentEvent?.laneLabel ?? prioritizedIncidentEvent?.laneLabel ?? "lane"} ${latestIncidentEvent?.title ?? prioritizedIncidentEvent?.title ?? "update"}`,
+            targetActivityId: latestIncidentEvent?.id,
+            targetCardId:
+              latestIncidentEvent?.targetCardId ??
+              "release-open-incidents-card",
             tone:
               latestIncidentEvent?.tone ??
               prioritizedIncidentEvent?.tone ??
               "watch",
-            targetCardId:
-              latestIncidentEvent?.targetCardId ??
-              "release-open-incidents-card",
-            targetActivityId: latestIncidentEvent?.id,
           }
         : (
               releaseData?.remediationStatus
@@ -1834,15 +1835,15 @@ export const buildDemoReleasePanelState = (
             ).some((entry) => (entry.executedAt ?? 0) === latestReleaseUpdateAt)
           ? {
               label: `Remediation: ${latestRemediationExecution?.action?.kind ?? "execution"}`,
-              tone: "watch",
-              targetCardId: "release-remediation-history-card",
               targetActivityId: undefined,
+              targetCardId: "release-remediation-history-card",
+              tone: "watch",
             }
           : {
               label: "Release state: snapshot",
-              tone: "muted",
-              targetCardId: "release-lane-readiness-card",
               targetActivityId: undefined,
+              targetCardId: "release-lane-readiness-card",
+              tone: "muted",
             };
   const releaseDiagnosticsUpdatedLabel =
     latestReleaseUpdateAt > 0
@@ -1875,6 +1876,8 @@ export const buildDemoReleasePanelState = (
 
   const incidentPosturePill = {
     label: "Incident posture",
+    targetActivityId: prioritizedIncidentEvent?.id,
+    targetCardId: "release-open-incidents-card",
     tone:
       (activeIncidentPostureByLane.get("stable")?.severity ?? "clear") ===
       "critical"
@@ -1890,20 +1893,20 @@ export const buildDemoReleasePanelState = (
               ? "watch"
               : "ready",
     value: `${activeIncidentPostureByLane.get("stable")?.severity ?? "clear"} stable · ${activeIncidentPostureByLane.get("canary")?.severity ?? "clear"} canary`,
-    targetCardId: "release-open-incidents-card",
-    targetActivityId: prioritizedIncidentEvent?.id,
   };
 
   const releaseHeroPills = [
     {
       label: "Stable lane",
+      targetActivityId: undefined,
+      targetCardId: "release-lane-readiness-card",
       tone: stableReadiness?.ready ? "ready" : "blocked",
       value: stableReadiness?.ready ? "ready" : "blocked",
-      targetCardId: "release-lane-readiness-card",
-      targetActivityId: undefined,
     },
     {
       label: "Canary lane",
+      targetActivityId: undefined,
+      targetCardId: "release-lane-readiness-card",
       tone: canaryReadiness?.ready
         ? "ready"
         : canaryReadiness
@@ -1914,113 +1917,111 @@ export const buildDemoReleasePanelState = (
         : canaryReadiness
           ? "watching"
           : "idle",
-      targetCardId: "release-lane-readiness-card",
-      targetActivityId: undefined,
     },
     {
       label: "Scenario",
+      targetActivityId: undefined,
+      targetCardId: undefined,
       tone:
         scenarioId === "ready" || scenarioId === "completed"
           ? "ready"
           : "watch",
       value: releaseData?.scenario?.label ?? "default",
-      targetCardId: undefined,
-      targetActivityId: undefined,
     },
     transitionPill,
     incidentPosturePill,
     laneDeltaPill,
     {
       label: "Handoff",
+      targetActivityId: undefined,
+      targetCardId: "release-stable-handoff-card",
       tone: handoffStateTone,
       value: handoffStateLabel,
-      targetCardId: "release-stable-handoff-card",
-      targetActivityId: undefined,
     },
   ];
 
   return {
+    actions,
     activeBaselines,
+    activeBlockerDeltaLines,
+    activeBlockerDeltaSummary,
+    auditSurfaceEntries,
+    auditSurfaceSummary,
+    benchmarkSnapshotLines,
+    benchmarkSnapshotSummary,
     canaryBaseline,
     canaryReadiness,
-    actions,
     handoffActions,
     handoffDriftCountsByLane:
       releaseData?.driftStatus?.handoffDriftCountsByLane ?? [],
+    handoffIncidentHistory,
+    handoffIncidents,
+    handoffStateLabel,
+    handoffStateTone,
+    incidentClassificationDetailLines,
+    incidentClassificationSummary,
     incidentSummary,
     incidentSummaryLabel,
     laneReadiness,
     laneReadinessEntries,
+    latestReleaseAction,
     latestReleaseDecision,
-    recentIncidents,
-    incidentClassificationSummary,
-    incidentClassificationDetailLines,
-    recentIncidentRemediationExecutions:
-      releaseData?.remediationStatus?.recentIncidentRemediationExecutions ?? [],
-    recentReleaseDecisions,
-    releaseAlerts,
-    releaseCandidates,
-    releaseDecisionHeadline,
+    policyHistoryDetailLines,
     policyHistoryEntries,
     policyHistorySummary,
-    policyHistoryDetailLines,
-    auditSurfaceEntries,
-    auditSurfaceSummary,
     pollingSurfaceEntries,
-    releaseHeroMeta,
-    releaseScopeNote,
-    releaseActions,
-    stableBlockedCandidateSummary,
-    releaseDiagnosticsSummary,
-    releaseStateBadge,
-    latestReleaseAction,
     primaryReleaseActions,
-    secondaryReleaseActions,
+    railApprovalChip,
+    railGateChip,
+    railIncidentPostureChip,
+    railRemediationChip,
+    recentIncidentRemediationExecutions:
+      releaseData?.remediationStatus?.recentIncidentRemediationExecutions ?? [],
+    recentIncidents,
+    recentReleaseActivity,
+    recentReleaseDecisions,
+    releaseActions,
+    releaseAlerts,
+    releaseBlockerComparisonCards,
+    releaseCandidates,
+    releaseDecisionHeadline,
+    releaseDiagnosticsSummary,
+    releaseDiagnosticsUpdatedLabel,
+    releaseEvidenceDrills,
     releaseHero,
+    releaseHeroMeta,
     releaseHeroPills,
     releaseHeroSummary,
-    scenarioClassificationLabel,
-    releaseRailDeltaChip,
-    railIncidentPostureChip,
-    railGateChip,
-    railApprovalChip,
-    railRemediationChip,
-    releaseRailUpdateSource,
-    releaseRailUpdatedLabel,
-    releaseDiagnosticsUpdatedLabel,
-    stableReadinessStatSummary,
-    remediationGuardrailSummary,
-    remediationDetailLines,
-    activeBlockerDeltaSummary,
-    runtimePlannerHistorySummary,
-    runtimePlannerHistoryLines,
-    benchmarkSnapshotSummary,
-    benchmarkSnapshotLines,
-    activeBlockerDeltaLines,
-    releaseEvidenceDrills,
-    releaseBlockerComparisonCards,
     releasePathSteps,
     releaseRailCallout,
-    recentReleaseActivity,
-    releaseScenarioActions,
+    releaseRailDeltaChip,
+    releaseRailUpdatedLabel,
+    releaseRailUpdateSource,
     releaseRecommendations,
+    releaseScenarioActions,
+    releaseScopeNote,
+    releaseStateBadge,
+    remediationDetailLines,
+    remediationGuardrailSummary,
     remediationSummary:
       releaseData?.remediationStatus?.incidentRemediationExecutionSummary,
+    runtimePlannerHistoryLines,
+    runtimePlannerHistorySummary,
     scenario: releaseData?.scenario,
+    scenarioClassificationLabel,
+    secondaryReleaseActions,
     stableBaseline,
+    stableBlockedCandidateSummary,
     stableHandoff,
-    handoffIncidents,
-    handoffIncidentHistory,
-    stableHandoffIncidentSummary,
-    stableHandoffIncidentSummaryLabel,
     stableHandoffAutoComplete,
     stableHandoffAutoCompleteLabel,
-    stableHandoffDisplayReasons,
     stableHandoffDecision,
+    stableHandoffDisplayReasons,
     stableHandoffDrift,
-    handoffStateLabel,
-    handoffStateTone,
+    stableHandoffIncidentSummary,
+    stableHandoffIncidentSummaryLabel,
     stableReadiness,
+    stableReadinessStatSummary,
   };
 };
 
@@ -2070,18 +2071,17 @@ export type DemoGroundingProviderComparison = {
   };
 };
 
-export const demoContentFormats: DemoContentFormat[] = [
-  "markdown",
-  "html",
-  "text",
-];
 export const demoChunkingStrategies: DemoChunkingStrategy[] = [
   "source_aware",
   "paragraphs",
   "sentences",
   "fixed",
 ];
-
+export const demoContentFormats: DemoContentFormat[] = [
+  "markdown",
+  "html",
+  "text",
+];
 export const demoFrameworks: Array<{ id: DemoFrameworkId; label: string }> = [
   { id: "react", label: "React" },
   { id: "svelte", label: "Svelte" },
@@ -2092,10 +2092,10 @@ export const demoFrameworks: Array<{ id: DemoFrameworkId; label: string }> = [
 ];
 
 const demoBackends: DemoBackendDescriptor[] = [
-  { id: "sqlite-native", label: "SQLite Native", available: true },
-  { id: "sqlite-fallback", label: "SQLite Fallback", available: true },
-  { id: "postgres", label: "PostgreSQL", available: true },
-  { id: "pinecone", label: "Pinecone", available: true },
+  { available: true, id: "sqlite-native", label: "SQLite Native" },
+  { available: true, id: "sqlite-fallback", label: "SQLite Fallback" },
+  { available: true, id: "postgres", label: "PostgreSQL" },
+  { available: true, id: "pinecone", label: "Pinecone" },
 ];
 const MAX_RECENT_QUERIES = 4;
 export const DEMO_RERANKER_LABEL = "Absolute heuristic";
@@ -2108,6 +2108,7 @@ const isSearchFormState = (value: unknown): value is SearchFormState => {
   }
 
   const record = value as Record<string, unknown>;
+
   return (
     typeof record.query === "string" &&
     typeof record.topK === "number" &&
@@ -2128,6 +2129,7 @@ const isRecentQueryEntry = (
   }
 
   const record = value as Record<string, unknown>;
+
   return typeof record.label === "string" && isSearchFormState(record.state);
 };
 
@@ -2139,6 +2141,7 @@ const isDemoActiveRetrievalState = (
   }
 
   const record = value as Record<string, unknown>;
+
   return (
     isSearchFormState(record.searchForm) &&
     typeof record.scopeDriver === "string" &&
@@ -2156,293 +2159,6 @@ const isDemoActiveRetrievalState = (
       typeof record.streamPrompt === "undefined")
   );
 };
-
-export const readJsonResponse = async (response: Response) => {
-  const text = await response.text();
-  if (text.trim().length === 0) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return null;
-  }
-};
-
-export const loadRecentQueries = (
-  frameworkId: DemoFrameworkId,
-  mode: DemoBackendMode,
-): Promise<Array<{ label: string; state: SearchFormState }>> => {
-  return fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`)
-    .then(async (result) => {
-      if (!result.ok) {
-        return [];
-      }
-
-      const parsed = await readJsonResponse(result);
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-
-      return parsed.filter(isRecentQueryEntry).slice(0, MAX_RECENT_QUERIES);
-    })
-    .catch(() => []);
-};
-
-export const saveRecentQueries = (
-  frameworkId: DemoFrameworkId,
-  mode: DemoBackendMode,
-  recentQueries: Array<{ label: string; state: SearchFormState }>,
-) => {
-  return fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`, {
-    body: JSON.stringify(recentQueries.slice(0, MAX_RECENT_QUERIES)),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  })
-    .then(() => undefined)
-    .catch(() => undefined);
-};
-
-export const loadActiveRetrievalState = (
-  frameworkId: DemoFrameworkId,
-  mode: DemoBackendMode,
-): Promise<DemoActiveRetrievalState | null> => {
-  return fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`)
-    .then(async (result) => {
-      if (!result.ok) {
-        return null;
-      }
-
-      const parsed = await readJsonResponse(result);
-      return isDemoActiveRetrievalState(parsed) ? parsed : null;
-    })
-    .catch(() => null);
-};
-
-export const saveActiveRetrievalState = (
-  frameworkId: DemoFrameworkId,
-  mode: DemoBackendMode,
-  state: DemoActiveRetrievalState,
-) => {
-  return fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`, {
-    body: JSON.stringify(state),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  })
-    .then(() => undefined)
-    .catch(() => undefined);
-};
-
-export const buildDemoAIStreamPrompt = (modelKey: string, prompt: string) => {
-  const trimmedPrompt = prompt.trim();
-  if (trimmedPrompt.length === 0) {
-    return trimmedPrompt;
-  }
-
-  const firstColon = modelKey.indexOf(":");
-  if (firstColon <= 0) {
-    return trimmedPrompt;
-  }
-
-  const providerId = modelKey.slice(0, firstColon);
-  const modelId = modelKey.slice(firstColon + 1);
-  if (providerId.length === 0 || modelId.length === 0) {
-    return trimmedPrompt;
-  }
-
-  return `${providerId}:${modelId}:${trimmedPrompt}`;
-};
-
-export const formatDemoAIModelLabel = (model: DemoAIModelOption) =>
-  `${model.providerLabel} · ${model.label}`;
-
-export const workflowChecks = [
-  "Inspect the stuffed file-backed seed corpus and verify extractor metadata across PDFs, office docs, archives, images, audio, video, EPUB, email, and legacy files.",
-  "Upload first-party fixture files through the extractor-backed ingest route and verify retrieval against the uploaded source path.",
-  "Ingest a custom document with a chosen format and chunking strategy.",
-  "Sync local folders, URL fixtures, storage-backed objects, and provider-specific mailbox threads for Gmail, Microsoft Graph, and IMAP through the same first-class knowledge-base operations surface, then switch those mailbox tiles from fixture mode to real-account mode with env credentials without changing the UI or ingestion workflow.",
-  "Run retrieval and verify the returned chunk text, source label, and metadata summary match the indexed source.",
-  "Stream a grounded answer from the first-class workflow primitive instead of stitching transport state by hand.",
-  "Run the built-in benchmark suite and compare retrieval, reranking, citations, and missing evidence on the same page.",
-  "Inspect grounded-answer coverage and reference mapping so every citation number resolves to concrete evidence.",
-  "Review knowledge-base operations health, extractor readiness, and recent admin jobs from the first-class ops surface.",
-  "Prove late-interaction multivector retrieval can hit phrase-level launch-checklist wording while still collapsing back to one parent chunk in the trace.",
-];
-
-export const demoEvaluationPresets: DemoEvaluationPreset[] = [
-  {
-    id: "support-policy-source",
-    label: "Support policy benchmark",
-    description:
-      "Proves the benchmark can pin a customer-facing answer back to the markdown policy source.",
-    query: "List support policies for shipping and returns.",
-    expectedSources: ["guide/demo.md"],
-  },
-  {
-    id: "metadata-discipline-source",
-    label: "Metadata discipline benchmark",
-    description:
-      "Verifies metadata guidance resolves to the dedicated metadata guide instead of a nearby chunk.",
-    query: "Why should metadata be stable?",
-    expectedSources: ["guides/metadata.md"],
-  },
-  {
-    id: "postgres-portability-source",
-    label: "PostgreSQL parity benchmark",
-    description:
-      "Shows the hosted PostgreSQL backend returns the same cross-framework workflow guidance as the local adapters.",
-    query: "Which frameworks stay aligned in the retrieval workflow?",
-    expectedSources: ["guide/welcome.md"],
-  },
-  {
-    id: "pdf-citation-source",
-    label: "PDF page provenance benchmark",
-    description:
-      "Verifies native PDF extraction returns page-aware evidence so the answer can point back to the exact handbook page.",
-    query:
-      "Which PDF page says page-aware evidence should remain inspectable in retrieval diagnostics?",
-    expectedSources: ["files/native-handbook.pdf"],
-  },
-  {
-    id: "ocr-fallback-source",
-    label: "OCR receipt benchmark",
-    description:
-      "Verifies scanned PDF OCR keeps receipt evidence retrievable with explicit provenance through the same workflow surface.",
-    query: "Which scanned PDF receipt contains invoice INV-2048?",
-    expectedSources: ["files/scanned-receipt.pdf"],
-  },
-  {
-    id: "spreadsheet-source",
-    label: "Spreadsheet benchmark",
-    description:
-      "Shows spreadsheet ingestion preserves sheet-aware evidence for retrieval and inspection.",
-    query:
-      "Which revenue forecast workbook sheet named Regional Growth tracks market expansion by territory?",
-    expectedSources: ["files/revenue-forecast.xlsx"],
-  },
-  {
-    id: "archive-source",
-    label: "Archive benchmark",
-    description:
-      "Shows archive expansion keeps nested source paths stable for retrieval and evaluation.",
-    query: "Which archive entry explains recovery procedures?",
-    expectedSources: ["archives/support-bundle.zip#runbooks/recovery.md"],
-  },
-  {
-    id: "media-source",
-    label: "Media timestamp benchmark",
-    description:
-      "Verifies media transcripts return timestamp-aware evidence so the answer can cite the exact audio segment.",
-    query:
-      "Which daily standup audio timestamp 00:00 to 00:08 says retrieval, citations, evaluation, and ingest workflows stay aligned across every frontend?",
-    expectedSources: ["files/daily-standup.mp3"],
-  },
-  {
-    id: "multi-source-audit",
-    label: "Multi-source audit benchmark",
-    description:
-      "Stresses overlapping phrasing so retrieval has to surface more than one relevant source instead of repeating near-duplicate chunks.",
-    query:
-      "Which sources say evidence should stay inspectable, auditable, and visible to operators reviewing an answer?",
-    expectedSources: ["files/platform-overview.txt", "files/field-notes.txt"],
-    topK: 6,
-  },
-  {
-    id: "multivector-late-interaction",
-    label: "Late interaction benchmark",
-    description:
-      "Proves multivector retrieval can match launch-checklist phrasing while still returning one parent source in the final evidence.",
-    query:
-      "Which aurora launch packet phrase shows late interaction can match precise wording without splitting the parent document?",
-    expectedSources: ["guide/multivector-release-guide.md"],
-    topK: 4,
-    retrievalPresetId: "hybrid",
-  },
-  {
-    id: "policy-metadata-pair",
-    label: "Policy and metadata pair benchmark",
-    description:
-      "Checks whether retrieval can bring back both the customer policy source and the metadata discipline source when the query spans auditability and stable filters.",
-    query:
-      "Which sources say support answers stay auditable after ingest and metadata filters stay stable over time?",
-    expectedSources: ["guide/demo.md", "guides/metadata.md"],
-    topK: 6,
-  },
-  {
-    id: "query-attribution-base",
-    label: "Base query attribution benchmark",
-    description:
-      "Uses a query with no transform domain so the section diagnostics stay on the base-query path.",
-    query:
-      "Which sources say support answers stay auditable after ingest and metadata filters stay stable over time?",
-    expectedSources: ["guide/demo.md", "guides/metadata.md"],
-    topK: 6,
-    benchmarkCategory: "base",
-  },
-  {
-    id: "query-attribution-transformed",
-    label: "Transformed attribution benchmark",
-    description:
-      "Uses framework wording that only becomes useful after the heuristic transform expands it into the seeded corpus vocabulary.",
-    query: "Which framework docs and approval gates explain rollout posture?",
-    expectedSources: ["files/legacy-brief.doc"],
-    topK: 6,
-    benchmarkCategory: "transformed",
-    retrievalPresetId: "hybrid-transform",
-  },
-  {
-    id: "query-attribution-benchmark",
-    label: "Mixed attribution benchmark",
-    description:
-      "Uses a preserved titled-workbook query plus spreadsheet variants so the same section can show base-query and variant reinforcement together.",
-    query: "Which workbook titled Regional Growth explains rollout posture?",
-    expectedSources: [
-      "guide/query-attribution.md",
-      "files/revenue-forecast.xlsx",
-    ],
-    topK: 6,
-    benchmarkCategory: "mixed",
-    retrievalPresetId: "hybrid-transform",
-  },
-  {
-    id: "section-competition-benchmark",
-    label: "Section competition benchmark",
-    description:
-      "Uses nested release-guide wording so sibling sections compete and the diagnostics have to explain why one stable-lane section wins.",
-    query:
-      "Which stable lane section explains approval gates and incident review?",
-    expectedSources: ["guide/release-hierarchy.md"],
-    topK: 6,
-    benchmarkCategory: "competition",
-  },
-  {
-    id: "rerank-survival-benchmark",
-    label: "Rerank survival benchmark",
-    description:
-      "Uses dense compliance wording so the retrieval trace shows a section survive rerank and narrow from a larger candidate set into the final winning evidence.",
-    query:
-      "Which source keeps archive entry paths, spreadsheet sheet names, presentation slide numbers, and email attachment labels visible in retrieval evidence?",
-    expectedSources: ["cases/compliance.html"],
-    topK: 6,
-    benchmarkCategory: "rerank",
-  },
-  {
-    id: "support-policy-routing-benchmark",
-    label: "Support policy routing benchmark",
-    description:
-      "Uses explicit support and policy wording so the built-in retrieval strategy routes the query onto the support lexical path.",
-    query:
-      "Which support policy explains password reset and customer billing access?",
-    expectedSources: ["guide/demo.md"],
-    topK: 6,
-    benchmarkCategory: "routing",
-  },
-];
 
 export const benchmarkOutcomeRail = [
   {
@@ -2479,157 +2195,329 @@ export const benchmarkOutcomeRail = [
       "Built-in retrieval routing should switch the query onto a non-default path.",
   },
 ] as const;
-
-export const resolveBenchmarkRetrievalPresetId = (presetId: string) =>
-  demoEvaluationPresets.find((preset) => preset.id === presetId)
-    ?.retrievalPresetId ?? "";
-
-export const formatBenchmarkOutcomeRailLabel = (
-  entry: (typeof benchmarkOutcomeRail)[number],
-  activePresetId?: string,
-) => {
-  const activeCategory = demoEvaluationPresets.find(
-    (preset) => preset.id === activePresetId,
-  )?.benchmarkCategory;
-  return activeCategory === entry.id ? `${entry.label} · active` : entry.label;
-};
-
+export const demoEvaluationPresets: DemoEvaluationPreset[] = [
+  {
+    description:
+      "Proves the benchmark can pin a customer-facing answer back to the markdown policy source.",
+    expectedSources: ["guide/demo.md"],
+    id: "support-policy-source",
+    label: "Support policy benchmark",
+    query: "List support policies for shipping and returns.",
+  },
+  {
+    description:
+      "Verifies metadata guidance resolves to the dedicated metadata guide instead of a nearby chunk.",
+    expectedSources: ["guides/metadata.md"],
+    id: "metadata-discipline-source",
+    label: "Metadata discipline benchmark",
+    query: "Why should metadata be stable?",
+  },
+  {
+    description:
+      "Shows the hosted PostgreSQL backend returns the same cross-framework workflow guidance as the local adapters.",
+    expectedSources: ["guide/welcome.md"],
+    id: "postgres-portability-source",
+    label: "PostgreSQL parity benchmark",
+    query: "Which frameworks stay aligned in the retrieval workflow?",
+  },
+  {
+    description:
+      "Verifies native PDF extraction returns page-aware evidence so the answer can point back to the exact handbook page.",
+    expectedSources: ["files/native-handbook.pdf"],
+    id: "pdf-citation-source",
+    label: "PDF page provenance benchmark",
+    query:
+      "Which PDF page says page-aware evidence should remain inspectable in retrieval diagnostics?",
+  },
+  {
+    description:
+      "Verifies scanned PDF OCR keeps receipt evidence retrievable with explicit provenance through the same workflow surface.",
+    expectedSources: ["files/scanned-receipt.pdf"],
+    id: "ocr-fallback-source",
+    label: "OCR receipt benchmark",
+    query: "Which scanned PDF receipt contains invoice INV-2048?",
+  },
+  {
+    description:
+      "Shows spreadsheet ingestion preserves sheet-aware evidence for retrieval and inspection.",
+    expectedSources: ["files/revenue-forecast.xlsx"],
+    id: "spreadsheet-source",
+    label: "Spreadsheet benchmark",
+    query:
+      "Which revenue forecast workbook sheet named Regional Growth tracks market expansion by territory?",
+  },
+  {
+    description:
+      "Shows archive expansion keeps nested source paths stable for retrieval and evaluation.",
+    expectedSources: ["archives/support-bundle.zip#runbooks/recovery.md"],
+    id: "archive-source",
+    label: "Archive benchmark",
+    query: "Which archive entry explains recovery procedures?",
+  },
+  {
+    description:
+      "Verifies media transcripts return timestamp-aware evidence so the answer can cite the exact audio segment.",
+    expectedSources: ["files/daily-standup.mp3"],
+    id: "media-source",
+    label: "Media timestamp benchmark",
+    query:
+      "Which daily standup audio timestamp 00:00 to 00:08 says retrieval, citations, evaluation, and ingest workflows stay aligned across every frontend?",
+  },
+  {
+    description:
+      "Stresses overlapping phrasing so retrieval has to surface more than one relevant source instead of repeating near-duplicate chunks.",
+    expectedSources: ["files/platform-overview.txt", "files/field-notes.txt"],
+    id: "multi-source-audit",
+    label: "Multi-source audit benchmark",
+    query:
+      "Which sources say evidence should stay inspectable, auditable, and visible to operators reviewing an answer?",
+    topK: 6,
+  },
+  {
+    description:
+      "Proves multivector retrieval can match launch-checklist phrasing while still returning one parent source in the final evidence.",
+    expectedSources: ["guide/multivector-release-guide.md"],
+    id: "multivector-late-interaction",
+    label: "Late interaction benchmark",
+    query:
+      "Which aurora launch packet phrase shows late interaction can match precise wording without splitting the parent document?",
+    retrievalPresetId: "hybrid",
+    topK: 4,
+  },
+  {
+    description:
+      "Checks whether retrieval can bring back both the customer policy source and the metadata discipline source when the query spans auditability and stable filters.",
+    expectedSources: ["guide/demo.md", "guides/metadata.md"],
+    id: "policy-metadata-pair",
+    label: "Policy and metadata pair benchmark",
+    query:
+      "Which sources say support answers stay auditable after ingest and metadata filters stay stable over time?",
+    topK: 6,
+  },
+  {
+    benchmarkCategory: "base",
+    description:
+      "Uses a query with no transform domain so the section diagnostics stay on the base-query path.",
+    expectedSources: ["guide/demo.md", "guides/metadata.md"],
+    id: "query-attribution-base",
+    label: "Base query attribution benchmark",
+    query:
+      "Which sources say support answers stay auditable after ingest and metadata filters stay stable over time?",
+    topK: 6,
+  },
+  {
+    benchmarkCategory: "transformed",
+    description:
+      "Uses framework wording that only becomes useful after the heuristic transform expands it into the seeded corpus vocabulary.",
+    expectedSources: ["files/legacy-brief.doc"],
+    id: "query-attribution-transformed",
+    label: "Transformed attribution benchmark",
+    query: "Which framework docs and approval gates explain rollout posture?",
+    retrievalPresetId: "hybrid-transform",
+    topK: 6,
+  },
+  {
+    benchmarkCategory: "mixed",
+    description:
+      "Uses a preserved titled-workbook query plus spreadsheet variants so the same section can show base-query and variant reinforcement together.",
+    expectedSources: [
+      "guide/query-attribution.md",
+      "files/revenue-forecast.xlsx",
+    ],
+    id: "query-attribution-benchmark",
+    label: "Mixed attribution benchmark",
+    query: "Which workbook titled Regional Growth explains rollout posture?",
+    retrievalPresetId: "hybrid-transform",
+    topK: 6,
+  },
+  {
+    benchmarkCategory: "competition",
+    description:
+      "Uses nested release-guide wording so sibling sections compete and the diagnostics have to explain why one stable-lane section wins.",
+    expectedSources: ["guide/release-hierarchy.md"],
+    id: "section-competition-benchmark",
+    label: "Section competition benchmark",
+    query:
+      "Which stable lane section explains approval gates and incident review?",
+    topK: 6,
+  },
+  {
+    benchmarkCategory: "rerank",
+    description:
+      "Uses dense compliance wording so the retrieval trace shows a section survive rerank and narrow from a larger candidate set into the final winning evidence.",
+    expectedSources: ["cases/compliance.html"],
+    id: "rerank-survival-benchmark",
+    label: "Rerank survival benchmark",
+    query:
+      "Which source keeps archive entry paths, spreadsheet sheet names, presentation slide numbers, and email attachment labels visible in retrieval evidence?",
+    topK: 6,
+  },
+  {
+    benchmarkCategory: "routing",
+    description:
+      "Uses explicit support and policy wording so the built-in retrieval strategy routes the query onto the support lexical path.",
+    expectedSources: ["guide/demo.md"],
+    id: "support-policy-routing-benchmark",
+    label: "Support policy routing benchmark",
+    query:
+      "Which support policy explains password reset and customer billing access?",
+    topK: 6,
+  },
+];
 export const demoUploadPresets: DemoUploadPreset[] = [
   {
-    id: "upload-native-pdf",
-    label: "Upload native PDF",
+    contentType: "application/pdf",
     description:
       "Exercises the native PDF extractor through the published upload ingest surface.",
+    expectedSources: ["uploads/native-handbook.pdf"],
     fileName: "native-handbook.pdf",
     fixturePath: "files/native-handbook.pdf",
-    contentType: "application/pdf",
+    id: "upload-native-pdf",
+    label: "Upload native PDF",
     query: "What should remain inspectable in retrieval diagnostics?",
-    expectedSources: ["uploads/native-handbook.pdf"],
     source: "uploads/native-handbook.pdf",
     title: "Uploaded native handbook PDF",
   },
   {
-    id: "upload-scanned-pdf",
-    label: "Upload scanned PDF",
+    contentType: "application/pdf",
     description:
       "Exercises the scanned PDF OCR fallback path through the published upload ingest surface.",
+    expectedSources: ["uploads/scanned-receipt.pdf"],
     fileName: "scanned-receipt.pdf",
     fixturePath: "files/scanned-receipt.pdf",
-    contentType: "application/pdf",
+    id: "upload-scanned-pdf",
+    label: "Upload scanned PDF",
     query: "Which invoice number appears in the scanned receipt?",
-    expectedSources: ["uploads/scanned-receipt.pdf"],
     source: "uploads/scanned-receipt.pdf",
     title: "Uploaded scanned receipt PDF",
   },
   {
-    id: "upload-spreadsheet",
-    label: "Upload spreadsheet",
-    description:
-      "Exercises sheet-aware office extraction through the published upload ingest surface.",
-    fileName: "revenue-forecast.xlsx",
-    fixturePath: "files/revenue-forecast.xlsx",
     contentType:
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    description:
+      "Exercises sheet-aware office extraction through the published upload ingest surface.",
+    expectedSources: ["uploads/revenue-forecast.xlsx"],
+    fileName: "revenue-forecast.xlsx",
+    fixturePath: "files/revenue-forecast.xlsx",
+    id: "upload-spreadsheet",
+    label: "Upload spreadsheet",
     query:
       "Which revenue forecast workbook sheet named Regional Growth tracks market expansion by territory?",
-    expectedSources: ["uploads/revenue-forecast.xlsx"],
     source: "uploads/revenue-forecast.xlsx",
     title: "Uploaded revenue forecast workbook",
   },
   {
-    id: "upload-presentation",
-    label: "Upload deck",
-    description:
-      "Exercises slide-aware presentation extraction through the published upload ingest surface.",
-    fileName: "workflow-roadmap.pptx",
-    fixturePath: "files/workflow-roadmap.pptx",
     contentType:
       "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    query: "Which slide explains the retrieval workflow rollout?",
+    description:
+      "Exercises slide-aware presentation extraction through the published upload ingest surface.",
     expectedSources: ["uploads/workflow-roadmap.pptx"],
+    fileName: "workflow-roadmap.pptx",
+    fixturePath: "files/workflow-roadmap.pptx",
+    id: "upload-presentation",
+    label: "Upload deck",
+    query: "Which slide explains the retrieval workflow rollout?",
     source: "uploads/workflow-roadmap.pptx",
     title: "Uploaded workflow roadmap deck",
   },
   {
-    id: "upload-email",
-    label: "Upload email thread",
+    contentType: "message/rfc822",
     description:
       "Exercises email extraction and thread metadata through the published upload ingest surface.",
+    expectedSources: ["uploads/support-thread.eml"],
     fileName: "support-thread.eml",
     fixturePath: "files/support-thread.eml",
-    contentType: "message/rfc822",
+    id: "upload-email",
+    label: "Upload email thread",
     query: "Who asked for workflow parity in the support thread?",
-    expectedSources: ["uploads/support-thread.eml"],
     source: "uploads/support-thread.eml",
     title: "Uploaded support thread",
   },
   {
-    id: "upload-image-ocr",
-    label: "Upload image OCR",
+    contentType: "image/jpeg",
     description:
       "Exercises image OCR extraction through the published upload ingest surface.",
+    expectedSources: ["uploads/receipt.jpg"],
     fileName: "receipt.jpg",
     fixturePath: "files/receipt.jpg",
-    contentType: "image/jpeg",
+    id: "upload-image-ocr",
+    label: "Upload image OCR",
     query: "Which invoice number appears in the receipt image?",
-    expectedSources: ["uploads/receipt.jpg"],
     source: "uploads/receipt.jpg",
     title: "Uploaded receipt image",
   },
   {
-    id: "upload-audio",
-    label: "Upload audio",
+    contentType: "audio/mpeg",
     description:
       "Exercises media transcription through the published upload ingest surface.",
+    expectedSources: ["uploads/daily-standup.mp3"],
     fileName: "daily-standup.mp3",
     fixturePath: "files/daily-standup.mp3",
-    contentType: "audio/mpeg",
+    id: "upload-audio",
+    label: "Upload audio",
     query:
       "Which uploaded daily standup audio timestamp 00:00 to 00:08 says retrieval, citations, evaluation, and ingest workflows stay aligned across every frontend?",
-    expectedSources: ["uploads/daily-standup.mp3"],
     source: "uploads/daily-standup.mp3",
     title: "Uploaded daily standup audio",
   },
   {
-    id: "upload-video",
-    label: "Upload video",
+    contentType: "video/mp4",
     description:
       "Exercises video transcription through the published upload ingest surface.",
+    expectedSources: ["uploads/workflow-walkthrough.mp4"],
     fileName: "workflow-walkthrough.mp4",
     fixturePath: "files/workflow-walkthrough.mp4",
-    contentType: "video/mp4",
+    id: "upload-video",
+    label: "Upload video",
     query: "Which source explains the workflow rollout checkpoint?",
-    expectedSources: ["uploads/workflow-walkthrough.mp4"],
     source: "uploads/workflow-walkthrough.mp4",
     title: "Uploaded workflow walkthrough video",
   },
   {
-    id: "upload-archive",
-    label: "Upload archive",
+    contentType: "application/zip",
     description:
       "Exercises archive expansion through the published upload ingest surface.",
+    expectedSources: ["uploads/support-bundle.zip#runbooks/recovery.md"],
     fileName: "support-bundle.zip",
     fixturePath: "archives/support-bundle.zip",
-    contentType: "application/zip",
+    id: "upload-archive",
+    label: "Upload archive",
     query: "Which archive entry explains recovery procedures?",
-    expectedSources: ["uploads/support-bundle.zip#runbooks/recovery.md"],
     source: "uploads/support-bundle.zip",
     title: "Uploaded support bundle archive",
   },
 ];
+export const workflowChecks = [
+  "Inspect the stuffed file-backed seed corpus and verify extractor metadata across PDFs, office docs, archives, images, audio, video, EPUB, email, and legacy files.",
+  "Upload first-party fixture files through the extractor-backed ingest route and verify retrieval against the uploaded source path.",
+  "Ingest a custom document with a chosen format and chunking strategy.",
+  "Sync local folders, URL fixtures, storage-backed objects, and provider-specific mailbox threads for Gmail, Microsoft Graph, and IMAP through the same first-class knowledge-base operations surface, then switch those mailbox tiles from fixture mode to real-account mode with env credentials without changing the UI or ingestion workflow.",
+  "Run retrieval and verify the returned chunk text, source label, and metadata summary match the indexed source.",
+  "Stream a grounded answer from the first-class workflow primitive instead of stitching transport state by hand.",
+  "Run the built-in benchmark suite and compare retrieval, reranking, citations, and missing evidence on the same page.",
+  "Inspect grounded-answer coverage and reference mapping so every citation number resolves to concrete evidence.",
+  "Review knowledge-base operations health, extractor readiness, and recent admin jobs from the first-class ops surface.",
+  "Prove late-interaction multivector retrieval can hit phrase-level launch-checklist wording while still collapsing back to one parent chunk in the trace.",
+];
+export const buildDemoAIStreamPrompt = (modelKey: string, prompt: string) => {
+  const trimmedPrompt = prompt.trim();
+  if (trimmedPrompt.length === 0) {
+    return trimmedPrompt;
+  }
 
-export const buildDemoEvaluationSuite = () =>
-  createRAGEvaluationSuite({
-    id: "absolutejs-rag-demo-suite",
-    label: "AbsoluteJS retrieval workflow suite",
-    description:
-      "Saved suite covering policy docs, metadata guidance, PostgreSQL parity, PDF and OCR, spreadsheets, archives, and media transcripts.",
-    input: buildDemoEvaluationInput(),
-    metadata: {
-      story: "retrieval-quality",
-    },
-  });
+  const firstColon = modelKey.indexOf(":");
+  if (firstColon <= 0) {
+    return trimmedPrompt;
+  }
 
+  const providerId = modelKey.slice(0, firstColon);
+  const modelId = modelKey.slice(firstColon + 1);
+  if (providerId.length === 0 || modelId.length === 0) {
+    return trimmedPrompt;
+  }
+
+  return `${providerId}:${modelId}:${trimmedPrompt}`;
+};
 export const buildDemoEvaluationInput = (): RAGEvaluationInput => ({
   cases: demoEvaluationPresets.map((preset) => ({
     expectedSources: preset.expectedSources,
@@ -2639,6 +2527,101 @@ export const buildDemoEvaluationInput = (): RAGEvaluationInput => ({
     topK: preset.topK ?? 4,
   })),
 });
+export const buildDemoEvaluationSuite = () =>
+  createRAGEvaluationSuite({
+    description:
+      "Saved suite covering policy docs, metadata guidance, PostgreSQL parity, PDF and OCR, spreadsheets, archives, and media transcripts.",
+    id: "absolutejs-rag-demo-suite",
+    input: buildDemoEvaluationInput(),
+    label: "AbsoluteJS retrieval workflow suite",
+    metadata: {
+      story: "retrieval-quality",
+    },
+  });
+export const formatBenchmarkOutcomeRailLabel = (
+  entry: (typeof benchmarkOutcomeRail)[number],
+  activePresetId?: string,
+) => {
+  const activeCategory = demoEvaluationPresets.find(
+    (preset) => preset.id === activePresetId,
+  )?.benchmarkCategory;
+
+  return activeCategory === entry.id ? `${entry.label} · active` : entry.label;
+};
+export const formatDemoAIModelLabel = (model: DemoAIModelOption) =>
+  `${model.providerLabel} · ${model.label}`;
+export const loadActiveRetrievalState = (
+  frameworkId: DemoFrameworkId,
+  mode: DemoBackendMode,
+): Promise<DemoActiveRetrievalState | null> => fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`)
+    .then(async (result) => {
+      if (!result.ok) {
+        return null;
+      }
+
+      const parsed = await readJsonResponse(result);
+
+      return isDemoActiveRetrievalState(parsed) ? parsed : null;
+    })
+    .catch(() => null);
+export const loadRecentQueries = (
+  frameworkId: DemoFrameworkId,
+  mode: DemoBackendMode,
+): Promise<Array<{ label: string; state: SearchFormState }>> => fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`)
+    .then(async (result) => {
+      if (!result.ok) {
+        return [];
+      }
+
+      const parsed = await readJsonResponse(result);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      return parsed.filter(isRecentQueryEntry).slice(0, MAX_RECENT_QUERIES);
+    })
+    .catch(() => []);
+export const readJsonResponse = async (response: Response) => {
+  const text = await response.text();
+  if (text.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
+};
+export const resolveBenchmarkRetrievalPresetId = (presetId: string) =>
+  demoEvaluationPresets.find((preset) => preset.id === presetId)
+    ?.retrievalPresetId ?? "";
+export const saveActiveRetrievalState = (
+  frameworkId: DemoFrameworkId,
+  mode: DemoBackendMode,
+  state: DemoActiveRetrievalState,
+) => fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`, {
+    body: JSON.stringify(state),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  })
+    .then(() => undefined)
+    .catch(() => undefined);
+export const saveRecentQueries = (
+  frameworkId: DemoFrameworkId,
+  mode: DemoBackendMode,
+  recentQueries: Array<{ label: string; state: SearchFormState }>,
+) => fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`, {
+    body: JSON.stringify(recentQueries.slice(0, MAX_RECENT_QUERIES)),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  })
+    .then(() => undefined)
+    .catch(() => undefined);
 
 const formatEvaluationPercent = (value: number) =>
   `${(value * 100).toFixed(1)}%`;
@@ -2653,16 +2636,16 @@ export const formatEvaluationCaseSummary = (entry: RAGEvaluationCaseResult) =>
     `recall ${formatEvaluationPercent(entry.recall)}`,
     `f1 ${entry.f1.toFixed(3)}`,
   ].join(" · ");
-
-export const formatEvaluationMissing = (entry: RAGEvaluationCaseResult) =>
-  entry.missingIds.length > 0 ? entry.missingIds.join(", ") : "none";
-
 export const formatEvaluationExpected = (entry: RAGEvaluationCaseResult) =>
   entry.expectedIds.join(", ");
-
+export const formatEvaluationLeaderboardEntry = (
+  entry: RAGEvaluationLeaderboardEntry,
+) =>
+  `#${entry.rank} · ${entry.label} · passing ${formatEvaluationPassingRate(entry.passingRate)} · f1 ${entry.averageF1.toFixed(3)} · ${entry.averageLatencyMs.toFixed(1)}ms`;
+export const formatEvaluationMissing = (entry: RAGEvaluationCaseResult) =>
+  entry.missingIds.length > 0 ? entry.missingIds.join(", ") : "none";
 export const formatEvaluationRetrieved = (entry: RAGEvaluationCaseResult) =>
   entry.retrievedIds.join(", ");
-
 export const formatEvaluationSummary = (response: RAGEvaluationResponse) =>
   [
     `${response.summary.passedCases}/${response.summary.totalCases} pass`,
@@ -2672,11 +2655,6 @@ export const formatEvaluationSummary = (response: RAGEvaluationResponse) =>
     `avg latency ${response.summary.averageLatencyMs.toFixed(1)}ms`,
     `passing ${formatEvaluationPassingRate(response.passingRate)}`,
   ].join(" · ");
-
-export const formatEvaluationLeaderboardEntry = (
-  entry: RAGEvaluationLeaderboardEntry,
-) =>
-  `#${entry.rank} · ${entry.label} · passing ${formatEvaluationPassingRate(entry.passingRate)} · f1 ${entry.averageF1.toFixed(3)} · ${entry.averageLatencyMs.toFixed(1)}ms`;
 
 const formatSignedDelta = (value: number, digits = 1, suffix = "") =>
   `${value > 0 ? "+" : ""}${value.toFixed(digits)}${suffix}`;
@@ -2690,6 +2668,7 @@ const formatHistoryCaseLabels = (
 
 const buildSnapshotLeadLabel = (snapshot?: Record<string, unknown>) => {
   if (!snapshot) return undefined;
+
   return typeof snapshot.topLocatorLabel === "string" &&
     snapshot.topLocatorLabel
     ? snapshot.topLocatorLabel
@@ -2718,8 +2697,10 @@ const ensureLabeledRow = (
     ) {
       existing.value = value;
     }
+
     return rows;
   }
+
   return [...rows, { label, value }];
 };
 
@@ -2783,6 +2764,7 @@ const buildComparisonLeadDriftValue = (
   const leaderSnapshots = new Map(
     (leader?.caseTraceSnapshots ?? []).map((snapshot) => {
       const record = snapshot as Record<string, unknown>;
+
       return [String(record.caseId ?? ""), record] as const;
     }),
   );
@@ -2804,6 +2786,7 @@ const buildComparisonLeadDriftValue = (
         typeof record.label === "string" && record.label
           ? record.label
           : caseId;
+
       return `${label} ${previousLead}→${currentLead}`;
     })
     .filter((value): value is string => typeof value === "string")
@@ -2838,6 +2821,7 @@ const buildComparisonLeadMediaDriftValue = (
   const leaderSnapshots = new Map(
     (leader?.caseTraceSnapshots ?? []).map((snapshot) => {
       const record = snapshot as Record<string, unknown>;
+
       return [String(record.caseId ?? ""), record] as const;
     }),
   );
@@ -2861,6 +2845,7 @@ const buildComparisonLeadMediaDriftValue = (
         typeof record.label === "string" && record.label
           ? record.label
           : caseId;
+
       return `${label} ${previousLead}→${currentLead}`;
     })
     .filter((value): value is string => typeof value === "string")
@@ -2876,10 +2861,10 @@ const buildHistoryLeadDriftValue = (history?: RAGEvaluationHistory) => {
       const caseId = String(record.caseId ?? "");
       const currentLead = buildSnapshotLeadLabel(record);
       const previousLead = buildSnapshotLeadLabel({
-        topLocatorLabel: record.previousTopLocatorLabel,
-        topContextLabel: record.previousTopContextLabel,
-        sourceAwareUnitScopeLabel: record.previousSourceAwareUnitScopeLabel,
         sourceAwareChunkReasonLabel: record.previousSourceAwareChunkReasonLabel,
+        sourceAwareUnitScopeLabel: record.previousSourceAwareUnitScopeLabel,
+        topContextLabel: record.previousTopContextLabel,
+        topLocatorLabel: record.previousTopLocatorLabel,
       });
       if (
         !caseId ||
@@ -2892,6 +2877,7 @@ const buildHistoryLeadDriftValue = (history?: RAGEvaluationHistory) => {
         typeof record.label === "string" && record.label
           ? record.label
           : caseId;
+
       return `${label} ${previousLead}→${currentLead}`;
     })
     .filter((value): value is string => typeof value === "string")
@@ -2965,6 +2951,7 @@ const buildComparisonSQLitePlannerDriftValue = (
   const leaderSnapshots = new Map(
     (leader?.caseTraceSnapshots ?? []).map((snapshot) => {
       const record = snapshot as Record<string, unknown>;
+
       return [String(record.caseId ?? ""), record] as const;
     }),
   );
@@ -2988,6 +2975,7 @@ const buildComparisonSQLitePlannerDriftValue = (
         typeof record.label === "string" && record.label
           ? record.label
           : caseId;
+
       return `${label} ${previousValue}→${currentValue}`;
     })
     .filter((value): value is string => typeof value === "string")
@@ -3005,14 +2993,14 @@ const buildHistorySQLitePlannerOutcomeValue = (
       const caseId = String(record.caseId ?? "");
       const currentValue = buildSnapshotSQLitePlannerOutcomeValue(record);
       const previousValue = buildSnapshotSQLitePlannerOutcomeValue({
-        sqliteQueryCandidateCoverage:
-          record.previousSqliteQueryCandidateCoverage,
-        sqliteQueryUnderfilledTopK: record.previousSqliteQueryUnderfilledTopK,
         sqliteQueryCandidateBudgetExhausted:
           record.previousSqliteQueryCandidateBudgetExhausted,
-        sqliteQueryReturnedCount: record.previousSqliteQueryReturnedCount,
+        sqliteQueryCandidateCoverage:
+          record.previousSqliteQueryCandidateCoverage,
         sqliteQueryFilteredCandidates:
           record.previousSqliteQueryFilteredCandidates,
+        sqliteQueryReturnedCount: record.previousSqliteQueryReturnedCount,
+        sqliteQueryUnderfilledTopK: record.previousSqliteQueryUnderfilledTopK,
       });
       if (
         !caseId ||
@@ -3025,6 +3013,7 @@ const buildHistorySQLitePlannerOutcomeValue = (
         typeof record.label === "string" && record.label
           ? record.label
           : caseId;
+
       return `${label} ${previousValue}→${currentValue}`;
     })
     .filter((value): value is string => typeof value === "string")
@@ -3051,6 +3040,7 @@ const buildSetDelta = (previous: string[] = [], current: string[] = []) => {
   const removed = [...previousSet]
     .filter((value) => !currentSet.has(value))
     .sort();
+
   return { added, removed };
 };
 
@@ -3187,10 +3177,6 @@ const formatGroundingHistoryCaseChanges = (
         .join(", ")
     : "none";
 
-export const formatEvaluationHistorySummary = (
-  history?: RAGEvaluationHistory,
-) => [formatEvaluationHistoryPresentation(history).summary];
-
 export const formatEvaluationHistoryDiff = (history?: RAGEvaluationHistory) => {
   if (!history?.diff) {
     return ["Run the benchmark again to compare benchmark results over time."];
@@ -3228,12 +3214,21 @@ export const formatEvaluationHistoryDiff = (history?: RAGEvaluationHistory) => {
 
   return lines;
 };
+export const formatEvaluationHistorySummary = (
+  history?: RAGEvaluationHistory,
+) => [formatEvaluationHistoryPresentation(history).summary];
 
 const formatTraceModes = (modes: string[]) =>
   modes.length > 0 ? modes.join(" / ") : "n/a";
 
 const formatEvaluationHistoryPresentation =
   buildRAGEvaluationHistoryPresentation;
+export const formatEvaluationHistoryDetails = (
+  history?: RAGEvaluationHistory,
+) =>
+  formatEvaluationHistoryRows(history).map(
+    (row) => `${row.label}: ${row.value}`,
+  );
 export const formatEvaluationHistoryRows = (history?: RAGEvaluationHistory) =>
   ensureLabeledRow(
     ensureLabeledRow(
@@ -3244,13 +3239,6 @@ export const formatEvaluationHistoryRows = (history?: RAGEvaluationHistory) =>
     "SQLite planner outcome",
     buildHistorySQLitePlannerOutcomeValue(history),
   );
-export const formatEvaluationHistoryDetails = (
-  history?: RAGEvaluationHistory,
-) =>
-  formatEvaluationHistoryRows(history).map(
-    (row) => `${row.label}: ${row.value}`,
-  );
-
 export const formatEvaluationHistoryTracePresentations = (
   history?: RAGEvaluationHistory,
 ) => {
@@ -3260,6 +3248,7 @@ export const formatEvaluationHistoryTracePresentations = (
       snapshot as unknown as Record<string, unknown>,
     ]),
   );
+
   return buildRAGEvaluationCaseTracePresentations(history).map((entry) => {
     let rows = [...entry.rows];
     const snapshot = snapshots.get(entry.caseId);
@@ -3288,6 +3277,7 @@ export const formatEvaluationHistoryTracePresentations = (
     if (boundary)
       rows = ensureLabeledRow(rows, "Chunk boundary rule", boundary);
     if (scope) rows = ensureLabeledRow(rows, "Source scope", scope);
+
     return { ...entry, rows };
   });
 };
@@ -3325,54 +3315,34 @@ const formatComparisonTraceDiffRows = (
     "SQLite planner outcome shift vs leader",
     buildComparisonSQLitePlannerDriftValue(entry, leader),
   );
-export const formatRetrievalComparisonPresentations = (
-  comparison: RAGRetrievalComparison,
-) =>
-  buildRAGRetrievalComparisonPresentations(comparison).map((card, index) => ({
-    ...card,
-    traceSummaryRows: formatComparisonTraceSummaryRows(
-      comparison.entries[index]!,
-    ),
-    diffRows: formatComparisonTraceDiffRows(
-      comparison.entries[index]!,
-      comparison.entries[0],
-    ),
-  }));
-export const formatRerankerComparisonPresentations = (
-  comparison: RAGRerankerComparison,
-) =>
-  buildRAGRerankerComparisonPresentations(comparison).map((card, index) => ({
-    ...card,
-    traceSummaryRows: formatComparisonTraceSummaryRows(
-      comparison.entries[index]!,
-    ),
-    diffRows: formatComparisonTraceDiffRows(
-      comparison.entries[index]!,
-      comparison.entries[0],
-    ),
-  }));
-export const formatRetrievalComparisonOverviewPresentation =
-  buildRAGRetrievalComparisonOverviewPresentation;
+export const buildTracePresentation = buildRAGRetrievalTracePresentation;
+export const formatGroundingProviderOverviewPresentation =
+  buildRAGGroundingProviderOverviewPresentation;
+export const formatGroundingProviderPresentations =
+  buildRAGGroundingProviderPresentations;
 export const formatRerankerComparisonOverviewPresentation =
   buildRAGRerankerComparisonOverviewPresentation;
-export const buildTracePresentation = buildRAGRetrievalTracePresentation;
-
-export const formatRerankerComparisonSummary = (
-  comparison: RAGRerankerComparison,
-) => {
-  return formatRerankerComparisonOverviewPresentation(comparison).rows.map(
-    (row) => `${row.label}: ${row.value}`,
-  );
-};
-
-export const formatRetrievalComparisonSummary = (
-  comparison: RAGRetrievalComparison,
-) => {
-  return formatRetrievalComparisonOverviewPresentation(comparison).rows.map(
-    (row) => `${row.label}: ${row.value}`,
-  );
-};
-
+export const formatRetrievalComparisonOverviewPresentation =
+  buildRAGRetrievalComparisonOverviewPresentation;
+export const formatGroundingEvaluationCase = (
+  entry: RAGAnswerGroundingEvaluationCaseResult,
+) =>
+  [
+    `${entry.status.toUpperCase()} via ${entry.mode}`,
+    `coverage ${entry.coverage}`,
+    `citations ${entry.resolvedCitationCount}/${entry.citationCount}`,
+    `resolved ${formatEvaluationPercent(entry.resolvedCitationRate)}`,
+    `f1 ${entry.citationF1.toFixed(3)}`,
+  ].join(" · ");
+export const formatGroundingEvaluationDetails = (
+  entry: RAGAnswerGroundingEvaluationCaseResult,
+) => [
+  `expected: ${entry.expectedIds.join(", ") || "none"}`,
+  `cited: ${entry.citedIds.join(", ") || "none"}`,
+  `missing: ${entry.missingIds.join(", ") || "none"}`,
+  `extra: ${entry.extraIds.join(", ") || "none"}`,
+  `unresolved citations: ${entry.unresolvedCitationCount}`,
+];
 export const formatGroundingEvaluationSummary = (
   response: RAGAnswerGroundingEvaluationResponse,
 ) =>
@@ -3385,32 +3355,42 @@ export const formatGroundingEvaluationSummary = (
     `citation f1 ${response.summary.averageCitationF1.toFixed(3)}`,
     `passing ${formatEvaluationPassingRate(response.passingRate)}`,
   ].join(" · ");
-
-export const formatGroundingEvaluationCase = (
-  entry: RAGAnswerGroundingEvaluationCaseResult,
+export const formatRerankerComparisonPresentations = (
+  comparison: RAGRerankerComparison,
 ) =>
-  [
-    `${entry.status.toUpperCase()} via ${entry.mode}`,
-    `coverage ${entry.coverage}`,
-    `citations ${entry.resolvedCitationCount}/${entry.citationCount}`,
-    `resolved ${formatEvaluationPercent(entry.resolvedCitationRate)}`,
-    `f1 ${entry.citationF1.toFixed(3)}`,
-  ].join(" · ");
-
-export const formatGroundingEvaluationDetails = (
-  entry: RAGAnswerGroundingEvaluationCaseResult,
-) => [
-  `expected: ${entry.expectedIds.join(", ") || "none"}`,
-  `cited: ${entry.citedIds.join(", ") || "none"}`,
-  `missing: ${entry.missingIds.join(", ") || "none"}`,
-  `extra: ${entry.extraIds.join(", ") || "none"}`,
-  `unresolved citations: ${entry.unresolvedCitationCount}`,
-];
-
-export const formatGroundingProviderPresentations =
-  buildRAGGroundingProviderPresentations;
-export const formatGroundingProviderOverviewPresentation =
-  buildRAGGroundingProviderOverviewPresentation;
+  buildRAGRerankerComparisonPresentations(comparison).map((card, index) => ({
+    ...card,
+    traceSummaryRows: formatComparisonTraceSummaryRows(
+      comparison.entries[index],
+    ),
+    diffRows: formatComparisonTraceDiffRows(
+      comparison.entries[index],
+      comparison.entries[0],
+    ),
+  }));
+export const formatRerankerComparisonSummary = (
+  comparison: RAGRerankerComparison,
+) => formatRerankerComparisonOverviewPresentation(comparison).rows.map(
+    (row) => `${row.label}: ${row.value}`,
+  );
+export const formatRetrievalComparisonPresentations = (
+  comparison: RAGRetrievalComparison,
+) =>
+  buildRAGRetrievalComparisonPresentations(comparison).map((card, index) => ({
+    ...card,
+    traceSummaryRows: formatComparisonTraceSummaryRows(
+      comparison.entries[index],
+    ),
+    diffRows: formatComparisonTraceDiffRows(
+      comparison.entries[index],
+      comparison.entries[0],
+    ),
+  }));
+export const formatRetrievalComparisonSummary = (
+  comparison: RAGRetrievalComparison,
+) => formatRetrievalComparisonOverviewPresentation(comparison).rows.map(
+    (row) => `${row.label}: ${row.value}`,
+  );
 const buildQualityOverviewPlannerOutcomeValue = (input: {
   retrievalComparison: RAGRetrievalComparison;
   rerankerComparison: RAGRerankerComparison;
@@ -3441,31 +3421,8 @@ const buildQualityOverviewPlannerOutcomeValue = (input: {
   return `reranker `;
 };
 
-export const formatQualityOverviewPresentation = (
-  input: Parameters<typeof buildRAGQualityOverviewPresentation>[0],
-) => {
-  const presentation = buildRAGQualityOverviewPresentation(input);
-  const plannerOutcome = buildQualityOverviewPlannerOutcomeValue(input);
-
-  return plannerOutcome === "none"
-    ? presentation
-    : {
-        ...presentation,
-        rows: [
-          ...presentation.rows,
-          { label: "SQLite planner outcome", value: plannerOutcome },
-        ],
-      };
-};
-
-export const formatQualityOverviewNotes = () => [
-  "Compare which strategy wins, whether grounding stays reliable, and whether a run slipped.",
-  "Use the drilldowns for evidence and history, but keep the top-level read focused on decisions and changes.",
-  "Planner outcome stays visible in the default view so selective-search regressions do not hide behind the strategy tabs.",
-];
 export const formatGroundingProviderCasePresentations =
   buildRAGGroundingProviderCaseComparisonPresentations;
-
 export const formatGroundingCaseDifficultyEntry = (
   entry: RAGAnswerGroundingEvaluationCaseDifficultyEntry,
 ) =>
@@ -3478,7 +3435,6 @@ export const formatGroundingCaseDifficultyEntry = (
     `citation f1 ${entry.averageCitationF1.toFixed(3)}`,
     `resolved ${formatEvaluationPercent(entry.averageResolvedCitationRate)}`,
   ].join(" · ");
-
 export const formatGroundingDifficultyHistorySummary = (
   history?: RAGAnswerGroundingCaseDifficultyHistory,
 ) => {
@@ -3506,6 +3462,27 @@ export const formatGroundingDifficultyHistorySummary = (
 
   return lines;
 };
+export const formatQualityOverviewNotes = () => [
+  "Compare which strategy wins, whether grounding stays reliable, and whether a run slipped.",
+  "Use the drilldowns for evidence and history, but keep the top-level read focused on decisions and changes.",
+  "Planner outcome stays visible in the default view so selective-search regressions do not hide behind the strategy tabs.",
+];
+export const formatQualityOverviewPresentation = (
+  input: Parameters<typeof buildRAGQualityOverviewPresentation>[0],
+) => {
+  const presentation = buildRAGQualityOverviewPresentation(input);
+  const plannerOutcome = buildQualityOverviewPlannerOutcomeValue(input);
+
+  return plannerOutcome === "none"
+    ? presentation
+    : {
+        ...presentation,
+        rows: [
+          ...presentation.rows,
+          { label: "SQLite planner outcome", value: plannerOutcome },
+        ],
+      };
+};
 
 const formatGroundingDifficultyCaseLabels = (
   entries: Array<{
@@ -3524,6 +3501,12 @@ const formatGroundingDifficultyCaseLabels = (
         .join(", ")
     : "none";
 
+export const formatGroundingDifficultyHistoryDetails = (
+  history?: RAGAnswerGroundingCaseDifficultyHistory,
+) => [
+  ...formatGroundingDifficultyHistorySummary(history).slice(1),
+  ...formatGroundingDifficultyHistoryDiff(history),
+];
 export const formatGroundingDifficultyHistoryDiff = (
   history?: RAGAnswerGroundingCaseDifficultyHistory,
 ) => {
@@ -3538,13 +3521,6 @@ export const formatGroundingDifficultyHistoryDiff = (
     `Cases trending easier: ${formatGroundingDifficultyCaseLabels(history.diff.easierCases)}`,
   ];
 };
-
-export const formatGroundingDifficultyHistoryDetails = (
-  history?: RAGAnswerGroundingCaseDifficultyHistory,
-) => [
-  ...formatGroundingDifficultyHistorySummary(history).slice(1),
-  ...formatGroundingDifficultyHistoryDiff(history),
-];
 
 const truncateAnswerSnapshot = (value: string, maxLength = 140) =>
   value.length <= maxLength
@@ -3571,6 +3547,7 @@ const formatGroundingSnapshotArtifacts = (
   }
 
   parts.push(truncateAnswerSnapshot(entry.answer));
+
   return parts.join(" · ");
 };
 
@@ -3631,6 +3608,8 @@ const buildGroundingCaseDiffTrail = (
   ];
 };
 
+export const formatGroundingHistorySnapshotPresentations =
+  buildRAGAnswerGroundingCaseSnapshotPresentations;
 export const formatGroundingHistoryArtifactTrail = (
   history?: RAGAnswerGroundingEvaluationHistory,
 ) => {
@@ -3664,7 +3643,6 @@ export const formatGroundingHistoryArtifactTrail = (
     ),
   ];
 };
-
 export const formatGroundingHistorySnapshots = (
   history?: RAGAnswerGroundingEvaluationHistory,
 ) => {
@@ -3684,16 +3662,15 @@ export const formatGroundingHistorySnapshots = (
   );
 };
 
-export const formatGroundingHistorySnapshotPresentations =
-  buildRAGAnswerGroundingCaseSnapshotPresentations;
-
 const formatGroundingHistoryPresentation =
   buildRAGAnswerGroundingHistoryPresentation;
 
-export const formatGroundingHistorySummary = (
+export const formatGroundingHistoryDetails = (
   history?: RAGAnswerGroundingEvaluationHistory,
-) => [formatGroundingHistoryPresentation(history).summary];
-
+) =>
+  formatGroundingHistoryPresentation(history).rows.map(
+    (row) => `${row.label}: ${row.value}`,
+  );
 export const formatGroundingHistoryDiff = (
   history?: RAGAnswerGroundingEvaluationHistory,
 ) => {
@@ -3712,20 +3689,14 @@ export const formatGroundingHistoryDiff = (
     ...formatGroundingHistoryArtifactDeltas(history),
   ];
 };
-
-export const formatGroundingHistoryDetails = (
+export const formatGroundingHistorySummary = (
   history?: RAGAnswerGroundingEvaluationHistory,
-) =>
-  formatGroundingHistoryPresentation(history).rows.map(
-    (row) => `${row.label}: ${row.value}`,
-  );
-
+) => [formatGroundingHistoryPresentation(history).summary];
 export const isBackendMode = (value: unknown): value is DemoBackendMode =>
   value === "sqlite-native" ||
   value === "sqlite-fallback" ||
   value === "postgres" ||
   value === "pinecone";
-
 export const isFrameworkId = (value: unknown): value is DemoFrameworkId =>
   value === "react" ||
   value === "svelte" ||
@@ -3762,6 +3733,7 @@ const readBackendModeFromPath = (
   defaultMode: DemoBackendMode = "sqlite-native",
 ) => {
   const mode = pathname.split("/").filter(Boolean).at(-1);
+
   return isBackendMode(mode) ? mode : defaultMode;
 };
 
@@ -3770,6 +3742,7 @@ const readFrameworkFromPath = (
   defaultFramework: DemoFrameworkId = "react",
 ) => {
   const framework = pathname.split("/").filter(Boolean)[0];
+
   return isFrameworkId(framework) ? framework : defaultFramework;
 };
 
@@ -3789,21 +3762,6 @@ const getInitialFramework = (defaultFramework: DemoFrameworkId = "react") => {
   }
 
   return readFrameworkFromPath(window.location.pathname, defaultFramework);
-};
-
-export const navigateToBackendMode = (
-  frameworkOrMode: DemoFrameworkId | DemoBackendMode,
-  maybeMode?: DemoBackendMode,
-) => {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const framework = maybeMode
-    ? (frameworkOrMode as DemoFrameworkId)
-    : getInitialFramework();
-  const mode = maybeMode ?? (frameworkOrMode as DemoBackendMode);
-  window.location.href = getDemoPagePath(framework, mode);
 };
 
 export const buildSearchPayload = (
@@ -3835,12 +3793,27 @@ export const buildSearchPayload = (
 
   return payload;
 };
+export const navigateToBackendMode = (
+  frameworkOrMode: DemoFrameworkId | DemoBackendMode,
+  maybeMode?: DemoBackendMode,
+) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const framework = maybeMode
+    ? (frameworkOrMode as DemoFrameworkId)
+    : getInitialFramework();
+  const mode = maybeMode ?? (frameworkOrMode as DemoBackendMode);
+  window.location.href = getDemoPagePath(framework, mode);
+};
 
 const buildSearchTargetId = (prefix: string, value: string) => {
   const normalized = value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
   return `${prefix}-${normalized || "item"}`;
 };
 
@@ -3930,7 +3903,7 @@ const buildSearchStoryHighlights = (
   const leadDiagnostic = diagnostics[0];
   const leadSource = results[0]?.source ?? leadDiagnostic?.topSource;
   const queryTransformApplied = Boolean(trace?.transformedQuery);
-  const leadMetadata = (results[0]?.metadata ?? {}) as Record<string, unknown>;
+  const leadMetadata = (results[0]?.metadata ?? {});
   const traceMode = leadDiagnostic?.retrievalMode ?? trace?.mode ?? "hybrid";
 
   let mode: "primary" | "transformed" | "variant" | "mixed" | undefined =
@@ -3938,7 +3911,7 @@ const buildSearchStoryHighlights = (
   if (!mode) {
     const seen = new Set<string>();
     for (const result of results) {
-      const metadata = (result.metadata ?? {}) as Record<string, unknown>;
+      const metadata = (result.metadata ?? {});
       const origins = Array.isArray(metadata.retrievalQueryOrigins)
         ? metadata.retrievalQueryOrigins.filter(
             (value): value is string => typeof value === "string",
@@ -3996,6 +3969,7 @@ const buildSearchStoryHighlights = (
       "Reading target · inspect whether transformed wording, not the base query, is carrying the winning source.",
     );
   }
+
   return lines;
 };
 
@@ -4026,7 +4000,7 @@ const buildSearchAttributionOverview = (
   if (diagnostics.length === 0) {
     const fallbackModes = new Set<string>();
     for (const result of results) {
-      const metadata = (result.metadata ?? {}) as Record<string, unknown>;
+      const metadata = (result.metadata ?? {});
       const origins = Array.isArray(metadata.retrievalQueryOrigins)
         ? metadata.retrievalQueryOrigins.filter(
             (value): value is string => typeof value === "string",
@@ -4083,6 +4057,7 @@ const buildSearchAttributionOverview = (
       `Late interaction summary · parents ${trace.multiVector.collapsedParents} · vector variants ${trace.multiVector.vectorVariantHits} · lexical variants ${trace.multiVector.lexicalVariantHits}`,
     );
   }
+
   return lines;
 };
 
@@ -4165,21 +4140,24 @@ export const buildSearchResponse = (
   );
 
   return {
-    query,
-    elapsedMs,
-    topK: typeof payload.topK === "number" ? payload.topK : 6,
-    count: results.length,
+    attributionOverview: buildSearchAttributionOverview(
+      results,
+      sectionDiagnostics,
+      trace,
+    ),
     chunks: results.map((result) => ({
       chunkId: result.chunkId,
-      title: result.title ?? result.chunkId,
-      source: result.source ?? "unknown",
-      score: result.score,
-      metadata: (result.metadata ?? {}) as Record<string, unknown>,
-      text: result.text,
       labels: result.labels,
+      metadata: (result.metadata ?? {}),
+      score: result.score,
+      source: result.source ?? "unknown",
       structure: result.structure,
       targetId: buildSearchTargetId("search-result", result.chunkId),
+      text: result.text,
+      title: result.title ?? result.chunkId,
     })),
+    count: results.length,
+    elapsedMs,
     filter: Object.fromEntries(
       Object.entries(payload)
         .filter(
@@ -4190,17 +4168,14 @@ export const buildSearchResponse = (
         )
         .map(([key, value]) => [key, value as string]),
     ),
+    query,
+    sectionDiagnostics,
     storyHighlights: buildSearchStoryHighlights(
       results,
       sectionDiagnostics,
       trace,
     ),
-    sectionDiagnostics,
-    attributionOverview: buildSearchAttributionOverview(
-      results,
-      sectionDiagnostics,
-      trace,
-    ),
+    topK: typeof payload.topK === "number" ? payload.topK : 6,
     trace,
   };
 };
@@ -4268,35 +4243,36 @@ export const buildSearchSectionGroups = (
 
   chunks.forEach((chunk, index) => {
     const navigation = buildRAGChunkGraphNavigation(graph, chunk.chunkId);
-    const section = navigation.section;
+    const {section} = navigation;
     const groupId = section?.id ?? `chunk:${chunk.chunkId}`;
     const existing = groups.get(groupId);
     if (existing) {
       existing.chunks.push(chunk);
       if (chunk.score > existing.score) existing.score = chunk.score;
+
       return;
     }
 
     groups.set(groupId, {
+      chunks: [chunk],
       id: groupId,
+      index,
       label: section
         ? formatChunkSectionGroupLabel(section)
         : (chunk.labels?.contextLabel ?? chunk.title),
-      targetId: section
-        ? buildSearchTargetId("search-section", section.id)
-        : chunk.targetId,
       leadChunkId: section?.leadChunkId ?? chunk.chunkId,
       score: chunk.score,
-      index,
       section: section
         ? {
             id: section.id,
+            leadChunkId: section.leadChunkId,
             path: section.path,
             title: section.title,
-            leadChunkId: section.leadChunkId,
           }
         : undefined,
-      chunks: [chunk],
+      targetId: section
+        ? buildSearchTargetId("search-section", section.id)
+        : chunk.targetId,
     });
   });
 
@@ -4309,6 +4285,7 @@ export const buildSearchSectionGroups = (
   return [...groups.values()]
     .sort((left, right) => {
       if (right.score !== left.score) return right.score - left.score;
+
       return left.index - right.index;
     })
     .map((group) => {
@@ -4335,14 +4312,15 @@ export const buildSearchSectionGroups = (
         if (targetId)
           jumps.push(buildSearchSectionJump("child", section, targetId));
       });
+
       return {
+        chunks: group.chunks,
         id: group.id,
+        jumps,
         label: group.label,
+        leadChunkId: group.leadChunkId,
         summary: `${group.chunks.length} matching chunk${group.chunks.length === 1 ? "" : "s"}`,
         targetId: group.targetId,
-        leadChunkId: group.leadChunkId,
-        jumps,
-        chunks: group.chunks,
       } satisfies SearchResultSectionGroup;
     });
 };
@@ -4403,12 +4381,13 @@ export const buildStatusView = (
       acc.total += 1;
       acc.byKind[doc.kind] = (acc.byKind[doc.kind] ?? 0) + 1;
       acc.chunkCount += doc.chunkCount;
+
       return acc;
     },
     {
-      total: 0,
+      byKind: { custom: 0, seed: 0 },
       chunkCount: 0,
-      byKind: { seed: 0, custom: 0 } as Record<RagDocumentKind, number>,
+      total: 0,
     },
   );
 
@@ -4428,8 +4407,8 @@ export const buildStatusView = (
     chunkCount: counts.chunkCount,
     dimensions: status.dimensions,
     documents: {
-      total: counts.total,
       byKind: counts.byKind,
+      total: counts.total,
     },
     native: {
       active: status.native?.active === true,
@@ -4488,6 +4467,38 @@ const formatCoverageMap = (entries: Record<string, number>) =>
     .map(([key, count]) => `${key}: ${count}`)
     .join(" · ") || "none";
 
+export const formatGroundedAnswerPartExcerpt = (part: RAGGroundedAnswerPart) =>
+  part.type === "citation"
+    ? part.referenceDetails[0]?.excerpt ||
+      part.references[0]?.excerpt ||
+      part.references[0]?.text ||
+      part.text
+    : part.text;
+export const formatGroundedAnswerSectionSummaryDetails = (
+  summary: RAGGroundedAnswerSectionSummary,
+) => {
+  const citationList = summary.referenceNumbers
+    .map((number) => `[${number}]`)
+    .join(" ");
+
+  return [
+    `${summary.count} reference${summary.count === 1 ? "" : "s"}${citationList ? ` · citations ${citationList}` : ""}`,
+    summary.locatorLabel ? `location: ${summary.locatorLabel}` : undefined,
+    summary.contextLabel && summary.contextLabel !== summary.label
+      ? `context: ${summary.contextLabel}`
+      : undefined,
+    summary.provenanceLabel
+      ? `provenance: ${summary.provenanceLabel}`
+      : undefined,
+  ].filter((line): line is string => Boolean(line));
+};
+export const formatGroundedAnswerSectionSummaryExcerpt = (
+  summary: RAGGroundedAnswerSectionSummary,
+) =>
+  summary.excerpt ||
+  summary.references[0]?.excerpt ||
+  summary.references[0]?.text ||
+  "";
 export const formatGroundingCoverage = (
   coverage: RAGGroundedAnswer["coverage"],
 ) => {
@@ -4501,13 +4512,25 @@ export const formatGroundingCoverage = (
       return "Ungrounded";
   }
 };
-
+export const formatGroundingReferenceExcerpt = (
+  reference: RAGGroundingReference,
+) => reference.excerpt || reference.text;
+export const formatGroundingReferenceLabel = (
+  reference: RAGGroundingReference,
+) =>
+  [reference.label, reference.contextLabel, reference.locatorLabel]
+    .filter(Boolean)
+    .join(" · ");
+export const formatGroundingReferenceSummary = (
+  reference: RAGGroundingReference,
+) => reference.source ?? reference.title ?? reference.chunkId;
 export const formatGroundingSummary = (answer?: RAGGroundedAnswer | null) => {
   if (!answer) {
     return [] as string[];
   }
 
   const citationParts = answer.parts.filter((part) => part.type === "citation");
+
   return [
     `${formatGroundingCoverage(answer.coverage)} answer · ${answer.references.length} reference(s)`,
     `${citationParts.length} cited answer segment(s)`,
@@ -4516,55 +4539,6 @@ export const formatGroundingSummary = (answer?: RAGGroundedAnswer | null) => {
       : "All citation numbers resolve to retrieved evidence.",
   ];
 };
-
-export const formatGroundedAnswerSectionSummaryDetails = (
-  summary: RAGGroundedAnswerSectionSummary,
-) => {
-  const citationList = summary.referenceNumbers
-    .map((number) => `[${number}]`)
-    .join(" ");
-  return [
-    `${summary.count} reference${summary.count === 1 ? "" : "s"}${citationList ? ` · citations ${citationList}` : ""}`,
-    summary.locatorLabel ? `location: ${summary.locatorLabel}` : undefined,
-    summary.contextLabel && summary.contextLabel !== summary.label
-      ? `context: ${summary.contextLabel}`
-      : undefined,
-    summary.provenanceLabel
-      ? `provenance: ${summary.provenanceLabel}`
-      : undefined,
-  ].filter((line): line is string => Boolean(line));
-};
-
-export const formatGroundingReferenceLabel = (
-  reference: RAGGroundingReference,
-) =>
-  [reference.label, reference.contextLabel, reference.locatorLabel]
-    .filter(Boolean)
-    .join(" · ");
-
-export const formatGroundingReferenceSummary = (
-  reference: RAGGroundingReference,
-) => reference.source ?? reference.title ?? reference.chunkId;
-
-export const formatGroundingReferenceExcerpt = (
-  reference: RAGGroundingReference,
-) => reference.excerpt || reference.text;
-
-export const formatGroundedAnswerPartExcerpt = (part: RAGGroundedAnswerPart) =>
-  part.type === "citation"
-    ? part.referenceDetails[0]?.excerpt ||
-      part.references[0]?.excerpt ||
-      part.references[0]?.text ||
-      part.text
-    : part.text;
-
-export const formatGroundedAnswerSectionSummaryExcerpt = (
-  summary: RAGGroundedAnswerSectionSummary,
-) =>
-  summary.excerpt ||
-  summary.references[0]?.excerpt ||
-  summary.references[0]?.text ||
-  "";
 
 const formatEvidenceDetailLine = (label: string, value?: string | null) =>
   value && value.length > 0 ? `${label}: ${value}` : "";
@@ -4576,25 +4550,86 @@ const formatEvidenceContextLine = (
   const value = [locatorLabel, contextLabel]
     .filter((entry): entry is string => Boolean(entry && entry.length > 0))
     .join(" · ");
+
   return value.length > 0 ? `location: ${value}` : "";
 };
 
-export const formatGroundingReferenceDetails = (
-  reference: RAGGroundingReference,
-) =>
-  [
-    formatEvidenceDetailLine(
-      "evidence",
-      reference.source ?? reference.title ?? reference.chunkId,
-    ),
-    formatEvidenceContextLine(reference.contextLabel, reference.locatorLabel),
-    formatEvidenceDetailLine("provenance", reference.provenanceLabel),
-    `score: ${formatScore(reference.score)}`,
-  ].filter((value) => value.length > 0);
+export const buildInspectionEntries = (
+  health?: RAGCorpusHealth,
+): DemoInspectionEntry[] => {
+  const inspection = health?.inspection;
+  if (!inspection) {
+    return [];
+  }
 
-export const formatGroundingPartReferences = (referenceNumbers: number[]) =>
-  referenceNumbers.map((value) => `[${value}]`).join(" ");
+  return [
+    ...(inspection.sampleDocuments ?? []).map((entry) => ({
+      detail: entry.source,
+      documentId: entry.id,
+      id: `document:${entry.id}`,
+      kind: "document" as const,
+      label: [
+        entry.sourceNativeKind,
+        entry.labels?.locatorLabel ?? entry.labels?.contextLabel ?? entry.title,
+      ]
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && value.length > 0,
+        )
+        .join(" · "),
+      source: entry.source,
+      sourceQuery: entry.source || entry.title,
+    })),
+    ...(inspection.sampleChunks ?? []).map((entry) => ({
+      detail: entry.source ?? entry.chunkId,
+      documentId: entry.documentId,
+      id: `chunk:${entry.chunkId}`,
+      kind: "chunk" as const,
+      label: [
+        entry.sourceNativeKind,
+        entry.labels?.locatorLabel ??
+          entry.labels?.contextLabel ??
+          entry.chunkId,
+      ]
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && value.length > 0,
+        )
+        .join(" · "),
+      source: entry.source,
+      sourceQuery: entry.source ?? entry.documentId ?? entry.chunkId,
+    })),
+  ];
+};
+export const buildInspectionEntryHref = (
+  mode: DemoBackendMode,
+  entry: DemoInspectionEntry,
+) => {
+  const params = new URLSearchParams();
+  if (entry.sourceQuery) params.set("query", entry.sourceQuery);
+  if (entry.documentId) params.set("documentId", entry.documentId);
+  if (entry.documentId) params.set("inspect", "true");
+  const query = params.toString();
 
+  return `/demo/documents/${mode}${query ? `?${query}` : ""}`;
+};
+export const formatAdminActionList = (actions?: RAGAdminActionRecord[]) =>
+  buildRAGAdminActionPresentations(actions).map((action) => action.summary);
+export const formatAdminJobList = (jobs?: RAGAdminJobRecord[]) =>
+  buildRAGAdminJobPresentations(jobs).map((job) => job.summary);
+export const formatFailureSummary = (health?: RAGCorpusHealth) => {
+  const failures = buildRAGCorpusHealthPresentation(health).sections.find(
+    (section) => section.label === "Failures",
+  );
+  if (!failures) {
+    return [] as string[];
+  }
+
+  return [
+    failures.title,
+    ...(failures.rows ?? []).map((row) => `${row.label}: ${row.value}`),
+  ];
+};
 export const formatGroundedAnswerPartDetails = (
   part: Extract<RAGGroundedAnswerPart, { type: "citation" }>,
 ) => [
@@ -4615,14 +4650,20 @@ export const formatGroundedAnswerPartDetails = (
       ]
     : []),
 ];
-
-export const formatReadinessSummary = (readiness?: RAGExtractorReadiness) => {
-  const presentation = buildRAGReadinessPresentation(readiness);
-  return presentation.sections.map(
-    (section) => `${section.label}: ${section.title} · ${section.summary}`,
-  );
-};
-
+export const formatGroundingPartReferences = (referenceNumbers: number[]) =>
+  referenceNumbers.map((value) => `[${value}]`).join(" ");
+export const formatGroundingReferenceDetails = (
+  reference: RAGGroundingReference,
+) =>
+  [
+    formatEvidenceDetailLine(
+      "evidence",
+      reference.source ?? reference.title ?? reference.chunkId,
+    ),
+    formatEvidenceContextLine(reference.contextLabel, reference.locatorLabel),
+    formatEvidenceDetailLine("provenance", reference.provenanceLabel),
+    `score: ${formatScore(reference.score)}`,
+  ].filter((value) => value.length > 0);
 export const formatHealthSummary = (health?: RAGCorpusHealth) => {
   const presentation = buildRAGCorpusHealthPresentation(health);
   const coverage = presentation.sections.find(
@@ -4667,39 +4708,6 @@ export const formatHealthSummary = (health?: RAGCorpusHealth) => {
       : "",
   ].filter((value) => value.length > 0);
 };
-
-export const formatFailureSummary = (health?: RAGCorpusHealth) => {
-  const failures = buildRAGCorpusHealthPresentation(health).sections.find(
-    (section) => section.label === "Failures",
-  );
-  if (!failures) {
-    return [] as string[];
-  }
-
-  return [
-    failures.title,
-    ...(failures.rows ?? []).map((row) => `${row.label}: ${row.value}`),
-  ];
-};
-
-export const formatInspectionSummary = (health?: RAGCorpusHealth) => {
-  const inspection = health?.inspection;
-  if (!inspection) {
-    return [] as string[];
-  }
-
-  const nativeKinds = Object.entries(inspection.sourceNativeKinds ?? {})
-    .map(([key, value]) => `${key} ${value}`)
-    .join(" · ");
-
-  return [
-    nativeKinds.length > 0
-      ? `Source-native kinds: ${nativeKinds}`
-      : "Source-native kinds: none detected",
-    `Labeled inspection: documents ${inspection.documentsWithSourceLabels} · chunks ${inspection.chunksWithSourceLabels}`,
-  ];
-};
-
 export const formatInspectionSamples = (health?: RAGCorpusHealth) => {
   const inspection = health?.inspection;
   if (!inspection) {
@@ -4731,72 +4739,30 @@ export const formatInspectionSamples = (health?: RAGCorpusHealth) => {
     ),
   ];
 };
-
-export const buildInspectionEntryHref = (
-  mode: DemoBackendMode,
-  entry: DemoInspectionEntry,
-) => {
-  const params = new URLSearchParams();
-  if (entry.sourceQuery) params.set("query", entry.sourceQuery);
-  if (entry.documentId) params.set("documentId", entry.documentId);
-  if (entry.documentId) params.set("inspect", "true");
-  const query = params.toString();
-  return `/demo/documents/${mode}${query ? `?${query}` : ""}`;
-};
-
-export const buildInspectionEntries = (
-  health?: RAGCorpusHealth,
-): DemoInspectionEntry[] => {
+export const formatInspectionSummary = (health?: RAGCorpusHealth) => {
   const inspection = health?.inspection;
   if (!inspection) {
-    return [];
+    return [] as string[];
   }
 
+  const nativeKinds = Object.entries(inspection.sourceNativeKinds ?? {})
+    .map(([key, value]) => `${key} ${value}`)
+    .join(" · ");
+
   return [
-    ...(inspection.sampleDocuments ?? []).map((entry) => ({
-      id: `document:${entry.id}`,
-      kind: "document" as const,
-      label: [
-        entry.sourceNativeKind,
-        entry.labels?.locatorLabel ?? entry.labels?.contextLabel ?? entry.title,
-      ]
-        .filter(
-          (value): value is string =>
-            typeof value === "string" && value.length > 0,
-        )
-        .join(" · "),
-      detail: entry.source,
-      documentId: entry.id,
-      source: entry.source,
-      sourceQuery: entry.source || entry.title,
-    })),
-    ...(inspection.sampleChunks ?? []).map((entry) => ({
-      id: `chunk:${entry.chunkId}`,
-      kind: "chunk" as const,
-      label: [
-        entry.sourceNativeKind,
-        entry.labels?.locatorLabel ??
-          entry.labels?.contextLabel ??
-          entry.chunkId,
-      ]
-        .filter(
-          (value): value is string =>
-            typeof value === "string" && value.length > 0,
-        )
-        .join(" · "),
-      detail: entry.source ?? entry.chunkId,
-      documentId: entry.documentId,
-      source: entry.source,
-      sourceQuery: entry.source ?? entry.documentId ?? entry.chunkId,
-    })),
+    nativeKinds.length > 0
+      ? `Source-native kinds: ${nativeKinds}`
+      : "Source-native kinds: none detected",
+    `Labeled inspection: documents ${inspection.documentsWithSourceLabels} · chunks ${inspection.chunksWithSourceLabels}`,
   ];
 };
+export const formatReadinessSummary = (readiness?: RAGExtractorReadiness) => {
+  const presentation = buildRAGReadinessPresentation(readiness);
 
-export const formatAdminJobList = (jobs?: RAGAdminJobRecord[]) =>
-  buildRAGAdminJobPresentations(jobs).map((job) => job.summary);
-
-export const formatAdminActionList = (actions?: RAGAdminActionRecord[]) =>
-  buildRAGAdminActionPresentations(actions).map((action) => action.summary);
+  return presentation.sections.map(
+    (section) => `${section.label}: ${section.title} · ${section.summary}`,
+  );
+};
 
 const readMetadataString = (value: unknown) =>
   typeof value === "string" && value.trim().length > 0
@@ -4951,57 +4917,8 @@ const formatLinkedProviderExtendedDetails = (source: RAGSyncSourceRecord) => {
   ].filter((value) => value.length > 0);
 };
 
-export const formatSyncSourceSummary = (source: RAGSyncSourceRecord) =>
-  (() => {
-    const discoverySummary = buildSyncDiscoverySummary(source);
-    return [
-      source.label,
-      buildRAGSyncSourcePresentation(source).summary,
-      discoverySummary,
-    ]
-      .filter((value) => value.length > 0)
-      .join(" · ");
-  })();
-
-export const formatSyncSourceDetails = (source: RAGSyncSourceRecord) => [
-  ...formatLinkedProviderPrimaryDetails(source),
-  ...buildRAGSyncSourcePresentation(source).rows.map(
-    (row) => `${row.label.toLowerCase()}: ${row.value}`,
-  ),
-  ...formatSyncSourceRecentRuns(source).map(
-    (run, index) =>
-      `recent run ${index + 1}: ${run.trigger} ${run.status} ${run.output} ${run.duration} ${run.finishedAt}${run.error ? ` error ${run.error}` : ""}`,
-  ),
-];
-
-export const formatSyncSourceRecentRuns = (source: RAGSyncSourceRecord) =>
-  (buildRAGSyncSourcePresentation(source).runs ?? []).map((run) => ({
-    duration: run.rows?.find((row) => row.label === "Duration")?.value ?? "n/a",
-    error: run.rows?.find((row) => row.label === "Error")?.value ?? "",
-    finishedAt:
-      run.rows?.find((row) => row.label === "Finished")?.value ?? "n/a",
-    label: run.label,
-    output: run.rows?.find((row) => row.label === "Output")?.value ?? "n/a",
-    status: run.status,
-    trigger: run.rows?.find((row) => row.label === "Trigger")?.value ?? "sync",
-  }));
-
-export const formatSyncSourceExtendedDetails = (source: RAGSyncSourceRecord) =>
-  [
-    ...formatLinkedProviderExtendedDetails(source),
-    buildSyncDiscoverySummary(source),
-    buildRAGSyncSourcePresentation(source).extendedSummary ?? "",
-  ].filter(
-    (value, index, values) =>
-      value.length > 0 && values.indexOf(value) === index,
-  );
-
-export const formatSyncSourceOverview = (sources?: RAGSyncSourceRecord[]) => {
-  return buildRAGSyncOverviewPresentation(sources).rows.map(
-    (row) => `${row.label}: ${row.value}`,
-  );
-};
-
+export const formatSyncSourceActionBadges = (source: RAGSyncSourceRecord) =>
+  buildRAGSyncSourcePresentation(source).tags ?? [];
 export const formatSyncSourceActionSummary = (source: RAGSyncSourceRecord) =>
   (() => {
     const presentation = buildRAGSyncSourcePresentation(source);
@@ -5024,10 +4941,6 @@ export const formatSyncSourceActionSummary = (source: RAGSyncSourceRecord) =>
       .filter((value) => value.length > 0)
       .join(" · ");
   })();
-
-export const formatSyncSourceActionBadges = (source: RAGSyncSourceRecord) =>
-  buildRAGSyncSourcePresentation(source).tags ?? [];
-
 export const formatSyncSourceCollapsedSummary = (source: RAGSyncSourceRecord) =>
   (() => {
     const presentation = buildRAGSyncSourcePresentation(source);
@@ -5052,7 +4965,39 @@ export const formatSyncSourceCollapsedSummary = (source: RAGSyncSourceRecord) =>
       .filter((value) => value.length > 0)
       .join(" · ");
   })();
-
+export const formatSyncSourceDetails = (source: RAGSyncSourceRecord) => [
+  ...formatLinkedProviderPrimaryDetails(source),
+  ...buildRAGSyncSourcePresentation(source).rows.map(
+    (row) => `${row.label.toLowerCase()}: ${row.value}`,
+  ),
+  ...formatSyncSourceRecentRuns(source).map(
+    (run, index) =>
+      `recent run ${index + 1}: ${run.trigger} ${run.status} ${run.output} ${run.duration} ${run.finishedAt}${run.error ? ` error ${run.error}` : ""}`,
+  ),
+];
+export const formatSyncSourceExtendedDetails = (source: RAGSyncSourceRecord) =>
+  [
+    ...formatLinkedProviderExtendedDetails(source),
+    buildSyncDiscoverySummary(source),
+    buildRAGSyncSourcePresentation(source).extendedSummary ?? "",
+  ].filter(
+    (value, index, values) =>
+      value.length > 0 && values.indexOf(value) === index,
+  );
+export const formatSyncSourceOverview = (sources?: RAGSyncSourceRecord[]) => buildRAGSyncOverviewPresentation(sources).rows.map(
+    (row) => `${row.label}: ${row.value}`,
+  );
+export const formatSyncSourceRecentRuns = (source: RAGSyncSourceRecord) =>
+  (buildRAGSyncSourcePresentation(source).runs ?? []).map((run) => ({
+    duration: run.rows?.find((row) => row.label === "Duration")?.value ?? "n/a",
+    error: run.rows?.find((row) => row.label === "Error")?.value ?? "",
+    finishedAt:
+      run.rows?.find((row) => row.label === "Finished")?.value ?? "n/a",
+    label: run.label,
+    output: run.rows?.find((row) => row.label === "Output")?.value ?? "n/a",
+    status: run.status,
+    trigger: run.rows?.find((row) => row.label === "Trigger")?.value ?? "sync",
+  }));
 export const formatSyncSourceSubtype = (source: RAGSyncSourceRecord) => {
   if (typeof source.metadata?.provider === "string") {
     if (typeof source.metadata?.accountMode === "string") {
@@ -5075,6 +5020,18 @@ export const formatSyncSourceSubtype = (source: RAGSyncSourceRecord) => {
       return source.kind;
   }
 };
+export const formatSyncSourceSummary = (source: RAGSyncSourceRecord) =>
+  (() => {
+    const discoverySummary = buildSyncDiscoverySummary(source);
+
+    return [
+      source.label,
+      buildRAGSyncSourcePresentation(source).summary,
+      discoverySummary,
+    ]
+      .filter((value) => value.length > 0)
+      .join(" · ");
+  })();
 
 const syncStatusRank = (status: string) => {
   switch (status.toLowerCase()) {
@@ -5091,16 +5048,6 @@ const syncStatusRank = (status: string) => {
       return 4;
   }
 };
-
-export const sortSyncSources = <T extends RAGSyncSourceRecord>(sources?: T[]) =>
-  [...(sources ?? [])].sort((left, right) => {
-    const byStatus = syncStatusRank(left.status) - syncStatusRank(right.status);
-    if (byStatus !== 0) return byStatus;
-    const leftTime = left.lastSuccessfulSyncAt ?? left.lastSyncedAt ?? 0;
-    const rightTime = right.lastSuccessfulSyncAt ?? right.lastSyncedAt ?? 0;
-    if (rightTime !== leftTime) return rightTime - leftTime;
-    return left.label.localeCompare(right.label);
-  });
 
 export const formatSyncDeltaChips = (sources?: RAGSyncSourceRecord[]) => {
   const records = sources ?? [];
@@ -5124,12 +5071,22 @@ export const formatSyncDeltaChips = (sources?: RAGSyncSourceRecord[]) => {
     latest ? `latest sync: ${latest.label}` : "latest sync: none",
   ];
 };
+export const sortSyncSources = <T extends RAGSyncSourceRecord>(sources?: T[]) =>
+  [...(sources ?? [])].sort((left, right) => {
+    const byStatus = syncStatusRank(left.status) - syncStatusRank(right.status);
+    if (byStatus !== 0) return byStatus;
+    const leftTime = left.lastSuccessfulSyncAt ?? left.lastSyncedAt ?? 0;
+    const rightTime = right.lastSuccessfulSyncAt ?? right.lastSyncedAt ?? 0;
+    if (rightTime !== leftTime) return rightTime - leftTime;
+
+    return left.label.localeCompare(right.label);
+  });
 
 const syncDiscoveryDiagnosticLabelByCode: Partial<Record<string, string>> = {
   canonical_dedupe_applied: "canonical dedupe",
-  robots_blocked: "robots blocked",
   nofollow_skipped: "nofollow",
   noindex_skipped: "noindex",
+  robots_blocked: "robots blocked",
 };
 
 const buildSyncDiscoverySummary = (source: RAGSyncSourceRecord) => {
@@ -5141,6 +5098,7 @@ const buildSyncDiscoverySummary = (source: RAGSyncSourceRecord) => {
   if (labels.length === 0) {
     return "";
   }
+
   return `discovery ${labels.join(" · ")}`;
 };
 
@@ -5150,21 +5108,7 @@ const hasSyncDiscoveryDiagnostics = (source: RAGSyncSourceRecord) =>
       typeof syncDiscoveryDiagnosticLabelByCode[entry.code] === "string",
   );
 
-export const formatRetrievalScopeSummary = (search: SearchFormState) => {
-  const parts = [
-    search.kind ? `kind ${search.kind}` : "",
-    search.source.trim().length > 0 ? `source ${search.source.trim()}` : "",
-    search.documentId.trim().length > 0
-      ? `document ${search.documentId.trim()}`
-      : "",
-    search.nativeQueryProfile ? `planner ${search.nativeQueryProfile}` : "",
-  ].filter((value) => value.length > 0);
-
-  return parts.length > 0
-    ? `Active scope: ${parts.join(" · ")}`
-    : "Active scope: whole index";
-};
-
+export const formatDate = (value: number) => new Date(value).toLocaleString();
 export const formatRetrievalScopeHint = (search: SearchFormState) => {
   const hasSource = search.source.trim().length > 0;
   const hasDocument = search.documentId.trim().length > 0;
@@ -5183,10 +5127,23 @@ export const formatRetrievalScopeHint = (search: SearchFormState) => {
   if (search.nativeQueryProfile) {
     return `Planner profile ${search.nativeQueryProfile} is active. Retrieval tuning is being applied before the search runs.`;
   }
+
   return "Use row actions or the filters below to narrow retrieval before searching.";
 };
+export const formatRetrievalScopeSummary = (search: SearchFormState) => {
+  const parts = [
+    search.kind ? `kind ${search.kind}` : "",
+    search.source.trim().length > 0 ? `source ${search.source.trim()}` : "",
+    search.documentId.trim().length > 0
+      ? `document ${search.documentId.trim()}`
+      : "",
+    search.nativeQueryProfile ? `planner ${search.nativeQueryProfile}` : "",
+  ].filter((value) => value.length > 0);
 
-export const formatDate = (value: number) => new Date(value).toLocaleString();
+  return parts.length > 0
+    ? `Active scope: ${parts.join(" · ")}`
+    : "Active scope: whole index";
+};
 export const formatScore = (value: number) => value.toFixed(4);
 
 const formatMetadataValue = (value: unknown): string => {
@@ -5201,6 +5158,95 @@ const formatMetadataValue = (value: unknown): string => {
   return typeof value === "string" ? value : "";
 };
 
+export const buildDemoUploadIngestInput = (
+  preset: DemoUploadPreset,
+  base64Content: string,
+): RAGDocumentUploadIngestInput => ({
+  baseMetadata: {
+    demoUploadPreset: preset.id,
+    fileKind: "uploaded-demo-fixture",
+    kind: "custom",
+  },
+  uploads: [
+    {
+      content: base64Content,
+      contentType: preset.contentType,
+      encoding: "base64",
+      metadata: {
+        demoUploadPreset: preset.id,
+        fixturePath: preset.fixturePath,
+        kind: "custom",
+      },
+      name: preset.fileName,
+      source: preset.source,
+      title: preset.title,
+    },
+  ],
+});
+export const encodeArrayBufferToBase64 = (value: ArrayBuffer) => {
+  const bytes = new Uint8Array(value);
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(bytes).toString("base64");
+  }
+
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+
+  return btoa(binary);
+};
+export const formatChunkNavigationNodeLabel = (
+  node?: Pick<
+    RAGChunkGraphNode,
+    "chunkId" | "locatorLabel" | "contextLabel"
+  > | null,
+) => node?.locatorLabel ?? node?.contextLabel ?? node?.chunkId ?? "";
+export const formatChunkNavigationSectionLabel = (
+  navigation?: Pick<RAGChunkGraphNavigation, "section"> | null,
+) => {
+  const path = navigation?.section?.path ?? [];
+  if (path.length > 0) {
+    return path.join(" > ");
+  }
+
+  return navigation?.section?.title ?? "Current section";
+};
+export const formatChunkSectionGroupLabel = (
+  section?: Pick<RAGChunkGraphSectionGroup, "id" | "path" | "title"> | null,
+) => {
+  const path = section?.path ?? [];
+  if (path.length > 0) {
+    return path.join(" > ");
+  }
+
+  return section?.title ?? section?.id ?? "Section";
+};
+export const formatChunkStrategy = (value: DemoChunkingStrategy) => {
+  switch (value) {
+    case "source_aware":
+      return "Source-aware";
+    case "paragraphs":
+      return "Paragraphs";
+    case "sentences":
+      return "Sentences";
+    case "fixed":
+    default:
+      return "Fixed window";
+  }
+};
+export const formatContentFormat = (value: DemoContentFormat) => {
+  switch (value) {
+    case "markdown":
+      return "Markdown";
+    case "html":
+      return "HTML";
+    case "text":
+    default:
+      return "Plain text";
+  }
+};
 export const formatDemoMetadataSummary = (
   metadata?: Record<string, unknown>,
 ) => {
@@ -5212,7 +5258,7 @@ export const formatDemoMetadataSummary = (
   const push = (label: string, key: string) => {
     const value = formatMetadataValue(metadata[key]);
     if (value.length > 0) {
-      lines.push(label + ": " + value);
+      lines.push(`${label  }: ${  value}`);
     }
   };
 
@@ -5236,117 +5282,17 @@ export const formatDemoMetadataSummary = (
 
   return lines;
 };
-
-export const formatContentFormat = (value: DemoContentFormat) => {
-  switch (value) {
-    case "markdown":
-      return "Markdown";
-    case "html":
-      return "HTML";
-    case "text":
-    default:
-      return "Plain text";
-  }
-};
-
-export const formatChunkStrategy = (value: DemoChunkingStrategy) => {
-  switch (value) {
-    case "source_aware":
-      return "Source-aware";
-    case "paragraphs":
-      return "Paragraphs";
-    case "sentences":
-      return "Sentences";
-    case "fixed":
-    default:
-      return "Fixed window";
-  }
-};
-
-export const formatOptionalContentFormat = (value?: string | null) =>
-  formatContentFormat(
-    value === "markdown" || value === "html" ? value : "text",
-  );
-
 export const formatOptionalChunkStrategy = (value?: string | null) =>
   formatChunkStrategy(
     value === "source_aware" || value === "sentences" || value === "fixed"
       ? value
       : "paragraphs",
   );
-
-export const formatChunkNavigationNodeLabel = (
-  node?: Pick<
-    RAGChunkGraphNode,
-    "chunkId" | "locatorLabel" | "contextLabel"
-  > | null,
-) => node?.locatorLabel ?? node?.contextLabel ?? node?.chunkId ?? "";
-
-export const formatChunkNavigationSectionLabel = (
-  navigation?: Pick<RAGChunkGraphNavigation, "section"> | null,
-) => {
-  const path = navigation?.section?.path ?? [];
-  if (path.length > 0) {
-    return path.join(" > ");
-  }
-
-  return navigation?.section?.title ?? "Current section";
-};
-
-export const formatChunkSectionGroupLabel = (
-  section?: Pick<RAGChunkGraphSectionGroup, "id" | "path" | "title"> | null,
-) => {
-  const path = section?.path ?? [];
-  if (path.length > 0) {
-    return path.join(" > ");
-  }
-
-  return section?.title ?? section?.id ?? "Section";
-};
-
+export const formatOptionalContentFormat = (value?: string | null) =>
+  formatContentFormat(
+    value === "markdown" || value === "html" ? value : "text",
+  );
+export const getDemoUploadFixtureUrl = (id: string) =>
+  `/demo/upload-fixtures/${  encodeURIComponent(id)}`;
 export const getDemoUploadPreset = (id: string) =>
   demoUploadPresets.find((preset) => preset.id === id) ?? null;
-
-export const getDemoUploadFixtureUrl = (id: string) =>
-  "/demo/upload-fixtures/" + encodeURIComponent(id);
-
-export const buildDemoUploadIngestInput = (
-  preset: DemoUploadPreset,
-  base64Content: string,
-): RAGDocumentUploadIngestInput => ({
-  baseMetadata: {
-    demoUploadPreset: preset.id,
-    fileKind: "uploaded-demo-fixture",
-    kind: "custom",
-  },
-  uploads: [
-    {
-      name: preset.fileName,
-      source: preset.source,
-      title: preset.title,
-      contentType: preset.contentType,
-      encoding: "base64",
-      content: base64Content,
-      metadata: {
-        demoUploadPreset: preset.id,
-        fixturePath: preset.fixturePath,
-        kind: "custom",
-      },
-    },
-  ],
-});
-
-export const encodeArrayBufferToBase64 = (value: ArrayBuffer) => {
-  const bytes = new Uint8Array(value);
-  if (typeof Buffer !== "undefined") {
-    return Buffer.from(bytes).toString("base64");
-  }
-
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let index = 0; index < bytes.length; index += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
-  }
-
-  return btoa(binary);
-};

@@ -1,4 +1,5 @@
-import { isVoiceModelProvider, type SavedIntake } from "../shared/demo";
+import { isVoiceModelProvider } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import { renderVoiceAssistantPage } from "./assistantPage";
 import { renderVoiceIntegrationEventsPage } from "./integrationsPage";
 import {
@@ -31,9 +32,7 @@ import {
 import { gemini } from "@absolutejs/voice-gemini";
 import { openai } from "@absolutejs/voice-openai";
 import { Elysia } from "elysia";
-import { mkdirSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
 import {
   agentSquadStatusRoutes,
   renderAgentSquadContractHTML,
@@ -144,8 +143,6 @@ import {
   realCallEvidenceRuntimeAutocollectIntervalMs,
   realCallEvidenceRuntimeRoutes,
   realCallEvidenceRuntimeWorkerLoop,
-  realCallProfileEvidencePath,
-  realCallProfileRecoveryJobsPath,
   renderRealCallProfileRecoveryHTML,
 } from "./realCallEvidence";
 import { productionReadinessOptions } from "./sessionsProofPack";
@@ -297,6 +294,7 @@ export const demoRoutes = new Elysia()
         const resource = event.resource
           ? `${event.resource.type}:${event.resource.id}`
           : "n/a";
+
         return `| ${new Date(event.at).toISOString()} | ${event.type} | ${event.outcome} | ${resource} |`;
       })
       .join("\n");
@@ -367,6 +365,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
   )
   .get("/agent-squad-contract", async ({ set }) => {
     set.headers["content-type"] = "text/html; charset=utf-8";
+
     return renderAgentSquadContractHTML();
   })
   .post("/api/turn-latency/proof", () => seedTurnLatencyProof())
@@ -385,23 +384,8 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
   )
   .use(
     createVoicePhoneAgent<unknown, VoiceSessionRecord, SavedIntake>({
-      matrix: {
-        path: "/api/carriers",
-        title: "AbsoluteJS Voice Demo Carrier Matrix",
-      },
-      setup: {
-        path: "/api/voice/phone/setup",
-        title: "AbsoluteJS Voice Demo Phone Agent",
-      },
-      productionSmoke: {
-        htmlPath: "/voice/phone/smoke-contract",
-        path: "/api/voice/phone/smoke-contract",
-        store: runtimeStorage.traces,
-        title: "AbsoluteJS Voice Demo Phone Call-Control Smoke",
-      },
       carriers: [
         {
-          provider: "telnyx",
           options: {
             bridge: createTelephonyBridgeConfig(),
             context: {},
@@ -432,18 +416,28 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
               idempotency: {
                 store: telephonyWebhookIdempotencyStore,
               },
-              onDecision: async (input) => {
-                await recordTelephonyWebhookDecision("telnyx", input);
-              },
               path: "/api/telnyx/webhook",
               publicKey: telnyxPublicKey,
               verify: localCarrierWebhookVerification,
+              onDecision: async (input) => {
+                await recordTelephonyWebhookDecision("telnyx", input);
+              },
             },
           },
+          provider: "telnyx",
         },
         {
-          provider: "plivo",
           options: {
+            answer: {
+              path: "/api/plivo/voice",
+              response: {
+                audioTrack: "inbound",
+                bidirectional: true,
+                contentType: "audio/x-mulaw;rate=8000",
+                keepCallAlive: true,
+              },
+              streamUrl: resolvePhoneAgentStreamUrl,
+            },
             bridge: createTelephonyBridgeConfig(),
             context: {},
             outcomePolicy: telephonyOutcomePolicy,
@@ -460,34 +454,24 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
               title: "AbsoluteJS Voice Demo Plivo Smoke Test",
             },
             streamPath: "/api/plivo/stream",
-            answer: {
-              path: "/api/plivo/voice",
-              response: {
-                audioTrack: "inbound",
-                bidirectional: true,
-                contentType: "audio/x-mulaw;rate=8000",
-                keepCallAlive: true,
-              },
-              streamUrl: resolvePhoneAgentStreamUrl,
-            },
             webhook: {
               authToken: plivoAuthToken,
               idempotency: {
                 store: telephonyWebhookIdempotencyStore,
-              },
-              onDecision: async (input) => {
-                await recordTelephonyWebhookDecision("plivo", input);
               },
               path: "/api/plivo/webhook",
               verificationUrl: publicBaseUrl
                 ? `${publicBaseUrl.replace(/\/$/, "")}/api/plivo/webhook`
                 : undefined,
               verify: localCarrierWebhookVerification,
+              onDecision: async (input) => {
+                await recordTelephonyWebhookDecision("plivo", input);
+              },
             },
           },
+          provider: "plivo",
         },
         {
-          provider: "twilio",
           options: {
             ...createTelephonyBridgeConfig(),
             ops: assistant.ops,
@@ -507,6 +491,9 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
             },
             streamPath: "/api/twilio/stream",
             twiml: {
+              path: "/api/twilio/voice",
+              streamName: "absolutejs-voice-demo",
+              streamUrl: resolvePhoneAgentStreamUrl,
               parameters: ({ query }) => ({
                 scenarioId:
                   typeof query.scenarioId === "string"
@@ -517,16 +504,10 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
                     ? query.sessionId
                     : undefined,
               }),
-              path: "/api/twilio/voice",
-              streamName: "absolutejs-voice-demo",
-              streamUrl: resolvePhoneAgentStreamUrl,
             },
             webhook: {
               idempotency: {
                 store: telephonyWebhookIdempotencyStore,
-              },
-              onDecision: async (input) => {
-                await recordTelephonyWebhookDecision("twilio", input);
               },
               path: "/api/telephony-webhook",
               signingSecret: telephonyWebhookSigningSecret,
@@ -534,10 +515,28 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
                 "/api/telephony-webhook",
               ),
               verify: localCarrierWebhookVerification,
+              onDecision: async (input) => {
+                await recordTelephonyWebhookDecision("twilio", input);
+              },
             },
           },
+          provider: "twilio",
         },
       ],
+      matrix: {
+        path: "/api/carriers",
+        title: "AbsoluteJS Voice Demo Carrier Matrix",
+      },
+      productionSmoke: {
+        htmlPath: "/voice/phone/smoke-contract",
+        path: "/api/voice/phone/smoke-contract",
+        store: runtimeStorage.traces,
+        title: "AbsoluteJS Voice Demo Phone Call-Control Smoke",
+      },
+      setup: {
+        path: "/api/voice/phone/setup",
+        title: "AbsoluteJS Voice Demo Phone Agent",
+      },
     }).routes,
   )
   .post("/api/voice/campaigns/proof", () =>
@@ -580,6 +579,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
   }))
   .get("/api/telephony-webhook-decisions", () => {
     const decisions = telephonyOutcomeRecorder.list();
+
     return {
       decisions,
       generatedAt: Date.now(),
@@ -737,6 +737,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
   .get("/api/assistant-memory", async () => listAssistantMemory())
   .get("/api/reviews", async ({ query }) => {
     const reviews = await listReviews();
+
     return filterVoiceReviews(reviews, normalizeReviewFilters(query));
   })
   .get(
@@ -746,6 +747,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
   )
   .get("/api/reviews/:reviewId", async ({ params }) => {
     const review = await runtimeStorage.reviews.get(params.reviewId);
+
     return review ?? { error: "Review not found" };
   })
   .get("/api/tasks", async ({ query }) =>
@@ -892,7 +894,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
         <button type="button" onclick="retryHandoffs(this)">Retry queued handoffs</button>
         <span id="handoff-retry-result">${handoffAdapters.length > 0 ? "Ready to drain pending and failed deliveries." : "Set VOICE_DEMO_HANDOFF_WEBHOOK_URL to enable delivery retries."}</span>
       </div>
-      <p><small>Queue file: ${escapeHtml(resolve(runtimeDirectory, "handoff-deliveries.json"))}</small></p>
+      <p><small>Queue: Neon · voice_handoff_deliveries</small></p>
     </section>
     <section>
       ${renderVoiceHandoffHealthHTML(handoffHealth)}
@@ -978,6 +980,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
         ? query.owner.trim()
         : "ops-demo";
     await assignTask(params.taskId, owner);
+
     return redirectToTasks();
   })
   .get("/tasks/:taskId/start", async ({ params }) => {
@@ -989,6 +992,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
         status: "in-progress",
       });
     }
+
     return redirectToTasks();
   })
   .get("/tasks/:taskId/complete", async ({ params }) => {
@@ -1000,6 +1004,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
         status: "done",
       });
     }
+
     return redirectToTasks();
   })
   .get("/tasks/:taskId/reopen", async ({ params }) => {
@@ -1011,6 +1016,7 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
         status: "open",
       });
     }
+
     return redirectToTasks();
   })
   .get("/reviews/compare", async ({ query }) => {
@@ -1052,21 +1058,26 @@ ${rows || "| n/a | n/a | n/a | n/a |"}
   );
 
 // ---- top-level side effects (run after all definitions) ----
+// runtimeDirectory holds only downloadable proof artifacts (OS temp); all
+// durable state lives in Neon via Drizzle.
 await mkdir(runtimeDirectory, { recursive: true });
-mkdirSync(dirname(realCallProfileRecoveryJobsPath), { recursive: true });
-mkdirSync(dirname(realCallProfileEvidencePath), { recursive: true });
 if (process.env.VOICE_REAL_CALL_EVIDENCE_AUTOCOLLECT === "1") {
   realCallEvidenceRuntimeWorkerLoop.start();
   console.log(
     `Real-call evidence auto-collector started every ${realCallEvidenceRuntimeAutocollectIntervalMs}ms.`,
   );
 }
-// Warm the boot caches; each loader self-invalidates on failure, so we only
-// need to swallow the startup rejection here.
+// Warm boot caches and seed demo proof data in the BACKGROUND so the server
+// starts accepting requests immediately. Each step makes several Neon round
+// trips; awaiting them at module load added ~8s to startup. Proof surfaces fill
+// in a moment after boot, and every loader self-invalidates on failure, so we
+// only swallow the startup rejection here.
 void loadDemoSloThresholdProfile().catch(() => {});
 void summarizeDemoDeliveryRuntime().catch(() => {});
-await cleanupDemoQualityNoise();
-await seedDemoOutcomeProof();
-await seedDemoBargeInProof();
-await seedDemoDeliveryProof();
-await ensureDemoIncidentBundleEvidence();
+void (async () => {
+  await cleanupDemoQualityNoise();
+  await seedDemoOutcomeProof();
+  await seedDemoBargeInProof();
+  await seedDemoDeliveryProof();
+  await ensureDemoIncidentBundleEvidence();
+})().catch(() => {});

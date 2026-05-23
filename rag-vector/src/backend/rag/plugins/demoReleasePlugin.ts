@@ -8,47 +8,47 @@ import type {
 } from "./pluginTypes";
 
 const releaseActionMessages: Record<string, string> = {
-  "switch-to-blocked-scenario":
-    "Switched the release demo to the blocked stable lane.",
-  "switch-to-blocked-general-scenario":
-    "Switched the release demo to the blocked stable lane.",
-  "switch-to-blocked-multivector-scenario":
-    "Switched the release demo to the blocked stable lane.",
-  "switch-to-ready-scenario":
-    "Switched the release demo to the promotable stable lane.",
-  "switch-to-completed-scenario":
-    "Switched the release demo to the completed stable handoff.",
+  "acknowledge-open-incident": "Acknowledged the current release incident.",
+  "approve-stable-handoff":
+    "Approved the stable handoff through the published workflow.",
+  "approve-stable-override":
+    "Approved the stable candidate through the published workflow.",
+  "complete-stable-handoff":
+    "Completed the stable handoff through the published workflow.",
+  "inspect-release-drift": "Loaded the published release drift workflow.",
+  "inspect-release-status": "Loaded the published release status workflow.",
+  "inspect-stable-handoffs": "Loaded the published handoff status workflow.",
+  "promote-stable-candidate":
+    "Promoted the stable candidate through the published workflow.",
+  "reject-stable-candidate":
+    "Rejected the stable candidate through the published workflow.",
   "reset-release-demo":
     "Reset the release demo back to the blocked stable lane.",
-  "inspect-release-status": "Loaded the published release status workflow.",
-  "inspect-release-drift": "Loaded the published release drift workflow.",
-  "run-remediation-drill":
-    "Ran the remediation drill through the published remediation execution workflows.",
-  "run-policy-history-drill":
-    "Loaded the published policy history workflows for release, gate, escalation, and handoff controls.",
-  "run-incident-drill":
-    "Ran the incident drill through the published incident workflows.",
-  "run-promote-revert-drill":
-    "Ran the promote and revert drill through the published baseline workflows.",
+  "resolve-open-incident": "Resolved the current release incident.",
+  "revert-stable-baseline":
+    "Reverted the stable baseline through the published workflow.",
   "run-handoff-completion-drill":
     "Ran the stable handoff completion drill through the published handoff workflows.",
   "run-handoff-incident-drill":
     "Ran the stale handoff incident drill through the published handoff incident workflows.",
-  "promote-stable-candidate":
-    "Promoted the stable candidate through the published workflow.",
-  "revert-stable-baseline":
-    "Reverted the stable baseline through the published workflow.",
-  "approve-stable-override":
-    "Approved the stable candidate through the published workflow.",
-  "reject-stable-candidate":
-    "Rejected the stable candidate through the published workflow.",
-  "acknowledge-open-incident": "Acknowledged the current release incident.",
-  "resolve-open-incident": "Resolved the current release incident.",
-  "inspect-stable-handoffs": "Loaded the published handoff status workflow.",
-  "approve-stable-handoff":
-    "Approved the stable handoff through the published workflow.",
-  "complete-stable-handoff":
-    "Completed the stable handoff through the published workflow.",
+  "run-incident-drill":
+    "Ran the incident drill through the published incident workflows.",
+  "run-policy-history-drill":
+    "Loaded the published policy history workflows for release, gate, escalation, and handoff controls.",
+  "run-promote-revert-drill":
+    "Ran the promote and revert drill through the published baseline workflows.",
+  "run-remediation-drill":
+    "Ran the remediation drill through the published remediation execution workflows.",
+  "switch-to-blocked-general-scenario":
+    "Switched the release demo to the blocked stable lane.",
+  "switch-to-blocked-multivector-scenario":
+    "Switched the release demo to the blocked stable lane.",
+  "switch-to-blocked-scenario":
+    "Switched the release demo to the blocked stable lane.",
+  "switch-to-completed-scenario":
+    "Switched the release demo to the completed stable handoff.",
+  "switch-to-ready-scenario":
+    "Switched the release demo to the promotable stable lane.",
 };
 
 export const createDemoReleasePlugin = ({
@@ -154,10 +154,10 @@ export const createDemoReleasePlugin = ({
       try {
         const release = await releaseDemo.handleAction({
           actionId,
-          handleInternal: (internalRequest) =>
-            handleInternalRequest(internalRequest),
           mode: resolved.mode,
           workspace,
+          handleInternal: (internalRequest) =>
+            handleInternalRequest(internalRequest),
         });
 
         const actionMessage = releaseActionMessages[actionId] ?? actionId;

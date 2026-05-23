@@ -7,6 +7,22 @@ import {
   type SavedContact,
 } from "../../shared/demo";
 
+export const emptyLead = (): LeadFormPayload => ({
+  company: "",
+  email: "",
+  firstName: "",
+  lastName: "",
+  notes: "",
+  phone: "",
+  source: "web-form",
+});
+export const fetchRecentContacts = async (): Promise<SavedContact[]> => {
+  const response = await fetch(CRM_RECENT_CONTACTS_ROUTE);
+  if (!response.ok) return [];
+  const json = (await response.json()) as RecentContactsResponse;
+
+  return json.contacts;
+};
 export const submitLead = async (
   payload: LeadFormPayload,
 ): Promise<LeadSubmissionResult> => {
@@ -21,22 +37,6 @@ export const submitLead = async (
       ok: false,
     };
   }
+
   return (await response.json()) as LeadSubmissionResult;
 };
-
-export const fetchRecentContacts = async (): Promise<SavedContact[]> => {
-  const response = await fetch(CRM_RECENT_CONTACTS_ROUTE);
-  if (!response.ok) return [];
-  const json = (await response.json()) as RecentContactsResponse;
-  return json.contacts;
-};
-
-export const emptyLead = (): LeadFormPayload => ({
-  company: "",
-  email: "",
-  firstName: "",
-  lastName: "",
-  notes: "",
-  phone: "",
-  source: "web-form",
-});

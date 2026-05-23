@@ -1,4 +1,4 @@
-import { type SavedIntake } from "../shared/demo";
+import type { SavedIntake } from "../types/domain";
 import { networking } from "@absolutejs/absolute";
 import {
   buildVoiceCompetitiveCoverageReport,
@@ -158,8 +158,8 @@ const vapiMigrationItems = [
   {
     absolute:
       "Agent tools, deterministic tool contracts, audit events, integration events, and operations-record links.",
-    coverageSurface: "Tools and functions",
     concept: "Tools / functions",
+    coverageSurface: "Tools and functions",
     proofHref: "/tool-contracts",
     proofLabel: "Open tool contracts",
     statusHref: "/api/tool-contracts",
@@ -167,8 +167,8 @@ const vapiMigrationItems = [
   {
     absolute:
       "Local guardrail policies block unsafe assistant output, warn/redact sensitive transcript data, and produce traceable JSON/Markdown proof.",
-    coverageSurface: "Guardrails and policies",
     concept: "Guardrails / policies",
+    coverageSurface: "Guardrails and policies",
     proofHref: "/voice/guardrails",
     proofLabel: "Open guardrails proof",
     statusHref: "/api/voice/guardrails",
@@ -176,8 +176,8 @@ const vapiMigrationItems = [
   {
     absolute:
       "One self-hosted operations record and session-observability page linking transcript, turn waterfalls, replay, provider choices, tools, handoffs, reviews, tasks, audit, and delivery attempts.",
-    coverageSurface: "Call logs and incident handoff",
     concept: "Call logs",
+    coverageSurface: "Call logs and incident handoff",
     proofHref: "/voice-observability/demo-incident-bundle",
     proofLabel: "Open session observability",
     statusHref: "/api/voice/session-observability/demo-incident-bundle",
@@ -185,8 +185,8 @@ const vapiMigrationItems = [
   {
     absolute:
       "Post-call analysis proof validates extracted fields, required follow-up tasks, delivery events, and the linked operations record.",
-    coverageSurface: "Post-call analysis",
     concept: "Post-call analysis",
+    coverageSurface: "Post-call analysis",
     proofHref: "/voice/post-call-analysis",
     proofLabel: "Open post-call proof",
     statusHref: "/api/voice/post-call-analysis",
@@ -194,8 +194,8 @@ const vapiMigrationItems = [
   {
     absolute:
       "Readiness gates, recovery report, provider SLOs, delivery runtime, and deploy-gate JSON.",
-    coverageSurface: "Monitoring and release gates",
     concept: "Monitoring / issue detection",
+    coverageSurface: "Monitoring and release gates",
     proofHref: "/production-readiness",
     proofLabel: "Open readiness",
     statusHref: "/api/production-readiness",
@@ -272,11 +272,11 @@ const competitiveCoverageSurfaces = [
       { href: "/traces", kind: "route", name: "traceTimeline", status: "pass" },
     ],
     frameworkPrimitives: ["react", "vue", "svelte", "angular", "html", "htmx"],
+    nextMove: "Keep first-success docs current as proof routes evolve.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Browser voice agent",
     why: "Framework-native hooks, composables, services, widgets, reconnect, barge-in, traces, and readiness proof are app-owned instead of widget-only.",
-    nextMove: "Keep first-success docs current as proof routes evolve.",
   },
   {
     buyerNeed:
@@ -307,12 +307,12 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["server routes", "carrier setup JSON/HTML"],
+    nextMove:
+      "Improve carrier setup UX without owning phone-number provisioning.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Phone voice agent",
     why: "Carrier bridges, setup reports, webhook security, smoke proof, and outcome normalization are present, while hosted providers still win on click-to-buy-number provisioning.",
-    nextMove:
-      "Improve carrier setup UX without owning phone-number provisioning.",
   },
   {
     buyerNeed: "Compose specialist assistants with traceable handoffs.",
@@ -335,11 +335,11 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["react", "vue", "svelte", "angular", "html"],
+    nextMove: "Keep specialist examples and operations-record links obvious.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Squads / multi-assistant routing",
     why: "Agent Squad provides specialist routing, context policy, handoff summaries, durable state, traces, contracts, and framework-visible specialist state.",
-    nextMove: "Keep specialist examples and operations-record links obvious.",
   },
   {
     buyerNeed:
@@ -364,11 +364,11 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["server routes", "contract reports"],
+    nextMove: "Add more real-session tool workflow recipes.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Tools and business actions",
     why: "Tool contracts, outcome contracts, audit hooks, ops tasks, integration events, and operation-linked failures are stronger for code-owned apps.",
-    nextMove: "Add more real-session tool workflow recipes.",
   },
   {
     buyerNeed:
@@ -392,12 +392,12 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["server routes", "runtime policy"],
+    nextMove:
+      "Keep recipes primitive-first instead of creating a policy builder.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Guardrails and policy enforcement",
     why: "Guardrails are code-owned runtime policies with blocking/warning proof, trace evidence, incident summaries, and proof-pack integration.",
-    nextMove:
-      "Keep recipes primitive-first instead of creating a policy builder.",
   },
   {
     buyerNeed:
@@ -446,12 +446,12 @@ const competitiveCoverageSurfaces = [
       "provider profiles",
       "trace reports",
     ],
+    nextMove:
+      "Keep provider recovery and caller-heard replay visible as headline proof-pack advantages.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Provider choice and fallback",
     why: "Provider profiles, cost/latency/quality routing, circuit breakers, SLOs, decision traces, fallback recovery, operations-record recovery evidence, and caller-heard failure replay are first-class.",
-    nextMove:
-      "Keep provider recovery and caller-heard replay visible as headline proof-pack advantages.",
   },
   {
     buyerNeed:
@@ -481,11 +481,11 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["readiness routes", "ops routes", "proof trends"],
+    nextMove: "Keep export/schema/readiness cohesion tight.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Monitoring, issues, and release gates",
     why: "Monitors, issues, notifier receipts, ops recovery, SLO calibration, proof trends, and production readiness are customer-owned.",
-    nextMove: "Keep export/schema/readiness cohesion tight.",
   },
   {
     buyerNeed: "Open one call log and understand the full lifecycle.",
@@ -525,12 +525,12 @@ const competitiveCoverageSurfaces = [
       "incident markdown",
       "failure replay",
     ],
+    nextMove:
+      "Keep every new proof surface linking back to operations records and failure replay where caller-heard context matters.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Unified call log / operations record",
     why: "Operations records link trace, replay, transcript, provider decisions, tools, guardrails, handoffs, audit, reviews, tasks, delivery attempts, failure replay, and incident Markdown.",
-    nextMove:
-      "Keep every new proof surface linking back to operations records and failure replay where caller-heard context matters.",
   },
   {
     buyerNeed: "Extract post-call data and trigger follow-up workflow.",
@@ -553,11 +553,11 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["server routes", "review/task/integration events"],
+    nextMove: "Add more workflow recipes and proof-pack examples.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Post-call analysis and workflows",
     why: "Extraction, required task creation, delivery proof, and operations-record linkage exist; hosted dashboards still have smoother built-in call-record UX.",
-    nextMove: "Add more workflow recipes and proof-pack examples.",
   },
   {
     buyerNeed: "Run simulations and regressions before production.",
@@ -584,11 +584,11 @@ const competitiveCoverageSurfaces = [
       "fixture stores",
       "contract reports",
     ],
+    nextMove: "Make scenario authoring easier without creating an app kit.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Simulation and regression testing",
     why: "Evals, fixtures, simulations, baselines, operation-linked failures, and readiness gates live in the repo and CI path.",
-    nextMove: "Make scenario authoring easier without creating an app kit.",
   },
   {
     buyerNeed: "Run outbound campaigns through owned carrier infrastructure.",
@@ -617,12 +617,12 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["server routes", "campaign runtime"],
+    nextMove:
+      "Improve docs/primitives without building a hosted dialer dashboard.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Outbound campaigns",
     why: "Campaign queues, imports, consent, retries, quiet hours, carrier dry-runs, and readiness proof exist, while Retell/Bland still lead dashboard-led campaign UX.",
-    nextMove:
-      "Improve docs/primitives without building a hosted dialer dashboard.",
   },
   {
     buyerNeed: "Let a human safely intervene during live automation.",
@@ -639,11 +639,11 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["react", "vue", "svelte", "angular", "html"],
+    nextMove: "Keep live-ops evidence visible in all framework examples.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Live operator controls",
     why: "Runtime pause/resume/takeover, injected instructions, action-center primitives, audit/trace evidence, and framework integrations are code-owned.",
-    nextMove: "Keep live-ops evidence visible in all framework examples.",
   },
   {
     buyerNeed: "Export voice evidence to owned storage, SIEM, or warehouse.",
@@ -666,11 +666,11 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["server routes", "export manifests"],
+    nextMove: "Make export manifests the default release/incident artifact.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Customer-owned observability export",
     why: "Export/replay, schema validation, delivery, redaction, readiness gating, and operations-record links support owned incident and warehouse workflows.",
-    nextMove: "Make export manifests the default release/incident artifact.",
   },
   {
     buyerNeed: "Control data retention, redaction, and audit export.",
@@ -693,11 +693,11 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["server routes", "storage recipes"],
+    nextMove: "Keep docs precise and avoid certification claims.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Compliance and data control",
     why: "Retention, redaction, zero-retention helpers, guarded deletion, customer storage, audit export, and provider-key guidance are app-owned.",
-    nextMove: "Keep docs precise and avoid certification claims.",
   },
   {
     buyerNeed:
@@ -728,12 +728,12 @@ const competitiveCoverageSurfaces = [
       },
     ],
     frameworkPrimitives: ["client traces", "server reports"],
+    nextMove:
+      "Build sustained benchmark history and tune defaults from real runs.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Latency, interruption, and reconnect confidence",
     why: "Live p50/p95, provider-stage timings, barge-in, reconnect contracts, long-window proof, SLO artifacts, and readiness gates exist.",
-    nextMove:
-      "Build sustained benchmark history and tune defaults from real runs.",
   },
   {
     buyerNeed:
@@ -813,51 +813,51 @@ const competitiveCoverageSurfaces = [
       "media-pipeline calibration",
       "realtime provider contracts",
     ],
+    nextMove:
+      "Expand native media-pipeline proof from calibration into transport, resampling, VAD, and interruption primitives.",
     operationsRecord: "linked",
     readinessGate: "present",
     surface: "Direct realtime/duplex providers",
     why: "OpenAI Realtime adapter path, browser capture negotiation, raw PCM realtime format proof, native media-pipeline calibration, first assistant audio latency, provider contracts, and cascaded STT/LLM/TTS fallback are all app-owned.",
-    nextMove:
-      "Expand native media-pipeline proof from calibration into transport, resampling, VAD, and interruption primitives.",
   },
   {
     buyerNeed: "Build visual workflows without code.",
     competitors: ["Bland", "Retell", "Vapi"],
     coverage: "intentional-gap",
     depth: "intentional-gap",
+    nextMove: "Avoid app kits; add lightweight diagrams/docs only.",
     operationsRecord: "not-applicable",
     readinessGate: "not-applicable",
     remainingGap:
       "No-code visual flow builders are not the AbsoluteJS Voice lane.",
     surface: "No-code visual builder",
     why: "AbsoluteJS Voice should provide code-first flow primitives, diagrams, and recipes, not a builder-owned app kit.",
-    nextMove: "Avoid app kits; add lightweight diagrams/docs only.",
   },
   {
     buyerNeed: "Provision phone numbers from a hosted dashboard.",
     competitors: ["Vapi", "LiveKit"],
     coverage: "intentional-gap",
     depth: "intentional-gap",
+    nextMove: "Keep setup reports copy-ready and adapter-friendly.",
     operationsRecord: "not-applicable",
     readinessGate: "not-applicable",
     remainingGap:
       "Hosted number purchasing/provisioning stays with carriers or media platforms.",
     surface: "Hosted phone-number provisioning",
     why: "AbsoluteJS Voice should guide carrier setup and verify config, not become a telco platform.",
-    nextMove: "Keep setup reports copy-ready and adapter-friendly.",
   },
   {
     buyerNeed: "Own raw SIP/media infrastructure.",
     competitors: ["LiveKit"],
     coverage: "intentional-gap",
     depth: "intentional-gap",
+    nextMove: "Expose adapter seams when needed.",
     operationsRecord: "not-applicable",
     readinessGate: "not-applicable",
     remainingGap:
       "LiveKit owns SIP trunks, rooms, RTP/SRTP, DTMF, REFER, dispatch, and media networking.",
     surface: "SIP/media infrastructure",
     why: "AbsoluteJS Voice should own app-level media pipeline primitives without becoming a hosted telco dashboard.",
-    nextMove: "Expose adapter seams when needed.",
   },
 ] satisfies VoiceCompetitiveSurface[];
 
@@ -1022,7 +1022,7 @@ const renderVapiMigrationHTML = async () => {
   const coverageBySurface = new Map(
     coverage
       .filter((coverage) => typeof coverage.surface === "string")
-      .map((coverage) => [coverage.surface as string, coverage]),
+      .map((coverage) => [coverage.surface, coverage]),
   );
   const rows = vapiMigrationItems
     .map(
@@ -1086,7 +1086,7 @@ const renderVapiMigrationHTML = async () => {
         </section>
         <section class="callout">
           <p>Migration rule: start with the voice route, operations record, readiness gate, provider contracts, and customer-owned observability export. Add campaigns, live-ops, or compliance controls only when that app needs them.</p>
-          <p class="muted">Live coverage status is read from <code>.voice-runtime/proof-pack/latest.json</code>; stale or missing proof is shown directly on each surface.</p>
+          <p class="muted">Live coverage status is read from the generated proof pack; stale or missing proof is shown directly on each surface.</p>
         </section>
         ${renderSustainedProofStatus(proofTrends)}
         <section class="grid">${rows}</section>

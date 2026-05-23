@@ -5,14 +5,18 @@ import {
   getVoiceModePrompt,
   getVoiceProfileSwitchGuardDecision,
   getVoiceRoutePath,
-  type SavedIntake,
-  type VoiceDemoMode,
-  type VoiceModelProvider,
-  type VoiceProfileId,
-  type VoiceProfileSwitchGuardClientDecision,
-  type VoiceRoutingMode,
-  type VoiceSpeechEngine,
 } from "../../../shared/demo";
+import type {
+  SavedIntake,
+  VoiceProfileSwitchGuardClientDecision,
+} from "../../../types/domain";
+import type {
+  VoiceDemoMode,
+  VoiceModelProvider,
+  VoiceProfileId,
+  VoiceRoutingMode,
+  VoiceSpeechEngine,
+} from "../../../types/voice";
 
 const RECONNECT_REPORT_PATH = "/api/voice/reconnect-traces";
 
@@ -40,8 +44,8 @@ type VoiceDemoStreams = {
 };
 
 const createInitialVoiceState = (): VoiceStreamState<SavedIntake> => ({
-  assistantTexts: [],
   assistantAudio: [],
+  assistantTexts: [],
   call: null,
   error: null,
   isConnected: false,
@@ -52,8 +56,8 @@ const createInitialVoiceState = (): VoiceStreamState<SavedIntake> => ({
     status: "idle",
   },
   scenarioId: null,
-  sessionMetadata: null,
   sessionId: null,
+  sessionMetadata: null,
   status: "idle",
   turns: [],
 });
@@ -164,29 +168,29 @@ export const useVoiceDemoStreams = (
   };
 
   return {
+    connect,
+    destroy,
+    getActiveVoice,
+    resetActiveMode,
+    setActiveMode,
+    simulateDisconnect,
     get activeMode() {
       return activeMode;
     },
     get callLifecycleLabel() {
       return callLifecycleLabel;
     },
-    connect,
     get currentPrompt() {
       return currentPrompt;
     },
     get currentVoice() {
       return currentVoice;
     },
-    destroy,
-    getActiveVoice,
     get leadMessage() {
       return leadMessage;
     },
     get profileSwitchGuardDecision() {
       return profileSwitchGuardDecision;
     },
-    resetActiveMode,
-    setActiveMode,
-    simulateDisconnect,
   };
 };

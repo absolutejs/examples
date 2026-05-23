@@ -125,6 +125,7 @@ const formatTaskAge = (createdAt: number) => {
   }
   const hours = Math.floor(elapsedMinutes / 60);
   const minutes = elapsedMinutes % 60;
+
   return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
 };
 
@@ -144,9 +145,6 @@ const formatHistoryType = (type: VoiceOpsTaskHistoryEntry["type"]) => {
       return type;
   }
 };
-
-export const listVoiceOpsTasks = (tasks: SavedVoiceOpsTask[]) =>
-  [...tasks].sort((left, right) => right.createdAt - left.createdAt);
 
 export const filterVoiceOpsTasks = (
   tasks: SavedVoiceOpsTask[],
@@ -175,18 +173,19 @@ export const filterVoiceOpsTasks = (
 
     return true;
   });
-
+export const listVoiceOpsTasks = (tasks: SavedVoiceOpsTask[]) =>
+  [...tasks].sort((left, right) => right.createdAt - left.createdAt);
 export const summarizeVoiceOpsTasks = (tasks: SavedVoiceOpsTask[]) => {
   const summary = {
-    open: 0,
-    inProgress: 0,
-    done: 0,
-    total: tasks.length,
+    breached: 0,
     byKind: new Map<VoiceOpsTaskKind, number>(),
     byOutcome: new Map<string, number>(),
-    breached: 0,
+    done: 0,
+    inProgress: 0,
+    open: 0,
     topAssignees: new Map<string, number>(),
     topTargets: new Map<string, number>(),
+    total: tasks.length,
   };
 
   for (const task of tasks) {
@@ -225,13 +224,13 @@ export const summarizeVoiceOpsTasks = (tasks: SavedVoiceOpsTask[]) => {
   }
 
   return {
+    breached: summary.breached,
     byKind: [...summary.byKind.entries()].sort(
       (left, right) => right[1] - left[1],
     ),
     byOutcome: [...summary.byOutcome.entries()].sort(
       (left, right) => right[1] - left[1],
     ),
-    breached: summary.breached,
     done: summary.done,
     inProgress: summary.inProgress,
     open: summary.open,
@@ -277,6 +276,7 @@ export const renderVoiceOpsPage = (
     .map((task) => {
       const latestHistory = task.history.at(-1);
       const breached = isTaskSlaBreached(task);
+
       return `
       <article class="task-item">
         <div class="task-header">
