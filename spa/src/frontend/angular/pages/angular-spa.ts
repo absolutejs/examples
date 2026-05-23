@@ -152,7 +152,10 @@ export const routes: Routes = [
     </main>
   `,
 })
-export class AngularSpaComponent {
+// Local (not exported) so it's the page's single default export — the build
+// reads `pageModule.default` for the root component. The route components
+// (HomeView/SettingsView/ProfileView) stay named exports for the `routes` array.
+class AngularSpaComponent {
   clicks = signal(0);
   currentPath = signal("/");
 

@@ -9,7 +9,6 @@
     "@angular/platform-server": "^21.0.0",
     "@angular/router": "^21.0.0",
     "@angular/ssr": "^21.0.0",
-    "@elysiajs/static": "^1.4.7",
     "elysia": "1.4.18",
     "pinia": "^3.0.4",
     "react": "19.2.4",
@@ -34,6 +33,7 @@
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-security": "^4.0.0",
     "globals": "^17.4.0",
+    "knip": "^6.14.1",
     "prettier": "^3.8.1",
     "prettier-plugin-svelte": "^3.5.1",
     "svelte-check": "^4.4.5",
@@ -45,6 +45,7 @@
   "scripts": {
     "dev": "absolute dev",
     "format": "absolute prettier --write",
+    "knip": "knip",
     "lint": "absolute eslint",
     "start": "absolute start",
     "typecheck": "absolute typecheck"

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/backend/server.ts",
+    "absolute.config.ts",
+    "src/frontend/angular/pages/**/*.ts",
+    "src/frontend/react/pages/**/*.tsx",
+    "src/frontend/svelte/pages/**/*.svelte",
+    "src/frontend/vue/pages/**/*.vue"
+  ],
+  "ignoreDependencies": ["svelte-check", "vue-tsc"],
+  "project": ["src/**/*.{ts,tsx,vue,svelte,js}"]
+}
