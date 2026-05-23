@@ -24,7 +24,9 @@ import { counterIslandStore } from "../../islands/counterStore";
       <strong>Local: {{ count() }}</strong>
       <strong>Shared: {{ sharedCount() }}</strong>
       <button (click)="increment()" type="button">Increment Angular</button>
-      <button (click)="incrementShared()" type="button">Increment Shared</button>
+      <button (click)="incrementShared()" type="button">
+        Increment Shared
+      </button>
     </div>
   `,
 })

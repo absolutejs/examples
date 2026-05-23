@@ -41,7 +41,8 @@ export const ReactRAGVectorDemo = ({
           </div>
           <div className="demo-header-actions">
             <ReactRAGVectorDemoNav
-              activeMode={activeMode} availableBackends={availableBackends}
+              activeMode={activeMode}
+              availableBackends={availableBackends}
             />
             <ReactRAGAuthMenu />
           </div>

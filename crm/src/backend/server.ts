@@ -58,8 +58,13 @@ const demoStubAdapter = (vendor: CRMVendor): CRMAdapter => ({
   lookupContactByEmail: async () => null,
   lookupContactByPhone: async () => null,
   searchContacts: async () => [],
-  updateContact: async (id, patch) =>
-    ({ emails: [], id, phones: [], vendor, ...patch }),
+  updateContact: async (id, patch) => ({
+    emails: [],
+    id,
+    phones: [],
+    vendor,
+    ...patch,
+  }),
   updateDeal: async (id, patch) => ({
     id,
     title: patch.title ?? "",
@@ -81,13 +86,15 @@ const recordToSavedContact = (record: {
   data: Record<string, unknown>;
   localUpdatedAt: number;
 }): SavedContact => {
-  const {data} = record;
+  const { data } = record;
 
   return {
     createdAt: record.localUpdatedAt,
     id: record.entityId,
     vendor: record.vendor,
-    ...(typeof data.firstName === "string" ? { firstName: data.firstName } : {}),
+    ...(typeof data.firstName === "string"
+      ? { firstName: data.firstName }
+      : {}),
     ...(typeof data.lastName === "string" ? { lastName: data.lastName } : {}),
     ...(typeof data.company === "string" ? { company: data.company } : {}),
     ...(Array.isArray(data.emails) && typeof data.emails[0] === "object"
@@ -144,11 +151,7 @@ const crmRoutes = new Elysia()
       ...(body.source ? { source: body.source } : {}),
       ...(body.notes ? { notes: body.notes } : {}),
     });
-    const stored = await localEntityStore.get(
-      lead.vendor,
-      "lead",
-      lead.id,
-    );
+    const stored = await localEntityStore.get(lead.vendor, "lead", lead.id);
 
     return {
       contact: stored

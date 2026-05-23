@@ -237,8 +237,7 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
         groundedAnswer.parts.some(
           (part: RAGGroundedAnswerPart) => part.type === "citation",
         )
-          ? `<div class="demo-result-grid">${ 
-            groundedAnswer.parts
+          ? `<div class="demo-result-grid">${groundedAnswer.parts
               .map((part: RAGGroundedAnswerPart) =>
                 part.type === "citation"
                   ? `<article class="demo-result-item demo-grounding-card"><p class="demo-citation-badge">${escapeHtml(formatGroundingPartReferences(part.referenceNumbers))}</p>${formatGroundedAnswerPartDetails(
@@ -253,13 +252,11 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
                       )}<p class="demo-result-text">${escapeHtml(formatGroundedAnswerPartExcerpt(part))}</p></article>`
                   : "",
               )
-              .join("") 
-            }</div>`
+              .join("")}</div>`
           : "",
         "</div>",
         groundedAnswer.sectionSummaries.length > 0
-          ? `<div class="demo-results"><h4>Grounding by Section</h4><div class="demo-result-grid">${ 
-            groundedAnswer.sectionSummaries
+          ? `<div class="demo-results"><h4>Grounding by Section</h4><div class="demo-result-grid">${groundedAnswer.sectionSummaries
               .map(
                 (summary: RAGGroundedAnswerSectionSummary) =>
                   `<article class="demo-result-item demo-grounding-card"><h3>${escapeHtml(summary.label)}</h3><p class="demo-result-source">${escapeHtml(summary.summary)}</p>${formatGroundedAnswerSectionSummaryDetails(
@@ -273,12 +270,10 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
                       "",
                     )}<p class="demo-result-text">${escapeHtml(formatGroundedAnswerSectionSummaryExcerpt(summary))}</p></article>`,
               )
-              .join("") 
-            }</div></div>`
+              .join("")}</div></div>`
           : "",
         groundingReferences.length > 0
-          ? `<div class="demo-results"><h4>Grounding Reference Map</h4><p class="demo-metadata">Each reference resolves answer citations back to concrete evidence with page, sheet, slide, archive, or thread context when available.</p><div class="demo-result-grid">${ 
-            groundingReferences
+          ? `<div class="demo-results"><h4>Grounding Reference Map</h4><p class="demo-metadata">Each reference resolves answer citations back to concrete evidence with page, sheet, slide, archive, or thread context when available.</p><div class="demo-result-grid">${groundingReferences
               .map(
                 (reference) =>
                   `<article class="demo-result-item demo-grounding-card"><p class="demo-citation-badge">${escapeHtml(formatGroundingReferenceLabel(reference))}</p><p class="demo-result-score">${escapeHtml(formatGroundingReferenceSummary(reference))}</p>${formatGroundingReferenceDetails(
@@ -292,8 +287,7 @@ export const createHtmxAIStreamRenderConfig = (): AIHTMXRenderConfig => {
                       "",
                     )}<p class="demo-result-text">${escapeHtml(formatGroundingReferenceExcerpt(reference))}</p></article>`,
               )
-              .join("") 
-            }</div></div>`
+              .join("")}</div></div>`
           : "",
       ].join("");
     },

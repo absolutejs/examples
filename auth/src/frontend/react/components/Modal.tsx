@@ -24,7 +24,10 @@ export const Modal = ({ children, onClose, open }: ModalProps) => {
 
   return (
     <dialog
-      className="auth-modal" onCancel={onClose} onClose={onClose} ref={dialogRef}
+      className="auth-modal"
+      onCancel={onClose}
+      onClose={onClose}
+      ref={dialogRef}
     >
       {children}
     </dialog>

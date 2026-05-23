@@ -17,9 +17,9 @@ export const PortalShell = () => {
       </div>
 
       <p className="section-desc">
-        Refresh on any sub-route — the server renders the right view because
-        the page handler forwards the request URL into the page&apos;s props,
-        and the page wraps its tree in{" "}
+        Refresh on any sub-route — the server renders the right view because the
+        page handler forwards the request URL into the page&apos;s props, and
+        the page wraps its tree in{" "}
         <code>{"<StaticRouter location={url}>"}</code> on the server.
       </p>
 

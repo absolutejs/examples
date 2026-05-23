@@ -46,10 +46,10 @@ const route = useRoute();
 
     <p class="section-desc">
       This page exports a <code>routes</code> array — that's it. AbsoluteJS
-      auto-installs vue-router with the right history mode for each
-      environment, navigates to the request URL on the server, and waits
-      for <code>router.isReady()</code> on both sides. No
-      <code>setupApp</code> hook needed for routing alone.
+      auto-installs vue-router with the right history mode for each environment,
+      navigates to the request URL on the server, and waits for
+      <code>router.isReady()</code> on both sides. No <code>setupApp</code> hook
+      needed for routing alone.
     </p>
 
     <div class="portal-state">
@@ -87,9 +87,9 @@ const route = useRoute();
     <p class="section-desc" style="margin-top: 2rem">
       Need plugins like <RouterLink to="/vue-pinia">pinia</RouterLink> or
       <RouterLink to="/vue-i18n">vue-i18n</RouterLink>? Export
-      <code>setupApp</code> alongside <code>routes</code> — the live
-      router is in the context so you can add guards, install plugins, or
-      both. See the linked pages for working examples.
+      <code>setupApp</code> alongside <code>routes</code> — the live router is
+      in the context so you can add guards, install plugins, or both. See the
+      linked pages for working examples.
     </p>
 
     <p class="footer">

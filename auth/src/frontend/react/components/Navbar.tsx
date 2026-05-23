@@ -22,7 +22,11 @@ export const Navbar = ({ basePath, onSignOut, user }: NavbarProps) => {
 
       return (
         <Link
-          aria-current={pathname === target ? "page" : undefined} className="navbar__link" key={item.path} onClick={onNavigate} to={target}
+          aria-current={pathname === target ? "page" : undefined}
+          className="navbar__link"
+          key={item.path}
+          onClick={onNavigate}
+          to={target}
         >
           {item.label}
         </Link>

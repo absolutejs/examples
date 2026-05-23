@@ -41,7 +41,8 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
           <div
             className={
               toast.tone === "info" ? "toast" : `toast toast--${toast.tone}`
-            } key={toast.id}
+            }
+            key={toast.id}
           >
             <span>{toast.message}</span>
             <button

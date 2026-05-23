@@ -236,7 +236,8 @@ const getElement = <T extends HTMLElement>(id: string) => {
   return element as T;
 };
 
-const getOptionalElement = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
+const getOptionalElement = <T extends HTMLElement>(id: string) =>
+  document.getElementById(id) as T | null;
 
 const statusBackendEl = getElement<HTMLSpanElement>("status-table");
 const statusModeEl = getElement<HTMLSpanElement>("status-mode");
@@ -665,8 +666,7 @@ const isStreamStageComplete = (
 ) =>
   currentStage === "complete"
     ? stage === "complete" ||
-      streamStages.indexOf(stage) <
-        streamStages.indexOf(currentStage)
+      streamStages.indexOf(stage) < streamStages.indexOf(currentStage)
     : streamStages.indexOf(stage) <
       streamStages.indexOf(currentStage as (typeof streamStages)[number]);
 
@@ -962,7 +962,7 @@ const runReleaseAction = async (actionId: string) => {
 };
 
 document.addEventListener("click", (event) => {
-  const {target} = event;
+  const { target } = event;
   if (!(target instanceof HTMLElement)) {
     return;
   }
@@ -977,9 +977,7 @@ document.addEventListener("click", (event) => {
 
     return;
   }
-  const evidenceButton = target.closest(
-    "[data-release-evidence-id]",
-  );
+  const evidenceButton = target.closest("[data-release-evidence-id]");
   if (evidenceButton) {
     void onPresetSearch({ currentTarget: evidenceButton } as unknown as Event);
     document
@@ -988,9 +986,7 @@ document.addEventListener("click", (event) => {
 
     return;
   }
-  const actionButton = target.closest<HTMLElement>(
-    "[data-release-action-id]",
-  );
+  const actionButton = target.closest<HTMLElement>("[data-release-action-id]");
   if (!actionButton) {
     return;
   }
@@ -1426,7 +1422,7 @@ const readAddForm = (): AddFormState => {
 const renderStreamState = () => {
   const currentStage = ragWorkflow.stage;
   const latestMessage = ragWorkflow.latestAssistantMessage;
-  const {retrieval} = ragWorkflow;
+  const { retrieval } = ragWorkflow;
   const workflowState = ragWorkflow.state;
 
   renderDetailList(
@@ -1486,8 +1482,8 @@ const renderStreamState = () => {
   streamAnswerTextEl.textContent = latestMessage?.content ?? "";
   streamAnswerEl.hidden = !latestMessage?.content;
 
-  const {groundedAnswer} = ragWorkflow;
-  const {groundingReferences} = ragWorkflow;
+  const { groundedAnswer } = ragWorkflow;
+  const { groundingReferences } = ragWorkflow;
 
   streamGroundingListEl.innerHTML = "";
   streamGroundingPartsEl.innerHTML = "";
@@ -1602,7 +1598,7 @@ const renderStreamState = () => {
   }
 
   streamCitationsGridEl.innerHTML = "";
-  const {citations} = ragWorkflow;
+  const { citations } = ragWorkflow;
   if (citations.length > 0) {
     streamCitationsEl.hidden = false;
     for (const group of buildCitationGroups(citations)) {
@@ -2197,7 +2193,7 @@ const fillSearchForm = (state: Partial<SearchFormState>) => {
     setSearchValue("query", query);
   }
 
-  const {topK} = state;
+  const { topK } = state;
   if (typeof topK === "number" && topK > 0) {
     setSearchValue("topK", String(topK));
   }
@@ -2295,22 +2291,17 @@ const renderSearchTrace = (trace: RAGRetrievalTrace | undefined) => {
   presentation.stats.forEach(({ label, value }) => {
     const card = document.createElement("article");
     card.className = "demo-stat-card";
-    card.innerHTML =
-      `<p class="demo-section-caption">${ 
-      label 
-      }</p><strong>${ 
-      value 
-      }</strong>`;
+    card.innerHTML = `<p class="demo-section-caption">${label}</p><strong>${
+      value
+    }</strong>`;
     stats.append(card);
   });
   const kv = document.createElement("div");
   kv.innerHTML = presentation.details
     .map(
       (row) =>
-        `<p class="demo-key-value-row"><strong>${ 
-        row.label 
-        }</strong><span>${ 
-        row.value 
+        `<p class="demo-key-value-row"><strong>${row.label}</strong><span>${
+          row.value
         }</span></p>`,
     )
     .join("");
@@ -2321,17 +2312,14 @@ const renderSearchTrace = (trace: RAGRetrievalTrace | undefined) => {
     details.className = "demo-collapsible demo-result-item";
     if (index === 0) details.open = true;
     const summaryEl = document.createElement("summary");
-    summaryEl.innerHTML =
-      `<strong>${  String(index + 1)  }. ${  step.label  }</strong>`;
+    summaryEl.innerHTML = `<strong>${String(index + 1)}. ${step.label}</strong>`;
     details.append(summaryEl);
     const meta = document.createElement("div");
     meta.innerHTML = step.rows
       .map(
         (row) =>
-          `<p class="demo-key-value-row"><strong>${ 
-          row.label 
-          }</strong><span>${ 
-          row.value 
+          `<p class="demo-key-value-row"><strong>${row.label}</strong><span>${
+            row.value
           }</span></p>`,
       )
       .join("");
@@ -2361,21 +2349,17 @@ const renderWorkflowTrace = (trace: RAGRetrievalTrace | undefined) => {
     presentation.stats
       .map(
         (row) =>
-          `<article class="demo-stat-card"><p class="demo-section-caption">${ 
-          row.label 
-          }</p><strong>${ 
-          row.value 
-          }</strong></article>`,
+          `<article class="demo-stat-card"><p class="demo-section-caption">${
+            row.label
+          }</p><strong>${row.value}</strong></article>`,
       )
       .join(""),
     "</div>",
     presentation.details
       .map(
         (row) =>
-          `<p class="demo-key-value-row"><strong>${ 
-          row.label 
-          }</strong><span>${ 
-          row.value 
+          `<p class="demo-key-value-row"><strong>${row.label}</strong><span>${
+            row.value
           }</span></p>`,
       )
       .join(""),
@@ -2389,17 +2373,14 @@ const renderWorkflowTrace = (trace: RAGRetrievalTrace | undefined) => {
       details.open = true;
     }
     const summary = document.createElement("summary");
-    summary.innerHTML =
-      `<strong>${  String(index + 1)  }. ${  step.label  }</strong>`;
+    summary.innerHTML = `<strong>${String(index + 1)}. ${step.label}</strong>`;
     details.append(summary);
     const meta = document.createElement("div");
     meta.innerHTML = step.rows
       .map(
         (row) =>
-          `<p class="demo-key-value-row"><strong>${ 
-          row.label 
-          }</strong><span>${ 
-          row.value 
+          `<p class="demo-key-value-row"><strong>${row.label}</strong><span>${
+            row.value
           }</span></p>`,
       )
       .join("");
@@ -3009,13 +2990,12 @@ const buildAuthMenu = () => {
 };
 
 const runUploadPreset = async (preset: DemoUploadPreset) => {
-  uploadStatusEl.innerHTML =
-    `<p class="demo-metadata">Uploading ${  preset.label  }...</p>`;
+  uploadStatusEl.innerHTML = `<p class="demo-metadata">Uploading ${preset.label}...</p>`;
   try {
     const fixture = await fetch(getDemoUploadFixtureUrl(preset.id));
     if (!fixture.ok) {
       throw new Error(
-        `Failed to load ${  preset.fileName  }: ${  String(fixture.status)}`,
+        `Failed to load ${preset.fileName}: ${String(fixture.status)}`,
       );
     }
 
@@ -3029,14 +3009,13 @@ const runUploadPreset = async (preset: DemoUploadPreset) => {
       throw new Error(response.error ?? "Upload ingest failed");
     }
 
-    uploadStatusEl.innerHTML =
-      `<p class="demo-banner">Uploaded ${ 
-      preset.label 
-      } through the extractor-backed ingest route.</p><p class="demo-metadata">Verification query: ${ 
-      preset.query 
-      }</p><p class="demo-metadata">Expected uploaded source: ${ 
-      preset.expectedSources[0] ?? preset.source 
-      }</p>`;
+    uploadStatusEl.innerHTML = `<p class="demo-banner">Uploaded ${
+      preset.label
+    } through the extractor-backed ingest route.</p><p class="demo-metadata">Verification query: ${
+      preset.query
+    }</p><p class="demo-metadata">Expected uploaded source: ${
+      preset.expectedSources[0] ?? preset.source
+    }</p>`;
     uploadPresetId = preset.id;
     fillSearchForm({
       query: preset.query,
@@ -3045,12 +3024,11 @@ const runUploadPreset = async (preset: DemoUploadPreset) => {
     });
     await runSearchFromValues(readSearchForm());
   } catch (error) {
-    uploadStatusEl.innerHTML =
-      `<p class="demo-error">${ 
+    uploadStatusEl.innerHTML = `<p class="demo-error">${
       error instanceof Error
-        ? `Upload failed: ${  error.message}`
-        : "Upload failed" 
-      }</p>`;
+        ? `Upload failed: ${error.message}`
+        : "Upload failed"
+    }</p>`;
   }
 };
 
@@ -3478,7 +3456,7 @@ qualitySuiteButtonEl.addEventListener("click", () => {
 });
 
 qualityTabRowEl.addEventListener("click", (event) => {
-  const {target} = event;
+  const { target } = event;
   if (!(target instanceof HTMLElement)) return;
   const nextView = target.getAttribute("data-quality-view");
   if (

@@ -16,8 +16,12 @@ defineProps<NavProps>();
     <nav v-if="active === 'vue'" class="subnav">
       <span class="subnav-label">Vue variants:</span>
       <a :class="{ active: vueVariant === 'spa' }" href="/vue">SPA</a>
-      <a :class="{ active: vueVariant === 'i18n' }" href="/vue-i18n">+ vue-i18n</a>
-      <a :class="{ active: vueVariant === 'pinia' }" href="/vue-pinia">+ pinia</a>
+      <a :class="{ active: vueVariant === 'i18n' }" href="/vue-i18n"
+        >+ vue-i18n</a
+      >
+      <a :class="{ active: vueVariant === 'pinia' }" href="/vue-pinia"
+        >+ pinia</a
+      >
     </nav>
     <nav>
       <a :class="{ active: active === 'react' }" href="/react">React</a>

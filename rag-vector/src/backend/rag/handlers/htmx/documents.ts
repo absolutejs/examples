@@ -95,7 +95,7 @@ export const renderHtmxChunkPreviewFragment = (
     preview as Parameters<typeof buildRAGChunkPreviewNavigation>[0],
     options?.selectedChunkId,
   );
-  const {activeChunkId} = navigation;
+  const { activeChunkId } = navigation;
   const query = options?.query ?? "";
   const fileType = options?.fileType ?? "all";
   const page = options?.page ?? 1;

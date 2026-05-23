@@ -29,7 +29,7 @@ export type Context = Record<string, never>;
     </p>
   `,
 })
-export class HomeView {};
+export class HomeView {}
 @Component({
   imports: [CommonModule],
   selector: "spa-profile",
@@ -43,7 +43,7 @@ export class HomeView {};
     </p>
   `,
 })
-export class ProfileView {};
+export class ProfileView {}
 @Component({
   imports: [CommonModule],
   selector: "spa-settings",
@@ -58,7 +58,7 @@ export class ProfileView {};
     </p>
   `,
 })
-export class SettingsView {};
+export class SettingsView {}
 
 // Routes are relative to the page's mount. The build statically detects this
 // `export const routes` and auto-wires provideRouter(routes) plus the inferred
@@ -126,12 +126,8 @@ export const routes: Routes = [
           >
             Home
           </a>
-          <a routerLink="/settings" routerLinkActive="active">
-            Settings
-          </a>
-          <a routerLink="/profile" routerLinkActive="active">
-            Profile
-          </a>
+          <a routerLink="/settings" routerLinkActive="active"> Settings </a>
+          <a routerLink="/profile" routerLinkActive="active"> Profile </a>
         </aside>
         <section class="portal-content">
           <router-outlet />

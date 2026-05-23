@@ -56,5 +56,7 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
         requestContext: {},
       }),
     )
-    .get("/html", () => handleHTMLPageRequest(asset(manifest, "HtmlWorkerDemo")));
+    .get("/html", () =>
+      handleHTMLPageRequest(asset(manifest, "HtmlWorkerDemo")),
+    );
 };

@@ -274,7 +274,7 @@ const readSyncBindingOptions = (
 ): SyncBindingOption[] => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata)
+      ? source.metadata
       : {};
   const raw = metadata.linkedAvailableBindings;
   if (!Array.isArray(raw)) {
@@ -309,7 +309,7 @@ const readSyncBindingOptions = (
 const readSelectedBindingId = (source: RAGSyncSourceRecord) => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata)
+      ? source.metadata
       : {};
 
   return typeof metadata.linkedBindingId === "string"
@@ -595,7 +595,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
     [chunkPreview, activeChunkPreviewId],
   );
   const evaluation = rag.evaluate.lastResponse;
-  const {workflow} = rag;
+  const { workflow } = rag;
   const workflowState = workflow.state;
   const streamLatestMessage = workflow.latestAssistantMessage;
   const streamRetrieval = workflow.retrieval;
@@ -2016,7 +2016,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       key={`release-workspace-${entry.id}`}
                     >
                       <button
-                        disabled={releaseWorkspace === entry.id} onClick={() => setReleaseWorkspace(entry.id)} title={entry.description} type="button"
+                        disabled={releaseWorkspace === entry.id}
+                        onClick={() => setReleaseWorkspace(entry.id)}
+                        title={entry.description}
+                        type="button"
                       >
                         Workspace · {entry.label}
                       </button>
@@ -2036,7 +2039,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       {releaseHeroPills.map((pill) =>
                         pill.targetCardId || pill.targetActivityId ? (
                           <a
-                            className={`demo-release-pill demo-release-pill-${pill.tone}`} href={`#${pill.targetActivityId ?? pill.targetCardId}`} key={pill.label} onClick={() =>
+                            className={`demo-release-pill demo-release-pill-${pill.tone}`}
+                            href={`#${pill.targetActivityId ?? pill.targetCardId}`}
+                            key={pill.label}
+                            onClick={() =>
                               openReleaseDiagnosticsTarget(pill.targetCardId)
                             }
                           >
@@ -2073,7 +2079,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                               disabled={
                                 entry.active ||
                                 releaseActionBusyId === entry.action.id
-                              } onClick={() => runReleaseAction(entry.action!)} title={entry.action.description} type="button"
+                              }
+                              onClick={() => runReleaseAction(entry.action!)}
+                              title={entry.action.description}
+                              type="button"
                             >
                               {releaseActionBusyId === entry.action.id
                                 ? `Running ${entry.action.label}...`
@@ -2105,7 +2114,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                           </p>
                           {step.action ? (
                             <button
-                              className="demo-release-path-action" disabled={releaseActionBusyId === step.action.id} onClick={() => runReleaseAction(step.action!)} type="button"
+                              className="demo-release-path-action"
+                              disabled={releaseActionBusyId === step.action.id}
+                              onClick={() => runReleaseAction(step.action!)}
+                              type="button"
                             >
                               {releaseActionBusyId === step.action.id
                                 ? `Running ${step.action.label}...`
@@ -2214,7 +2226,11 @@ export const ReactRAGVectorDemoFullLabApp = ({
                         </span>
                         {recentReleaseActivity.map((entry, index) => (
                           <a
-                            className={`demo-release-activity demo-release-activity-${entry.tone}`} href={`#${entry.targetCardId}`} id={entry.id} key={`${entry.laneLabel}-${entry.title}-${index}`} onClick={() =>
+                            className={`demo-release-activity demo-release-activity-${entry.tone}`}
+                            href={`#${entry.targetCardId}`}
+                            id={entry.id}
+                            key={`${entry.laneLabel}-${entry.title}-${index}`}
+                            onClick={() =>
                               openReleaseDiagnosticsTarget(entry.targetCardId)
                             }
                           >
@@ -2236,7 +2252,12 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       <div className="demo-release-actions">
                         {primaryReleaseActions.map((action) => (
                           <button
-                            className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`} disabled={releaseActionBusyId === action.id} key={action.id} onClick={() => runReleaseAction(action)} title={action.description} type="button"
+                            className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`}
+                            disabled={releaseActionBusyId === action.id}
+                            key={action.id}
+                            onClick={() => runReleaseAction(action)}
+                            title={action.description}
+                            type="button"
                           >
                             {releaseActionBusyId === action.id
                               ? `Running ${action.label}...`
@@ -2250,7 +2271,12 @@ export const ReactRAGVectorDemoFullLabApp = ({
                           <div className="demo-release-actions">
                             {secondaryReleaseActions.map((action) => (
                               <button
-                                className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`} disabled={releaseActionBusyId === action.id} key={action.id} onClick={() => runReleaseAction(action)} title={action.description} type="button"
+                                className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`}
+                                disabled={releaseActionBusyId === action.id}
+                                key={action.id}
+                                onClick={() => runReleaseAction(action)}
+                                title={action.description}
+                                type="button"
                               >
                                 {releaseActionBusyId === action.id
                                   ? `Running ${action.label}...`
@@ -2269,7 +2295,12 @@ export const ReactRAGVectorDemoFullLabApp = ({
                         <div className="demo-release-actions">
                           {handoffActions.map((action) => (
                             <button
-                              className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`} disabled={releaseActionBusyId === action.id} key={action.id} onClick={() => runReleaseAction(action)} title={action.description} type="button"
+                              className={`demo-release-action demo-release-action-${action.tone ?? "neutral"}`}
+                              disabled={releaseActionBusyId === action.id}
+                              key={action.id}
+                              onClick={() => runReleaseAction(action)}
+                              title={action.description}
+                              type="button"
                             >
                               {releaseActionBusyId === action.id
                                 ? `Running ${action.label}...`
@@ -2334,7 +2365,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                     <div className="demo-release-actions">
                       {releaseEvidenceDrills.map((drill) => (
                         <button
-                          className={`demo-release-action demo-release-action-${drill.active ? "primary" : "neutral"}`} key={drill.id} onClick={() => runReleaseEvidenceDrill(drill)} type="button"
+                          className={`demo-release-action demo-release-action-${drill.active ? "primary" : "neutral"}`}
+                          key={drill.id}
+                          onClick={() => runReleaseEvidenceDrill(drill)}
+                          type="button"
                         >
                           {drill.label}
                         </button>
@@ -2832,7 +2866,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: filter behavior",
                       "filter-behavior",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Filter behavior
                 </button>
@@ -2844,7 +2879,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: verify ingestion",
                       "verify-ingestion",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Verify ingestion
                 </button>
@@ -2856,7 +2892,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: source filter",
                       "source-filter",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Source filter
                 </button>
@@ -2868,7 +2905,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: metadata discipline",
                       "metadata-discipline",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Metadata discipline
                 </button>
@@ -2880,7 +2918,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: late interaction",
                       "hybrid",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Late interaction / multivector
                 </button>
@@ -2894,7 +2933,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: site discovery",
                       "site-discovery",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Site discovery (sync first)
                 </button>
@@ -2906,7 +2946,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: planner profile latency",
                       "planner-profile-latency",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Planner profile · latency
                 </button>
@@ -2918,7 +2959,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: planner profile balanced",
                       "planner-profile-balanced",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Planner profile · balanced
                 </button>
@@ -2930,7 +2972,8 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       "preset: planner profile recall",
                       "planner-profile-recall",
                     )
-                  } type="button"
+                  }
+                  type="button"
                 >
                   Planner profile · recall
                 </button>
@@ -2958,7 +3001,15 @@ export const ReactRAGVectorDemoFullLabApp = ({
                 />
                 <label htmlFor="scoreThreshold">Minimum score (0-1)</label>
                 <input
-                  id="scoreThreshold" max={1} min={0} name="scoreThreshold" onChange={onSearchFieldChange} placeholder="optional" step="0.01" type="number" value={searchForm.scoreThreshold}
+                  id="scoreThreshold"
+                  max={1}
+                  min={0}
+                  name="scoreThreshold"
+                  onChange={onSearchFieldChange}
+                  placeholder="optional"
+                  step="0.01"
+                  type="number"
+                  value={searchForm.scoreThreshold}
                 />
                 <label htmlFor="kind">Kind filter</label>
                 <select
@@ -3359,14 +3410,17 @@ export const ReactRAGVectorDemoFullLabApp = ({
                 <div className="demo-preset-grid">
                   {demoEvaluationPresets.map((preset) => (
                     <button
-                      key={preset.id} onClick={() =>
+                      key={preset.id}
+                      onClick={() =>
                         runPresetSearch(
                           preset.query,
                           { source: preset.expectedSources[0] ?? "" },
                           `benchmark preset: ${preset.label}`,
                           preset.id,
                         )
-                      } title={preset.description} type="button"
+                      }
+                      title={preset.description}
+                      type="button"
                     >
                       {preset.label}
                     </button>
@@ -3464,7 +3518,10 @@ export const ReactRAGVectorDemoFullLabApp = ({
                         qualityView === view
                           ? "demo-tab demo-tab-active"
                           : "demo-tab"
-                      } key={view} onClick={() => setQualityView(view)} type="button"
+                      }
+                      key={view}
+                      onClick={() => setQualityView(view)}
+                      type="button"
                     >
                       {view[0].toUpperCase() + view.slice(1)}
                     </button>
@@ -4626,9 +4683,7 @@ export const ReactRAGVectorDemoFullLabApp = ({
                       currentStage === "complete"
                         ? stage === "complete" ||
                           streamStages.indexOf(stage) <
-                            streamStages.indexOf(
-                              currentStage,
-                            )
+                            streamStages.indexOf(currentStage)
                         : streamStages.indexOf(stage) <
                           streamStages.indexOf(
                             currentStage as (typeof streamStages)[number],

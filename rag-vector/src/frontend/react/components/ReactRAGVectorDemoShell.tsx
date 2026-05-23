@@ -149,7 +149,7 @@ const readSyncBindingOptions = (
 ): SyncBindingOption[] => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata)
+      ? source.metadata
       : {};
   const raw = metadata.linkedAvailableBindings;
   if (!Array.isArray(raw)) {
@@ -184,7 +184,7 @@ const readSyncBindingOptions = (
 const readSelectedBindingId = (source: RAGSyncSourceRecord) => {
   const metadata =
     source.metadata && typeof source.metadata === "object"
-      ? (source.metadata)
+      ? source.metadata
       : {};
 
   return typeof metadata.linkedBindingId === "string"

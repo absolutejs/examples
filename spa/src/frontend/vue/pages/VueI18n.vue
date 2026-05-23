@@ -93,11 +93,11 @@ const route = useRoute();
     </div>
 
     <p class="section-desc">
-      <code>routes</code> handles routing. <code>setupApp</code> handles
-      the rest. This page exports both — AbsoluteJS auto-installs the
-      router, and your <code>setupApp</code> runs after, with the live
-      router in <code>ctx.router</code>, to install
-      <code>vue-i18n</code> with the locale derived from the URL.
+      <code>routes</code> handles routing. <code>setupApp</code> handles the
+      rest. This page exports both — AbsoluteJS auto-installs the router, and
+      your <code>setupApp</code> runs after, with the live router in
+      <code>ctx.router</code>, to install <code>vue-i18n</code> with the locale
+      derived from the URL.
     </p>
 
     <div class="portal-state">
@@ -111,22 +111,13 @@ const route = useRoute();
 
     <div class="portal-layout">
       <aside class="portal-sidebar">
-        <RouterLink
-          :class="{ active: locale === 'en' }"
-          to="/vue-i18n/en"
-        >
+        <RouterLink :class="{ active: locale === 'en' }" to="/vue-i18n/en">
           English
         </RouterLink>
-        <RouterLink
-          :class="{ active: locale === 'es' }"
-          to="/vue-i18n/es"
-        >
+        <RouterLink :class="{ active: locale === 'es' }" to="/vue-i18n/es">
           Español
         </RouterLink>
-        <RouterLink
-          :class="{ active: locale === 'ja' }"
-          to="/vue-i18n/ja"
-        >
+        <RouterLink :class="{ active: locale === 'ja' }" to="/vue-i18n/ja">
           日本語
         </RouterLink>
       </aside>

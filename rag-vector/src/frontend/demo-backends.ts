@@ -1387,7 +1387,7 @@ export const buildDemoReleasePanelState = (
               ? `Active stable baseline · ${formatDate(stableBaseline.approvedAt)}`
               : undefined,
           message: stableBaseline?.retrievalId
-            ? `Stable is already serving ${  stableBaseline.retrievalId  }.`
+            ? `Stable is already serving ${stableBaseline.retrievalId}.`
             : "Stable is already serving the promoted candidate.",
           nextStep:
             "Next step · inspect release status or reset the demo to replay the rollout path.",
@@ -1410,7 +1410,8 @@ export const buildDemoReleasePanelState = (
               .filter(Boolean)
               .join(" · "),
             message: stableReadiness.candidateRetrievalId
-              ? `${stableReadiness.candidateRetrievalId 
+              ? `${
+                  stableReadiness.candidateRetrievalId
                 } is ready for stable promotion.`
               : "Stable is ready for promotion.",
             nextStep:
@@ -2553,7 +2554,8 @@ export const formatDemoAIModelLabel = (model: DemoAIModelOption) =>
 export const loadActiveRetrievalState = (
   frameworkId: DemoFrameworkId,
   mode: DemoBackendMode,
-): Promise<DemoActiveRetrievalState | null> => fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`)
+): Promise<DemoActiveRetrievalState | null> =>
+  fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`)
     .then(async (result) => {
       if (!result.ok) {
         return null;
@@ -2567,7 +2569,8 @@ export const loadActiveRetrievalState = (
 export const loadRecentQueries = (
   frameworkId: DemoFrameworkId,
   mode: DemoBackendMode,
-): Promise<Array<{ label: string; state: SearchFormState }>> => fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`)
+): Promise<Array<{ label: string; state: SearchFormState }>> =>
+  fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`)
     .then(async (result) => {
       if (!result.ok) {
         return [];
@@ -2600,7 +2603,8 @@ export const saveActiveRetrievalState = (
   frameworkId: DemoFrameworkId,
   mode: DemoBackendMode,
   state: DemoActiveRetrievalState,
-) => fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`, {
+) =>
+  fetch(`/demo/ui-state/active-retrieval/${frameworkId}/${mode}`, {
     body: JSON.stringify(state),
     headers: {
       "Content-Type": "application/json",
@@ -2613,7 +2617,8 @@ export const saveRecentQueries = (
   frameworkId: DemoFrameworkId,
   mode: DemoBackendMode,
   recentQueries: Array<{ label: string; state: SearchFormState }>,
-) => fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`, {
+) =>
+  fetch(`/demo/ui-state/recent-queries/${frameworkId}/${mode}`, {
     body: JSON.stringify(recentQueries.slice(0, MAX_RECENT_QUERIES)),
     headers: {
       "Content-Type": "application/json",
@@ -3370,7 +3375,8 @@ export const formatRerankerComparisonPresentations = (
   }));
 export const formatRerankerComparisonSummary = (
   comparison: RAGRerankerComparison,
-) => formatRerankerComparisonOverviewPresentation(comparison).rows.map(
+) =>
+  formatRerankerComparisonOverviewPresentation(comparison).rows.map(
     (row) => `${row.label}: ${row.value}`,
   );
 export const formatRetrievalComparisonPresentations = (
@@ -3388,7 +3394,8 @@ export const formatRetrievalComparisonPresentations = (
   }));
 export const formatRetrievalComparisonSummary = (
   comparison: RAGRetrievalComparison,
-) => formatRetrievalComparisonOverviewPresentation(comparison).rows.map(
+) =>
+  formatRetrievalComparisonOverviewPresentation(comparison).rows.map(
     (row) => `${row.label}: ${row.value}`,
   );
 const buildQualityOverviewPlannerOutcomeValue = (input: {
@@ -3903,7 +3910,7 @@ const buildSearchStoryHighlights = (
   const leadDiagnostic = diagnostics[0];
   const leadSource = results[0]?.source ?? leadDiagnostic?.topSource;
   const queryTransformApplied = Boolean(trace?.transformedQuery);
-  const leadMetadata = (results[0]?.metadata ?? {});
+  const leadMetadata = results[0]?.metadata ?? {};
   const traceMode = leadDiagnostic?.retrievalMode ?? trace?.mode ?? "hybrid";
 
   let mode: "primary" | "transformed" | "variant" | "mixed" | undefined =
@@ -3911,7 +3918,7 @@ const buildSearchStoryHighlights = (
   if (!mode) {
     const seen = new Set<string>();
     for (const result of results) {
-      const metadata = (result.metadata ?? {});
+      const metadata = result.metadata ?? {};
       const origins = Array.isArray(metadata.retrievalQueryOrigins)
         ? metadata.retrievalQueryOrigins.filter(
             (value): value is string => typeof value === "string",
@@ -4000,7 +4007,7 @@ const buildSearchAttributionOverview = (
   if (diagnostics.length === 0) {
     const fallbackModes = new Set<string>();
     for (const result of results) {
-      const metadata = (result.metadata ?? {});
+      const metadata = result.metadata ?? {};
       const origins = Array.isArray(metadata.retrievalQueryOrigins)
         ? metadata.retrievalQueryOrigins.filter(
             (value): value is string => typeof value === "string",
@@ -4148,7 +4155,7 @@ export const buildSearchResponse = (
     chunks: results.map((result) => ({
       chunkId: result.chunkId,
       labels: result.labels,
-      metadata: (result.metadata ?? {}),
+      metadata: result.metadata ?? {},
       score: result.score,
       source: result.source ?? "unknown",
       structure: result.structure,
@@ -4243,7 +4250,7 @@ export const buildSearchSectionGroups = (
 
   chunks.forEach((chunk, index) => {
     const navigation = buildRAGChunkGraphNavigation(graph, chunk.chunkId);
-    const {section} = navigation;
+    const { section } = navigation;
     const groupId = section?.id ?? `chunk:${chunk.chunkId}`;
     const existing = groups.get(groupId);
     if (existing) {
@@ -4984,7 +4991,8 @@ export const formatSyncSourceExtendedDetails = (source: RAGSyncSourceRecord) =>
     (value, index, values) =>
       value.length > 0 && values.indexOf(value) === index,
   );
-export const formatSyncSourceOverview = (sources?: RAGSyncSourceRecord[]) => buildRAGSyncOverviewPresentation(sources).rows.map(
+export const formatSyncSourceOverview = (sources?: RAGSyncSourceRecord[]) =>
+  buildRAGSyncOverviewPresentation(sources).rows.map(
     (row) => `${row.label}: ${row.value}`,
   );
 export const formatSyncSourceRecentRuns = (source: RAGSyncSourceRecord) =>
@@ -5258,7 +5266,7 @@ export const formatDemoMetadataSummary = (
   const push = (label: string, key: string) => {
     const value = formatMetadataValue(metadata[key]);
     if (value.length > 0) {
-      lines.push(`${label  }: ${  value}`);
+      lines.push(`${label}: ${value}`);
     }
   };
 
@@ -5293,6 +5301,6 @@ export const formatOptionalContentFormat = (value?: string | null) =>
     value === "markdown" || value === "html" ? value : "text",
   );
 export const getDemoUploadFixtureUrl = (id: string) =>
-  `/demo/upload-fixtures/${  encodeURIComponent(id)}`;
+  `/demo/upload-fixtures/${encodeURIComponent(id)}`;
 export const getDemoUploadPreset = (id: string) =>
   demoUploadPresets.find((preset) => preset.id === id) ?? null;

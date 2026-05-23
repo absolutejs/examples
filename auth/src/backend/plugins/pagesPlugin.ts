@@ -82,77 +82,87 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
 
   const htmlHandler = () => handleHTMLPageRequest(asset(manifest, "HtmlAuth"));
 
-  return new Elysia()
-    .get(
-      "/",
-      () =>
-        new Response(landingPage(cssPath), {
-          headers: { "content-type": "text/html; charset=utf-8" },
+  return (
+    new Elysia()
+      .get(
+        "/",
+        () =>
+          new Response(landingPage(cssPath), {
+            headers: { "content-type": "text/html; charset=utf-8" },
+          }),
+      )
+      .get("/react", reactHandler)
+      .get("/react/*", reactHandler)
+      .get("/vue", vueHandler)
+      .get("/vue/*", vueHandler)
+      .get("/svelte", svelteHandler)
+      .get("/svelte/*", svelteHandler)
+      // The Angular handler is inlined into both `.get` calls on purpose: the
+      // build's AST scan walks up from each `handleAngularPageRequest` call to
+      // its enclosing mount, and the `/angular/*` mount is what makes it infer
+      // `APP_BASE_HREF: "/angular/"` and inject it alongside
+      // `provideRouter(routes)` into the page's SSR bundle. Extracting the call
+      // into a shared const would hide the mount from the scanner and break the
+      // inferred base href, so each route keeps its own inline call.
+      .get("/angular", ({ request }) =>
+        handleAngularPageRequest<AngularAuthPage.Context>({
+          headTag: generateHeadElement({
+            cssPath,
+            title: "AbsoluteJS Auth — Angular",
+          }),
+          indexPath: asset(manifest, "AngularAuthIndex"),
+          pagePath: asset(manifest, "AngularAuth"),
+          request,
+          requestContext: {},
         }),
-    )
-    .get("/react", reactHandler)
-    .get("/react/*", reactHandler)
-    .get("/vue", vueHandler)
-    .get("/vue/*", vueHandler)
-    .get("/svelte", svelteHandler)
-    .get("/svelte/*", svelteHandler)
-    // The Angular handler is inlined into both `.get` calls on purpose: the
-    // build's AST scan walks up from each `handleAngularPageRequest` call to
-    // its enclosing mount, and the `/angular/*` mount is what makes it infer
-    // `APP_BASE_HREF: "/angular/"` and inject it alongside
-    // `provideRouter(routes)` into the page's SSR bundle. Extracting the call
-    // into a shared const would hide the mount from the scanner and break the
-    // inferred base href, so each route keeps its own inline call.
-    .get("/angular", ({ request }) =>
-      handleAngularPageRequest<AngularAuthPage.Context>({
-        headTag: generateHeadElement({
-          cssPath,
-          title: "AbsoluteJS Auth — Angular",
+      )
+      .get("/angular/*", ({ request }) =>
+        handleAngularPageRequest<AngularAuthPage.Context>({
+          headTag: generateHeadElement({
+            cssPath,
+            title: "AbsoluteJS Auth — Angular",
+          }),
+          indexPath: asset(manifest, "AngularAuthIndex"),
+          pagePath: asset(manifest, "AngularAuth"),
+          request,
+          requestContext: {},
         }),
-        indexPath: asset(manifest, "AngularAuthIndex"),
-        pagePath: asset(manifest, "AngularAuth"),
-        request,
-        requestContext: {},
-      }),
-    )
-    .get("/angular/*", ({ request }) =>
-      handleAngularPageRequest<AngularAuthPage.Context>({
-        headTag: generateHeadElement({
-          cssPath,
-          title: "AbsoluteJS Auth — Angular",
-        }),
-        indexPath: asset(manifest, "AngularAuthIndex"),
-        pagePath: asset(manifest, "AngularAuth"),
-        request,
-        requestContext: {},
-      }),
-    )
-    .get("/html", htmlHandler)
-    .get("/html/protected", htmlHandler)
-    .get("/html/settings", htmlHandler)
-    .get("/html/connectors", htmlHandler)
-    .get(
-      "/htmx/htmx.min.js",
-      () =>
-        new Response(
-          file(
-            join(process.cwd(), "src", "frontend", "htmx", "htmx.2.0.6.min.js"),
-          ),
-          {
-            headers: {
-              "content-type": "application/javascript; charset=utf-8",
+      )
+      .get("/html", htmlHandler)
+      .get("/html/protected", htmlHandler)
+      .get("/html/settings", htmlHandler)
+      .get("/html/connectors", htmlHandler)
+      .get(
+        "/htmx/htmx.min.js",
+        () =>
+          new Response(
+            file(
+              join(
+                process.cwd(),
+                "src",
+                "frontend",
+                "htmx",
+                "htmx.2.0.6.min.js",
+              ),
+            ),
+            {
+              headers: {
+                "content-type": "application/javascript; charset=utf-8",
+              },
             },
-          },
-        ),
-    )
-    .get("/htmx", () => handleHTMXPageRequest(asset(manifest, "HtmxAuthHome")))
-    .get("/htmx/protected", () =>
-      handleHTMXPageRequest(asset(manifest, "HtmxAuthProtected")),
-    )
-    .get("/htmx/settings", () =>
-      handleHTMXPageRequest(asset(manifest, "HtmxAuthSettings")),
-    )
-    .get("/htmx/connectors", () =>
-      handleHTMXPageRequest(asset(manifest, "HtmxAuthConnectors")),
-    );
+          ),
+      )
+      .get("/htmx", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthHome")),
+      )
+      .get("/htmx/protected", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthProtected")),
+      )
+      .get("/htmx/settings", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthSettings")),
+      )
+      .get("/htmx/connectors", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthConnectors")),
+      )
+  );
 };

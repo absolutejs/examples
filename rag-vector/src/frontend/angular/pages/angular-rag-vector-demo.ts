@@ -3824,8 +3824,7 @@ export class AngularRAGVectorDemoComponent {
   ) {
     return currentStage === "complete"
       ? stage === "complete" ||
-          streamStages.indexOf(stage) <
-            streamStages.indexOf(currentStage)
+          streamStages.indexOf(stage) < streamStages.indexOf(currentStage)
       : streamStages.indexOf(stage) <
           streamStages.indexOf(currentStage as (typeof streamStages)[number]);
   }
@@ -3910,7 +3909,7 @@ export class AngularRAGVectorDemoComponent {
   }
 
   get releaseStableReadinessSummary() {
-    const {stableReadiness} = this.releasePanel;
+    const { stableReadiness } = this.releasePanel;
     if (!stableReadiness) {
       return "No stable lane readiness snapshot available.";
     }

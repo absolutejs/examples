@@ -164,7 +164,7 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
   };
 
   // ---- chapter 2: organize (status numbers) -------------------------------
-  const {status} = rag.status;
+  const { status } = rag.status;
   const caps = rag.status.capabilities;
   const chunkCount = safe(
     () =>

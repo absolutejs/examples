@@ -22,7 +22,9 @@ export const ProviderLogin = ({ action = "login" }: ProviderLoginProps) => {
     <div className="oauth-grid">
       {FEATURED_LOGIN_PROVIDERS.map((provider) => (
         <a
-          className="oauth-button" href={authorizationHref(provider)} key={provider}
+          className="oauth-button"
+          href={authorizationHref(provider)}
+          key={provider}
         >
           <img
             alt=""

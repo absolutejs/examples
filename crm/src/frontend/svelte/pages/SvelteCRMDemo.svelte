@@ -145,8 +145,10 @@
                 </div>
                 <div class="crm-contact__meta">
                   {contact.email ?? "—"}
-                  {#if contact.phone} · {contact.phone}{/if}
-                  {#if contact.company} · {contact.company}{/if}
+                  {#if contact.phone}
+                    · {contact.phone}{/if}
+                  {#if contact.company}
+                    · {contact.company}{/if}
                 </div>
               </article>
             {/each}
@@ -155,7 +157,8 @@
       </div>
     </div>
     <footer class="crm-footer">
-      Backed by @absolutejs/crm runtime — same backend for all 6 framework pages.
+      Backed by @absolutejs/crm runtime — same backend for all 6 framework
+      pages.
     </footer>
   </div>
 </div>

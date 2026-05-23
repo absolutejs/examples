@@ -436,7 +436,7 @@ const handleClick = (event: MouseEvent) => {
 };
 
 const handleInput = (event: Event) => {
-  const {target} = event;
+  const { target } = event;
   if (!(target instanceof HTMLElement)) {
     return;
   }
@@ -456,7 +456,7 @@ const handleInput = (event: Event) => {
 };
 
 const handleChange = (event: Event) => {
-  const {target} = event;
+  const { target } = event;
   if (
     !(target instanceof HTMLSelectElement) ||
     target.dataset.role !== "provider-select"

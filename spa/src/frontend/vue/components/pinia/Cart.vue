@@ -8,9 +8,9 @@ const cart = useCartStore();
   <div>
     <h2>Cart ({{ cart.count }})</h2>
     <p v-if="cart.items.length === 0">
-      Empty. Visit <code>Catalog</code> to add items — both views read
-      from the same pinia store, so navigation back and forth preserves
-      whatever you put in.
+      Empty. Visit <code>Catalog</code> to add items — both views read from the
+      same pinia store, so navigation back and forth preserves whatever you put
+      in.
     </p>
     <ul v-else class="cart">
       <li v-for="item in cart.items" :key="item.id">

@@ -192,12 +192,16 @@ import { Component } from "@angular/core";
               Angular
             </h1>
           </div>
-          <p class="m-0 max-w-[760px] text-lg leading-[1.6] text-[var(--t-muted)]">
+          <p
+            class="m-0 max-w-[760px] text-lg leading-[1.6] text-[var(--t-muted)]"
+          >
             Tailwind styles this route directly in the markup with utility
             classes.
           </p>
         </section>
-        <section class="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section
+          class="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+        >
           <article
             class="grid min-h-[260px] gap-3 rounded-lg border border-[var(--t-border)] border-l-[6px] border-l-orange-600 bg-[var(--t-surface)] bg-linear-to-br/srgb from-orange-600/15 to-orange-600/5 p-6 shadow-[0_20px_48px_var(--t-card-shadow)]"
           >

@@ -42,7 +42,10 @@ const handleSubmit = async () => {
   const result = await submitLead(form.value);
   submitting.value = false;
   if (!result.ok) {
-    status.value = { kind: "error", message: result.error ?? "Submission failed" };
+    status.value = {
+      kind: "error",
+      message: result.error ?? "Submission failed",
+    };
     return;
   }
   status.value = {
@@ -153,14 +156,17 @@ const handleSubmit = async () => {
               <div class="crm-contact__meta">
                 {{ contact.email || "—" }}
                 <template v-if="contact.phone"> · {{ contact.phone }}</template>
-                <template v-if="contact.company"> · {{ contact.company }}</template>
+                <template v-if="contact.company">
+                  · {{ contact.company }}</template
+                >
               </div>
             </article>
           </div>
         </div>
       </div>
       <footer class="crm-footer">
-        Backed by @absolutejs/crm runtime — same backend for all 6 framework pages.
+        Backed by @absolutejs/crm runtime — same backend for all 6 framework
+        pages.
       </footer>
     </div>
   </div>

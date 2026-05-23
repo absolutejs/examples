@@ -261,12 +261,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 12px;
   color: #a7f3d0;
-  font-family:
-    ui-monospace,
-    "SF Mono",
-    Menlo,
-    Consolas,
-    monospace;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.78rem;
   margin-top: 1rem;
   overflow-x: auto;

@@ -48,10 +48,10 @@ const route = useRoute();
     </div>
 
     <p class="section-desc">
-      <code>routes</code> handles the SPA navigation. <code>setupApp</code>
-      installs <code>pinia</code> via <code>app.use(createPinia())</code>.
-      The cart store lives outside any single component — both sub-routes
-      read and write the same reactive state.
+      <code>routes</code> handles the SPA navigation.
+      <code>setupApp</code> installs <code>pinia</code> via
+      <code>app.use(createPinia())</code>. The cart store lives outside any
+      single component — both sub-routes read and write the same reactive state.
     </p>
 
     <div class="portal-state">

@@ -14,9 +14,9 @@ const products = [
   <div>
     <h2>Catalog</h2>
     <p>
-      Add an item, then click <code>Cart</code> in the sidebar — the
-      sub-route changes but the shared pinia store keeps the same data.
-      The sidebar count is wired to the same store too.
+      Add an item, then click <code>Cart</code> in the sidebar — the sub-route
+      changes but the shared pinia store keeps the same data. The sidebar count
+      is wired to the same store too.
     </p>
     <ul class="catalog">
       <li v-for="product in products" :key="product.id">

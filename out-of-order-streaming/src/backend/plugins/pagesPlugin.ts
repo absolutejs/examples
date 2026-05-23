@@ -83,78 +83,80 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
       request,
     });
 
-  return new Elysia()
-    .get("/", reactStreamingHandler)
-    .get("/react-streaming", reactStreamingHandler)
-    .get("/react-framework", reactFrameworkHandler)
-    .get("/vue", vueStreamingHandler)
-    .get("/vue-streaming", vueStreamingHandler)
-    .get("/vue-framework", vueFrameworkHandler)
-    .get("/svelte", svelteStreamingHandler)
-    .get("/svelte-streaming", svelteStreamingHandler)
-    .get("/svelte-framework", svelteFrameworkHandler)
-    // The Angular handler is inlined into both `.get` calls on purpose: the
-    // build's AST scan walks up from each `handleAngularPageRequest` call to
-    // its enclosing mount, and the mount is what makes it infer the
-    // `APP_BASE_HREF` and inject it alongside the page's SSR bundle.
-    // Extracting the call into a shared const would hide the mount from the
-    // scanner and break the inferred base href, so each route keeps its own
-    // inline call.
-    .get("/angular", ({ request }) =>
-      handleAngularPageRequest<AngularStreamingHostPage.Context>({
-        collectStreamingSlots: true,
-        headTag: generateHeadElement({
-          cssPath: sharedCssPath,
-          title: "AbsoluteJS Streaming - Angular Raw Slots",
+  return (
+    new Elysia()
+      .get("/", reactStreamingHandler)
+      .get("/react-streaming", reactStreamingHandler)
+      .get("/react-framework", reactFrameworkHandler)
+      .get("/vue", vueStreamingHandler)
+      .get("/vue-streaming", vueStreamingHandler)
+      .get("/vue-framework", vueFrameworkHandler)
+      .get("/svelte", svelteStreamingHandler)
+      .get("/svelte-streaming", svelteStreamingHandler)
+      .get("/svelte-framework", svelteFrameworkHandler)
+      // The Angular handler is inlined into both `.get` calls on purpose: the
+      // build's AST scan walks up from each `handleAngularPageRequest` call to
+      // its enclosing mount, and the mount is what makes it infer the
+      // `APP_BASE_HREF` and inject it alongside the page's SSR bundle.
+      // Extracting the call into a shared const would hide the mount from the
+      // scanner and break the inferred base href, so each route keeps its own
+      // inline call.
+      .get("/angular", ({ request }) =>
+        handleAngularPageRequest<AngularStreamingHostPage.Context>({
+          collectStreamingSlots: true,
+          headTag: generateHeadElement({
+            cssPath: sharedCssPath,
+            title: "AbsoluteJS Streaming - Angular Raw Slots",
+          }),
+          indexPath: asset(manifest, "AngularStreamingHostIndex"),
+          pagePath: asset(manifest, "AngularStreamingHost"),
+          request,
+          requestContext: {},
         }),
-        indexPath: asset(manifest, "AngularStreamingHostIndex"),
-        pagePath: asset(manifest, "AngularStreamingHost"),
-        request,
-        requestContext: {},
-      }),
-    )
-    .get("/angular-streaming", ({ request }) =>
-      handleAngularPageRequest<AngularStreamingHostPage.Context>({
-        collectStreamingSlots: true,
-        headTag: generateHeadElement({
-          cssPath: sharedCssPath,
-          title: "AbsoluteJS Streaming - Angular Raw Slots",
+      )
+      .get("/angular-streaming", ({ request }) =>
+        handleAngularPageRequest<AngularStreamingHostPage.Context>({
+          collectStreamingSlots: true,
+          headTag: generateHeadElement({
+            cssPath: sharedCssPath,
+            title: "AbsoluteJS Streaming - Angular Raw Slots",
+          }),
+          indexPath: asset(manifest, "AngularStreamingHostIndex"),
+          pagePath: asset(manifest, "AngularStreamingHost"),
+          request,
+          requestContext: {},
         }),
-        indexPath: asset(manifest, "AngularStreamingHostIndex"),
-        pagePath: asset(manifest, "AngularStreamingHost"),
-        request,
-        requestContext: {},
-      }),
-    )
-    .get("/angular-framework", ({ request }) =>
-      handleAngularPageRequest<AngularDeferHostPage.Context>({
-        collectStreamingSlots: true,
-        headTag: generateHeadElement({
-          cssPath: sharedCssPath,
-          title: "AbsoluteJS Streaming - Angular Framework Primitives",
+      )
+      .get("/angular-framework", ({ request }) =>
+        handleAngularPageRequest<AngularDeferHostPage.Context>({
+          collectStreamingSlots: true,
+          headTag: generateHeadElement({
+            cssPath: sharedCssPath,
+            title: "AbsoluteJS Streaming - Angular Framework Primitives",
+          }),
+          indexPath: asset(manifest, "AngularDeferHostIndex"),
+          pagePath: asset(manifest, "AngularDeferHost"),
+          request,
+          requestContext: {},
         }),
-        indexPath: asset(manifest, "AngularDeferHostIndex"),
-        pagePath: asset(manifest, "AngularDeferHost"),
-        request,
-        requestContext: {},
-      }),
-    )
-    .get("/html", async () =>
-      handleHTMLPageRequest(asset(manifest, "HTMLHost"), {
-        streamingSlots: htmlStreamingSlots,
-      }),
-    )
-    .get("/htmx/slots/:slotId", async ({ params }) => {
-      const html = await resolveHTMXSlotFragment(params.slotId);
-      if (!html) {
-        return new Response("Not found", { status: 404 });
-      }
+      )
+      .get("/html", async () =>
+        handleHTMLPageRequest(asset(manifest, "HTMLHost"), {
+          streamingSlots: htmlStreamingSlots,
+        }),
+      )
+      .get("/htmx/slots/:slotId", async ({ params }) => {
+        const html = await resolveHTMXSlotFragment(params.slotId);
+        if (!html) {
+          return new Response("Not found", { status: 404 });
+        }
 
-      return new Response(html, {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
-    })
-    .get("/htmx", async () =>
-      handleHTMXPageRequest(asset(manifest, "HTMXHost")),
-    );
+        return new Response(html, {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      })
+      .get("/htmx", async () =>
+        handleHTMXPageRequest(asset(manifest, "HTMXHost")),
+      )
+  );
 };

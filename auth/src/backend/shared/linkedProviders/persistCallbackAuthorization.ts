@@ -41,7 +41,7 @@ const getGrantedScopes = (
 };
 
 const getPrimaryEmail = (userIdentity: Record<string, unknown>) => {
-  const {email} = userIdentity;
+  const { email } = userIdentity;
 
   return typeof email === "string" && email.trim().length > 0
     ? email.trim().toLowerCase()
@@ -49,7 +49,7 @@ const getPrimaryEmail = (userIdentity: Record<string, unknown>) => {
 };
 
 const getPreferredLabel = (userIdentity: Record<string, unknown>) => {
-  const {name} = userIdentity;
+  const { name } = userIdentity;
   if (typeof name === "string" && name.trim().length > 0) {
     return name.trim();
   }

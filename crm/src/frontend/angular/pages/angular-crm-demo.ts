@@ -147,9 +147,7 @@ import {
                 <div class="crm-contact__name">
                   {{ contact.firstName || "" }}
                   {{ contact.lastName ? " " + contact.lastName : "" }}
-                  <ng-container
-                    *ngIf="!contact.firstName && !contact.lastName"
-                  >
+                  <ng-container *ngIf="!contact.firstName && !contact.lastName">
                     (unnamed)
                   </ng-container>
                 </div>
@@ -184,9 +182,10 @@ export class AngularCRMDemo implements OnInit, OnDestroy {
 
   readonly form = signal<LeadFormPayload>(emptyLead());
   readonly submitting = signal(false);
-  readonly status = signal<
-    { kind: "success" | "error"; message: string } | null
-  >(null);
+  readonly status = signal<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
   readonly contacts = signal<SavedContact[]>([]);
 
   private intervalRef: ReturnType<typeof setInterval> | null = null;
@@ -204,7 +203,7 @@ export class AngularCRMDemo implements OnInit, OnDestroy {
   }
 
   updateField(key: keyof LeadFormPayload, event: Event) {
-    const {value} = (event.target as HTMLInputElement | HTMLTextAreaElement);
+    const { value } = event.target as HTMLInputElement | HTMLTextAreaElement;
     this.form.update((current) => ({ ...current, [key]: value }));
   }
 

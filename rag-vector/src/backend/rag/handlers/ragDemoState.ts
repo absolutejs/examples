@@ -715,9 +715,8 @@ const buildSiteDiscoveryFixtureDocuments = async () => {
   };
 };
 
-const buildEmailSyncFixtureDocuments = async (
-  fixture: DemoEmailSyncFixture,
-) => buildEmailSyncDocuments({
+const buildEmailSyncFixtureDocuments = async (fixture: DemoEmailSyncFixture) =>
+  buildEmailSyncDocuments({
     client: createRAGStaticEmailSyncClient({
       messages: [
         {
@@ -1600,7 +1599,7 @@ export const createRagDemoState = ({
     request: Request,
     query?: Record<string, unknown>,
   ): DemoBackendMode => {
-    const {searchParams} = new URL(request.url);
+    const { searchParams } = new URL(request.url);
     const queryMode = query?.mode ?? searchParams.get("mode");
     if (isBackendMode(queryMode) && ragBackends.backends[queryMode].available) {
       return queryMode;
@@ -2699,7 +2698,7 @@ export const createRagDemoState = ({
     }
 
     const metadata = await loadDynamicSyncMetadata(definition, userSub);
-    const {linkedAvailableBindings} = (metadata as Record<string, unknown>);
+    const { linkedAvailableBindings } = metadata as Record<string, unknown>;
     const availableBindings = Array.isArray(linkedAvailableBindings)
       ? linkedAvailableBindings.filter(
           (entry): entry is { id: string } =>

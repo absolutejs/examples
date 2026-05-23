@@ -26,9 +26,10 @@ const POLL_INTERVAL_MS = 5_000;
 export const ReactCRMDemo = ({ cssPath }: ReactCRMDemoProps) => {
   const [form, setForm] = useState<LeadFormPayload>(emptyLead());
   const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState<
-    { kind: "success" | "error"; message: string } | null
-  >(null);
+  const [status, setStatus] = useState<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
   const [contacts, setContacts] = useState<SavedContact[]>([]);
 
   useEffect(() => {
@@ -53,7 +54,10 @@ export const ReactCRMDemo = ({ cssPath }: ReactCRMDemoProps) => {
     const result = await submitLead(form);
     setSubmitting(false);
     if (!result.ok) {
-      setStatus({ kind: "error", message: result.error ?? "Submission failed" });
+      setStatus({
+        kind: "error",
+        message: result.error ?? "Submission failed",
+      });
 
       return;
     }
@@ -81,7 +85,9 @@ export const ReactCRMDemo = ({ cssPath }: ReactCRMDemoProps) => {
           <nav aria-label="Frameworks" className="crm-nav">
             {FRAMEWORKS.map((framework) => (
               <a
-                className={framework.id === "react" ? "is-active" : ""} href={framework.href} key={framework.id}
+                className={framework.id === "react" ? "is-active" : ""}
+                href={framework.href}
+                key={framework.id}
               >
                 {framework.label}
               </a>
@@ -104,60 +110,76 @@ export const ReactCRMDemo = ({ cssPath }: ReactCRMDemoProps) => {
                 <label>
                   First name
                   <input
-                    name="firstName" onChange={(e) =>
+                    name="firstName"
+                    onChange={(e) =>
                       setForm({ ...form, firstName: e.target.value })
-                    } required value={form.firstName}
+                    }
+                    required
+                    value={form.firstName}
                   />
                 </label>
                 <label>
                   Last name
                   <input
-                    name="lastName" onChange={(e) =>
+                    name="lastName"
+                    onChange={(e) =>
                       setForm({ ...form, lastName: e.target.value })
-                    } required value={form.lastName}
+                    }
+                    required
+                    value={form.lastName}
                   />
                 </label>
               </div>
               <label>
                 Email
                 <input
-                  name="email" onChange={(e) => setForm({ ...form, email: e.target.value })} required type="email" value={form.email}
+                  name="email"
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                  type="email"
+                  value={form.email}
                 />
               </label>
               <div className="crm-form__row">
                 <label>
                   Phone
                   <input
-                    name="phone" onChange={(e) =>
+                    name="phone"
+                    onChange={(e) =>
                       setForm({ ...form, phone: e.target.value })
-                    } value={form.phone}
+                    }
+                    value={form.phone}
                   />
                 </label>
                 <label>
                   Company
                   <input
-                    name="company" onChange={(e) =>
+                    name="company"
+                    onChange={(e) =>
                       setForm({ ...form, company: e.target.value })
-                    } value={form.company}
+                    }
+                    value={form.company}
                   />
                 </label>
               </div>
               <label>
                 Notes
                 <textarea
-                  name="notes" onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} value={form.notes ?? ""}
+                  name="notes"
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  rows={3}
+                  value={form.notes ?? ""}
                 />
               </label>
               <button
-                className="crm-form__submit" disabled={submitting} type="submit"
+                className="crm-form__submit"
+                disabled={submitting}
+                type="submit"
               >
                 {submitting ? "Submitting…" : "Capture lead"}
               </button>
               {status ? (
-                <div
-                  className={`crm-status is-${status.kind}`}
-                  role="status"
-                >
+                <div className={`crm-status is-${status.kind}`} role="status">
                   {status.message}
                 </div>
               ) : null}
@@ -180,7 +202,9 @@ export const ReactCRMDemo = ({ cssPath }: ReactCRMDemoProps) => {
                     <div className="crm-contact__name">
                       {(contact.firstName ?? "") +
                         (contact.lastName ? ` ${contact.lastName}` : "")}
-                      {!contact.firstName && !contact.lastName ? "(unnamed)" : null}
+                      {!contact.firstName && !contact.lastName
+                        ? "(unnamed)"
+                        : null}
                     </div>
                     <div className="crm-contact__meta">
                       {contact.email ?? "—"}

@@ -117,7 +117,9 @@ export class NotAuthorizedComponent {}
       @for (provider of featured; track provider) {
         <a class="oauth-button" [href]="href(provider)">
           <img class="oauth-button__icon" alt="" [src]="logo(provider)" />
-          <span class="oauth-button__text">{{ verb }} {{ name(provider) }}</span>
+          <span class="oauth-button__text"
+            >{{ verb }} {{ name(provider) }}</span
+          >
         </a>
       }
       <div class="separator">
@@ -134,7 +136,9 @@ export class NotAuthorizedComponent {}
       @if (selected) {
         <a class="oauth-button" [href]="href(selected)">
           <img class="oauth-button__icon" alt="" [src]="logo(selected)" />
-          <span class="oauth-button__text">{{ verb }} {{ name(selected) }}</span>
+          <span class="oauth-button__text"
+            >{{ verb }} {{ name(selected) }}</span
+          >
         </a>
       } @else {
         <span class="oauth-button oauth-button--disabled">
@@ -254,7 +258,9 @@ export class ProtectedComponent {
       <section class="auth-section stack">
         <div>
           <h1 class="page-heading">Account settings</h1>
-          <p class="muted">Manage the login identities linked to your account.</p>
+          <p class="muted">
+            Manage the login identities linked to your account.
+          </p>
         </div>
 
         <div class="grid-2">
@@ -271,10 +277,12 @@ export class ProtectedComponent {
               <span class="muted">Subject</span><span>{{ user.sub }}</span>
             </div>
             <div class="spread">
-              <span class="muted">Name</span><span>{{ fullName(user) || "—" }}</span>
+              <span class="muted">Name</span
+              ><span>{{ fullName(user) || "—" }}</span>
             </div>
             <div class="spread">
-              <span class="muted">Email</span><span>{{ user.email ?? "—" }}</span>
+              <span class="muted">Email</span
+              ><span>{{ user.email ?? "—" }}</span>
             </div>
             <div class="spread">
               <span class="muted">Primary identity</span>
@@ -295,9 +303,15 @@ export class ProtectedComponent {
           <div class="panel__header">
             <div>
               <h2 class="panel__title">Linked login identities</h2>
-              <p class="muted">Search, set a primary, remove, or resolve merges.</p>
+              <p class="muted">
+                Search, set a primary, remove, or resolve merges.
+              </p>
             </div>
-            <button class="btn btn--ghost btn--sm" type="button" (click)="refresh()">
+            <button
+              class="btn btn--ghost btn--sm"
+              type="button"
+              (click)="refresh()"
+            >
               Refresh
             </button>
           </div>
@@ -366,7 +380,11 @@ export class ProtectedComponent {
             <div class="provider-group">
               <h3 class="provider-heading">
                 @if (logo(group.provider)) {
-                  <img class="entity__logo" alt="" [src]="logo(group.provider)" />
+                  <img
+                    class="entity__logo"
+                    alt=""
+                    [src]="logo(group.provider)"
+                  />
                 }
                 {{ label(group.provider) }}
               </h3>
@@ -429,17 +447,31 @@ export class ProtectedComponent {
             Permanently removes your user, all linked identities, and connector
             grants. This cannot be undone.
           </p>
-          <button class="btn btn--danger" type="button" (click)="deleteOpen.set(true)">
+          <button
+            class="btn btn--danger"
+            type="button"
+            (click)="deleteOpen.set(true)"
+          >
             Delete account
           </button>
         </div>
 
         <dialog #deleteDialog class="auth-modal" (close)="closeDelete()">
           <h3 class="auth-modal__title">Delete your account?</h3>
-          <p class="auth-modal__body">Type <strong>DELETE</strong> to confirm.</p>
-          <input class="confirm-input" placeholder="DELETE" [(ngModel)]="confirmText" />
+          <p class="auth-modal__body">
+            Type <strong>DELETE</strong> to confirm.
+          </p>
+          <input
+            class="confirm-input"
+            placeholder="DELETE"
+            [(ngModel)]="confirmText"
+          />
           <div class="auth-modal__actions">
-            <button class="btn btn--ghost" type="button" (click)="closeDelete()">
+            <button
+              class="btn btn--ghost"
+              type="button"
+              (click)="closeDelete()"
+            >
               Cancel
             </button>
             <button
@@ -504,7 +536,10 @@ export class SettingsComponent {
     if (
       this.route.snapshot.queryParams["notice"] === "identity-already-linked"
     ) {
-      this.toast.add("That identity is already linked to your account.", "info");
+      this.toast.add(
+        "That identity is already linked to your account.",
+        "info",
+      );
       this.router.navigate(["/settings"]);
     }
   }
@@ -621,11 +656,18 @@ export class SettingsComponent {
           @for (target of targets; track target.provider) {
             <div class="card text-left">
               <h2 class="card__title row">
-                <img class="entity__logo" alt="" [src]="logo(target.provider)" />
+                <img
+                  class="entity__logo"
+                  alt=""
+                  [src]="logo(target.provider)"
+                />
                 {{ target.label }}
               </h2>
               <p class="muted">{{ target.description }}</p>
-              <a class="btn btn--primary" [href]="connectorHref(target.provider)">
+              <a
+                class="btn btn--primary"
+                [href]="connectorHref(target.provider)"
+              >
                 Link {{ target.label }}
               </a>
             </div>
@@ -636,9 +678,15 @@ export class SettingsComponent {
           <div class="panel__header">
             <div>
               <h2 class="panel__title">Linked connectors</h2>
-              <p class="muted">OAuth grants and discovered external accounts.</p>
+              <p class="muted">
+                OAuth grants and discovered external accounts.
+              </p>
             </div>
-            <button class="btn btn--ghost btn--sm" type="button" (click)="refresh()">
+            <button
+              class="btn btn--ghost btn--sm"
+              type="button"
+              (click)="refresh()"
+            >
               Refresh
             </button>
           </div>
@@ -674,7 +722,11 @@ export class SettingsComponent {
                     [disabled]="busyId() === binding.id"
                     type="button"
                     (click)="
-                      run(binding.id, removeBinding(binding.id), 'Binding removed')
+                      run(
+                        binding.id,
+                        removeBinding(binding.id),
+                        'Binding removed'
+                      )
                     "
                   >
                     Remove
@@ -711,7 +763,9 @@ export class SettingsComponent {
                     class="btn btn--danger btn--sm"
                     [disabled]="busyId() === grant.id"
                     type="button"
-                    (click)="run(grant.id, removeGrant(grant.id), 'Grant removed')"
+                    (click)="
+                      run(grant.id, removeGrant(grant.id), 'Grant removed')
+                    "
                   >
                     Remove
                   </button>
@@ -770,7 +824,11 @@ export class ConnectorsComponent {
     }
   }
 
-  async run(id: string, action: Promise<LinkedProviderPayload>, success: string) {
+  async run(
+    id: string,
+    action: Promise<LinkedProviderPayload>,
+    success: string,
+  ) {
     this.busyId.set(id);
     try {
       this.payload.set(await action);
@@ -820,8 +878,14 @@ export const routes: Routes = [
       </nav>
       <div class="navbar__user">
         @if (auth.user(); as user) {
-          <span class="muted">{{ user.email ?? user.first_name ?? "Account" }}</span>
-          <button class="btn btn--ghost btn--sm" type="button" (click)="signOut()">
+          <span class="muted">{{
+            user.email ?? user.first_name ?? "Account"
+          }}</span>
+          <button
+            class="btn btn--ghost btn--sm"
+            type="button"
+            (click)="signOut()"
+          >
             Sign out
           </button>
         } @else {

@@ -104,8 +104,7 @@ export const createDemoAIProviderCatalog = (): DemoAIProviderCatalog | null => {
         createModelOption("openai", "OpenAI", modelId),
       ),
       providerId: "openai",
-      provider: () =>
-        openaiResponses({ apiKey: openaiApiKey }),
+      provider: () => openaiResponses({ apiKey: openaiApiKey }),
     });
   }
 

@@ -42,7 +42,7 @@ export const createDemoFixturesPlugin = () =>
         ),
     )
     .get("/demo/sync-fixtures/site/robots.txt", ({ request }) => {
-      const {origin} = new URL(request.url);
+      const { origin } = new URL(request.url);
 
       return new Response(
         [
@@ -58,7 +58,7 @@ export const createDemoFixturesPlugin = () =>
       );
     })
     .get("/demo/sync-fixtures/site/sitemap.xml", ({ request }) => {
-      const {origin} = new URL(request.url);
+      const { origin } = new URL(request.url);
 
       return new Response(
         [
