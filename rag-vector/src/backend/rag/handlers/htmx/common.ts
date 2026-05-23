@@ -1,9 +1,11 @@
-import type { RAGAdminActionRecord, RAGAdminJobRecord } from "@absolutejs/rag";
-import { buildRAGCitations, buildRAGSourceSummaries } from "@absolutejs/rag/ui";
+import {
+  buildRAGCitations,
+  buildRAGSourceSummaries,
+  resolveRAGHTMXRenderers,
+} from "@absolutejs/rag/ui";
 import {
   buildCitationGroups,
   buildSourceSummarySectionGroups,
-  buildTracePresentation,
   formatCitationDetails,
   formatCitationExcerpt,
   formatCitationLabel,
@@ -22,23 +24,10 @@ import {
   formatSourceSummaryDetails,
 } from "../../../../frontend/demo-backends";
 
-export type RAGBackendCapabilities = {
-  backend: string;
-  persistence: string;
-  nativeVectorSearch: boolean;
-  serverSideFiltering: boolean;
-  streamingIngestStatus: boolean;
-};
-
-export type RAGVectorStoreStatus = {
-  backend: string;
-  vectorMode: string;
-  dimensions?: number;
-  native?: {
-    active: boolean;
-    fallbackReason?: string;
-  };
-};
+export type {
+  RAGBackendCapabilities,
+  RAGVectorStoreStatus,
+} from "@absolutejs/rag";
 
 export type RAGSource = {
   chunkId: string;
@@ -48,13 +37,10 @@ export type RAGSource = {
   source?: string;
 };
 
-const STREAM_STAGES = [
-  "submitting",
-  "retrieving",
-  "retrieved",
-  "streaming",
-  "complete",
-] as const;
+// Self-contained HTMX fragment renderers now live in @absolutejs/rag; resolve
+// them with the example's `demo-` class prefix so the existing stylesheet keeps
+// working, and re-export under the original names below.
+const htmxRenderers = resolveRAGHTMXRenderers({ classPrefix: "demo" });
 
 export const escapeHtml = (text: string) =>
   text
@@ -86,185 +72,21 @@ export const formatDuration = (durationMs?: number) => {
   return `${durationMs}ms`;
 };
 
-export const renderTracePanel = ({
-  title,
-  summary,
-  trace,
-}: {
-  title: string;
-  summary: string;
-  trace?: Parameters<typeof buildTracePresentation>[0];
-}) => {
-  if (!trace) {
-    return "";
-  }
+export const renderTracePanel = htmxRenderers.tracePanel;
 
-  const presentation = buildTracePresentation(trace);
-  return [
-    '<div class="demo-results">',
-    `<h4>${escapeHtml(title)}</h4>`,
-    `<p class="demo-metadata">${escapeHtml(summary)}</p>`,
-    '<div class="demo-stat-grid">',
-    presentation.stats
-      .map(
-        (row) =>
-          `<article class="demo-stat-card"><p class="demo-section-caption">${escapeHtml(row.label)}</p><strong>${escapeHtml(row.value)}</strong></article>`,
-      )
-      .join(""),
-    "</div>",
-    "<div>",
-    presentation.details
-      .map(
-        (row) =>
-          `<p class="demo-key-value-row"><strong>${escapeHtml(row.label)}</strong><span>${escapeHtml(row.value)}</span></p>`,
-      )
-      .join(""),
-    "</div>",
-    '<div class="demo-result-grid">',
-    presentation.steps
-      .map(
-        (step, index) => `
-          <details class="demo-collapsible demo-result-item" ${index === 0 ? "open" : ""}>
-            <summary><strong>${index + 1}. ${escapeHtml(step.label)}</strong></summary>
-            ${step.rows.map((row) => `<p class="demo-key-value-row"><strong>${escapeHtml(row.label)}</strong><span>${escapeHtml(row.value)}</span></p>`).join("")}
-          </details>`,
-      )
-      .join(""),
-    "</div>",
-    "</div>",
-  ].join("");
-};
+export const renderStageRow = htmxRenderers.stageRow;
 
-export const renderStageRow = (currentStage: (typeof STREAM_STAGES)[number]) =>
-  `<div class="demo-stage-row">${STREAM_STAGES.map((stage) => {
-    const classNames = ["demo-stage-pill"];
+export const renderCapabilities = htmxRenderers.capabilities;
 
-    if (stage === "complete") {
-      classNames.push("complete");
-    }
+export const renderNativeSource = htmxRenderers.nativeSource;
 
-    if (stage === currentStage) {
-      classNames.push("current");
-    }
+export const renderStatusSummary = htmxRenderers.statusSummary;
 
-    return `<span class="${classNames.join(" ")}">${escapeHtml(stage)}</span>`;
-  }).join("")}</div>`;
+export const renderStatusMessage = htmxRenderers.statusMessage;
 
-export const renderCapabilities = (capabilities?: RAGBackendCapabilities) => {
-  if (!capabilities) {
-    return '<p class="demo-metadata">Backend capabilities unavailable.</p>';
-  }
+export const renderAdminJobCards = htmxRenderers.adminJobCards;
 
-  const values = [
-    capabilities.backend,
-    capabilities.persistence,
-    capabilities.nativeVectorSearch
-      ? "native vector search"
-      : "managed fallback search",
-    capabilities.serverSideFiltering
-      ? "server-side filters"
-      : "client-side filters",
-    capabilities.streamingIngestStatus
-      ? "streaming ingest status"
-      : "polled ingest status",
-  ];
-
-  return `<p class="demo-metadata">Backend capabilities: <strong>${escapeHtml(values.join(" · "))}</strong></p>`;
-};
-
-export const renderNativeSource = (status?: RAGVectorStoreStatus) => {
-  const native = status?.native;
-  if (!native || !native.active) {
-    return "Not applicable";
-  }
-
-  if (status?.backend === "sqlite") {
-    return "Packaged sqlite-vec";
-  }
-
-  if (status?.backend === "postgres") {
-    return "PostgreSQL pgvector extension";
-  }
-
-  return "Managed by AbsoluteJS";
-};
-
-export const renderStatusSummary = (status?: RAGVectorStoreStatus) => {
-  if (!status) {
-    return "No backend status is available.";
-  }
-
-  if (status.native?.active) {
-    return "Native vector acceleration is active.";
-  }
-
-  if (status.vectorMode === "json_fallback") {
-    return "Owned JSON fallback retrieval is active.";
-  }
-
-  return `Vector mode ${status.vectorMode} is active.`;
-};
-
-export const renderStatusMessage = (status?: RAGVectorStoreStatus) => {
-  if (!status) {
-    return "Backend status unavailable.";
-  }
-
-  return status.native?.fallbackReason ?? renderStatusSummary(status);
-};
-
-export const renderAdminJobCards = (jobs?: RAGAdminJobRecord[]) => {
-  const records = (jobs ?? []).slice(0, 3);
-  if (records.length === 0) {
-    return '<p class="demo-metadata">No admin jobs recorded yet.</p>';
-  }
-
-  return `<div class="demo-stat-grid">${records
-    .map((job) => {
-      const target = job.target ?? "global";
-      const timing =
-        typeof job.startedAt === "number" ? formatTime(job.startedAt) : "n/a";
-
-      return `<article class="demo-stat-card">
-        <span class="demo-stat-label">${escapeHtml(job.action)}</span>
-        <strong>${escapeHtml(job.status.toUpperCase())}</strong>
-        <p>${escapeHtml(target)}</p>
-        <div class="demo-key-value-list">
-          <div class="demo-key-value-row"><span>Started</span><strong>${escapeHtml(timing)}</strong></div>
-          ${typeof job.elapsedMs === "number" ? `<div class="demo-key-value-row"><span>Elapsed</span><strong>${escapeHtml(formatDuration(job.elapsedMs))}</strong></div>` : ""}
-        </div>
-      </article>`;
-    })
-    .join("")}</div>`;
-};
-
-export const renderAdminActionCards = (actions?: RAGAdminActionRecord[]) => {
-  const records = (actions ?? []).slice(0, 3);
-  if (records.length === 0) {
-    return '<p class="demo-metadata">No admin actions recorded yet.</p>';
-  }
-
-  return `<div class="demo-stat-grid">${records
-    .map((action) => {
-      const target = action.documentId ?? action.target ?? "global";
-      const timing =
-        typeof action.elapsedMs === "number"
-          ? formatDuration(action.elapsedMs)
-          : typeof action.startedAt === "number"
-            ? formatTime(action.startedAt)
-            : "n/a";
-
-      return `<article class="demo-stat-card">
-        <span class="demo-stat-label">${escapeHtml(action.action)}</span>
-        <strong>${escapeHtml(action.status.toUpperCase())}</strong>
-        <p>${escapeHtml(target)}</p>
-        <div class="demo-key-value-list">
-          <div class="demo-key-value-row"><span>When</span><strong>${escapeHtml(timing)}</strong></div>
-        </div>
-      </article>`;
-    })
-    .join("")}</div>`;
-};
+export const renderAdminActionCards = htmxRenderers.adminActionCards;
 
 export const renderSourceSummaries = (sources: RAGSource[]) => {
   const summaries = buildRAGSourceSummaries(sources);
@@ -349,10 +171,7 @@ export const renderCitations = (sources: RAGSource[]) => {
   ].join("");
 };
 
-export const renderDetailList = (lines: string[], fallback: string) => {
-  const values = lines.length > 0 ? lines : [fallback];
-  return `<ul class="demo-detail-list">${values.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`;
-};
+export const renderDetailList = htmxRenderers.detailList;
 
 export const renderSectionDiagnosticCard = (diagnostic: {
   key: string;
