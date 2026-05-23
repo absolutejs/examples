@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DemoBackendMode } from "../../demo-backends";
-import { ReactRAGVectorDemoShell } from "./ReactRAGVectorDemoShell";
+import { ReactRAGJourney } from "../pages/ReactRAGJourney";
 
 const ReactRAGVectorDemoLoadingShell = () => (
   <main className="demo-layout">
@@ -36,5 +36,5 @@ export const ReactRAGVectorDemoClientMount = ({
     return <ReactRAGVectorDemoLoadingShell />;
   }
 
-  return <ReactRAGVectorDemoShell mode={mode} />;
+  return <ReactRAGJourney mode={mode} />;
 };
