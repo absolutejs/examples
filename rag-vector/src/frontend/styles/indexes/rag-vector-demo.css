@@ -247,23 +247,22 @@ nav {
   justify-content: center;
 }
 
-.demo-auth-bar {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  justify-content: flex-end;
-  margin-bottom: 0.15rem;
+/* HTMX auth menu is a no-JS <details> dropdown; drop the native marker and
+   reuse the shared .demo-auth-* dropdown styling used by the other frameworks. */
+details.demo-auth-menu > summary.demo-auth-trigger {
+  list-style: none;
 }
 
-.demo-auth-state {
-  color: #a1a1aa;
-  font-size: 0.78rem;
+details.demo-auth-menu > summary.demo-auth-trigger::-webkit-details-marker {
+  display: none;
 }
 
-.demo-auth-state strong {
-  color: #f4f4f5;
-  font-weight: 600;
+details.demo-auth-menu .demo-auth-trigger-chevron {
+  transition: transform 0.2s ease;
+}
+
+details.demo-auth-menu[open] .demo-auth-trigger-chevron {
+  transform: rotate(45deg);
 }
 
 .demo-nav-row {

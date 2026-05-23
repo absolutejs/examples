@@ -2718,6 +2718,274 @@ const renderHeaderNav = () => {
   headerNavEl.append(frameworkLabel);
 };
 
+// Auth menu — mirrors ReactRAGAuthMenu imperatively.
+type AuthUser = {
+  sub: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  primary_auth_identity_id?: string | null;
+};
+
+type AuthMenuState = {
+  isBusy: boolean;
+  isOpen: boolean;
+  user: AuthUser | null;
+};
+
+const loginProviders: Array<{
+  href: string;
+  iconPath: string;
+  label: string;
+}> = [
+  {
+    href: "/oauth2/google/authorization?client=login",
+    iconPath: "/assets/svg/providers/google.svg",
+    label: "Google",
+  },
+  {
+    href: "/oauth2/facebook/authorization?client=login",
+    iconPath: "/assets/svg/providers/meta.svg",
+    label: "Facebook",
+  },
+];
+
+const getAccountLabel = (user: AuthUser | null): string => {
+  if (!user) {
+    return "Login";
+  }
+  const fullName = [user.first_name, user.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return fullName || user.email || "Account";
+};
+
+const buildAuthMenu = () => {
+  const containerEl = document.getElementById("header-auth");
+  if (containerEl === null) {
+    return;
+  }
+
+  const state: AuthMenuState = {
+    isBusy: true,
+    isOpen: false,
+    user: null,
+  };
+
+  let removeOutsideListeners: (() => void) | null = null;
+
+  const removeDocumentListeners = () => {
+    if (removeOutsideListeners !== null) {
+      removeOutsideListeners();
+      removeOutsideListeners = null;
+    }
+  };
+
+  const addDocumentListeners = () => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !containerEl.contains(event.target)) {
+        state.isOpen = false;
+        removeDocumentListeners();
+        render();
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        state.isOpen = false;
+        removeDocumentListeners();
+        render();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    removeOutsideListeners = () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  };
+
+  const handleSignOut = async () => {
+    state.isBusy = true;
+    render();
+    try {
+      const response = await fetch("/oauth2/signout", { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error(
+          `Sign out failed with status ${String(response.status)}`,
+        );
+      }
+      state.user = null;
+      state.isOpen = false;
+      removeDocumentListeners();
+    } catch (error) {
+      console.error("Failed to sign out", error);
+    } finally {
+      state.isBusy = false;
+      render();
+    }
+  };
+
+  const render = () => {
+    const accountLabel = getAccountLabel(state.user);
+
+    // Trigger button
+    let triggerEl =
+      containerEl.querySelector<HTMLButtonElement>(".demo-auth-trigger");
+    if (triggerEl === null) {
+      triggerEl = document.createElement("button");
+      triggerEl.className = "demo-auth-trigger";
+      triggerEl.type = "button";
+
+      const textSpan = document.createElement("span");
+      textSpan.className = "demo-auth-trigger-text";
+      triggerEl.append(textSpan);
+
+      const chevronSpan = document.createElement("span");
+      chevronSpan.setAttribute("aria-hidden", "true");
+      chevronSpan.className = "demo-auth-trigger-chevron";
+      triggerEl.append(chevronSpan);
+
+      triggerEl.addEventListener("click", () => {
+        if (state.isBusy) return;
+        state.isOpen = !state.isOpen;
+        if (state.isOpen) {
+          addDocumentListeners();
+        } else {
+          removeDocumentListeners();
+        }
+        render();
+      });
+      containerEl.append(triggerEl);
+    }
+
+    const textSpanEl = triggerEl.querySelector<HTMLSpanElement>(
+      ".demo-auth-trigger-text",
+    );
+    const chevronSpanEl = triggerEl.querySelector<HTMLSpanElement>(
+      ".demo-auth-trigger-chevron",
+    );
+    if (textSpanEl !== null) {
+      textSpanEl.textContent = accountLabel;
+    }
+    if (chevronSpanEl !== null) {
+      chevronSpanEl.textContent = state.isOpen ? "−" : "+";
+    }
+    triggerEl.disabled = state.isBusy;
+
+    // Dropdown
+    const existingDropdown = containerEl.querySelector<HTMLDivElement>(
+      ".demo-auth-dropdown",
+    );
+    if (!state.isOpen) {
+      existingDropdown?.remove();
+      return;
+    }
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "demo-auth-dropdown";
+
+    if (state.user !== null) {
+      const currentUser = state.user;
+      const summary = document.createElement("div");
+      summary.className = "demo-auth-account-summary";
+
+      const kicker = document.createElement("span");
+      kicker.className = "demo-auth-kicker";
+      kicker.textContent = "AbsoluteJS account";
+      summary.append(kicker);
+
+      const strong = document.createElement("strong");
+      strong.textContent = accountLabel;
+      summary.append(strong);
+
+      if (currentUser.email) {
+        const emailSpan = document.createElement("span");
+        emailSpan.textContent = currentUser.email;
+        summary.append(emailSpan);
+      }
+      dropdown.append(summary);
+
+      const signOutBtn = document.createElement("button");
+      signOutBtn.className =
+        "demo-auth-provider-button demo-auth-provider-button-secondary";
+      signOutBtn.type = "button";
+      signOutBtn.disabled = state.isBusy;
+      const signOutSpan = document.createElement("span");
+      signOutSpan.textContent = "Sign out";
+      signOutBtn.append(signOutSpan);
+      signOutBtn.addEventListener("click", () => {
+        void handleSignOut();
+      });
+      dropdown.append(signOutBtn);
+    } else {
+      const summary = document.createElement("div");
+      summary.className = "demo-auth-account-summary";
+
+      const kicker = document.createElement("span");
+      kicker.className = "demo-auth-kicker";
+      kicker.textContent = "AbsoluteJS account";
+      summary.append(kicker);
+
+      const strong = document.createElement("strong");
+      strong.textContent = "Sign in to unlock linked connectors";
+      summary.append(strong);
+
+      const hint = document.createElement("span");
+      hint.textContent =
+        "Use the same account you linked Gmail, Google Contacts, or Meta bindings to in the auth example.";
+      summary.append(hint);
+      dropdown.append(summary);
+
+      const providerList = document.createElement("div");
+      providerList.className = "demo-auth-provider-list";
+      for (const provider of loginProviders) {
+        const link = document.createElement("a");
+        link.className = "demo-auth-provider-button";
+        link.href = provider.href;
+
+        const img = document.createElement("img");
+        img.src = provider.iconPath;
+        img.alt = "";
+        img.setAttribute("aria-hidden", "true");
+        link.append(img);
+
+        const labelSpan = document.createElement("span");
+        labelSpan.textContent = `Continue with ${provider.label}`;
+        link.append(labelSpan);
+
+        providerList.append(link);
+      }
+      dropdown.append(providerList);
+    }
+
+    existingDropdown?.remove();
+    containerEl.append(dropdown);
+  };
+
+  // Initial render (busy/loading state)
+  render();
+
+  // Load auth status
+  void (async () => {
+    try {
+      const response = await fetch("/oauth2/status");
+      if (!response.ok) {
+        state.user = null;
+      } else {
+        const payload = (await response.json()) as { user?: AuthUser | null };
+        state.user = payload.user ?? null;
+      }
+    } catch (error) {
+      console.error("Failed to load auth status", error);
+      state.user = null;
+    } finally {
+      state.isBusy = false;
+      render();
+    }
+  })();
+};
+
 const runUploadPreset = async (preset: DemoUploadPreset) => {
   uploadStatusEl.innerHTML =
     '<p class="demo-metadata">Uploading ' + preset.label + "...</p>";
@@ -3285,4 +3553,5 @@ stateRerunChipEl.addEventListener("click", () => {
   void rerunLastQuery();
 });
 stateClearChipEl.addEventListener("click", clearAllRetrievalState);
+buildAuthMenu();
 void loadRagReadiness();

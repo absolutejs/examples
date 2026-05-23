@@ -1,5 +1,10 @@
 import { networking } from "@absolutejs/absolute";
 import { Elysia } from "elysia";
+import {
+  getDemoPagePath,
+  isBackendMode,
+  isFrameworkId,
+} from "../../frontend/demo-backends";
 import { buildRagAbsoluteAuth } from "../shared/auth/config";
 import { createWebRuntime } from "./handlers/runtime/createWebRuntime";
 import { renderAuthMenu } from "./handlers/renderAuthMenu";
@@ -47,6 +52,18 @@ export const server = new Elysia()
       referer && referer.includes("/htmx/") ? referer : "/htmx/sqlite-native";
 
     return new Response(null, { headers: { Location: location }, status: 303 });
+  })
+  // No-JS nav for the HTMX page: the backend/framework <select>s fire an htmx
+  // request on change; we answer with an HX-Redirect so htmx navigates the
+  // browser to the chosen demo (same destinations as the other framework navs).
+  .get("/demo/nav", ({ query, set }) => {
+    const framework = isFrameworkId(query.framework) ? query.framework : "htmx";
+    const backend = isBackendMode(query.backend)
+      ? query.backend
+      : "sqlite-native";
+    set.headers["HX-Redirect"] = getDemoPagePath(framework, backend);
+
+    return new Response(null, { status: 204 });
   })
   .use(createRagProxyPlugin())
   .use(runtime.absolutejs)

@@ -28,32 +28,54 @@
           AbsoluteJS
         </a>
       </div>
-      <nav>
-        <div
+      <div class="demo-header-actions">
+        <nav class="demo-nav">
+          <label class="demo-nav-select">
+            <span>Backend</span>
+            <select
+              name="backend"
+              hx-get="/demo/nav"
+              hx-trigger="change"
+              hx-vals='{"framework":"htmx"}'
+              hx-swap="none"
+            >
+              <option value="sqlite-native">SQLite Native</option>
+              <option value="sqlite-fallback">SQLite Fallback</option>
+              <option value="postgres">PostgreSQL</option>
+              <option value="pinecone" selected>Pinecone</option>
+            </select>
+          </label>
+          <label class="demo-nav-select">
+            <span>Framework</span>
+            <select
+              name="framework"
+              hx-get="/demo/nav"
+              hx-trigger="change"
+              hx-vals='{"backend":"pinecone"}'
+              hx-swap="none"
+            >
+              <option value="react">React</option>
+              <option value="svelte">Svelte</option>
+              <option value="vue">Vue</option>
+              <option value="angular">Angular</option>
+              <option value="html">HTML</option>
+              <option value="htmx" selected>HTMX</option>
+            </select>
+          </label>
+        </nav>
+        <details
           id="auth-menu"
-          class="demo-auth-bar"
+          class="demo-auth-menu"
           hx-get="/demo/auth/htmx"
           hx-trigger="load"
           hx-swap="innerHTML"
         >
-          <span class="demo-auth-state">Checking sign-in...</span>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">Backend</span
-          ><a href="/htmx/sqlite-native">SQLite Native</a
-          ><a href="/htmx/sqlite-fallback">SQLite Fallback</a
-          ><a href="/htmx/postgres">PostgreSQL</a
-          ><a href="/htmx/pinecone" class="active">Pinecone</a>
-        </div>
-        <div class="demo-nav-row">
-          <span class="demo-nav-row-label">Framework</span
-          ><a href="/react/pinecone">React</a
-          ><a href="/svelte/pinecone">Svelte</a><a href="/vue/pinecone">Vue</a
-          ><a href="/angular/pinecone">Angular</a
-          ><a href="/html/pinecone">HTML</a
-          ><a href="/htmx/pinecone" class="active">HTMX</a>
-        </div>
-      </nav>
+          <summary class="demo-auth-trigger">
+            <span class="demo-auth-trigger-text">Account</span>
+            <span aria-hidden="true" class="demo-auth-trigger-chevron">+</span>
+          </summary>
+        </details>
+      </div>
     </header>
 
     <main class="demo-layout">

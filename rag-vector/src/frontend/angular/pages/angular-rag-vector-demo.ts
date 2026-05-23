@@ -2,6 +2,7 @@ import { FormsModule } from "@angular/forms";
 import { ChangeDetectorRef, Component, inject } from "@angular/core";
 import { RAGClientService, RAGWorkflowService } from "@absolutejs/rag/angular";
 import { usePageContext } from "@absolutejs/absolute/angular";
+import { AngularRAGAuthMenuComponent } from "../components/angular-rag-auth-menu";
 import {
   buildRAGEvaluationLeaderboard,
   runRAGEvaluationSuite,
@@ -258,7 +259,7 @@ const formatCitationNumbers = (values: number[]) =>
 const savedEvaluationSuite = buildDemoEvaluationSuite();
 
 @Component({
-  imports: [FormsModule],
+  imports: [FormsModule, AngularRAGAuthMenuComponent],
   providers: [RAGClientService, RAGWorkflowService],
   selector: "angular-rag-vector-demo",
   standalone: true,
@@ -275,40 +276,43 @@ const savedEvaluationSuite = buildDemoEvaluationSuite();
             AbsoluteJS
           </a>
         </div>
-        <nav class="demo-nav">
-          <label class="demo-nav-select">
-            <span>Backend</span>
-            <select
-              (change)="goToDemoPage('angular', $any($event.target).value)"
-            >
-              @for (backend of backendOptions; track backend.id) {
-                <option
-                  [value]="backend.id"
-                  [disabled]="!backend.available"
-                  [selected]="backend.id === selectedMode"
-                >
-                  {{ backend.label
-                  }}{{ backend.available ? "" : " · unavailable" }}
-                </option>
-              }
-            </select>
-          </label>
-          <label class="demo-nav-select">
-            <span>Framework</span>
-            <select
-              (change)="goToDemoPage($any($event.target).value, selectedMode)"
-            >
-              @for (framework of demoFrameworks; track framework.id) {
-                <option
-                  [value]="framework.id"
-                  [selected]="framework.id === 'angular'"
-                >
-                  {{ framework.label }}
-                </option>
-              }
-            </select>
-          </label>
-        </nav>
+        <div class="demo-header-actions">
+          <nav class="demo-nav">
+            <label class="demo-nav-select">
+              <span>Backend</span>
+              <select
+                (change)="goToDemoPage('angular', $any($event.target).value)"
+              >
+                @for (backend of backendOptions; track backend.id) {
+                  <option
+                    [value]="backend.id"
+                    [disabled]="!backend.available"
+                    [selected]="backend.id === selectedMode"
+                  >
+                    {{ backend.label
+                    }}{{ backend.available ? "" : " · unavailable" }}
+                  </option>
+                }
+              </select>
+            </label>
+            <label class="demo-nav-select">
+              <span>Framework</span>
+              <select
+                (change)="goToDemoPage($any($event.target).value, selectedMode)"
+              >
+                @for (framework of demoFrameworks; track framework.id) {
+                  <option
+                    [value]="framework.id"
+                    [selected]="framework.id === 'angular'"
+                  >
+                    {{ framework.label }}
+                  </option>
+                }
+              </select>
+            </label>
+          </nav>
+          <angular-rag-auth-menu />
+        </div>
       </header>
 
       <main class="demo-layout">

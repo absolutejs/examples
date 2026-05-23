@@ -1271,6 +1271,94 @@ onUnmounted(() => {
     clearTimeout(ragReadinessTimer);
   }
 });
+
+// Auth menu
+type AuthUser = {
+  sub: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  primary_auth_identity_id?: string | null;
+};
+
+const authUser = ref<AuthUser | null>(null);
+const authIsBusy = ref(true);
+const authIsOpen = ref(false);
+const authContainerRef = ref<HTMLDivElement | null>(null);
+
+const authAccountLabel = computed(() => {
+  const user = authUser.value;
+  if (!user) return "Login";
+  const fullName = [user.first_name, user.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return fullName || user.email || "Account";
+});
+
+onMounted(async () => {
+  try {
+    const response = await fetch("/oauth2/status");
+    if (!response.ok) {
+      authUser.value = null;
+      return;
+    }
+    const payload = (await response.json()) as { user?: AuthUser | null };
+    authUser.value = payload.user ?? null;
+  } catch (error) {
+    console.error("Failed to load auth status", error);
+    authUser.value = null;
+  } finally {
+    authIsBusy.value = false;
+  }
+});
+
+watch(authIsOpen, (open) => {
+  if (!open) return;
+
+  const handlePointerDown = (event: PointerEvent) => {
+    if (
+      authContainerRef.value &&
+      event.target instanceof Node &&
+      !authContainerRef.value.contains(event.target)
+    ) {
+      authIsOpen.value = false;
+    }
+  };
+
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      authIsOpen.value = false;
+    }
+  };
+
+  document.addEventListener("pointerdown", handlePointerDown);
+  document.addEventListener("keydown", handleEscape);
+
+  const stop = watch(authIsOpen, (stillOpen) => {
+    if (!stillOpen) {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+      stop();
+    }
+  });
+});
+
+const handleSignOut = async () => {
+  authIsBusy.value = true;
+  try {
+    const response = await fetch("/oauth2/signout", { method: "DELETE" });
+    if (!response.ok) {
+      throw new Error(`Sign out failed with status ${response.status}`);
+    }
+    authUser.value = null;
+    authIsOpen.value = false;
+  } catch (error) {
+    console.error("Failed to sign out", error);
+  } finally {
+    authIsBusy.value = false;
+  }
+};
 </script>
 
 <template>
@@ -1286,49 +1374,116 @@ onUnmounted(() => {
           AbsoluteJS
         </a>
       </div>
-      <nav class="demo-nav">
-        <label class="demo-nav-select">
-          <span>Backend</span>
-          <select
-            @change="
-              goTo(
-                ACTIVE_FRAMEWORK,
-                ($event.target as HTMLSelectElement).value as DemoBackendMode,
-              )
-            "
-          >
-            <option
-              v-for="backend in backendOptions"
-              :key="backend.id"
-              :disabled="!backend.available"
-              :selected="backend.id === selectedMode"
-              :value="backend.id"
+      <div class="demo-header-actions">
+        <nav class="demo-nav">
+          <label class="demo-nav-select">
+            <span>Backend</span>
+            <select
+              @change="
+                goTo(
+                  ACTIVE_FRAMEWORK,
+                  ($event.target as HTMLSelectElement).value as DemoBackendMode,
+                )
+              "
             >
-              {{ backend.label }}{{ backend.available ? "" : " · unavailable" }}
-            </option>
-          </select>
-        </label>
-        <label class="demo-nav-select">
-          <span>Framework</span>
-          <select
-            @change="
-              goTo(
-                ($event.target as HTMLSelectElement).value as DemoFrameworkId,
-                selectedMode,
-              )
-            "
-          >
-            <option
-              v-for="framework in demoFrameworks"
-              :key="framework.id"
-              :selected="framework.id === ACTIVE_FRAMEWORK"
-              :value="framework.id"
+              <option
+                v-for="backend in backendOptions"
+                :key="backend.id"
+                :disabled="!backend.available"
+                :selected="backend.id === selectedMode"
+                :value="backend.id"
+              >
+                {{ backend.label
+                }}{{ backend.available ? "" : " · unavailable" }}
+              </option>
+            </select>
+          </label>
+          <label class="demo-nav-select">
+            <span>Framework</span>
+            <select
+              @change="
+                goTo(
+                  ($event.target as HTMLSelectElement).value as DemoFrameworkId,
+                  selectedMode,
+                )
+              "
             >
-              {{ framework.label }}
-            </option>
-          </select>
-        </label>
-      </nav>
+              <option
+                v-for="framework in demoFrameworks"
+                :key="framework.id"
+                :selected="framework.id === ACTIVE_FRAMEWORK"
+                :value="framework.id"
+              >
+                {{ framework.label }}
+              </option>
+            </select>
+          </label>
+        </nav>
+        <div class="demo-auth-menu" ref="authContainerRef">
+          <button
+            class="demo-auth-trigger"
+            :disabled="authIsBusy"
+            type="button"
+            @click="authIsOpen = !authIsOpen"
+          >
+            <span class="demo-auth-trigger-text">{{ authAccountLabel }}</span>
+            <span aria-hidden="true" class="demo-auth-trigger-chevron">{{
+              authIsOpen ? "−" : "+"
+            }}</span>
+          </button>
+          <div v-if="authIsOpen" class="demo-auth-dropdown">
+            <template v-if="authUser">
+              <div class="demo-auth-account-summary">
+                <span class="demo-auth-kicker">AbsoluteJS account</span>
+                <strong>{{ authAccountLabel }}</strong>
+                <span v-if="authUser.email">{{ authUser.email }}</span>
+              </div>
+              <button
+                class="demo-auth-provider-button demo-auth-provider-button-secondary"
+                :disabled="authIsBusy"
+                type="button"
+                @click="void handleSignOut()"
+              >
+                <span>Sign out</span>
+              </button>
+            </template>
+            <template v-else>
+              <div class="demo-auth-account-summary">
+                <span class="demo-auth-kicker">AbsoluteJS account</span>
+                <strong>Sign in to unlock linked connectors</strong>
+                <span
+                  >Use the same account you linked Gmail, Google Contacts, or
+                  Meta bindings to in the auth example.</span
+                >
+              </div>
+              <div class="demo-auth-provider-list">
+                <a
+                  class="demo-auth-provider-button"
+                  href="/oauth2/google/authorization?client=login"
+                >
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    src="/assets/svg/providers/google.svg"
+                  />
+                  <span>Continue with Google</span>
+                </a>
+                <a
+                  class="demo-auth-provider-button"
+                  href="/oauth2/facebook/authorization?client=login"
+                >
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    src="/assets/svg/providers/meta.svg"
+                  />
+                  <span>Continue with Facebook</span>
+                </a>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
     </header>
 
     <main class="demo-layout">

@@ -2,6 +2,7 @@
   import { createRAG } from "@absolutejs/rag/svelte";
   import type { RAGEvaluationResponse } from "@absolutejs/rag";
   import { derived, get } from "svelte/store";
+  import SvelteRAGAuthMenu from "../components/SvelteRAGAuthMenu.svelte";
   import {
     type AddFormState,
     type DemoActiveRetrievalState,
@@ -1240,32 +1241,35 @@
         AbsoluteJS
       </a>
     </div>
-    <nav class="demo-nav">
-      <label class="demo-nav-select">
-        <span>Backend</span>
-        <select on:change={onNavBackendChange}>
-          {#each backendOptions as backend}
-            <option
-              disabled={!backend.available}
-              selected={backend.id === selectedMode}
-              value={backend.id}
-            >
-              {backend.label}{backend.available ? "" : " · unavailable"}
-            </option>
-          {/each}
-        </select>
-      </label>
-      <label class="demo-nav-select">
-        <span>Framework</span>
-        <select on:change={onNavFrameworkChange}>
-          {#each demoFrameworks as framework}
-            <option selected={framework.id === "svelte"} value={framework.id}>
-              {framework.label}
-            </option>
-          {/each}
-        </select>
-      </label>
-    </nav>
+    <div class="demo-header-actions">
+      <nav class="demo-nav">
+        <label class="demo-nav-select">
+          <span>Backend</span>
+          <select on:change={onNavBackendChange}>
+            {#each backendOptions as backend}
+              <option
+                disabled={!backend.available}
+                selected={backend.id === selectedMode}
+                value={backend.id}
+              >
+                {backend.label}{backend.available ? "" : " · unavailable"}
+              </option>
+            {/each}
+          </select>
+        </label>
+        <label class="demo-nav-select">
+          <span>Framework</span>
+          <select on:change={onNavFrameworkChange}>
+            {#each demoFrameworks as framework}
+              <option selected={framework.id === "svelte"} value={framework.id}>
+                {framework.label}
+              </option>
+            {/each}
+          </select>
+        </label>
+      </nav>
+      <SvelteRAGAuthMenu />
+    </div>
   </header>
 
   <main class="demo-layout">
