@@ -1,7 +1,4 @@
 {
-  "name": "absolutejs-rag-vector-example",
-  "version": "0.0.1",
-  "private": true,
   "dependencies": {
     "@absolutejs/absolute": "0.19.0-beta.1010",
     "@absolutejs/absolute-rag-pinecone": "^0.0.2",
@@ -48,15 +45,18 @@
     "typescript-eslint": "^8.57.2",
     "vue-tsc": "^3.2.6"
   },
+  "name": "absolutejs-rag-vector-example",
+  "private": true,
   "scripts": {
     "dev": "absolute workspace dev",
-    "typecheck": "absolute typecheck",
-    "lint": "absolute eslint",
     "format": "absolute prettier --write",
     "knip": "knip",
+    "lint": "absolute eslint",
+    "pg:logs": "docker logs absolutejs-rag-demo-pg",
+    "pg:reset": "sh -lc 'docker rm -f absolutejs-rag-demo-pg >/dev/null 2>&1 || true; docker volume rm absolutejs-rag-demo-pg-data >/dev/null 2>&1 || true'",
     "pg:start": "sh -lc 'docker start absolutejs-rag-demo-pg >/dev/null 2>&1 || docker run -d --name absolutejs-rag-demo-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=absolute_rag_demo -p 55433:5432 -v absolutejs-rag-demo-pg-data:/var/lib/postgresql/data pgvector/pgvector:pg17'",
     "pg:stop": "sh -lc 'docker stop absolutejs-rag-demo-pg >/dev/null 2>&1 || true'",
-    "pg:logs": "docker logs absolutejs-rag-demo-pg",
-    "pg:reset": "sh -lc 'docker rm -f absolutejs-rag-demo-pg >/dev/null 2>&1 || true; docker volume rm absolutejs-rag-demo-pg-data >/dev/null 2>&1 || true'"
-  }
+    "typecheck": "absolute typecheck"
+  },
+  "version": "0.0.1"
 }

@@ -1,21 +1,8 @@
 {
-  "name": "absolutejs-voice-example",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "absolute build",
-    "dev": "absolute dev",
-    "format": "absolute prettier --write",
-    "knip": "knip",
-    "lint": "absolute eslint",
-    "start": "absolute start",
-    "typecheck": "absolute typecheck"
-  },
   "dependencies": {
-    "@absolutejs/absolute": "0.19.0-beta.1009",
+    "@absolutejs/absolute": "0.19.0-beta.1015",
     "@absolutejs/media": "0.0.1-beta.16",
-    "@absolutejs/voice": "0.0.22-beta.534",
+    "@absolutejs/voice": "0.0.22-beta.538",
     "@absolutejs/voice-assemblyai": "0.0.19-beta.123",
     "@absolutejs/voice-deepgram": "0.0.20-beta.93",
     "@absolutejs/voice-gemini": "0.0.1-beta.40",
@@ -27,6 +14,8 @@
     "@angular/platform-browser": "^21.0.0",
     "@angular/platform-server": "^21.0.0",
     "@angular/ssr": "^21.0.0",
+    "@neondatabase/serverless": "1.0.2",
+    "drizzle-orm": "0.44.7",
     "elysia": "1.4.18",
     "htmx.org": "^2.0.7",
     "react": "19.2.1",
@@ -43,8 +32,9 @@
     "@types/react": "19.2.0",
     "@types/react-dom": "19.2.0",
     "@typescript-eslint/parser": "^8.57.2",
+    "drizzle-kit": "0.31.7",
     "eslint": "^10.1.0",
-    "eslint-plugin-absolute": "0.11.0-beta.3",
+    "eslint-plugin-absolute": "^0.11.0",
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-security": "^4.0.0",
     "globals": "^17.4.0",
@@ -55,5 +45,20 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
     "vue-tsc": "^3.2.6"
-  }
+  },
+  "name": "absolutejs-voice-example",
+  "private": true,
+  "scripts": {
+    "build": "absolute build",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "dev": "absolute dev",
+    "format": "absolute prettier --write",
+    "knip": "knip",
+    "lint": "absolute eslint",
+    "start": "absolute start",
+    "typecheck": "absolute typecheck"
+  },
+  "type": "module",
+  "version": "0.0.1"
 }

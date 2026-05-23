@@ -5,6 +5,7 @@ Each directory is a standalone example app. Pick one, `cd` in, `bun install`, `b
 | Example | Demonstrates | Companion package |
 |---|---|---|
 | [`ai/`](./ai) | Multi-provider chat / completion using `@absolutejs/ai` | `@absolutejs/ai` |
+| [`auth/`](./auth) | 6-framework OAuth2 login, identity linking/merging, and connector grants against `@absolutejs/auth` | `@absolutejs/auth` |
 | [`crm/`](./crm) | 6-framework lead-capture form against `@absolutejs/crm` runtime + local entity store | `@absolutejs/crm` |
 | [`error-boundaries/`](./error-boundaries) | Per-route error boundaries, fallback UIs, RUM hooks | `@absolutejs/absolute` |
 | [`image-optimization/`](./image-optimization) | Image pipeline: format negotiation, responsive srcsets, blur placeholders | `@absolutejs/absolute` |
