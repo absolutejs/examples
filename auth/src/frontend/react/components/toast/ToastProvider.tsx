@@ -5,7 +5,7 @@ import {
   useContext,
   useState,
 } from "react";
-import { TOAST_DURATION } from "../../../shared/constants";
+import { TOAST_DURATION } from "../../../../constants";
 
 type ToastTone = "success" | "error" | "info";
 

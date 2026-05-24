@@ -1,34 +1,36 @@
-import { networking } from "@absolutejs/absolute";
-import { auth } from "@absolutejs/auth";
+import { getEnv, networking, prepare } from "@absolutejs/absolute";
+import { auth, createNeonAuthSessionStore } from "@absolutejs/auth";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import { Elysia } from "elysia";
-import * as ReactRouterDOM from "react-router";
 import { buildAuthHtmxConfig } from "./htmxConfig";
 import { apiPlugin } from "./plugins/apiPlugin";
 import { pagesPlugin } from "./plugins/pagesPlugin";
 import { authConfig } from "./shared/auth/config";
-import { User } from "./shared/auth/schema";
-import { createAuthRuntime } from "./shared/runtime";
+import { schema, User } from "./shared/auth/schema";
+import { createDrizzleLinkedProviderStores } from "./shared/linkedProviders/stores";
 
-// UniversalRouter resolves react-router via `globalThis.ReactRouterDOM` during
-// server rendering; register it explicitly so SSR can find it.
-Reflect.set(globalThis, "ReactRouterDOM", ReactRouterDOM);
-
-const runtime = await createAuthRuntime();
+const { absolutejs, manifest } = await prepare();
+const databaseUrl = getEnv("DATABASE_URL");
+const sql = neon(databaseUrl);
+const db = drizzle(sql, { schema });
+const authSessionStore = createNeonAuthSessionStore<User>(databaseUrl);
+const { bindingStore, grantStore } = createDrizzleLinkedProviderStores(db);
 
 const server = new Elysia()
   .use(
     await auth<User>({
-      ...authConfig(runtime.db),
-      authSessionStore: runtime.authSessionStore,
-      htmx: buildAuthHtmxConfig(runtime),
+      ...authConfig(db),
+      authSessionStore,
+      htmx: buildAuthHtmxConfig({ bindingStore, db, grantStore }),
     }),
   )
-  .use(apiPlugin(runtime))
+  .use(apiPlugin({ authSessionStore, bindingStore, db, grantStore }))
   .post("/cleanup", async ({ cleanupSessions }) => {
     await cleanupSessions();
   })
-  .use(pagesPlugin(runtime.manifest))
-  .use(runtime.absolutejs)
+  .use(pagesPlugin(manifest))
+  .use(absolutejs)
   .use(networking)
   .on("error", (error) => {
     const { request } = error;

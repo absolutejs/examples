@@ -7,6 +7,7 @@ import {
 } from "@absolutejs/auth";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { providerData } from "../../../frontend/shared/providerData";
+import { frameworkPrefixFromOrigin } from "../frameworkPrefix";
 import {
   createUser,
   getUser,
@@ -16,22 +17,6 @@ import {
 import { persistLinkedProviderCallbackAuthorization } from "../linkedProviders/persistCallbackAuthorization";
 import { providersConfiguration } from "./providersConfiguration";
 import { SchemaType, User } from "./schema";
-
-// Each framework is served under its own URL prefix (/react, /vue, ...). After
-// an identity/connector link we send the user back to the framework they came
-// from, derived from the OAuth origin URL.
-const KNOWN_FRAMEWORKS = ["react", "vue", "svelte", "angular", "html", "htmx"];
-
-const frameworkPrefixFromOrigin = (originUrl: string) => {
-  const path = originUrl.startsWith("http")
-    ? new URL(originUrl).pathname
-    : originUrl;
-  const [segment] = path.split("/").filter(Boolean);
-
-  return segment !== undefined && KNOWN_FRAMEWORKS.includes(segment)
-    ? `/${segment}`
-    : "/react";
-};
 
 export const authConfig = (
   db: NeonHttpDatabase<SchemaType>,

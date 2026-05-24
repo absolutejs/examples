@@ -1,4 +1,5 @@
 import { isValidProviderOption, providerOptions } from "citra";
+import { TOAST_DURATION } from "../../../constants";
 import {
   deleteAccount,
   dismissMergeRequest,
@@ -12,7 +13,6 @@ import {
   setPrimaryIdentity,
   signOut,
 } from "../../shared/authClient";
-import { TOAST_DURATION } from "../../shared/constants";
 import {
   CONNECTOR_TARGETS,
   FEATURED_LOGIN_PROVIDERS,

@@ -1,5 +1,5 @@
 import { Injectable, signal } from "@angular/core";
-import { TOAST_DURATION } from "../../shared/constants";
+import { TOAST_DURATION } from "../../../constants";
 
 type ToastTone = "success" | "error" | "info";
 type ToastItem = { id: number; message: string; tone: ToastTone };

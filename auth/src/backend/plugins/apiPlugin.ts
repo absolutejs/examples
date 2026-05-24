@@ -1,7 +1,12 @@
-import { protectRoutePlugin } from "@absolutejs/auth";
+import { type AuthSessionStore, protectRoutePlugin } from "@absolutejs/auth";
+import type {
+  LinkedProviderBindingStore,
+  LinkedProviderGrantStore,
+} from "@absolutejs/linked-providers";
 import { eq, or } from "drizzle-orm";
+import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { Elysia } from "elysia";
-import { schema, User } from "../shared/auth/schema";
+import { schema, SchemaType, User } from "../shared/auth/schema";
 import {
   deleteDBAuthIdentityMergeRequest,
   mergeUserAccounts,
@@ -12,17 +17,22 @@ import {
   buildAuthIdentityPayload,
   buildLinkedProviderPayload,
 } from "../shared/payloads";
-import { AuthRuntime } from "../shared/runtime";
-
 const flattenIdentityGroups = <T>(identities: Record<string, T[]>) =>
   Object.values(identities).flat();
+
+type ApiPluginDeps = {
+  authSessionStore: AuthSessionStore<User>;
+  bindingStore: LinkedProviderBindingStore;
+  db: NeonHttpDatabase<SchemaType>;
+  grantStore: LinkedProviderGrantStore;
+};
 
 export const apiPlugin = ({
   authSessionStore,
   bindingStore,
   db,
   grantStore,
-}: AuthRuntime) => {
+}: ApiPluginDeps) => {
   const deps = { bindingStore, db, grantStore };
 
   return new Elysia({ prefix: "/api" })

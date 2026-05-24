@@ -1,12 +1,17 @@
 import type { AuthHtmxConfig } from "@absolutejs/auth";
+import type {
+  LinkedProviderBindingStore,
+  LinkedProviderGrantStore,
+} from "@absolutejs/linked-providers";
 import { eq, or } from "drizzle-orm";
+import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import {
   CONNECTOR_TARGETS,
   FEATURED_LOGIN_PROVIDERS,
 } from "../frontend/shared/navData";
 import { authorizationHref } from "../frontend/shared/oauth";
 import { providerData } from "../frontend/shared/providerData";
-import { schema } from "./shared/auth/schema";
+import { schema, SchemaType } from "./shared/auth/schema";
 import {
   deleteDBAuthIdentityMergeRequest,
   mergeUserAccounts,
@@ -17,7 +22,12 @@ import {
   buildAuthIdentityPayload,
   buildLinkedProviderPayload,
 } from "./shared/payloads";
-import { AuthRuntime } from "./shared/runtime";
+
+type AuthHtmxConfigDeps = {
+  bindingStore: LinkedProviderBindingStore;
+  db: NeonHttpDatabase<SchemaType>;
+  grantStore: LinkedProviderGrantStore;
+};
 
 // The `htmx` option for auth: provider display data + the OAuth href
 // builder for the renderers, plus this app's identity/connector data actions.
@@ -26,7 +36,7 @@ export const buildAuthHtmxConfig = ({
   bindingStore,
   db,
   grantStore,
-}: AuthRuntime): AuthHtmxConfig => {
+}: AuthHtmxConfigDeps): AuthHtmxConfig => {
   const deps = { bindingStore, db, grantStore };
 
   return {
