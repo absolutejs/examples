@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@absolutejs/absolute": "0.19.0-beta.1024",
+    "@absolutejs/absolute": "0.19.0-beta.1025",
     "@absolutejs/absolute-rag-pinecone": "^0.0.2",
     "@absolutejs/absolute-rag-sqlite": "0.0.5",
     "@absolutejs/ai": "0.0.5",
@@ -22,8 +22,7 @@
     "react-dom": "19.2.4",
     "react-refresh": "^0.18.0",
     "svelte": "5.55.0",
-    "vue": "3.5.27",
-    "zone.js": "^0.15.0"
+    "vue": "3.5.27"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, signal } from "@angular/core";
 import { NgClass } from "@angular/common";
+import { useTimers } from "@absolutejs/absolute/angular";
 import {
   ConversationItemComponent,
   type ConversationSummary,
@@ -21,19 +22,13 @@ export class SidebarComponent {
   @Output() deleteConversation = new EventEmitter<string>();
 
   conversations = signal<ConversationSummary[]>([]);
-  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private readonly timers = useTimers();
 
   ngOnInit() {
     if (typeof window === "undefined") return;
     this.fetchConversations();
-    this.intervalId = setInterval(
-      () => this.fetchConversations(),
-      POLL_INTERVAL,
-    );
-  }
-
-  ngOnDestroy() {
-    if (this.intervalId) clearInterval(this.intervalId);
+    // useTimers clears the polling interval automatically on destroy.
+    this.timers.setInterval(() => this.fetchConversations(), POLL_INTERVAL);
   }
 
   async fetchConversations() {

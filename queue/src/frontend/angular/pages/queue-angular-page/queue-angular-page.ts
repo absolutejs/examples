@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
-import { Component, type OnDestroy, type OnInit, signal } from "@angular/core";
+import { Component, type OnInit, signal } from "@angular/core";
+import { useTimers } from "@absolutejs/absolute/angular";
 
 // This page has no per-request DI context, so the SSR handler's
 // `requestContext` is an empty object.
@@ -39,12 +40,12 @@ const STAT_ORDER: Array<{ label: string; status: string }> = [
   standalone: true,
   templateUrl: "./queue-angular-page.html",
 })
-export class QueueAngularPageComponent implements OnInit, OnDestroy {
+export class QueueAngularPageComponent implements OnInit {
   jobs = signal<Job[]>([]);
   counts = signal<Record<string, number>>({});
   readonly statOrder = STAT_ORDER;
   readonly statusLabel = STATUS_LABEL;
-  private intervalId?: ReturnType<typeof setInterval>;
+  private readonly timers = useTimers();
 
   ngOnInit() {
     // Runs during SSR too; the polling loop is browser-only.
@@ -61,13 +62,8 @@ export class QueueAngularPageComponent implements OnInit, OnDestroy {
         });
 
     void refresh();
-    this.intervalId = setInterval(refresh, 1000);
-  }
-
-  ngOnDestroy() {
-    if (this.intervalId !== undefined) {
-      clearInterval(this.intervalId);
-    }
+    // useTimers clears the polling interval automatically on destroy.
+    this.timers.setInterval(refresh, 1000);
   }
 
   enqueue() {

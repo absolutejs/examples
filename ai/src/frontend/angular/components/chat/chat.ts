@@ -11,6 +11,7 @@ import {
   effect,
 } from "@angular/core";
 import { NgClass } from "@angular/common";
+import { useTimers } from "@absolutejs/absolute/angular";
 import { AIStreamService } from "@absolutejs/ai/angular";
 import {
   COPY_FEEDBACK_MS,
@@ -95,6 +96,7 @@ const SUGGESTIONS: SuggestionCategory[] = [
 })
 export class ChatComponent {
   private aiService = inject(AIStreamService);
+  private readonly timers = useTimers();
 
   @Input() sidebarOpen = false;
   @Output() sidebarToggle = new EventEmitter<void>();
@@ -149,7 +151,7 @@ export class ChatComponent {
   private scrollEffect = effect(() => {
     // Track messages signal so effect runs on change
     this.messages();
-    setTimeout(() => {
+    this.timers.setTimeout(() => {
       const container = this.appMain?.nativeElement;
       if (!container) return;
       const { scrollTop, scrollHeight, clientHeight } = container;
@@ -158,7 +160,7 @@ export class ChatComponent {
       if (isNearBottom) {
         this.messagesEnd?.nativeElement?.scrollIntoView({ behavior: "smooth" });
       }
-    });
+    }, 0);
   });
 
   private modelChangeEffect = effect(() => {
@@ -243,7 +245,7 @@ export class ChatComponent {
   handleCopy(evt: { id: string; content: string }) {
     navigator.clipboard.writeText(evt.content);
     this.copiedId.set(evt.id);
-    setTimeout(() => this.copiedId.set(null), COPY_FEEDBACK_MS);
+    this.timers.setTimeout(() => this.copiedId.set(null), COPY_FEEDBACK_MS);
   }
 
   handleRetry(msgIdx: number) {

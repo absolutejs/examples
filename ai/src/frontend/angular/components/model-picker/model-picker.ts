@@ -9,6 +9,7 @@ import {
   ViewChild,
 } from "@angular/core";
 import { NgClass } from "@angular/common";
+import { useTimers } from "@absolutejs/absolute/angular";
 import {
   FILTER_CLOSE_MS,
   MODAL_CLOSE_MS,
@@ -38,7 +39,7 @@ export class ModelPickerComponent {
     if (val && !this.visible()) {
       this.visible.set(true);
       this.closing.set(false);
-      setTimeout(
+      this.timers.setTimeout(
         () => this.searchInput?.nativeElement?.focus(),
         SEARCH_FOCUS_DELAY_MS,
       );
@@ -63,6 +64,8 @@ export class ModelPickerComponent {
   filterClosing = signal(false);
   visible = signal(false);
   closing = signal(false);
+
+  private readonly timers = useTimers();
 
   private escHandler = (evt: KeyboardEvent) => {
     if (evt.key === "Escape") this.handleClose();
@@ -110,7 +113,7 @@ export class ModelPickerComponent {
 
   closeFilter() {
     this.filterClosing.set(true);
-    setTimeout(() => {
+    this.timers.setTimeout(() => {
       this.filterClosing.set(false);
       this.filterOpen.set(false);
     }, FILTER_CLOSE_MS);
@@ -137,7 +140,7 @@ export class ModelPickerComponent {
     this.closing.set(true);
     this.filterOpen.set(false);
     this.filterClosing.set(false);
-    setTimeout(() => {
+    this.timers.setTimeout(() => {
       this.closing.set(false);
       this.visible.set(false);
       this.close.emit();

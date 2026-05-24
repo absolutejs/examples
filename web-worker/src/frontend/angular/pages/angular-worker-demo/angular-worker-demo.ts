@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, inject } from "@angular/core";
+import { useTimers } from "@absolutejs/absolute/angular";
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -68,10 +69,12 @@ export class AngularWorkerDemoComponent {
   stressing = false;
 
   private cdr = inject(ChangeDetectorRef);
+  private readonly timers = useTimers();
 
   ngOnDestroy() {
+    // useTimers clears mainInterval on destroy; the worker still needs an
+    // explicit terminate.
     this.timerWorker?.terminate();
-    if (this.mainInterval) clearInterval(this.mainInterval);
   }
 
   private CANVAS_W = CANVAS_WIDTH;
@@ -162,7 +165,7 @@ export class AngularWorkerDemoComponent {
     this.timerWorker = worker;
 
     let mainElapsed = 0;
-    this.mainInterval = setInterval(() => {
+    this.mainInterval = this.timers.setInterval(() => {
       mainElapsed += MAIN_TIMER_INTERVAL_MS;
       this.mainTime = mainElapsed;
       this.cdr.detectChanges();
@@ -174,7 +177,7 @@ export class AngularWorkerDemoComponent {
     this.timerWorker?.postMessage({ command: "stop" });
     this.timerWorker?.terminate();
     this.timerWorker = null;
-    if (this.mainInterval) clearInterval(this.mainInterval);
+    if (this.mainInterval) this.timers.clearInterval(this.mainInterval);
     this.mainInterval = null;
   }
 

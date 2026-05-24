@@ -1,7 +1,7 @@
 import { FormsModule } from "@angular/forms";
 import { ChangeDetectorRef, Component, inject } from "@angular/core";
 import { RAGClientService, RAGWorkflowService } from "@absolutejs/rag/angular";
-import { usePageContext } from "@absolutejs/absolute/angular";
+import { usePageContext, useTimers } from "@absolutejs/absolute/angular";
 import { AngularRAGAuthMenuComponent } from "../../components/angular-rag-auth-menu/angular-rag-auth-menu";
 import {
   buildRAGEvaluationLeaderboard,
@@ -1692,13 +1692,14 @@ export class AngularRAGVectorDemoComponent {
     return formatChunkStrategy(value);
   }
 
+  private readonly timers = useTimers();
   private ragReadinessTimer: ReturnType<typeof setTimeout> | null = null;
   private ragReadinessRequest = 0;
 
   private async loadRagReadiness() {
     const requestId = ++this.ragReadinessRequest;
     if (this.ragReadinessTimer) {
-      clearTimeout(this.ragReadinessTimer);
+      this.timers.clearTimeout(this.ragReadinessTimer);
       this.ragReadinessTimer = null;
     }
 
@@ -1713,7 +1714,7 @@ export class AngularRAGVectorDemoComponent {
       this.ragReadiness = next;
       this.flushView();
       if (next.status === "warming") {
-        this.ragReadinessTimer = setTimeout(() => {
+        this.ragReadinessTimer = this.timers.setTimeout(() => {
           void this.loadRagReadiness();
         }, 2000);
       }
@@ -1733,12 +1734,6 @@ export class AngularRAGVectorDemoComponent {
 
   private flushView() {
     this.cdr.detectChanges();
-  }
-
-  ngOnDestroy() {
-    if (this.ragReadinessTimer) {
-      clearTimeout(this.ragReadinessTimer);
-    }
   }
 
   ngOnInit() {

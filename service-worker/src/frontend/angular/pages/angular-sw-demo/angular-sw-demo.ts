@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { useTimers } from "@absolutejs/absolute/angular";
 import { DEMO_CACHE_URLS, PING_COUNT, SW_STATES } from "../../../constants";
 
 // This page has no per-request DI context, so the SSR handler's
@@ -143,6 +144,7 @@ export class AngularSwDemoComponent {
   online = true;
 
   private cdr = inject(ChangeDetectorRef);
+  private readonly timers = useTimers();
 
   ngOnInit() {
     this.online = typeof navigator !== "undefined" ? navigator.onLine : true;
@@ -337,7 +339,7 @@ export class AngularSwDemoComponent {
 
           return;
         }
-        setTimeout(sendPing, PING_DELAY_MS);
+        this.timers.setTimeout(sendPing, PING_DELAY_MS);
       };
       navigator.serviceWorker.addEventListener("message", handler);
       worker.postMessage({ type: "ping" });

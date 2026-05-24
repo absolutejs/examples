@@ -7,6 +7,7 @@ import {
   RouterLinkActive,
   RouterOutlet,
 } from "@angular/router";
+import { useSubscription } from "@absolutejs/absolute/angular";
 import { HomeComponent } from "../../components/home/home";
 import { ProfileComponent } from "../../components/profile/profile";
 import { SettingsComponent } from "../../components/settings/settings";
@@ -38,7 +39,9 @@ export class AngularSpaComponent {
 
   constructor() {
     this.currentPath.set(this.router.url || "/");
-    this.router.events.subscribe(() => {
+    // useSubscription tears the router-events subscription down with the
+    // component (constructor is an injection context, so it captures DestroyRef).
+    useSubscription(this.router.events, () => {
       this.currentPath.set(this.router.url);
     });
   }

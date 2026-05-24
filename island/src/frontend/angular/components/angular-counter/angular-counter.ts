@@ -2,14 +2,13 @@ import "@angular/compiler";
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   inject,
   Input,
-  OnDestroy,
   OnInit,
   signal,
 } from "@angular/core";
-import { Subscription } from "rxjs";
-import { IslandStore } from "@absolutejs/absolute/angular";
+import { IslandStore, useSubscription } from "@absolutejs/absolute/angular";
 import { counterIslandStore } from "../../../islands/counterStore";
 
 // This is a loose Angular ISLAND, JIT-compiled at render time (note the
@@ -34,19 +33,19 @@ import { counterIslandStore } from "../../../islands/counterStore";
     </div>
   `,
 })
-class AngularCounterImpl implements OnDestroy, OnInit {
+class AngularCounterImpl implements OnInit {
   static __absoluteProps = {
     initialCount: 0,
     label: "",
   };
 
   readonly changeDetectorRef = inject(ChangeDetectorRef);
+  readonly destroyRef = inject(DestroyRef);
   readonly islandStore = inject(IslandStore);
   readonly incrementSharedAction = this.islandStore.get(
     counterIslandStore,
     (state) => state.incrementShared,
   );
-  subscription = new Subscription();
   @Input() initialCount = 0;
   @Input() label = "";
   readonly count = signal(this.initialCount);
@@ -54,13 +53,19 @@ class AngularCounterImpl implements OnDestroy, OnInit {
 
   ngOnInit() {
     this.count.set(this.initialCount);
-    this.subscription.add(
-      this.islandStore
-        .select(counterIslandStore, (state) => state.sharedCount)
-        .subscribe((value) => {
-          this.sharedCount.set(Number(value));
-          this.changeDetectorRef.detectChanges();
-        }),
+    // useSubscription auto-tears down on destroy — no manual Subscription or
+    // ngOnDestroy needed. Pass the captured DestroyRef since ngOnInit is not an
+    // injection context.
+    useSubscription(
+      this.islandStore.select(
+        counterIslandStore,
+        (state) => state.sharedCount,
+      ),
+      (value) => {
+        this.sharedCount.set(Number(value));
+        this.changeDetectorRef.detectChanges();
+      },
+      this.destroyRef,
     );
   }
 
@@ -70,10 +75,6 @@ class AngularCounterImpl implements OnDestroy, OnInit {
 
   incrementShared() {
     this.incrementSharedAction();
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
   }
 }
 

@@ -2,10 +2,10 @@ import { CommonModule } from "@angular/common";
 import {
   ChangeDetectionStrategy,
   Component,
-  OnDestroy,
   OnInit,
   signal,
 } from "@angular/core";
+import { useTimers } from "@absolutejs/absolute/angular";
 import {
   emptyLead,
   fetchRecentContacts,
@@ -30,7 +30,7 @@ import {
   standalone: true,
   templateUrl: "./angular-crm-demo.html",
 })
-export class AngularCRMDemo implements OnInit, OnDestroy {
+export class AngularCRMDemo implements OnInit {
   readonly frameworks = FRAMEWORKS;
   readonly frameworkDescription = FRAMEWORK_DESCRIPTIONS.angular;
   readonly snippet = FRAMEWORK_SNIPPETS.angular;
@@ -46,18 +46,15 @@ export class AngularCRMDemo implements OnInit, OnDestroy {
   } | null>(null);
   readonly contacts = signal<SavedContact[]>([]);
 
-  private intervalRef: ReturnType<typeof setInterval> | null = null;
+  private readonly timers = useTimers();
 
   trackById = (_index: number, item: SavedContact) => item.id;
   formatTime = (ms: number) => formatRelativeTime(ms);
 
   ngOnInit() {
     void this.refresh();
-    this.intervalRef = setInterval(() => void this.refresh(), 5_000);
-  }
-
-  ngOnDestroy() {
-    if (this.intervalRef !== null) clearInterval(this.intervalRef);
+    // useTimers clears the polling interval automatically on destroy.
+    this.timers.setInterval(() => void this.refresh(), 5_000);
   }
 
   updateField(key: keyof LeadFormPayload, event: Event) {
