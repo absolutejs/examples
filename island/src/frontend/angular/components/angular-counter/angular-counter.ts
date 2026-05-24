@@ -12,10 +12,27 @@ import { Subscription } from "rxjs";
 import { IslandStore } from "@absolutejs/absolute/angular";
 import { counterIslandStore } from "../../../islands/counterStore";
 
+// This is a loose Angular ISLAND, JIT-compiled at render time (note the
+// `@angular/compiler` import). JIT can't load an external `templateUrl` without
+// `resolveComponentResources()`, so an island component must use an inline
+// template — the one exception to the example's folder/templateUrl convention.
 @Component({
   selector: "abs-angular-counter",
   standalone: true,
-  templateUrl: "./angular-counter.html",
+  template: `
+    <div class="island-card island-card-angular">
+      <div class="island-header">
+        <img alt="Angular" height="20" src="/assets/svg/angular.svg" />
+        <span>{{ label }}</span>
+      </div>
+      <strong>Local: {{ count() }}</strong>
+      <strong>Shared: {{ sharedCount() }}</strong>
+      <button (click)="increment()" type="button">Increment Angular</button>
+      <button (click)="incrementShared()" type="button">
+        Increment Shared
+      </button>
+    </div>
+  `,
 })
 class AngularCounterImpl implements OnDestroy, OnInit {
   static __absoluteProps = {

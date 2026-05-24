@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Island } from "@absolutejs/absolute/svelte";
+  import Island from "@absolutejs/absolute/svelte/Island.svelte";
   import Nav from "../components/Nav.svelte";
 
   let { cssPath = undefined }: { cssPath?: string } = $props();
