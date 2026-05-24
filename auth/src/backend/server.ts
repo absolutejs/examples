@@ -2,8 +2,8 @@ import { networking } from "@absolutejs/absolute";
 import { absoluteAuth } from "@absolutejs/auth";
 import { Elysia } from "elysia";
 import * as ReactRouterDOM from "react-router";
+import { buildAuthHtmxConfig } from "./htmxConfig";
 import { apiPlugin } from "./plugins/apiPlugin";
-import { htmxFragmentsPlugin } from "./plugins/htmxFragmentsPlugin";
 import { pagesPlugin } from "./plugins/pagesPlugin";
 import { absoluteAuthConfig } from "./shared/auth/config";
 import { User } from "./shared/auth/schema";
@@ -20,10 +20,10 @@ const server = new Elysia()
     await absoluteAuth<User>({
       ...absoluteAuthConfig(runtime.db),
       authSessionStore: runtime.authSessionStore,
+      htmx: buildAuthHtmxConfig(runtime),
     }),
   )
   .use(apiPlugin(runtime))
-  .use(htmxFragmentsPlugin(runtime))
   .post("/cleanup", async ({ cleanupSessions }) => {
     await cleanupSessions();
   })
