@@ -32,16 +32,16 @@ type AuthHtmxConfigDeps = {
 // The `htmx` option for auth: provider display data + the OAuth href
 // builder for the renderers, plus this app's identity/connector data actions.
 // @absolutejs/auth owns the routes, gating and fragment HTML.
-export const buildAuthHtmxConfig = ({
+export const authHtmxConfig = ({
   bindingStore,
   db,
   grantStore,
-}: AuthHtmxConfigDeps) => {
-  const deps = { bindingStore, db, grantStore };
-
-  return defineAuthHtmxConfig({
+}: AuthHtmxConfigDeps) =>
+  defineAuthHtmxConfig({
     authorizationHref,
     connectorTargets: CONNECTOR_TARGETS,
+    featuredLoginProviders: FEATURED_LOGIN_PROVIDERS,
+    providerData,
     deleteAccount: async ({ userSub }) => {
       const grants = await grantStore.listGrantsByOwner(userSub);
       for (const grant of grants) {
@@ -62,12 +62,12 @@ export const buildAuthHtmxConfig = ({
     },
     dismissMergeRequest: ({ mergeRequestId }) =>
       deleteDBAuthIdentityMergeRequest({ db, id: mergeRequestId }),
-    featuredLoginProviders: FEATURED_LOGIN_PROVIDERS,
-    loadAuthIdentities: (userSub) => buildAuthIdentityPayload(deps, userSub),
-    loadLinkedProviders: (userSub) => buildLinkedProviderPayload(deps, userSub),
+    loadAuthIdentities: (userSub) =>
+      buildAuthIdentityPayload({ bindingStore, db, grantStore }, userSub),
+    loadLinkedProviders: (userSub) =>
+      buildLinkedProviderPayload({ bindingStore, db, grantStore }, userSub),
     mergeIdentity: ({ mergeRequestId, userSub }) =>
       mergeUserAccounts({ db, mergeRequestId, targetUserSub: userSub }),
-    providerData,
     removeBinding: async ({ bindingId, userSub }) => {
       const bindings = await bindingStore.listBindingsByOwner(userSub);
       const binding = bindings.find((candidate) => candidate.id === bindingId);
@@ -86,4 +86,3 @@ export const buildAuthHtmxConfig = ({
     setPrimaryIdentity: ({ identityId, userSub }) =>
       setPrimaryAuthIdentity({ db, identityId, userSub }),
   });
-};

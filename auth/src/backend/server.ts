@@ -8,7 +8,7 @@ import { pagesPlugin } from "./plugins/pagesPlugin";
 import { authConfig } from "./shared/auth/config";
 import { schema, User } from "./shared/auth/schema";
 import { createDrizzleLinkedProviderStores } from "./shared/linkedProviders/stores";
-import { buildAuthHtmxConfig } from "./utils/htmxConfig";
+import { authHtmxConfig } from "./utils/htmxConfig";
 
 const { absolutejs, manifest } = await prepare();
 const databaseUrl = getEnv("DATABASE_URL");
@@ -22,7 +22,7 @@ const server = new Elysia()
     await auth<User>({
       ...authConfig(db),
       authSessionStore,
-      htmx: buildAuthHtmxConfig({ bindingStore, db, grantStore }),
+      htmx: authHtmxConfig({ bindingStore, db, grantStore }),
     }),
   )
   .use(apiPlugin({ authSessionStore, bindingStore, db, grantStore }))
