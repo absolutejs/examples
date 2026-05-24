@@ -19,7 +19,7 @@ import {
 } from "./shared/payloads";
 import { AuthRuntime } from "./shared/runtime";
 
-// The `htmx` option for absoluteAuth: provider display data + the OAuth href
+// The `htmx` option for auth: provider display data + the OAuth href
 // builder for the renderers, plus this app's identity/connector data actions.
 // @absolutejs/auth owns the routes, gating and fragment HTML.
 export const buildAuthHtmxConfig = ({

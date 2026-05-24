@@ -5,7 +5,7 @@ import {
 } from "citra";
 import { and, eq, inArray } from "drizzle-orm";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
-import { AbsoluteAuthIdentityConflictError } from "@absolutejs/auth";
+import { AuthIdentityConflictError } from "@absolutejs/auth";
 import {
   AuthIdentity,
   NewAuthIdentity,
@@ -431,7 +431,7 @@ export const linkUserIdentity = async ({
   });
 
   if (existingIdentity !== undefined && existingIdentity.user_sub !== userSub) {
-    throw new AbsoluteAuthIdentityConflictError({
+    throw new AuthIdentityConflictError({
       authProvider,
       currentUserAuthSub: userSub,
       existingUserAuthSub: existingIdentity.user_sub,

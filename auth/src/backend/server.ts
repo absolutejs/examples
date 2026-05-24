@@ -1,11 +1,11 @@
 import { networking } from "@absolutejs/absolute";
-import { absoluteAuth } from "@absolutejs/auth";
+import { auth } from "@absolutejs/auth";
 import { Elysia } from "elysia";
 import * as ReactRouterDOM from "react-router";
 import { buildAuthHtmxConfig } from "./htmxConfig";
 import { apiPlugin } from "./plugins/apiPlugin";
 import { pagesPlugin } from "./plugins/pagesPlugin";
-import { absoluteAuthConfig } from "./shared/auth/config";
+import { authConfig } from "./shared/auth/config";
 import { User } from "./shared/auth/schema";
 import { createAuthRuntime } from "./shared/runtime";
 
@@ -17,8 +17,8 @@ const runtime = await createAuthRuntime();
 
 const server = new Elysia()
   .use(
-    await absoluteAuth<User>({
-      ...absoluteAuthConfig(runtime.db),
+    await auth<User>({
+      ...authConfig(runtime.db),
       authSessionStore: runtime.authSessionStore,
       htmx: buildAuthHtmxConfig(runtime),
     }),

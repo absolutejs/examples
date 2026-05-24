@@ -1,5 +1,5 @@
 import {
-  AbsoluteAuthProps,
+  defineAuthConfig,
   instantiateUserSession,
   isValidProviderOption,
   resolveOAuthAuthorization,
@@ -33,9 +33,9 @@ const frameworkPrefixFromOrigin = (originUrl: string) => {
     : "/react";
 };
 
-export const absoluteAuthConfig = (
+export const authConfig = (
   db: NeonHttpDatabase<SchemaType>,
-): AbsoluteAuthProps<User> => ({
+) => defineAuthConfig<User>({
   providersConfiguration,
   onAuthorizeSuccess: ({ authProvider, authorizationUrl, authIntent }) => {
     const providerName = isValidProviderOption(authProvider)

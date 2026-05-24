@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import { env } from "process";
-import { createProvidersConfiguration } from "@absolutejs/auth";
+import { defineProvidersConfiguration } from "@absolutejs/auth";
 
 const getEnvVar = (key: string) => {
   const environmentVariable = env[key];
@@ -14,7 +14,7 @@ const getEnvVar = (key: string) => {
   return environmentVariable;
 };
 
-export const providersConfiguration = createProvidersConfiguration({
+export const providersConfiguration = defineProvidersConfiguration({
   "42": {
     credentials: {
       clientId: getEnvVar("FORTY_TWO_CLIENT_ID"),
