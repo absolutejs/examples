@@ -1,0 +1,147 @@
+<header>
+  <a href="/" class="logo">
+    <img src="/assets/png/absolutejs-temp.png" height="24" alt="AbsoluteJS" />
+    AbsoluteJS
+  </a>
+  <nav>
+    <a href="/">React</a>
+    <a href="/svelte">Svelte</a>
+    <a href="/vue">Vue</a>
+    <a href="/angular" class="active">Angular</a>
+    <a href="/html">HTML</a>
+    <a href="/htmx">HTMX</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-title">
+    <img src="/assets/svg/angular.svg" height="32" alt="Angular" />
+    <h1>Angular</h1>
+    <span class="badge">Image Optimization</span>
+  </div>
+
+  <h2 class="section-title">Responsive Images</h2>
+  <p class="section-desc">
+    Each image below uses the &lt;abs-image&gt; component with width, height,
+    and sizes. The component generates responsive srcset attributes and serves
+    optimized images through the /_absolute/image endpoint.
+  </p>
+
+  <div class="image-grid">
+    <div class="image-card">
+      <div class="image-wrapper">
+        <abs-image
+          alt="Landscape photo"
+          src="/assets/jpg/landscape.jpg"
+          [width]="1200"
+          [height]="800"
+          [priority]="true"
+          sizes="(max-width: 640px) 100vw, 340px"
+        />
+      </div>
+      <div class="card-body">
+        <div class="card-title">Landscape</div>
+        <div class="card-desc">
+          1200×800 served via the optimization endpoint.
+        </div>
+      </div>
+      <div class="card-meta">
+        <span>src: <code>/assets/jpg/landscape.jpg</code></span>
+      </div>
+    </div>
+
+    <div class="image-card">
+      <div class="image-wrapper">
+        <abs-image
+          alt="Portrait photo"
+          src="/assets/jpg/portrait.jpg"
+          [width]="600"
+          [height]="900"
+          [priority]="true"
+          sizes="(max-width: 640px) 100vw, 340px"
+        />
+      </div>
+      <div class="card-body">
+        <div class="card-title">Portrait</div>
+        <div class="card-desc">
+          600×900 portrait, optimized and served as WebP when supported.
+        </div>
+      </div>
+      <div class="card-meta">
+        <span>src: <code>/assets/jpg/portrait.jpg</code></span>
+      </div>
+    </div>
+
+    <div class="image-card">
+      <div class="image-wrapper">
+        <abs-image
+          alt="Square photo"
+          src="/assets/jpg/square.jpg"
+          [width]="800"
+          [height]="800"
+          sizes="(max-width: 640px) 100vw, 340px"
+        />
+      </div>
+      <div class="card-body">
+        <div class="card-title">Square</div>
+        <div class="card-desc">
+          800×800 square image. Width/height prevent layout shift.
+        </div>
+      </div>
+      <div class="card-meta">
+        <span>src: <code>/assets/jpg/square.jpg</code></span>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Fill Mode</h2>
+  <p class="section-desc">
+    Fill mode makes the image fill its parent container with object-fit: cover.
+  </p>
+
+  <div class="fill-demo">
+    <abs-image
+      alt="Fill mode landscape"
+      src="/assets/jpg/landscape.jpg"
+      [fill]="true"
+      sizes="100vw"
+    />
+  </div>
+
+  <h2 class="section-title">Unoptimized</h2>
+  <p class="section-desc">
+    Setting unoptimized=true bypasses the optimization endpoint entirely. The
+    original image is served as-is.
+  </p>
+
+  <div class="image-grid">
+    <div class="image-card">
+      <div class="image-wrapper">
+        <abs-image
+          alt="Unoptimized square"
+          src="/assets/jpg/square.jpg"
+          [width]="800"
+          [height]="800"
+          [unoptimized]="true"
+        />
+      </div>
+      <div class="card-body">
+        <div class="card-title">Unoptimized</div>
+        <div class="card-desc">
+          Original JPG served directly. No srcset, no format conversion.
+        </div>
+      </div>
+      <div class="card-meta">
+        <span>unoptimized: <code>true</code></span>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer">
+    <img src="/assets/png/absolutejs-temp.png" alt="" />
+    Powered by
+    <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
+      >AbsoluteJS</a
+    >
+  </p>
+</main>

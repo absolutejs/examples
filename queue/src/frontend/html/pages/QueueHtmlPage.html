@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Queue - HTML</title>
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/queue.css"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/html" class="logo">
+        <img
+          src="/assets/png/absolutejs-temp.png"
+          height="24"
+          alt="AbsoluteJS"
+        />
+        AbsoluteJS
+      </a>
+      <nav>
+        <a href="/">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a href="/html" class="active">HTML</a>
+        <a href="/htmx">HTMX</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <h1>HTML</h1>
+        <span class="badge">@absolutejs/queue</span>
+      </div>
+
+      <p class="section-desc">
+        Enqueue a job and watch the in-process worker pick it up. The handler
+        simulates work and occasionally fails the first attempt, so the queue's
+        automatic retry (and eventual <code>done</code>) is visible.
+      </p>
+
+      <div class="queue-actions">
+        <button class="primary" type="button" id="enqueue">Enqueue job</button>
+      </div>
+
+      <div class="queue-stats" id="stats"></div>
+
+      <div class="job-list" id="jobs"></div>
+
+      <p class="footer">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          rel="noopener noreferrer"
+          target="_blank"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+
+    <script type="module">
+      const STATUS_LABEL = {
+        canceled: "Canceled",
+        claimed: "Running",
+        dead: "Failed",
+        done: "Done",
+        pending: "Queued",
+      };
+
+      const STAT_ORDER = [
+        { label: "Queued", status: "pending" },
+        { label: "Running", status: "claimed" },
+        { label: "Done", status: "done" },
+        { label: "Failed", status: "dead" },
+      ];
+
+      const statsEl = document.getElementById("stats");
+      const jobsEl = document.getElementById("jobs");
+
+      const renderStats = (counts) => {
+        statsEl.replaceChildren();
+        for (const stat of STAT_ORDER) {
+          const span = document.createElement("span");
+          span.className = "stat";
+          const strong = document.createElement("strong");
+          strong.textContent = String(counts[stat.status] ?? 0);
+          span.append(strong, stat.label);
+          statsEl.append(span);
+        }
+      };
+
+      const renderJobs = (jobs) => {
+        jobsEl.replaceChildren();
+        if (jobs.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "job-empty";
+          empty.textContent = "No jobs yet — enqueue one above.";
+          jobsEl.append(empty);
+          return;
+        }
+        for (const job of jobs) {
+          const row = document.createElement("div");
+          row.className = "job";
+
+          const label = document.createElement("span");
+          label.className = "job-label";
+          label.textContent = job.label;
+
+          const meta = document.createElement("span");
+          meta.className = "job-meta";
+
+          if (job.attempts > 1) {
+            const attempts = document.createElement("span");
+            attempts.className = "job-attempts";
+            attempts.textContent = `attempt ${job.attempts}`;
+            meta.append(attempts);
+          }
+
+          const status = document.createElement("span");
+          status.className = `job-status job-status-${job.status}`;
+          status.textContent = STATUS_LABEL[job.status] ?? job.status;
+          meta.append(status);
+
+          row.append(label, meta);
+          jobsEl.append(row);
+        }
+      };
+
+      const refresh = () =>
+        fetch("/api/jobs")
+          .then((response) => response.json())
+          .then((data) => {
+            renderStats(data.counts);
+            renderJobs(data.jobs);
+          });
+
+      refresh();
+      setInterval(refresh, 1000);
+
+      document
+        .getElementById("enqueue")
+        .addEventListener("click", () =>
+          fetch("/api/enqueue", { method: "POST" }),
+        );
+    </script>
+  </body>
+</html>

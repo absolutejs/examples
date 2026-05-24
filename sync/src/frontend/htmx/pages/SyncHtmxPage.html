@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Sync - HTMX</title>
+    <link rel="icon" href="/assets/ico/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/sync.css"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/htmx" class="logo">
+        <img
+          src="/assets/png/absolutejs-temp.png"
+          height="24"
+          alt="AbsoluteJS"
+        />
+        AbsoluteJS
+      </a>
+      <nav>
+        <a href="/">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+        <a href="/html">HTML</a>
+        <a href="/htmx" class="active">HTMX</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <h1>HTMX</h1>
+        <span class="badge">@absolutejs/sync</span>
+      </div>
+
+      <p class="section-desc">
+        The mutations post over the wire and the live value arrives on the
+        native <code>EventSource</code> stream — the sync plugin's standard SSE
+        endpoint needs no framework runtime to stay live.
+      </p>
+
+      <section class="sync-card">
+        <div class="sync-status">
+          <span class="dot" id="dot"></span>
+          <span id="status">Connecting…</span>
+        </div>
+        <div class="sync-count" id="count">0</div>
+        <div class="sync-actions">
+          <button class="primary" type="button" id="bump">Bump counter</button>
+          <button type="button" id="reset">Reset</button>
+        </div>
+      </section>
+
+      <p class="section-desc">
+        Open <code>/</code>, <code>/vue</code>, <code>/svelte</code>,
+        <code>/angular</code>, or <code>/html</code> in another tab and bump
+        from any of them — every open client updates at once.
+      </p>
+
+      <p class="footer">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          rel="noopener noreferrer"
+          target="_blank"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+
+    <script type="module">
+      const countEl = document.getElementById("count");
+      const dotEl = document.getElementById("dot");
+      const statusEl = document.getElementById("status");
+      const setCount = (value) => {
+        countEl.textContent = String(value);
+      };
+
+      fetch("/api/state")
+        .then((response) => response.json())
+        .then((data) => setCount(data.count));
+
+      const source = new EventSource("/sync?topics=counter");
+      source.onopen = () => {
+        dotEl.classList.add("dot-live");
+        statusEl.textContent = "Live — subscribed to /sync";
+      };
+      source.onerror = () => {
+        dotEl.classList.remove("dot-live");
+        statusEl.textContent = "Reconnecting…";
+      };
+      source.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.payload && data.payload.count !== undefined) {
+            setCount(data.payload.count);
+          }
+        } catch {
+          /* ignore heartbeats */
+        }
+      };
+
+      document
+        .getElementById("bump")
+        .addEventListener("click", () =>
+          fetch("/api/bump", { method: "POST" }),
+        );
+      document
+        .getElementById("reset")
+        .addEventListener("click", () =>
+          fetch("/api/reset", { method: "POST" }),
+        );
+    </script>
+  </body>
+</html>

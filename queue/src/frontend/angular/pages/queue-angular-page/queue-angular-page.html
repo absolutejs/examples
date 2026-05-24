@@ -1,0 +1,69 @@
+<header>
+  <a href="/angular" class="logo">
+    <img src="/assets/png/absolutejs-temp.png" height="24" alt="AbsoluteJS" />
+    AbsoluteJS
+  </a>
+  <nav>
+    <a href="/">React</a>
+    <a href="/svelte">Svelte</a>
+    <a href="/vue">Vue</a>
+    <a href="/angular" class="active">Angular</a>
+    <a href="/html">HTML</a>
+    <a href="/htmx">HTMX</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-title">
+    <img alt="Angular" src="/assets/svg/angular.svg" />
+    <h1>Angular</h1>
+    <span class="badge">&#64;absolutejs/queue</span>
+  </div>
+
+  <p class="section-desc">
+    Enqueue a job and watch the in-process worker pick it up. The handler
+    simulates work and occasionally fails the first attempt, so the queue's
+    automatic retry (and eventual <code>done</code>) is visible.
+  </p>
+
+  <div class="queue-actions">
+    <button class="primary" type="button" (click)="enqueue()">
+      Enqueue job
+    </button>
+  </div>
+
+  <div class="queue-stats">
+    @for (stat of statOrder; track stat.status) {
+    <span class="stat">
+      <strong>{{ counts()[stat.status] ?? 0 }}</strong>
+      {{ stat.label }}
+    </span>
+    }
+  </div>
+
+  <div class="job-list">
+    @if (jobs().length === 0) {
+    <p class="job-empty">No jobs yet — enqueue one above.</p>
+    } @for (job of jobs(); track job.id) {
+    <div class="job">
+      <span class="job-label">{{ job.label }}</span>
+      <span class="job-meta">
+        @if (job.attempts > 1) {
+        <span class="job-attempts">attempt {{ job.attempts }}</span>
+        }
+        <span [class]="'job-status job-status-' + job.status">
+          {{ statusLabel[job.status] ?? job.status }}
+        </span>
+      </span>
+    </div>
+    }
+  </div>
+
+  <p class="footer">
+    <img alt="" src="/assets/png/absolutejs-temp.png" />
+    Powered by
+    <a href="https://absolutejs.com" rel="noopener noreferrer" target="_blank">
+      AbsoluteJS
+    </a>
+  </p>
+</main>
