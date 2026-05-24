@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@absolutejs/absolute": "0.19.0-beta.1025",
+    "@absolutejs/absolute": "0.19.0-beta.1026",
     "@absolutejs/absolute-rag-pinecone": "^0.0.2",
     "@absolutejs/absolute-rag-sqlite": "0.0.5",
     "@absolutejs/ai": "0.0.5",
