@@ -15,7 +15,7 @@ import {
   ResolvedOAuthAuthorization,
   resolveOAuthAuthorization,
 } from "@absolutejs/auth";
-import { SchemaType } from "../auth/schema";
+import { SchemaType } from "../../../db/schema";
 import { createDrizzleLinkedProviderStores } from "./stores";
 
 export const FACEBOOK_PAGES_READ_ENGAGEMENT_SCOPE = "pages_read_engagement";

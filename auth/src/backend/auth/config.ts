@@ -6,8 +6,8 @@ import {
   resolveProviderClientConfiguration,
 } from "@absolutejs/auth";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
-import { providerData } from "../../../frontend/shared/providerData";
-import { frameworkPrefixFromOrigin } from "../frameworkPrefix";
+import { SchemaType, User } from "../../../db/schema";
+import { providerData } from "../../frontend/shared/providerData";
 import {
   createUser,
   getUser,
@@ -15,8 +15,8 @@ import {
   upsertDBAuthIdentityMergeRequest,
 } from "../handlers/userHandlers";
 import { persistLinkedProviderCallbackAuthorization } from "../linkedProviders/persistCallbackAuthorization";
+import { frameworkPrefixFromOrigin } from "../utils/frameworkPrefix";
 import { providersConfiguration } from "./providersConfiguration";
-import { SchemaType, User } from "./schema";
 
 export const authConfig = (
   db: NeonHttpDatabase<SchemaType>,

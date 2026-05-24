@@ -5,9 +5,9 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { Elysia } from "elysia";
 import { apiPlugin } from "./plugins/apiPlugin";
 import { pagesPlugin } from "./plugins/pagesPlugin";
-import { authConfig } from "./shared/auth/config";
-import { schema, User } from "./shared/auth/schema";
-import { createDrizzleLinkedProviderStores } from "./shared/linkedProviders/stores";
+import { schema, User } from "../../db/schema";
+import { authConfig } from "./auth/config";
+import { createDrizzleLinkedProviderStores } from "./linkedProviders/stores";
 import { authHtmxConfig } from "./utils/htmxConfig";
 
 const { absolutejs, manifest } = await prepare();

@@ -13,7 +13,7 @@ import {
   NewUser,
   schema,
   SchemaType,
-} from "../auth/schema";
+} from "../../../db/schema";
 import { LinkUserIdentityProps, UserFunctionProps } from "../auth/types";
 
 type GetDBUserProps = {

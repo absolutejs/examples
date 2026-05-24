@@ -3,12 +3,12 @@ import type {
   LinkedProviderGrantStore,
 } from "@absolutejs/linked-providers";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
-import { SchemaType } from "./auth/schema";
+import { SchemaType } from "../../../db/schema";
 import {
   getDBUser,
   listDBAuthIdentitiesByUser,
   listDBAuthIdentityMergeRequestsByTarget,
-} from "./handlers/userHandlers";
+} from "../handlers/userHandlers";
 
 type PayloadDeps = {
   bindingStore: LinkedProviderBindingStore;

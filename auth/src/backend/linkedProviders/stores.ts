@@ -12,7 +12,7 @@ import {
   LinkedProviderBindingRow,
   LinkedProviderGrantRow,
   SchemaType,
-} from "../auth/schema";
+} from "../../../db/schema";
 
 const toTimestamp = (value: number | undefined) =>
   value === undefined ? null : new Date(value);

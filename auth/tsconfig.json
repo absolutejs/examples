@@ -18,5 +18,5 @@
     "tsBuildInfoFile": ".absolutejs/tsconfig.tsbuildinfo",
     "types": ["bun"]
   },
-  "include": ["src/**/*"]
+  "include": ["db/**/*", "src/**/*"]
 }

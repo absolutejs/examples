@@ -11,17 +11,17 @@ import {
 } from "../../frontend/shared/navData";
 import { authorizationHref } from "../../frontend/shared/oauth";
 import { providerData } from "../../frontend/shared/providerData";
-import { schema, SchemaType } from "../shared/auth/schema";
+import { schema, SchemaType } from "../../../db/schema";
 import {
   deleteDBAuthIdentityMergeRequest,
   mergeUserAccounts,
   removeDBAuthIdentity,
   setPrimaryAuthIdentity,
-} from "../shared/handlers/userHandlers";
+} from "../handlers/userHandlers";
 import {
   buildAuthIdentityPayload,
   buildLinkedProviderPayload,
-} from "../shared/payloads";
+} from "./payloads";
 
 type AuthHtmxConfigDeps = {
   bindingStore: LinkedProviderBindingStore;

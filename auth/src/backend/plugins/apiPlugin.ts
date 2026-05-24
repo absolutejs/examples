@@ -6,17 +6,17 @@ import type {
 import { eq, or } from "drizzle-orm";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { Elysia } from "elysia";
-import { schema, SchemaType, User } from "../shared/auth/schema";
+import { schema, SchemaType, User } from "../../../db/schema";
 import {
   deleteDBAuthIdentityMergeRequest,
   mergeUserAccounts,
   removeDBAuthIdentity,
   setPrimaryAuthIdentity,
-} from "../shared/handlers/userHandlers";
+} from "../handlers/userHandlers";
 import {
   buildAuthIdentityPayload,
   buildLinkedProviderPayload,
-} from "../shared/payloads";
+} from "../utils/payloads";
 const flattenIdentityGroups = <T>(identities: Record<string, T[]>) =>
   Object.values(identities).flat();
 
