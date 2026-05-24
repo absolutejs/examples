@@ -286,9 +286,7 @@ const getTask = async (taskId: string): Promise<SavedVoiceOpsTask | null> =>
   (await runtimeStorage.tasks.get(taskId)) ?? null;
 
 const emitTaskUpdatedEvent = async (task: SavedVoiceOpsTask) => {
-  await deliverIntegrationEvent(
-    createVoiceTaskUpdatedEvent(task),
-  );
+  await deliverIntegrationEvent(createVoiceTaskUpdatedEvent(task));
 };
 
 const updateTaskStatus = async (

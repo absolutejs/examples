@@ -581,7 +581,8 @@ const refreshFastProductionReadinessProof = () =>
     ]);
   });
 
-const summarizeProductionReadinessDeliveryRuntime = () => productionReadinessProofRuntime.cache("delivery-runtime", () =>
+const summarizeProductionReadinessDeliveryRuntime = () =>
+  productionReadinessProofRuntime.cache("delivery-runtime", () =>
     deliveryRuntimeControl.summarize(),
   );
 
@@ -833,7 +834,8 @@ const demoVoiceProfileIds = [
   "noisy-phone-call",
 ] as const;
 
-const buildProductionReadinessProfileSwitchReport = () => productionReadinessProofRuntime.cache("profile-switch-readiness", () =>
+const buildProductionReadinessProfileSwitchReport = () =>
+  productionReadinessProofRuntime.cache("profile-switch-readiness", () =>
     buildVoiceProfileSwitchReadinessReport({
       audit: runtimeStorage.audit,
       autoMode: true,
@@ -952,11 +954,8 @@ const createDemoProfileSwitchGuard = (endpoint: string) => ({
     requestedProfileId: resolveVoiceProfileIdFromContext(context),
     selectedBy: "session-start",
   }),
-  minConfidence: ({ context }: { context: unknown }) => readQueryNumber(
-      queryFromContext(context),
-      ["minProfileConfidence"],
-      0.75,
-    ),
+  minConfidence: ({ context }: { context: unknown }) =>
+    readQueryNumber(queryFromContext(context), ["minProfileConfidence"], 0.75),
   mode: ({ context }: { context: unknown }) =>
     readProfileSwitchGuardMode(queryFromContext(context)),
   observed: async ({ context }: { context: unknown }) => {

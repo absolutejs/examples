@@ -3,6 +3,7 @@ import { type SavedVoiceIntegrationEvent } from "./integrationsPage";
 import { type SavedVoiceOpsTask } from "./opsPage";
 import { type SavedVoiceReviewArtifact } from "./reviewPage";
 import { buildSavedIntake, resolveScenarioFromContext } from "./voiceFlow";
+import { createWriteBehindCache } from "@absolutejs/sync";
 import {
   createVoiceAuditEvent,
   createVoiceAuditSinkDeliveryRecord,
@@ -44,63 +45,33 @@ const runtimeStorage = createVoiceDrizzleRuntimeStorage<
 // The voice runtime reads and writes the live session on the per-audio-frame hot
 // path (~3 store round-trips every 20ms). Hitting Neon directly there runs the
 // pipeline 10-20x slower than real time, which starves STT and delays turn commit
-// by ~80s. Serve the hot path from memory and persist to Neon write-behind: reads
-// are instant, writes are coalesced (~250ms), and terminal sessions evict from the
-// cache once durable so it stays bounded.
-type SessionStore = typeof runtimeStorage.session;
+// by ~80s. @absolutejs/sync's write-behind cache serves the hot path from memory
+// and persists to Neon in the background, so the live turn loop stays real-time
+// while Neon remains the source of truth for history and observability.
+const sessionCache = createWriteBehindCache<string, VoiceSessionRecord>({
+  evict: (value) => value.status === "completed" || value.status === "failed",
+  load: (id) => runtimeStorage.session.get(id),
+  persist: (id, value) => runtimeStorage.session.set(id, value),
+  remove: (id) => runtimeStorage.session.remove(id),
+});
 
-const createCachedVoiceSessionStore = (inner: SessionStore): SessionStore => {
-  const cache = new Map<string, VoiceSessionRecord>();
-  const timers = new Map<string, ReturnType<typeof setTimeout>>();
-
-  const persist = (id: string) => {
-    timers.delete(id);
-    const session = cache.get(id);
-    if (!session) {
-      return;
+const sessionStore: typeof runtimeStorage.session = {
+  get: (id) => sessionCache.get(id),
+  getOrCreate: async (id) => {
+    const cached = await sessionCache.get(id);
+    if (cached) {
+      return cached;
     }
-    void inner.set(id, session).catch(() => {});
-    if (session.status === "completed" || session.status === "failed") {
-      cache.delete(id);
-    }
-  };
-
-  const schedulePersist = (id: string) => {
-    if (timers.has(id)) {
-      return;
-    }
-    timers.set(id, setTimeout(() => persist(id), 250));
-  };
-
-  return {
-    get: async (id) => cache.get(id) ?? (await inner.get(id)),
-    getOrCreate: async (id) => {
-      const cached = cache.get(id);
-      if (cached) {
-        return cached;
-      }
-      const session = (await inner.get(id)) ?? (await inner.getOrCreate(id));
-      cache.set(id, session);
-      return session;
-    },
-    list: () => inner.list(),
-    remove: async (id) => {
-      const timer = timers.get(id);
-      if (timer) {
-        clearTimeout(timer);
-        timers.delete(id);
-      }
-      cache.delete(id);
-      await inner.remove(id);
-    },
-    set: async (id, value) => {
-      cache.set(id, value);
-      schedulePersist(id);
-    },
-  };
+    const created = await runtimeStorage.session.getOrCreate(id);
+    sessionCache.set(id, created);
+    return created;
+  },
+  list: () => runtimeStorage.session.list(),
+  remove: (id) => sessionCache.delete(id),
+  set: async (id, value) => {
+    sessionCache.set(id, value);
+  },
 };
-
-const sessionStore = createCachedVoiceSessionStore(runtimeStorage.session);
 
 // The demo's captured intakes ("saved captures" in the UI), persisted to Neon
 // and keyed by session id so re-persisting a session replaces its capture.

@@ -33,8 +33,6 @@ import { escapeHtml } from "./format";
 import type { VoiceDemoElements } from "./dom";
 import type { VoiceDemoStream } from "./streams";
 
-export const AGENT_SQUAD_REFRESH_INTERVAL_MS = 3_000;
-
 type HtmxWindow = Window & {
   htmx?: {
     trigger: (target: string | Element, event: string) => void;

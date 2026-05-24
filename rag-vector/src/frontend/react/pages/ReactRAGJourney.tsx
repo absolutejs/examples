@@ -703,34 +703,34 @@ export const ReactRAGJourney = ({ mode }: ReactRAGJourneyProps) => {
           <div className="j-panel">
             <div className="j-panel-label">Your latest answer</div>
             {askedOnce && heroCitations.length > 0 ? (
-              <>
-                <p className="j-note" style={{ marginBottom: "0.8rem" }}>
-                  You asked:{" "}
-                  <strong style={{ color: "var(--j-ink)" }}>{question}</strong>
-                </p>
-                {heroCitations.slice(0, 5).map((citation, i) => (
-                  <div className="j-result" key={i}>
-                    <div className="j-result-top">
-                      <span className="j-result-title">
-                        <span className="j-cite">{i + 1}</span>{" "}
-                        {safe(
-                          () => formatCitationLabel(citation),
-                          `Source ${i + 1}`,
-                        )}
-                      </span>
-                    </div>
-                    <p className="j-result-text">
-                      {safe(() => formatCitationSummary(citation), "")}
-                    </p>
-                  </div>
-                ))}
-              </>
+              <p className="j-note" style={{ marginBottom: "0.8rem" }}>
+                You asked:{" "}
+                <strong style={{ color: "var(--j-ink)" }}>{question}</strong>
+              </p>
             ) : (
               <p className="j-note">
                 Ask a question at the top and the cited sources behind the
                 answer show up here — one card per citation.
               </p>
             )}
+            {askedOnce &&
+              heroCitations.length > 0 &&
+              heroCitations.slice(0, 5).map((citation, i) => (
+                <div className="j-result" key={i}>
+                  <div className="j-result-top">
+                    <span className="j-result-title">
+                      <span className="j-cite">{i + 1}</span>{" "}
+                      {safe(
+                        () => formatCitationLabel(citation),
+                        `Source ${i + 1}`,
+                      )}
+                    </span>
+                  </div>
+                  <p className="j-result-text">
+                    {safe(() => formatCitationSummary(citation), "")}
+                  </p>
+                </div>
+              ))}
           </div>
         </section>
 

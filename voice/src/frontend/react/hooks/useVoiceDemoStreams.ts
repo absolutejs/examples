@@ -65,7 +65,9 @@ type VoiceDemoStreamsInput = {
 
 export const useVoiceDemoStreams = (input: VoiceDemoStreamsInput) => {
   const activeModeRef = useRef<VoiceDemoMode | null>(null);
-  const sessionIdsRef = useRef<{ general: string; guided: string } | null>(null);
+  const sessionIdsRef = useRef<{ general: string; guided: string } | null>(
+    null,
+  );
   if (!sessionIdsRef.current) {
     sessionIdsRef.current = {
       general: crypto.randomUUID(),
@@ -101,6 +103,7 @@ export const useVoiceDemoStreams = (input: VoiceDemoStreamsInput) => {
         input.routingMode,
         input.speechEngine,
         input.profileId,
+        sessionIdsRef.current.general,
       ),
       { reconnectReportPath: RECONNECT_REPORT_PATH },
     ) ?? EMPTY_VOICE;

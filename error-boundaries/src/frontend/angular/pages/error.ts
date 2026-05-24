@@ -1,7 +1,6 @@
-import { defineRenderErrorPage } from "@absolutejs/absolute";
+import type { RenderErrorPage } from "@absolutejs/absolute";
 
-export default defineRenderErrorPage(
-  ({ message }) => `<!DOCTYPE html>
+const renderErrorPage: RenderErrorPage = ({ message }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -84,5 +83,6 @@ export default defineRenderErrorPage(
   </p>
 </main>
 </body>
-</html>`,
-);
+</html>`;
+
+export default renderErrorPage;

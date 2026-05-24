@@ -503,233 +503,228 @@ export const ReactRAGVectorDemoShell = ({ mode }: DemoProps) => {
       </section>
 
       {activeSection === "connectors" && (
-        <>
-          <section className="demo-card demo-connector-focus">
-            <div className="demo-connector-layout">
-              <article className="demo-result-item">
-                <h2>1. Connect Providers</h2>
-                <p className="demo-metadata">
-                  These are connector grants, not login identities. They attach
-                  API access to your signed-in AbsoluteJS account.
-                </p>
-                <div className="demo-provider-card-grid">
-                  {connectorProviders.map((provider) => (
-                    <a
-                      className="demo-provider-card"
-                      href={provider.href}
-                      key={provider.key}
-                    >
-                      <img alt="" aria-hidden="true" src={provider.iconPath} />
-                      <strong>{provider.label}</strong>
-                      <span>{provider.description}</span>
-                    </a>
-                  ))}
-                </div>
-              </article>
-
-              <article className="demo-result-item">
-                <h2>2. Verify Linked Accounts</h2>
-                <p className="demo-metadata">
-                  These are the exact auth-backed bindings RAG will use for this
-                  account.
-                </p>
-                {syncSourcesLoading ? (
-                  <p className="demo-release-pending">
-                    <span aria-hidden="true" className="demo-inline-spinner" />
-                    Loading linked connector state...
-                  </p>
-                ) : linkedConnectorAccounts.length > 0 ? (
-                  <div className="demo-stat-grid">
-                    {linkedConnectorAccounts.map((account) => (
-                      <article
-                        className="demo-stat-card"
-                        key={account.sourceId}
-                      >
-                        <span className="demo-stat-label">
-                          {account.providerLabel}
-                        </span>
-                        <strong>
-                          {account.accountLabel ??
-                            account.email ??
-                            "No linked account resolved"}
-                        </strong>
-                        <p>
-                          {account.providerFound
-                            ? `Using ${account.bindingLabel ?? account.bindingId ?? "the resolved binding"} for ${account.sourceLabel}.`
-                            : (account.providerError ??
-                              `No ${account.providerLabel} binding is resolved for ${account.sourceLabel}.`)}
-                        </p>
-                        <div className="demo-key-value-list">
-                          <div className="demo-key-value-row">
-                            <span>RAG source</span>
-                            <strong>{account.sourceLabel}</strong>
-                          </div>
-                          <div className="demo-key-value-row">
-                            <span>Grant</span>
-                            <strong>{account.grantStatus ?? "missing"}</strong>
-                          </div>
-                          <div className="demo-key-value-row">
-                            <span>Bindings</span>
-                            <strong>
-                              {typeof account.availableBindingCount === "number"
-                                ? account.availableBindingCount
-                                : 0}
-                            </strong>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="demo-metadata">
-                    No linked connector bindings are resolved yet. Use the
-                    connector buttons above after signing in.
-                  </p>
-                )}
-              </article>
-            </div>
-          </section>
-
-          <section className="demo-card">
-            <div className="demo-sync-section-heading">
-              <div>
-                <span className="demo-hero-kicker">Connector proof</span>
-                <h2>3. Select Binding And Sync</h2>
-                <p className="demo-metadata">
-                  Everything needed to prove Gmail and Contacts ingestion is
-                  kept in this section.
-                </p>
+        <section className="demo-card demo-connector-focus">
+          <div className="demo-connector-layout">
+            <article className="demo-result-item">
+              <h2>1. Connect Providers</h2>
+              <p className="demo-metadata">
+                These are connector grants, not login identities. They attach
+                API access to your signed-in AbsoluteJS account.
+              </p>
+              <div className="demo-provider-card-grid">
+                {connectorProviders.map((provider) => (
+                  <a
+                    className="demo-provider-card"
+                    href={provider.href}
+                    key={provider.key}
+                  >
+                    <img alt="" aria-hidden="true" src={provider.iconPath} />
+                    <strong>{provider.label}</strong>
+                    <span>{provider.description}</span>
+                  </a>
+                ))}
               </div>
-              <div className="demo-actions">
-                <button
-                  disabled={syncSourcesLoading}
-                  onClick={() => void loadSyncSources()}
-                  type="button"
-                >
-                  {syncSourcesLoading
-                    ? "Loading connector state..."
-                    : "Reload connector state"}
-                </button>
-                <button
-                  disabled={syncPending !== null}
-                  onClick={() => void syncConnectors()}
-                  type="button"
-                >
-                  {syncPending?.scope === "all"
-                    ? "Queueing sync..."
-                    : "Sync all connector sources"}
-                </button>
-              </div>
-            </div>
-            <div className="demo-sync-source-grid">
-              {liveConnectorSources.length > 0 ? (
-                liveConnectorSources.map((source) => {
-                  const bindingOptions = readSyncBindingOptions(source);
-                  const selectedBindingId = readSelectedBindingId(source);
+            </article>
 
-                  return (
-                    <article
-                      className={
-                        source.status === "failed"
-                          ? "demo-sync-source-card demo-sync-source-card-failed"
-                          : "demo-sync-source-card"
-                      }
-                      key={source.id}
-                    >
-                      <div className="demo-sync-source-header">
-                        <div>
-                          <h3>{source.label}</h3>
-                          <p className="demo-metadata">
-                            {source.target ??
-                              source.description ??
-                              "No target configured."}
-                          </p>
-                        </div>
-                        <div className="demo-badge-row">
-                          <span className="demo-badge">
-                            {source.status.toUpperCase()}
-                          </span>
-                          {typeof source.documentCount === "number" && (
-                            <span className="demo-badge">
-                              {source.documentCount} docs
-                            </span>
-                          )}
-                          {typeof source.chunkCount === "number" && (
-                            <span className="demo-badge">
-                              {source.chunkCount} chunks
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="demo-actions">
-                        <button
-                          disabled={syncPending !== null}
-                          onClick={() => void syncConnectors(source.id)}
-                          type="button"
-                        >
-                          {syncPending?.scope === "source" &&
-                          syncPending.sourceId === source.id
-                            ? "Queueing..."
-                            : "Sync this source"}
-                        </button>
-                        {bindingOptions.length > 0 && (
-                          <label className="demo-connector-binding-select">
-                            <span>Binding</span>
-                            <select
-                              disabled={syncPending !== null}
-                              onChange={(event) =>
-                                void selectSyncBinding(
-                                  source.id,
-                                  event.target.value,
-                                )
-                              }
-                              value={selectedBindingId}
-                            >
-                              <option value="">
-                                Auto select first binding
-                              </option>
-                              {bindingOptions.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                  {formatSyncBindingOptionLabel(option)}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        )}
-                      </div>
-                      <p className="demo-metadata demo-sync-action-meta">
-                        {formatSyncSourceActionSummary(source)}
+            <article className="demo-result-item">
+              <h2>2. Verify Linked Accounts</h2>
+              <p className="demo-metadata">
+                These are the exact auth-backed bindings RAG will use for this
+                account.
+              </p>
+              {syncSourcesLoading ? (
+                <p className="demo-release-pending">
+                  <span aria-hidden="true" className="demo-inline-spinner" />
+                  Loading linked connector state...
+                </p>
+              ) : linkedConnectorAccounts.length > 0 ? (
+                <div className="demo-stat-grid">
+                  {linkedConnectorAccounts.map((account) => (
+                    <article className="demo-stat-card" key={account.sourceId}>
+                      <span className="demo-stat-label">
+                        {account.providerLabel}
+                      </span>
+                      <strong>
+                        {account.accountLabel ??
+                          account.email ??
+                          "No linked account resolved"}
+                      </strong>
+                      <p>
+                        {account.providerFound
+                          ? `Using ${account.bindingLabel ?? account.bindingId ?? "the resolved binding"} for ${account.sourceLabel}.`
+                          : (account.providerError ??
+                            `No ${account.providerLabel} binding is resolved for ${account.sourceLabel}.`)}
                       </p>
-                      <div className="demo-badge-row">
-                        {formatSyncSourceActionBadges(source).map((badge) => (
-                          <span
-                            className="demo-badge"
-                            key={`${source.id}-${badge}`}
-                          >
-                            {badge}
-                          </span>
-                        ))}
+                      <div className="demo-key-value-list">
+                        <div className="demo-key-value-row">
+                          <span>RAG source</span>
+                          <strong>{account.sourceLabel}</strong>
+                        </div>
+                        <div className="demo-key-value-row">
+                          <span>Grant</span>
+                          <strong>{account.grantStatus ?? "missing"}</strong>
+                        </div>
+                        <div className="demo-key-value-row">
+                          <span>Bindings</span>
+                          <strong>
+                            {typeof account.availableBindingCount === "number"
+                              ? account.availableBindingCount
+                              : 0}
+                          </strong>
+                        </div>
                       </div>
                     </article>
-                  );
-                })
+                  ))}
+                </div>
               ) : (
-                <article className="demo-result-item">
-                  <h3>
-                    {syncSourcesLoading
-                      ? "Loading connector sources"
-                      : "No connector sources loaded"}
-                  </h3>
-                  <p className="demo-metadata">
-                    {syncSourcesLoading
-                      ? "Connector bindings are being resolved for the signed-in AbsoluteJS account."
-                      : "If you are signed in and have granted Google connector access, reload connector state. If this stays empty, the connector providers or auth database are not wired into this example."}
-                  </p>
-                </article>
+                <p className="demo-metadata">
+                  No linked connector bindings are resolved yet. Use the
+                  connector buttons above after signing in.
+                </p>
               )}
+            </article>
+          </div>
+        </section>
+      )}
+
+      {activeSection === "connectors" && (
+        <section className="demo-card">
+          <div className="demo-sync-section-heading">
+            <div>
+              <span className="demo-hero-kicker">Connector proof</span>
+              <h2>3. Select Binding And Sync</h2>
+              <p className="demo-metadata">
+                Everything needed to prove Gmail and Contacts ingestion is kept
+                in this section.
+              </p>
             </div>
-          </section>
-        </>
+            <div className="demo-actions">
+              <button
+                disabled={syncSourcesLoading}
+                onClick={() => void loadSyncSources()}
+                type="button"
+              >
+                {syncSourcesLoading
+                  ? "Loading connector state..."
+                  : "Reload connector state"}
+              </button>
+              <button
+                disabled={syncPending !== null}
+                onClick={() => void syncConnectors()}
+                type="button"
+              >
+                {syncPending?.scope === "all"
+                  ? "Queueing sync..."
+                  : "Sync all connector sources"}
+              </button>
+            </div>
+          </div>
+          <div className="demo-sync-source-grid">
+            {liveConnectorSources.length > 0 ? (
+              liveConnectorSources.map((source) => {
+                const bindingOptions = readSyncBindingOptions(source);
+                const selectedBindingId = readSelectedBindingId(source);
+
+                return (
+                  <article
+                    className={
+                      source.status === "failed"
+                        ? "demo-sync-source-card demo-sync-source-card-failed"
+                        : "demo-sync-source-card"
+                    }
+                    key={source.id}
+                  >
+                    <div className="demo-sync-source-header">
+                      <div>
+                        <h3>{source.label}</h3>
+                        <p className="demo-metadata">
+                          {source.target ??
+                            source.description ??
+                            "No target configured."}
+                        </p>
+                      </div>
+                      <div className="demo-badge-row">
+                        <span className="demo-badge">
+                          {source.status.toUpperCase()}
+                        </span>
+                        {typeof source.documentCount === "number" && (
+                          <span className="demo-badge">
+                            {source.documentCount} docs
+                          </span>
+                        )}
+                        {typeof source.chunkCount === "number" && (
+                          <span className="demo-badge">
+                            {source.chunkCount} chunks
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="demo-actions">
+                      <button
+                        disabled={syncPending !== null}
+                        onClick={() => void syncConnectors(source.id)}
+                        type="button"
+                      >
+                        {syncPending?.scope === "source" &&
+                        syncPending.sourceId === source.id
+                          ? "Queueing..."
+                          : "Sync this source"}
+                      </button>
+                      {bindingOptions.length > 0 && (
+                        <label className="demo-connector-binding-select">
+                          <span>Binding</span>
+                          <select
+                            disabled={syncPending !== null}
+                            onChange={(event) =>
+                              void selectSyncBinding(
+                                source.id,
+                                event.target.value,
+                              )
+                            }
+                            value={selectedBindingId}
+                          >
+                            <option value="">Auto select first binding</option>
+                            {bindingOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {formatSyncBindingOptionLabel(option)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                    </div>
+                    <p className="demo-metadata demo-sync-action-meta">
+                      {formatSyncSourceActionSummary(source)}
+                    </p>
+                    <div className="demo-badge-row">
+                      {formatSyncSourceActionBadges(source).map((badge) => (
+                        <span
+                          className="demo-badge"
+                          key={`${source.id}-${badge}`}
+                        >
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              <article className="demo-result-item">
+                <h3>
+                  {syncSourcesLoading
+                    ? "Loading connector sources"
+                    : "No connector sources loaded"}
+                </h3>
+                <p className="demo-metadata">
+                  {syncSourcesLoading
+                    ? "Connector bindings are being resolved for the signed-in AbsoluteJS account."
+                    : "If you are signed in and have granted Google connector access, reload connector state. If this stays empty, the connector providers or auth database are not wired into this example."}
+                </p>
+              </article>
+            )}
+          </div>
+        </section>
       )}
 
       {shouldMountFullLab && (

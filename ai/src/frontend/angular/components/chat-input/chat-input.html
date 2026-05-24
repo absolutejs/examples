@@ -1,0 +1,44 @@
+<form
+  class="chat-input-card"
+  [ngClass]="{ centered: !hasMessages }"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+  (submit)="onSubmit($event)"
+>
+  @if (pendingFiles.length > 0) {
+  <div class="file-previews">
+    @for (file of pendingFiles; track $index) {
+    <app-file-preview-item [file]="file" (remove)="removeFile.emit($index)" />
+    }
+  </div>
+  }
+  <textarea
+    #textareaEl
+    autocomplete="off"
+    [disabled]="isStreaming"
+    name="input"
+    (keydown)="onKeyDown($event)"
+    (paste)="onPaste($event)"
+    [placeholder]="hasMessages ? 'Reply...' : 'Ask anything...'"
+    [rows]="hasMessages ? 1 : 2"
+  ></textarea>
+  <input
+    #fileInput
+    [accept]="acceptTypes"
+    multiple
+    (change)="onFileChange($event)"
+    style="display: none"
+    type="file"
+  />
+  <app-input-toolbar
+    [isStreaming]="isStreaming"
+    [selectedModel]="selectedModel"
+    [supportsAttachments]="supportsAttachments"
+    [supportsVision]="supportsVision"
+    [supportsPdf]="supportsPdf"
+    (attachClick)="fileInput.click()"
+    (cancel)="cancelStream.emit()"
+    (selectModel)="selectModel.emit($event)"
+  />
+</form>

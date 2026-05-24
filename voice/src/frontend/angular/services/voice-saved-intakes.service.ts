@@ -1,8 +1,10 @@
 import { Injectable, signal } from "@angular/core";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import {
   fetchAgentSquadDemoStatus,
   fetchSavedIntakes,
 } from "../../../shared/browser";
+import { VOICE_INTAKES_TOPIC, VOICE_SYNC_PATH } from "../../../constants/sync";
 import type {
   SavedIntake,
   VoiceAgentSquadDemoStatus,
@@ -12,7 +14,7 @@ import type {
 export class VoiceSavedIntakesService {
   readonly agentSquadStatus = signal<VoiceAgentSquadDemoStatus | null>(null);
   readonly savedIntakes = signal<SavedIntake[]>([]);
-  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private subscriber: ReturnType<typeof createSyncSubscriber> | null = null;
 
   async refreshAgentSquadStatus(sessionId: string | undefined) {
     this.agentSquadStatus.set(await fetchAgentSquadDemoStatus(sessionId));
@@ -22,18 +24,23 @@ export class VoiceSavedIntakesService {
     this.savedIntakes.set(await fetchSavedIntakes());
   }
 
+  // Reactive instead of polled: load once, then refetch only when the server
+  // pushes a "voice:intakes" change over @absolutejs/sync's SSE stream. No timer.
   start(getSessionId: () => string | undefined) {
     void this.refreshIntakes();
-    this.refreshTimer = setInterval(() => {
-      void this.refreshIntakes();
-      void this.refreshAgentSquadStatus(getSessionId());
-    }, 4_000);
     void this.refreshAgentSquadStatus(getSessionId());
+    this.subscriber = createSyncSubscriber({
+      onEvent: () => {
+        void this.refreshIntakes();
+        void this.refreshAgentSquadStatus(getSessionId());
+      },
+      topics: [VOICE_INTAKES_TOPIC],
+      url: VOICE_SYNC_PATH,
+    });
   }
 
   stop() {
-    if (this.refreshTimer) {
-      clearInterval(this.refreshTimer);
-    }
+    this.subscriber?.close();
+    this.subscriber = null;
   }
 }

@@ -1,0 +1,78 @@
+<div class="app-layout">
+  <app-sidebar
+    [open]="sidebarOpen"
+    [activeConversationId]="activeConvId()"
+    (newChat)="handleNewChat()"
+    (selectConversation)="handleSelectConversation($event)"
+    (deleteConversation)="handleDeleteConversation($event)"
+  />
+  <div class="app-main" #appMain>
+    <div class="chat-container" [ngClass]="{ 'has-messages': hasMessages() }">
+      @if (!hasMessages()) {
+      <app-empty-state
+        [suggestions]="suggestions"
+        (sendMessage)="sendMessage($event)"
+      >
+        <app-chat-input
+          [hasMessages]="false"
+          [isStreaming]="isStreaming()"
+          [pendingFiles]="pendingFiles()"
+          [selectedModel]="selectedModel()"
+          [supportsAttachments]="supportsAttachments()"
+          [supportsVision]="supportsVision()"
+          [supportsPdf]="supportsPdf()"
+          (processFiles)="processFiles($event)"
+          (removeFile)="removePendingFile($event)"
+          (cancelStream)="cancelStream()"
+          (selectModel)="selectedModel.set($event)"
+          (submitMessage)="sendMessage($event)"
+        />
+      </app-empty-state>
+      } @else {
+      <div class="messages">
+        @for (msg of messages(); track msg.id; let i = $index) {
+        <app-message-item
+          [message]="msg"
+          [messageIndex]="i"
+          [copiedId]="copiedId()"
+          [selectedModel]="selectedModel()"
+          (copyMessage)="handleCopy($event)"
+          (retryMessage)="handleRetry($event)"
+        />
+        } @if (showWaitingIndicator()) {
+        <div class="message" data-role="assistant">
+          <div class="typing-indicator">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+        }
+        <div #messagesEnd></div>
+      </div>
+      @if (chatError()) {
+      <div class="error-banner">Error: {{ chatError() }}</div>
+      }
+      <app-chat-input
+        [hasMessages]="true"
+        [isStreaming]="isStreaming()"
+        [pendingFiles]="pendingFiles()"
+        [selectedModel]="selectedModel()"
+        [supportsAttachments]="supportsAttachments()"
+        [supportsVision]="supportsVision()"
+        [supportsPdf]="supportsPdf()"
+        (processFiles)="processFiles($event)"
+        (removeFile)="removePendingFile($event)"
+        (cancelStream)="cancelStream()"
+        (selectModel)="selectedModel.set($event)"
+        (submitMessage)="sendMessage($event)"
+      />
+      }
+    </div>
+    <p class="footer">
+      <img src="/assets/png/absolutejs-temp.png" alt="" />
+      Powered by
+      <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
+        >AbsoluteJS</a
+      >
+    </p>
+  </div>
+</div>

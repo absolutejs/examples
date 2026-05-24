@@ -1,12 +1,17 @@
 import { type ComputedRef, onMounted, onUnmounted, ref, type Ref } from "vue";
 import { mountVoiceOpsActionHistory } from "@absolutejs/voice/client";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import {
   mountDemoBargeInProof,
   mountVoiceLiveOpsPanel,
 } from "../../../shared/browser";
+import {
+  VOICE_INTAKES_TOPIC,
+  VOICE_SYNC_PATH,
+  VOICE_TURN_TOPIC,
+} from "../../../constants/sync";
 import type { VueVoiceStream } from "./useVoiceDemoStreams";
 
-const REFRESH_INTERVAL_MS = 4_000;
 const OPS_ACTION_HISTORY_INTERVAL_MS = 5_000;
 
 type VoiceDemoWindow = typeof window & {
@@ -33,7 +38,9 @@ export const useImperativePanels = (
   const opsActionHistoryEl = ref<HTMLElement | null>(null);
   const liveOpsPanelEl = ref<HTMLElement | null>(null);
 
-  let refreshTimer: ReturnType<typeof setInterval> | null = null;
+  let intakesSubscriber: ReturnType<typeof createSyncSubscriber> | null = null;
+  let agentSquadSubscriber: ReturnType<typeof createSyncSubscriber> | null =
+    null;
   let bargeInProof: ReturnType<typeof mountDemoBargeInProof> | null = null;
   let opsActionHistory: ReturnType<typeof mountVoiceOpsActionHistory> | null =
     null;
@@ -88,11 +95,19 @@ export const useImperativePanels = (
       });
     }
     void input.refreshIntakes();
-    refreshTimer = setInterval(() => {
-      void input.refreshIntakes();
-      void input.refreshAgentSquadStatus();
-    }, REFRESH_INTERVAL_MS);
     void input.refreshAgentSquadStatus();
+    // Reactive push instead of a 4s timer: saved intakes follow
+    // VOICE_INTAKES_TOPIC; agent-squad status advances per committed turn.
+    intakesSubscriber = createSyncSubscriber({
+      onEvent: () => void input.refreshIntakes(),
+      topics: [VOICE_INTAKES_TOPIC],
+      url: VOICE_SYNC_PATH,
+    });
+    agentSquadSubscriber = createSyncSubscriber({
+      onEvent: () => void input.refreshAgentSquadStatus(),
+      topics: [VOICE_TURN_TOPIC],
+      url: VOICE_SYNC_PATH,
+    });
   });
 
   onUnmounted(() => {
@@ -106,9 +121,10 @@ export const useImperativePanels = (
     ) {
       delete demoWindow.__absoluteVoiceDemoSimulateDisconnect;
     }
-    if (refreshTimer) {
-      clearInterval(refreshTimer);
-    }
+    intakesSubscriber?.close();
+    intakesSubscriber = null;
+    agentSquadSubscriber?.close();
+    agentSquadSubscriber = null;
     bargeInProof?.close();
     opsActionHistory?.close();
     liveOpsPanel?.close();

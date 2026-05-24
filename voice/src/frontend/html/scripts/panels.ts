@@ -15,24 +15,23 @@ import {
   mountVoiceTurnQuality,
   renderVoicePlatformCoverageHTML,
 } from "@absolutejs/voice/client";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import {
+  fetchVoiceRealCallEvidenceWorkerHealth,
+  formatErrorMessage,
   mountDemoBargeInProof,
-  mountVoiceRealCallEvidenceWorkerHealth,
+  renderVoiceRealCallEvidenceWorkerHealthHTML,
+  voiceReactiveSource,
 } from "../../../shared/browser";
+import {
+  VOICE_EVIDENCE_TOPIC,
+  VOICE_SYNC_PATH,
+  VOICE_TURN_TOPIC,
+  VOICE_WORKER_HEALTH_TOPIC,
+} from "../../../constants/sync";
 import { escapeHtml } from "./format";
 import type { VoiceDemoElements } from "./dom";
 
-const OPS_STATUS_INTERVAL_MS = 5_000;
-const PROOF_TRENDS_INTERVAL_MS = 10_000;
-const PROFILE_COMPARISON_INTERVAL_MS = 10_000;
-const PROFILE_SWITCH_INTERVAL_MS = 10_000;
-const READINESS_FAILURES_INTERVAL_MS = 10_000;
-const PLATFORM_COVERAGE_INTERVAL_MS = 10_000;
-const PROVIDER_STATUS_INTERVAL_MS = 5_000;
-const PROVIDER_CAPABILITIES_INTERVAL_MS = 5_000;
-const PROVIDER_CONTRACTS_INTERVAL_MS = 5_000;
-const ROUTING_STATUS_INTERVAL_MS = 4_000;
-const TURN_QUALITY_INTERVAL_MS = 5_000;
 const PLATFORM_COVERAGE_LIMIT = 4;
 
 type PanelsInput = {
@@ -46,7 +45,7 @@ export const mountVoicePanels = (input: PanelsInput) => {
     elements.workflowStatusHost,
     "/api/voice/ops-status",
     {
-      intervalMs: OPS_STATUS_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
     },
   );
   const proofTrends = mountVoiceProofTrends(
@@ -54,7 +53,7 @@ export const mountVoicePanels = (input: PanelsInput) => {
     "/api/voice/proof-trends",
     {
       description: `${framework.toUpperCase()} renders sustained proof freshness and p95 metrics from the package proof-trends widget.`,
-      intervalMs: PROOF_TRENDS_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
       title: "Sustained Proof Trends",
     },
   );
@@ -63,7 +62,7 @@ export const mountVoicePanels = (input: PanelsInput) => {
     "/api/voice/real-call-profile-history",
     {
       description: `${framework.toUpperCase()} renders measured profile defaults and persisted reconnect resume evidence behind each selected stack.`,
-      intervalMs: PROFILE_COMPARISON_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
       title: "Profile + Reconnect Evidence",
     },
   );
@@ -75,7 +74,7 @@ export const mountVoicePanels = (input: PanelsInput) => {
     "/api/voice/profile-switch-recommendation",
     {
       description: `${framework.toUpperCase()} compares latest session signals against measured profile evidence and recommends whether to switch stacks.`,
-      intervalMs: PROFILE_SWITCH_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
       title: "Profile Switch Recommendation",
     },
   );
@@ -84,35 +83,35 @@ export const mountVoicePanels = (input: PanelsInput) => {
     "/api/production-readiness",
     {
       description: `${framework.toUpperCase()} renders structured deploy-gate explanations from production readiness JSON when calibrated gates warn or fail.`,
-      intervalMs: READINESS_FAILURES_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
       title: "Readiness Gate Explanations",
     },
   );
   const platformCoverage = createVoicePlatformCoverageStore(
     "/api/voice/platform-coverage",
     {
-      intervalMs: PLATFORM_COVERAGE_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const providerStatus = mountVoiceProviderStatus(
     elements.providerStatusHost,
     "/api/provider-status",
     {
-      intervalMs: PROVIDER_STATUS_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
     },
   );
   const providerCapabilities = mountVoiceProviderCapabilities(
     elements.providerCapabilitiesHost,
     "/api/provider-capabilities",
     {
-      intervalMs: PROVIDER_CAPABILITIES_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const providerContracts = mountVoiceProviderContracts(
     elements.providerContractsHost,
     "/api/provider-contracts",
     {
-      intervalMs: PROVIDER_CONTRACTS_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const providerSimulation = mountVoiceProviderSimulationControls(
@@ -135,23 +134,40 @@ export const mountVoicePanels = (input: PanelsInput) => {
     elements.routingDecisionRoot,
     "/api/routing/latest",
     {
-      intervalMs: ROUTING_STATUS_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
     },
   );
   const turnQuality = mountVoiceTurnQuality(
     elements.turnQualityHost,
     "/api/turn-quality",
     {
-      intervalMs: TURN_QUALITY_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
     },
   );
-  const realCallWorkerHealth = mountVoiceRealCallEvidenceWorkerHealth(
-    elements.realCallWorkerHost,
-    "/api/voice/real-call-evidence-runtime/worker",
-    {
-      description: `${framework.toUpperCase()} renders whether rolling real-call evidence is automatic or manual, backed by the same worker health route used by readiness.`,
-    },
-  );
+  // Reactive worker-health: render once, then refetch only when the server
+  // pushes VOICE_WORKER_HEALTH_TOPIC (republished per worker collect tick).
+  const realCallWorkerDescription = `${framework.toUpperCase()} renders whether rolling real-call evidence is automatic or manual, backed by the same worker health route used by readiness.`;
+  const renderRealCallWorkerHealth = async () => {
+    try {
+      elements.realCallWorkerHost.innerHTML =
+        renderVoiceRealCallEvidenceWorkerHealthHTML(
+          await fetchVoiceRealCallEvidenceWorkerHealth(),
+          { description: realCallWorkerDescription },
+        );
+    } catch (error) {
+      elements.realCallWorkerHost.innerHTML =
+        renderVoiceRealCallEvidenceWorkerHealthHTML(null, {
+          description: realCallWorkerDescription,
+          error: formatErrorMessage(error),
+        });
+    }
+  };
+  void renderRealCallWorkerHealth();
+  const realCallWorkerSubscriber = createSyncSubscriber({
+    onEvent: () => void renderRealCallWorkerHealth(),
+    topics: [VOICE_WORKER_HEALTH_TOPIC],
+    url: VOICE_SYNC_PATH,
+  });
   const renderPlatformCoverage = () => {
     elements.platformCoverageHost.innerHTML = renderVoicePlatformCoverageHTML(
       platformCoverage.getSnapshot(),
@@ -221,7 +237,7 @@ export const mountVoicePanels = (input: PanelsInput) => {
     providerStatus.close();
     routingStatus.close();
     turnQuality.close();
-    realCallWorkerHealth.close();
+    realCallWorkerSubscriber.close();
     bargeInProof.close();
   };
 

@@ -148,44 +148,43 @@ export const ReactRAGAuthMenu = () => {
       {isOpen ? (
         <div className="demo-auth-dropdown">
           {user ? (
-            <>
-              <div className="demo-auth-account-summary">
-                <span className="demo-auth-kicker">AbsoluteJS account</span>
-                <strong>{accountLabel}</strong>
-                {user.email ? <span>{user.email}</span> : null}
-              </div>
-              <button
-                className="demo-auth-provider-button demo-auth-provider-button-secondary"
-                disabled={isBusy}
-                onClick={() => void handleSignOut()}
-                type="button"
-              >
-                <span>Sign out</span>
-              </button>
-            </>
+            <div className="demo-auth-account-summary">
+              <span className="demo-auth-kicker">AbsoluteJS account</span>
+              <strong>{accountLabel}</strong>
+              {user.email ? <span>{user.email}</span> : null}
+            </div>
           ) : (
-            <>
-              <div className="demo-auth-account-summary">
-                <span className="demo-auth-kicker">AbsoluteJS account</span>
-                <strong>Sign in to unlock linked connectors</strong>
-                <span>
-                  Use the same account you linked Gmail, Google Contacts, or
-                  Meta bindings to in the auth example.
-                </span>
-              </div>
-              <div className="demo-auth-provider-list">
-                {loginProviders.map((provider) => (
-                  <a
-                    className="demo-auth-provider-button"
-                    href={provider.href}
-                    key={provider.key}
-                  >
-                    <img alt="" aria-hidden="true" src={provider.iconPath} />
-                    <span>Continue with {provider.label}</span>
-                  </a>
-                ))}
-              </div>
-            </>
+            <div className="demo-auth-account-summary">
+              <span className="demo-auth-kicker">AbsoluteJS account</span>
+              <strong>Sign in to unlock linked connectors</strong>
+              <span>
+                Use the same account you linked Gmail, Google Contacts, or Meta
+                bindings to in the auth example.
+              </span>
+            </div>
+          )}
+          {user ? (
+            <button
+              className="demo-auth-provider-button demo-auth-provider-button-secondary"
+              disabled={isBusy}
+              onClick={() => void handleSignOut()}
+              type="button"
+            >
+              <span>Sign out</span>
+            </button>
+          ) : (
+            <div className="demo-auth-provider-list">
+              {loginProviders.map((provider) => (
+                <a
+                  className="demo-auth-provider-button"
+                  href={provider.href}
+                  key={provider.key}
+                >
+                  <img alt="" aria-hidden="true" src={provider.iconPath} />
+                  <span>Continue with {provider.label}</span>
+                </a>
+              ))}
+            </div>
           )}
         </div>
       ) : null}

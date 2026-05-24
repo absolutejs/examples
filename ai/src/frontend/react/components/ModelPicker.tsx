@@ -121,7 +121,7 @@ export const ModelPicker = ({
   }
 
   return (
-    <>
+    <div className="picker-portal">
       <div className="picker-overlay" onClick={handleClose} />
       <div
         className={`picker-modal ${closing ? "closing" : ""}`}
@@ -148,7 +148,7 @@ export const ModelPicker = ({
           showLegacy={showLegacy}
         />
       </div>
-    </>
+    </div>
   );
 };
 

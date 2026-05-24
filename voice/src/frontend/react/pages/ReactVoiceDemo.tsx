@@ -23,8 +23,15 @@ import {
   VoiceTurnQuality,
 } from "@absolutejs/voice/react";
 import { createVoiceOpsActionCenterActions } from "@absolutejs/voice/client";
-import { formatReconnectState } from "../../../shared/browser";
+import {
+  formatReconnectState,
+  voiceReactiveSource,
+} from "../../../shared/browser";
 import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
+import {
+  VOICE_EVIDENCE_TOPIC,
+  VOICE_TURN_TOPIC,
+} from "../../../constants/sync";
 import type {
   VoiceModelProvider,
   VoiceProfileId,
@@ -212,7 +219,14 @@ export const ReactVoiceDemo = ({
         >
           {CONSOLE_TABS.map((tab) => (
             <button
-              aria-controls={`voice-panel-${tab.id}`} aria-selected={activeTab === tab.id} className="voice-tab" id={`voice-tab-${tab.id}`} key={tab.id} onClick={() => setActiveTab(tab.id)} role="tab" type="button"
+              aria-controls={`voice-panel-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              className="voice-tab"
+              id={`voice-tab-${tab.id}`}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              role="tab"
+              type="button"
             >
               {tab.label}
             </button>
@@ -232,20 +246,20 @@ export const ReactVoiceDemo = ({
 
             <VoiceTurnLatency
               className="voice-card voice-provider-health-card voice-turn-detail"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
               proofLabel="Run latency proof"
               proofPath="/api/turn-latency/proof"
             />
 
             <VoiceTurnQuality
               className="voice-card voice-provider-health-card voice-turn-detail"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
             />
 
             <VoiceProofTrends
               className="voice-card voice-provider-health-card"
               description="Sustained proof freshness, provider p95, turn p95, and live p95 from the package proof-trends widget."
-              intervalMs={10_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
               path="/api/voice/proof-trends"
               title="Sustained Proof Trends"
             />
@@ -253,7 +267,7 @@ export const ReactVoiceDemo = ({
             <VoicePlatformCoverage
               className="voice-card voice-provider-health-card"
               description="Package coverage rendered against the same proof-backed route used by the server."
-              intervalMs={10_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
               limit={4}
               path="/api/voice/platform-coverage"
               title="Vapi Replacement Coverage"
@@ -262,7 +276,7 @@ export const ReactVoiceDemo = ({
             <VoiceTraceTimeline
               className="voice-card voice-provider-health-card"
               incidentBundleBasePath="/voice-incidents"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
               limit={2}
               operationsRecordBasePath="/voice-operations"
             />
@@ -287,22 +301,22 @@ export const ReactVoiceDemo = ({
           <div className="voice-grid">
             <VoiceProviderStatus
               className="voice-card voice-provider-health-card"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
             />
 
             <VoiceRoutingStatus
               className="voice-card voice-routing-card"
-              intervalMs={4_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
             />
 
             <VoiceProviderCapabilities
               className="voice-card voice-provider-health-card voice-card-full"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
             />
 
             <VoiceProviderContracts
               className="voice-card voice-provider-health-card voice-card-full"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
             />
 
             <VoiceProviderSimulationControls
@@ -318,7 +332,7 @@ export const ReactVoiceDemo = ({
             <VoiceProfileComparison
               className="voice-card voice-provider-health-card"
               description="Measured profile defaults and persisted reconnect resume evidence showing why each voice stack was selected."
-              intervalMs={10_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
               path="/api/voice/real-call-profile-history"
               title="Profile + Reconnect Evidence"
             />
@@ -326,7 +340,7 @@ export const ReactVoiceDemo = ({
             <VoiceProfileSwitchRecommendation
               className="voice-card voice-provider-health-card"
               description="Compares the latest session signals against measured profile evidence and recommends whether to switch stacks."
-              intervalMs={10_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
               path="/api/voice/profile-switch-recommendation"
               title="Profile Switch Recommendation"
             />
@@ -334,7 +348,7 @@ export const ReactVoiceDemo = ({
             <VoiceReconnectProfileEvidence
               className="voice-card voice-provider-health-card"
               description="Persisted real browser reconnect/resume traces from the package reconnect evidence primitive."
-              intervalMs={10_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
               path="/api/voice/reconnect-profile-evidence"
               title="Persisted Reconnect Evidence"
             />
@@ -352,12 +366,12 @@ export const ReactVoiceDemo = ({
           <div className="voice-grid">
             <VoiceOpsStatus
               className="voice-card voice-workflow-card"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
             />
 
             <VoiceDeliveryRuntime
               className="voice-card voice-workflow-card"
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
             />
 
             <VoiceOpsActionCenter
@@ -377,7 +391,7 @@ export const ReactVoiceDemo = ({
             <VoiceSessionSnapshot
               className="voice-card voice-provider-health-card"
               description="Downloadable support bundle with session media graph, provider routing, and turn-quality evidence."
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
               path="/api/voice/session-snapshot/latest"
               title="Session Debug Snapshot"
             />
@@ -385,7 +399,7 @@ export const ReactVoiceDemo = ({
             <VoiceSessionObservability
               className="voice-card voice-provider-health-card"
               description="One per-call support report with turn waterfalls, provider recovery, tools, handoffs, guardrails, and incident handoff links."
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
               path="/api/voice/session-observability/demo-incident-bundle"
               title="Session Observability"
             />
@@ -393,7 +407,7 @@ export const ReactVoiceDemo = ({
             <VoiceCallDebuggerLaunch
               className="voice-card voice-provider-health-card"
               description="Opens the latest full call debugger with snapshot, replay, provider path, transcript, and incident markdown."
-              intervalMs={5_000}
+              reactiveSource={voiceReactiveSource(VOICE_TURN_TOPIC)}
               path="/api/voice-call-debugger/latest"
               title="Debug Latest Call"
             />
@@ -401,7 +415,7 @@ export const ReactVoiceDemo = ({
             <VoiceReadinessFailures
               className="voice-card voice-provider-health-card"
               description="Structured deploy-gate explanations from production readiness JSON when calibrated gates warn or fail."
-              intervalMs={10_000}
+              reactiveSource={voiceReactiveSource(VOICE_EVIDENCE_TOPIC)}
               path="/api/production-readiness"
               title="Readiness Gate Explanations"
             />

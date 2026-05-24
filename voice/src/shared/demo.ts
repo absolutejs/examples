@@ -91,14 +91,14 @@ const readString = (
   record: Record<string, unknown>,
   key: string,
 ): string | undefined =>
-  typeof record[key] === "string" ? (record[key]) : undefined;
+  typeof record[key] === "string" ? record[key] : undefined;
 
 const readNumber = (
   record: Record<string, unknown>,
   key: string,
 ): number | undefined =>
   typeof record[key] === "number" && Number.isFinite(record[key])
-    ? (record[key])
+    ? record[key]
     : undefined;
 
 export const formatVoiceProfileSwitchGuardLabel = (

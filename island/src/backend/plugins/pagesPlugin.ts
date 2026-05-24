@@ -1,4 +1,4 @@
-import type * as AngularHostPage from "../../frontend/angular/pages/angular-host";
+import type * as AngularHostPage from "../../frontend/angular/pages/angular-host/angular-host";
 import type SvelteHost from "../../frontend/svelte/pages/SvelteHost.svelte";
 import type VueHost from "../../frontend/vue/pages/VueHost.vue";
 import { Elysia } from "elysia";

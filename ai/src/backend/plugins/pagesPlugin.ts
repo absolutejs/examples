@@ -9,7 +9,7 @@ import { handleAngularPageRequest } from "@absolutejs/absolute/angular";
 import { handleReactPageRequest } from "@absolutejs/absolute/react";
 import { handleSveltePageRequest } from "@absolutejs/absolute/svelte";
 import { handleVuePageRequest } from "@absolutejs/absolute/vue";
-import type * as AngularChatPage from "../../frontend/angular/pages/angular-chat";
+import type * as AngularChatPage from "../../frontend/angular/pages/angular-chat/angular-chat";
 import type SvelteChat from "../../frontend/svelte/pages/SvelteChat.svelte";
 import type VueChat from "../../frontend/vue/pages/VueChat.vue";
 import { ReactChat } from "../../frontend/react/pages/ReactChat";

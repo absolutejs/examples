@@ -1,0 +1,103 @@
+<header>
+  <a href="/" class="logo">
+    <img src="/assets/png/absolutejs-temp.png" height="24" alt="AbsoluteJS" />
+    AbsoluteJS
+  </a>
+  <div class="nav-stack">
+    <nav class="nav-row">
+      <span class="nav-label">Raw Slots</span>
+      <a href="/">React</a>
+      <a href="/svelte">Svelte</a>
+      <a href="/vue">Vue</a>
+      <a href="/angular" class="active">Angular</a>
+      <a href="/html">HTML</a>
+      <a href="/htmx">HTMX</a>
+    </nav>
+    <nav class="nav-row nav-row-secondary">
+      <span class="nav-label">Framework Primitives</span>
+      <a href="/react-framework">React</a>
+      <a href="/svelte-framework">Svelte</a>
+      <a href="/vue-framework">Vue</a>
+      <a href="/angular-framework">Angular</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">
+    <img alt="Angular" height="32" src="/assets/svg/angular.svg" />
+    <h1>Angular Raw Slots</h1>
+    <span class="badge">Transport Primitive</span>
+  </div>
+
+  <p class="section-desc">
+    This page shows the low-level <code>abs-stream-slot</code> transport
+    directly. The cards stay in declaration order while their server HTML lands
+    in resolve order.
+  </p>
+
+  <h2 class="section-title">Streamed Slots</h2>
+  <p class="section-desc">
+    Six slots declared in order. Watch them resolve out of sequence &mdash; slot
+    4 arrives first, then 2, 6, 5, 1, and finally 3.
+  </p>
+
+  <section class="grid">
+    <abs-stream-slot
+      id="angular-first"
+      [fallbackHtml]="
+        createFallback('1st', '5th', 'Angular Slot 1', 'StreamSlotComponent')
+      "
+      [resolve]="resolveFirstSlot"
+      [timeoutMs]="5000"
+    ></abs-stream-slot>
+    <abs-stream-slot
+      id="angular-second"
+      [fallbackHtml]="
+        createFallback('2nd', '2nd', 'Angular Slot 2', 'StreamSlotComponent')
+      "
+      [resolve]="resolveSecondSlot"
+      [timeoutMs]="5000"
+    ></abs-stream-slot>
+    <abs-stream-slot
+      id="angular-third"
+      [fallbackHtml]="
+        createFallback('3rd', '6th', 'Angular Slot 3', 'StreamSlotComponent')
+      "
+      [resolve]="resolveThirdSlot"
+      [timeoutMs]="5000"
+    ></abs-stream-slot>
+    <abs-stream-slot
+      id="angular-fourth"
+      [fallbackHtml]="
+        createFallback('4th', '1st', 'Angular Slot 4', 'StreamSlotComponent')
+      "
+      [resolve]="resolveFourthSlot"
+      [timeoutMs]="5000"
+    ></abs-stream-slot>
+    <abs-stream-slot
+      id="angular-fifth"
+      [fallbackHtml]="
+        createFallback('5th', '4th', 'Angular Slot 5', 'StreamSlotComponent')
+      "
+      [resolve]="resolveFifthSlot"
+      [timeoutMs]="5000"
+    ></abs-stream-slot>
+    <abs-stream-slot
+      id="angular-sixth"
+      [fallbackHtml]="
+        createFallback('6th', '3rd', 'Angular Slot 6', 'StreamSlotComponent')
+      "
+      [resolve]="resolveSixthSlot"
+      [timeoutMs]="5000"
+    ></abs-stream-slot>
+  </section>
+
+  <p class="footer">
+    <img alt="" src="/assets/png/absolutejs-temp.png" />
+    Powered by
+    <a href="https://absolutejs.com" rel="noopener noreferrer" target="_blank">
+      AbsoluteJS
+    </a>
+  </p>
+</main>

@@ -29,13 +29,20 @@ import {
   renderVoiceReadinessFailuresHTML,
   createVoiceOpsActionCenterActions,
 } from "@absolutejs/voice/client";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import {
   fetchVoiceRealCallEvidenceWorkerHealth,
   formatErrorMessage,
   renderVoiceRealCallEvidenceWorkerHealthHTML,
+  voiceReactiveSource,
 } from "../../../shared/browser";
+import {
+  VOICE_EVIDENCE_TOPIC,
+  VOICE_SYNC_PATH,
+  VOICE_TURN_TOPIC,
+  VOICE_WORKER_HEALTH_TOPIC,
+} from "../../../constants/sync";
 
-const REAL_CALL_WORKER_INTERVAL_MS = 10_000;
 const REAL_CALL_WORKER_DESCRIPTION =
   "Svelte renders whether rolling real-call evidence is automatic or manual, backed by the same worker health route used by readiness.";
 
@@ -110,15 +117,16 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     error: null,
     isLoading: false,
   });
-  let realCallWorkerTimer: ReturnType<typeof setInterval> | null = null;
+  let realCallWorkerSubscriber: ReturnType<typeof createSyncSubscriber> | null =
+    null;
 
   const opsStatus = createVoiceOpsStatus("/api/voice/ops-status", {
-    intervalMs: 5_000,
+    reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
   });
   const deliveryRuntime = createVoiceDeliveryRuntime(
     "/api/voice-delivery-runtime",
     {
-      intervalMs: 5_000,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
     },
   );
   const opsActionCenter = createVoiceOpsActionCenter({
@@ -129,16 +137,16 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
   const platformCoverage = createVoicePlatformCoverage(
     "/api/voice/platform-coverage",
     {
-      intervalMs: 10_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const proofTrends = createVoiceProofTrends("/api/voice/proof-trends", {
-    intervalMs: 10_000,
+    reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
   });
   const profileComparison = createVoiceProfileComparison(
     "/api/voice/real-call-profile-history",
     {
-      intervalMs: 10_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const profileComparisonWidgetOptions = {
@@ -153,7 +161,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
   const reconnectEvidence = createVoiceReconnectProfileEvidence(
     "/api/voice/reconnect-profile-evidence",
     {
-      intervalMs: 10_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const reconnectEvidenceWidgetOptions = {
@@ -169,7 +177,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     createVoiceProfileSwitchRecommendationStore(
       "/api/voice/profile-switch-recommendation",
       {
-        intervalMs: 10_000,
+        reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
       },
     );
   const profileSwitchWidgetOptions = {
@@ -184,7 +192,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
   const readinessFailures = createVoiceReadinessFailures(
     "/api/production-readiness",
     {
-      intervalMs: 10_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const readinessFailuresWidgetOptions = {
@@ -201,7 +209,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     {
       description:
         "Svelte renders a downloadable support bundle with session media graph, provider routing, and turn-quality evidence.",
-      intervalMs: 5_000,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
       title: "Session Debug Snapshot",
     },
   );
@@ -211,7 +219,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     {
       description:
         "Svelte renders one per-call support report with turn waterfalls, provider recovery, tools, handoffs, guardrails, and incident handoff links.",
-      intervalMs: 5_000,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
       title: "Session Observability",
     },
   );
@@ -221,24 +229,24 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     {
       description:
         "Svelte opens the latest full call debugger with snapshot, replay, provider path, transcript, and incident markdown.",
-      intervalMs: 5_000,
+      reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
       title: "Debug Latest Call",
     },
   );
   callDebuggerHTML = callDebugger.getHTML();
   const providerStatus = createVoiceProviderStatus("/api/provider-status", {
-    intervalMs: 5_000,
+    reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
   });
   const providerCapabilities = createVoiceProviderCapabilities(
     "/api/provider-capabilities",
     {
-      intervalMs: 5_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const providerContracts = createVoiceProviderContracts(
     "/api/provider-contracts",
     {
-      intervalMs: 5_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const providerSimulation = createVoiceProviderSimulationControls({
@@ -252,21 +260,21 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     providers: [{ provider: "deepgram" }, { provider: "assemblyai" }],
   });
   const routingStatus = createVoiceRoutingStatus("/api/routing/latest", {
-    intervalMs: 4_000,
+    reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
   });
   const turnQuality = createVoiceTurnQuality("/api/turn-quality", {
-    intervalMs: 5_000,
+    reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
   });
   const turnLatency = createVoiceTurnLatency("/api/turn-latency", {
-    intervalMs: 5_000,
     proofLabel: "Run latency proof",
     proofPath: "/api/turn-latency/proof",
+    reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
   });
   const traceTimeline = createVoiceTraceTimeline("/api/voice-traces", {
     incidentBundleBasePath: "/voice-incidents",
-    intervalMs: 5_000,
     limit: 2,
     operationsRecordBasePath: "/voice-operations",
+    reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
   });
 
   let unsubscribeDeliveryRuntime = () => {};
@@ -301,7 +309,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
   );
 
   const handleTurnLatencyClick = (event: MouseEvent) => {
-    const {target} = event;
+    const { target } = event;
     if (
       target instanceof Element &&
       target.closest("[data-absolute-voice-turn-latency-proof]")
@@ -525,15 +533,16 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     void turnQuality.refresh().catch(() => {});
     void turnLatency.refresh().catch(() => {});
     void traceTimeline.refresh().catch(() => {});
-    realCallWorkerTimer = setInterval(() => {
-      void refreshRealCallWorkerHealth();
-    }, REAL_CALL_WORKER_INTERVAL_MS);
+    realCallWorkerSubscriber = createSyncSubscriber({
+      onEvent: () => void refreshRealCallWorkerHealth(),
+      topics: [VOICE_WORKER_HEALTH_TOPIC],
+      url: VOICE_SYNC_PATH,
+    });
   };
 
   const stop = () => {
-    if (realCallWorkerTimer) {
-      clearInterval(realCallWorkerTimer);
-    }
+    realCallWorkerSubscriber?.close();
+    realCallWorkerSubscriber = null;
     unsubscribeDeliveryRuntime();
     unsubscribeOpsActionCenter();
     unsubscribeOpsStatus();

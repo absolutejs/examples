@@ -1,0 +1,797 @@
+<div voiceDemoChrome>
+  <article
+    voiceHeroCard
+    [activeMode]="activeMode()"
+    [description]="description"
+    [isConnected]="currentVoice().isConnected()"
+    [modelProvider]="modelProvider()"
+    [profileSwitchGuardDecision]="profileSwitchGuardDecision()"
+    [routingMode]="routingMode()"
+    [savedIntakesCount]="savedIntakes().length"
+  ></article>
+
+  <article
+    voiceProviderConfigCard
+    [modelProvider]="modelProvider()"
+    [profileId]="profileId()"
+    [routingDescription]="routingDescription()"
+    [routingMode]="routingMode()"
+    [speechEngine]="speechEngine()"
+    (modelProviderChange)="changeModelProvider($event)"
+    (profileIdChange)="changeProfileId($event)"
+    (routingModeChange)="changeRoutingMode($event)"
+    (speechEngineChange)="changeSpeechEngine($event)"
+  ></article>
+
+  <article voiceProofDashboardsCard></article>
+
+  <article
+    class="voice-card voice-provider-health-card"
+    voiceServerHtmlCard
+    [html]="realCallWorkerHtml()"
+  ></article>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Vapi Replacement Coverage</span>
+    <h2>
+      @if (platformCoverage.report(); as report) { {{ platformCoveragePassing()
+      }}/{{ report.total }} surfaces passing } @else if
+      (platformCoverage.error()) { Coverage unavailable } @else if
+      (platformCoverage.isLoading()) { Checking coverage } @else { Awaiting
+      proof pack }
+    </h2>
+    <p class="voice-footnote">
+      Angular reads the package route primitive behind the switching proof, so
+      the framework page proves the same replacement surface as the server.
+    </p>
+    @if (platformCoverage.report()?.coverage?.length) {
+    <div class="voice-provider-health-list">
+      @for ( surface of platformCoverage.report()!.coverage.slice(0, 4); track
+      surface.surface ) {
+      <div class="voice-provider-health-item">
+        <strong>{{ surface.surface }}</strong>
+        <span>{{ surface.status }}</span>
+        <small>{{ surface.replacement }}</small>
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty-copy">
+      {{ platformCoverage.error() ?? "Run the proof pack to populate coverage
+      evidence." }}
+    </p>
+    }
+    <p class="voice-footnote">
+      <a href="/switching-from-vapi">Open switching guide</a> ·
+      <a href="/api/voice/platform-coverage">Open JSON</a>
+    </p>
+  </article>
+
+  <absolute-voice-profile-comparison
+    class="voice-card voice-provider-health-card"
+    description="Angular renders measured profile defaults and persisted reconnect resume evidence behind each selected stack."
+    reactive-topic="voice:evidence"
+    reactive-path="/api/sync"
+    title="Profile + Reconnect Evidence"
+  ></absolute-voice-profile-comparison>
+
+  <div
+    class="voice-card voice-provider-health-card"
+    voiceServerHtmlCard
+    [html]="reconnectEvidenceHtml()"
+  ></div>
+
+  <absolute-voice-profile-switch
+    class="voice-card voice-provider-health-card"
+    description="Angular compares latest session signals against measured profile evidence and recommends whether to switch stacks."
+    reactive-topic="voice:evidence"
+    reactive-path="/api/sync"
+    title="Profile Switch Recommendation"
+  ></absolute-voice-profile-switch>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Sustained Proof Trends</span>
+    <h2>
+      @if (proofTrends.report(); as report) { {{ report.status }} · {{
+      report.summary.cycles ?? report.cycles.length }} cycles } @else if
+      (proofTrends.error()) { Proof trends unavailable } @else if
+      (proofTrends.isLoading()) { Checking proof trends } @else { Awaiting trend
+      proof }
+    </h2>
+    <p class="voice-footnote">
+      Angular reads the package proof-trends primitive for freshness, provider
+      p95, turn p95, and live p95.
+    </p>
+    @if (proofTrends.report(); as report) {
+    <div class="voice-routing-grid">
+      <div>
+        <span>Provider p95</span>
+        <strong>{{ formatMs(report.summary.maxProviderP95Ms) }}</strong>
+      </div>
+      <div>
+        <span>Turn p95</span>
+        <strong>{{ formatMs(report.summary.maxTurnP95Ms) }}</strong>
+      </div>
+      <div>
+        <span>Live p95</span>
+        <strong>{{ formatMs(report.summary.maxLiveP95Ms) }}</strong>
+      </div>
+      <div>
+        <span>Fresh until</span>
+        <strong>{{ report.freshUntil ?? "n/a" }}</strong>
+      </div>
+    </div>
+    } @else {
+    <p class="empty-copy">
+      {{ proofTrends.error() ?? "Run the sustained proof trends script to
+      populate evidence." }}
+    </p>
+    }
+    <p class="voice-footnote">
+      <a href="/voice/proof-trends">Open trends</a> ·
+      <a href="/api/voice/proof-trends">Open JSON</a>
+    </p>
+  </article>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Readiness Gate Explanations</span>
+    <h2>
+      @if (readinessFailures.explanations().length > 0) { {{
+      readinessFailures.explanations().length }} calibrated gate issue(s) }
+      @else if (readinessFailures.error()) { Readiness explanations unavailable
+      } @else if (readinessFailures.isLoading()) { Checking readiness gates }
+      @else { No calibrated gate issues }
+    </h2>
+    <p class="voice-footnote">
+      Angular reads structured gate explanations from production readiness JSON
+      so deploy blockers show observed values, thresholds, evidence, and
+      remediation.
+    </p>
+    @if (readinessFailures.explanations().length > 0) {
+    <div class="voice-routing-grid">
+      @for (check of readinessFailures.explanations(); track check.label) {
+      <div>
+        <span>{{ check.status }} · {{ check.label }}</span>
+        <strong>
+          {{ check.gateExplanation?.observed ?? "n/a" }} / {{
+          check.gateExplanation?.threshold ?? "n/a" }} {{
+          check.gateExplanation?.unit ?? "" }}
+        </strong>
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty-copy">
+      {{ readinessFailures.error() ?? "No calibrated readiness gate explanations
+      are open." }}
+    </p>
+    }
+    <p class="voice-footnote">
+      <a href="/production-readiness">Open readiness</a> ·
+      <a href="/voice/slo-readiness-thresholds">Open thresholds</a>
+    </p>
+  </article>
+
+  <article
+    class="voice-card voice-provider-health-card absolute-voice-session-snapshot"
+    [class.absolute-voice-session-snapshot--ready]="
+      sessionSnapshotModel().status === 'ready'
+    "
+    [class.absolute-voice-session-snapshot--warning]="
+      sessionSnapshotModel().status === 'warning'
+    "
+  >
+    <header class="absolute-voice-session-snapshot__header">
+      <span class="absolute-voice-session-snapshot__eyebrow">
+        {{ sessionSnapshotModel().title }}
+      </span>
+      <strong class="absolute-voice-session-snapshot__label">
+        {{ sessionSnapshotModel().label }}
+      </strong>
+    </header>
+    <p class="absolute-voice-session-snapshot__description">
+      {{ sessionSnapshotModel().description }}
+    </p>
+    @if (sessionSnapshotModel().showDownload) {
+    <button
+      class="absolute-voice-session-snapshot__download"
+      type="button"
+      (click)="downloadSessionSnapshot()"
+    >
+      Download support bundle
+    </button>
+    } @if (sessionSnapshotModel().rows.length > 0) {
+    <dl>
+      @for (row of sessionSnapshotModel().rows; track row.label) {
+      <div>
+        <dt>{{ row.label }}</dt>
+        <dd>{{ row.value }}</dd>
+      </div>
+      }
+    </dl>
+    } @else {
+    <p class="absolute-voice-session-snapshot__empty">
+      Load a session snapshot to see support diagnostics.
+    </p>
+    } @if (sessionSnapshotModel().error) {
+    <p class="absolute-voice-session-snapshot__error">
+      {{ sessionSnapshotModel().error }}
+    </p>
+    }
+  </article>
+
+  <article
+    class="voice-card voice-provider-health-card absolute-voice-session-observability"
+    [class.absolute-voice-session-observability--ready]="
+      sessionObservabilityModel().status === 'ready'
+    "
+    [class.absolute-voice-session-observability--warning]="
+      sessionObservabilityModel().status === 'warning'
+    "
+  >
+    <header class="absolute-voice-session-observability__header">
+      <span class="absolute-voice-session-observability__eyebrow">
+        {{ sessionObservabilityModel().title }}
+      </span>
+      <strong class="absolute-voice-session-observability__label">
+        {{ sessionObservabilityModel().label }}
+      </strong>
+    </header>
+    <p class="absolute-voice-session-observability__description">
+      {{ sessionObservabilityModel().description }}
+    </p>
+    @if (sessionObservabilityModel().links.length > 0) {
+    <p class="absolute-voice-session-observability__actions">
+      @for (link of sessionObservabilityModel().links; track link.href) {
+      <a [href]="link.href">{{ link.label }}</a>
+      }
+    </p>
+    } @if (sessionObservabilityModel().turns.length > 0) {
+    <div class="absolute-voice-session-observability__turns">
+      @for (turn of sessionObservabilityModel().turns; track turn.turnId) {
+      <article class="absolute-voice-session-observability__turn">
+        <header>
+          <strong>{{ turn.turnId }}</strong>
+          <span>{{ turn.durationLabel }}</span>
+        </header>
+        <p>{{ turn.label }}</p>
+      </article>
+      }
+    </div>
+    } @else {
+    <p class="absolute-voice-session-observability__empty">
+      Open a voice session to see turn waterfalls.
+    </p>
+    } @if (sessionObservabilityModel().error) {
+    <p class="absolute-voice-session-observability__error">
+      {{ sessionObservabilityModel().error }}
+    </p>
+    }
+  </article>
+
+  <article
+    class="voice-card voice-provider-health-card absolute-voice-call-debugger-launch"
+    [class.absolute-voice-call-debugger-launch--ready]="
+      callDebuggerModel().status === 'ready'
+    "
+    [class.absolute-voice-call-debugger-launch--warning]="
+      callDebuggerModel().status === 'warning'
+    "
+  >
+    <header class="absolute-voice-call-debugger-launch__header">
+      <span class="absolute-voice-call-debugger-launch__eyebrow">
+        {{ callDebuggerModel().title }}
+      </span>
+      <strong class="absolute-voice-call-debugger-launch__label">
+        {{ callDebuggerModel().label }}
+      </strong>
+    </header>
+    <p class="absolute-voice-call-debugger-launch__description">
+      {{ callDebuggerModel().description }}
+    </p>
+    <a
+      class="absolute-voice-call-debugger-launch__link"
+      [href]="callDebuggerModel().href"
+    >
+      Open debugger
+    </a>
+    @if (callDebuggerModel().rows.length > 0) {
+    <dl>
+      @for (row of callDebuggerModel().rows; track row.label) {
+      <div>
+        <dt>{{ row.label }}</dt>
+        <dd>{{ row.value }}</dd>
+      </div>
+      }
+    </dl>
+    } @else {
+    <p class="absolute-voice-call-debugger-launch__empty">
+      Load a call debugger report to see the latest support artifact.
+    </p>
+    } @if (callDebuggerModel().error) {
+    <p class="absolute-voice-call-debugger-launch__error">
+      {{ callDebuggerModel().error }}
+    </p>
+    }
+  </article>
+
+  <article class="voice-card voice-routing-card">
+    <span class="voice-framework-pill">Routing Trace</span>
+    <h2>Why this STT provider?</h2>
+    <p class="voice-footnote">
+      Latest router event from the self-hosted trace store.
+    </p>
+    @if (routingStatus.decision(); as decision) {
+    <div class="voice-routing-stack">
+      <div>
+        <span>Profile</span>
+        <strong
+          >{{ decision.profileLabel ?? decision.profileId ?? "None" }}</strong
+        >
+      </div>
+      <div>
+        <span>LLM</span>
+        <strong
+          >{{ formatProviderRoute(decision.providerRoutes, "llm") }}</strong
+        >
+      </div>
+      <div>
+        <span>STT</span>
+        <strong
+          >{{ formatProviderRoute(decision.providerRoutes, "stt") }}</strong
+        >
+      </div>
+      <div>
+        <span>TTS</span>
+        <strong
+          >{{ formatProviderRoute(decision.providerRoutes, "tts") }}</strong
+        >
+      </div>
+      <div>
+        <span>Fallback path</span>
+        <strong>{{ formatFallbackPath(decision) }}</strong>
+      </div>
+    </div>
+    <div class="voice-routing-grid">
+      <div>
+        <span>Policy</span>
+        <strong>{{ getVoiceRoutingLabel(decision.routing) }}</strong>
+      </div>
+      <div>
+        <span>Provider</span>
+        <strong>{{ decision.provider }}</strong>
+      </div>
+      <div>
+        <span>Selected</span>
+        <strong>{{ decision.selectedProvider }}</strong>
+      </div>
+      <div>
+        <span>Fallback</span>
+        <strong>{{ decision.fallbackProvider ?? "None" }}</strong>
+      </div>
+      <div>
+        <span>Status</span>
+        <strong>{{ decision.status }}</strong>
+      </div>
+      <div>
+        <span>Voice profile</span>
+        <strong
+          >{{ decision.profileLabel ?? decision.profileId ?? "None" }}</strong
+        >
+      </div>
+      <div>
+        <span>Default routes</span>
+        <strong>{{ formatProviderRoutes(decision.providerRoutes) }}</strong>
+      </div>
+      <div>
+        <span>Latency budget</span>
+        <strong
+          >{{ decision.latencyBudgetMs ? decision.latencyBudgetMs + "ms" :
+          "None" }}</strong
+        >
+      </div>
+    </div>
+    } @else {
+    <p class="empty-copy">
+      Start a voice session to see the selected STT provider.
+    </p>
+    }
+  </article>
+
+  <article
+    voiceAgentSquadCard
+    [agentSquadStatus]="agentSquadStatus()"
+  ></article>
+
+  <article
+    voiceCampaignDialerCard
+    [campaignDialerProof]="campaignDialerProof"
+    (runProof)="runCampaignDialerProof()"
+  ></article>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Provider Health</span>
+    <h2>
+      {{ providerStatus.providers().length ? providerStatus.providers().length +
+      " tracked" : "Checking providers" }}
+    </h2>
+    <p class="voice-footnote">
+      Live model provider health, fallback counts, and cooldown state.
+    </p>
+    @if (providerStatus.providers().length) {
+    <div class="voice-provider-health-list">
+      @for ( provider of providerStatus.providers(); track provider.provider ) {
+      <div class="voice-provider-health-item">
+        <strong>{{ provider.provider }}</strong>
+        <span>{{ provider.status }}</span>
+        <small>
+          {{ provider.runCount }} runs · {{ provider.errorCount }} errors · {{
+          provider.fallbackCount }} fallbacks
+        </small>
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty-copy">Run assistant traffic to see provider health.</p>
+    }
+  </article>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Provider Capabilities</span>
+    <h2>
+      {{ providerCapabilities.report() ? providerCapabilities.report()!.selected
+      + " selected" : "Checking capabilities" }}
+    </h2>
+    <p class="voice-footnote">
+      Configured LLM/STT providers, selected defaults, models, and feature
+      coverage.
+    </p>
+    @if (providerCapabilities.report()?.capabilities?.length) {
+    <div class="voice-provider-health-list">
+      @for ( capability of providerCapabilities.report()!.capabilities; track
+      capability.kind + ":" + capability.provider ) {
+      <div class="voice-provider-health-item">
+        <strong>{{ capability.provider }} {{ capability.kind }}</strong>
+        <span>{{ capability.status }}</span>
+        <small>
+          {{ capability.model || "default" }} · {{ capability.features?.join(",
+          ") || "features not specified" }}
+        </small>
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty-copy">Configure provider capabilities to see coverage.</p>
+    }
+  </article>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Provider Contracts</span>
+    <h2>
+      {{ providerContracts.report() ? providerContracts.report()!.passed + "/" +
+      providerContracts.report()!.total + " passing" : "Checking contracts" }}
+    </h2>
+    <p class="voice-footnote">
+      Required env, latency budget, fallback, streaming, and capability
+      contracts.
+    </p>
+    @if (providerContracts.report()?.rows?.length) {
+    <div class="voice-provider-health-list">
+      @for ( row of providerContracts.report()!.rows; track row.kind + ":" +
+      row.provider ) {
+      <div class="voice-provider-health-item">
+        <strong>{{ row.provider }} {{ row.kind }}</strong>
+        <span>{{ row.status }}</span>
+        <small>
+          {{ row.checks.length }} checks · {{ row.selected ? "selected" :
+          "available" }}
+        </small>
+        @for (check of row.checks; track check.key) { @if (check.remediation) {
+        <small>
+          {{ check.remediation.label }}: {{ check.remediation.detail }}
+        </small>
+        } }
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty-copy">Configure provider contracts to see coverage.</p>
+    }
+  </article>
+
+  <absolute-voice-provider-simulation
+    class="voice-card voice-provider-simulation-card"
+    failure-message="Prove Deepgram STT failover to AssemblyAI without changing credentials."
+    failure-providers="deepgram"
+    fallback-required-message="Add ASSEMBLYAI_API_KEY to enable the fallback simulation."
+    fallback-required-provider="assemblyai"
+    kind="stt"
+    providers="deepgram,assemblyai"
+  ></absolute-voice-provider-simulation>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Turn Quality</span>
+    <h2>
+      {{ turnQuality.report() ? turnQuality.report()!.warnings + " warnings" :
+      "Checking turns" }}
+    </h2>
+    <p class="voice-footnote">
+      STT confidence, fallback selection, correction, and transcript coverage.
+    </p>
+    @if (turnQuality.report()?.turns?.length) {
+    <div class="voice-provider-health-list">
+      @for ( turn of turnQuality.report()!.turns; track turn.sessionId + ":" +
+      turn.turnId ) {
+      <div class="voice-provider-health-item">
+        <strong>{{ turn.text || "Empty turn" }}</strong>
+        <span>{{ turn.status }}</span>
+        <small>
+          {{ turn.source || "unknown" }} · {{ turn.fallbackUsed ? "fallback" :
+          "primary" }} · confidence {{ turn.averageConfidence === undefined ?
+          "n/a" : (turn.averageConfidence * 100).toFixed(0) + "%" }}
+        </small>
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty-copy">Complete a turn to see quality diagnostics.</p>
+    }
+  </article>
+
+  <article class="voice-card voice-provider-health-card">
+    <span class="voice-framework-pill">Turn Latency</span>
+    <h2>
+      {{ turnLatency.report()?.averageTotalMs ?
+      turnLatency.report()!.averageTotalMs + "ms avg" : "Checking latency" }}
+    </h2>
+    <p class="voice-footnote">
+      End-to-end turn responsiveness from transcript timing to assistant start.
+    </p>
+    <button
+      class="absolute-voice-turn-latency__proof"
+      type="button"
+      (click)="runTurnLatencyProof()"
+    >
+      Run latency proof
+    </button>
+    @if (turnLatency.report()?.turns?.length) {
+    <div class="voice-provider-health-list">
+      @for ( turn of turnLatency.report()!.turns; track turn.sessionId + ":" +
+      turn.turnId ) {
+      <div class="voice-provider-health-item">
+        <strong>{{ turn.text || "Empty turn" }}</strong>
+        <span>{{ turn.status }}</span>
+        <small>
+          {{ turn.totalMs === undefined ? "n/a" : turn.totalMs + "ms" }} · {{
+          turn.stages[0]?.label || "stage" }}
+        </small>
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty-copy">Complete a turn to see latency diagnostics.</p>
+    }
+  </article>
+
+  <article
+    class="voice-card voice-workflow-card"
+    [class.is-failing]="opsStatus.report()?.status === 'fail'"
+  >
+    <span class="voice-framework-pill">Voice Ops Status</span>
+    <h2>{{ getOpsStatusLabel(opsStatus.report()) }}</h2>
+    <p class="voice-footnote">
+      One embedded readiness check for certified workflows, provider health, and
+      handoffs.
+    </p>
+    <div class="voice-workflow-summary">
+      <span class="pill">{{ opsStatus.report()?.passed ?? 0 }} passing</span>
+      <span class="pill">{{ opsStatus.report()?.failed ?? 0 }} failing</span>
+      <span class="pill">{{ opsStatus.report()?.total ?? 0 }} checks</span>
+    </div>
+    <p class="voice-footnote">
+      <a href="/api/voice/ops-status">Open ops status</a> ·
+      <a href="/evals/fixtures">Open certified fixtures</a>
+    </p>
+  </article>
+
+  <article class="voice-card voice-workflow-card">
+    <span class="voice-framework-pill">Delivery Runtime</span>
+    <h2>
+      {{ deliveryRuntime.error() ? "Unavailable" :
+      deliveryRuntime.report()?.isRunning ? "Running" : deliveryRuntime.report()
+      ? "Stopped" : "Checking" }}
+    </h2>
+    <p class="voice-footnote">
+      Audit and trace delivery worker health from the Angular service primitive.
+    </p>
+    <div class="voice-workflow-summary">
+      <span class="pill"
+        >{{ deliveryRuntime.report()?.summary?.audit?.pending ?? 0 }} audit
+        pending</span
+      >
+      <span class="pill"
+        >{{ deliveryRuntime.report()?.summary?.trace?.pending ?? 0 }} trace
+        pending</span
+      >
+      <span class="pill"
+        >{{ (deliveryRuntime.report()?.summary?.audit?.deadLettered ?? 0) +
+        (deliveryRuntime.report()?.summary?.trace?.deadLettered ?? 0) }}
+        dead-lettered</span
+      >
+    </div>
+    <p class="voice-footnote">
+      <a href="/delivery-runtime">Open delivery runtime</a>
+    </p>
+  </article>
+
+  <article class="voice-card voice-workflow-card">
+    <span class="voice-framework-pill">Voice Ops Action Center</span>
+    <h2>
+      {{ opsActionCenter.error() ? "Needs attention" :
+      opsActionCenter.isRunning() ? "Running" : opsActionCenter.lastResult() ?
+      "Action completed" : "Ready" }}
+    </h2>
+    <p class="voice-footnote">
+      One Angular service primitive for readiness, delivery workers, latency
+      proof, and provider failover actions.
+    </p>
+    <div class="voice-workflow-summary">
+      @for (action of opsActionCenter.actions(); track action.id) {
+      <button
+        class="pill"
+        type="button"
+        [disabled]="opsActionCenter.isRunning() || action.disabled"
+        (click)="runOpsAction(action.id)"
+      >
+        {{ opsActionCenter.runningActionId() === action.id ? "Working..." :
+        action.label }}
+      </button>
+      }
+    </div>
+    @if (opsActionCenter.error()) {
+    <p class="voice-footnote">{{ opsActionCenter.error() }}</p>
+    }
+  </article>
+
+  <article class="voice-card voice-live-ops-panel">
+    <span class="voice-framework-pill">Live Ops</span>
+    <h2>Operator intervention</h2>
+    <p class="voice-footnote">
+      Tag, assign, pause, take over, force handoff, or inject an instruction
+      while the voice session is still running.
+    </p>
+    <div class="voice-live-ops-panel__session">
+      <span>Active session</span>
+      <strong>{{ currentVoice().sessionId() || "No active session" }}</strong>
+    </div>
+    <label class="voice-provider-select">
+      <span>Operator</span>
+      <input [value]="liveOpsAssignee()" (input)="setLiveOpsAssignee($event)" />
+    </label>
+    <label class="voice-provider-select">
+      <span>Tag</span>
+      <input [value]="liveOpsTag()" (input)="setLiveOpsTag($event)" />
+    </label>
+    <label class="voice-provider-select">
+      <span>Detail</span>
+      <input [value]="liveOpsDetail()" (input)="setLiveOpsDetail($event)" />
+    </label>
+    <div class="voice-actions">
+      @for (action of liveOpsActions; track action.action) {
+      <button
+        type="button"
+        [disabled]="liveOpsRunning() || !currentVoice().sessionId()"
+        (click)="runLiveOpsAction(action.action)"
+      >
+        {{ liveOpsRunning() ? "Running" : action.label }}
+      </button>
+      }
+    </div>
+    <div voiceServerHtmlCard [html]="liveOpsResultHtml()"></div>
+  </article>
+
+  <article class="voice-card voice-workflow-card">
+    <span class="voice-framework-pill">Operator Action History</span>
+    <h2>Auditable actions</h2>
+    <p class="voice-footnote">
+      Every action-center click is recorded as audit and trace evidence.
+    </p>
+    <p class="voice-footnote">
+      <a href="/voice/ops-actions">Open action history</a> ·
+      <a href="/api/voice/ops-actions/history">Open JSON</a>
+    </p>
+  </article>
+
+  <article
+    class="voice-card voice-provider-health-card absolute-voice-trace-timeline"
+    [class.absolute-voice-trace-timeline--failed]="
+      (traceTimeline.report()?.failed ?? 0) > 0
+    "
+  >
+    <header class="absolute-voice-trace-timeline__header">
+      <span class="absolute-voice-trace-timeline__eyebrow">Voice Traces</span>
+      <strong class="absolute-voice-trace-timeline__label">
+        {{ traceTimeline.report()?.total ?? 0 }} recent
+      </strong>
+    </header>
+    <p class="absolute-voice-trace-timeline__description">
+      Latest call timelines from the Angular service primitive.
+    </p>
+    @if ((traceTimeline.report()?.sessions?.length ?? 0) > 0) {
+    <div class="absolute-voice-trace-timeline__sessions">
+      @for ( session of traceTimeline.report()?.sessions?.slice(0, 2) ?? [];
+      track session.sessionId ) {
+      <article
+        class="absolute-voice-trace-timeline__session"
+        [class.absolute-voice-trace-timeline__session--failed]="
+              session.status === 'failed'
+            "
+      >
+        <header>
+          <strong>{{ session.sessionId }}</strong>
+          <span>{{ session.status }}</span>
+        </header>
+        <p>
+          {{ session.summary.eventCount }} events · {{ session.summary.turnCount
+          }} turns · {{ session.providers.length }} providers
+        </p>
+        <p class="absolute-voice-trace-timeline__actions">
+          <a href="/traces/{{ session.sessionId }}">Open timeline</a>
+          <a [href]="operationsRecordHref(session.sessionId)"
+            >Open operations record</a
+          >
+          <a [href]="incidentBundleHref(session.sessionId)"
+            >Export incident bundle</a
+          >
+        </p>
+      </article>
+      }
+    </div>
+    } @else {
+    <p class="absolute-voice-trace-timeline__empty">
+      Run a voice session to see call timelines.
+    </p>
+    }
+  </article>
+
+  <div voiceServerHtmlCard [html]="bargeInProofHtml()"></div>
+
+  <div voiceServerHtmlCard [html]="liveLatencyHtml()"></div>
+
+  <article
+    voiceGuideCard
+    [guideSteps]="guideSteps"
+    [guideTitle]="guideTitle"
+  ></article>
+
+  <article
+    voiceAssistantConfigCard
+    [assistantConfig]="assistantConfig"
+  ></article>
+
+  <article
+    voiceConversationCard
+    [activeMode]="activeMode()"
+    [callControlActions]="callControlActions"
+    [callLifecycleLabel]="callLifecycleLabel()"
+    [currentPrompt]="currentPrompt()"
+    [errorMessage]="errorMessage()"
+    [generalLabel]="generalLabel"
+    [guidedLabel]="guidedLabel"
+    [idleMicCopy]="idleMicCopy"
+    [isCapturing]="isCapturing()"
+    [leadMessage]="leadMessage()"
+    [liveMicCopy]="liveMicCopy"
+    [partial]="currentVoice().partial()"
+    [reconnect]="currentVoice().reconnect()"
+    [status]="currentVoice().status()"
+    [stopLabel]="stopLabel"
+    [turns]="currentVoice().turns()"
+    [wavePath]="wavePath()"
+    (runCallControl)="runCallControl($event)"
+    (startMode)="startMode($event)"
+    (stopMic)="stopMic()"
+  ></article>
+
+  <article voiceSavedCapturesCard [savedIntakes]="savedIntakes()"></article>
+</div>

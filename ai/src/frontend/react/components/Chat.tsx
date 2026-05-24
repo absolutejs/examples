@@ -281,7 +281,7 @@ export const Chat = () => {
     messages[messages.length - 1].role === "user";
 
   return (
-    <>
+    <div className="chat-shell">
       <ChatHeader
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         sidebarOpen={sidebarOpen}
@@ -309,7 +309,7 @@ export const Chat = () => {
           showWaitingIndicator={showWaitingIndicator}
         />
       </div>
-    </>
+    </div>
   );
 };
 
@@ -344,33 +344,34 @@ const ChatMain = ({
 }: ChatMainProps) => (
   <div className="app-main" ref={appMainRef}>
     <div className={`chat-container ${hasMessages ? "has-messages" : ""}`}>
-      {!hasMessages ? (
+      {!hasMessages && (
         <EmptyState
           inputBox={inputBox}
           onSendMessage={sendMessage}
           suggestions={SUGGESTIONS}
         />
-      ) : (
-        <>
-          <div className="messages">
-            {messages.map((msg, idx) => (
-              <MessageItem
-                copiedId={copiedId}
-                key={msg.id}
-                message={msg}
-                messageIndex={idx}
-                onCopy={handleCopy}
-                onRetry={handleRetry}
-                selectedModel={selectedModel}
-              />
-            ))}
-            {showWaitingIndicator && <TypingIndicator />}
-            <div ref={messagesEndRef} />
-          </div>
-          {error && <div className="error-banner">Error: {error}</div>}
-          {inputBox}
-        </>
       )}
+      {hasMessages && (
+        <div className="messages">
+          {messages.map((msg, idx) => (
+            <MessageItem
+              copiedId={copiedId}
+              key={msg.id}
+              message={msg}
+              messageIndex={idx}
+              onCopy={handleCopy}
+              onRetry={handleRetry}
+              selectedModel={selectedModel}
+            />
+          ))}
+          {showWaitingIndicator && <TypingIndicator />}
+          <div ref={messagesEndRef} />
+        </div>
+      )}
+      {hasMessages && error && (
+        <div className="error-banner">Error: {error}</div>
+      )}
+      {hasMessages && inputBox}
     </div>
     <p className="footer">
       <img alt="" src="/assets/png/absolutejs-temp.png" />

@@ -1,0 +1,32 @@
+<div
+  class="sidebar-item"
+  [ngClass]="{ active: active }"
+  (click)="selectConversation.emit(conversation.id)"
+  role="button"
+  tabindex="0"
+>
+  <div class="sidebar-item-title">{{ conversation.title }}</div>
+  <div class="sidebar-item-meta">
+    {{ conversation.messageCount }} messages &middot; {{
+    formatTime(conversation.lastMessageAt ?? conversation.createdAt) }}
+  </div>
+  <button
+    class="sidebar-item-delete"
+    (click)="onDeleteClick($event)"
+    title="Delete conversation"
+    type="button"
+  >
+    <svg
+      fill="none"
+      height="12"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+      width="12"
+    >
+      <line x1="18" x2="6" y1="6" y2="18" />
+      <line x1="6" x2="18" y1="6" y2="18" />
+    </svg>
+  </button>
+</div>

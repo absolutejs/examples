@@ -318,7 +318,11 @@ const receivedWebhookEnvelopes: VoiceOpsWebhookEnvelope[] = [];
 
 const handoffAdapters = handoffWebhookUrl
   ? [
-      createVoiceWebhookHandoffAdapter({
+      createVoiceWebhookHandoffAdapter<
+        unknown,
+        VoiceSessionRecord,
+        SavedIntake
+      >({
         actions: ["transfer", "escalate", "voicemail", "no-answer"],
         id: "voice-demo-handoff-webhook",
         signingSecret: webhookSigningSecret,
@@ -359,10 +363,10 @@ const deliverIntegrationEvent = async (
   event: SavedVoiceIntegrationEvent,
 ): Promise<SavedVoiceIntegrationEvent> => {
   const storedEvent: SavedVoiceIntegrationEvent = webhookSink
-    ? ((await deliverVoiceIntegrationEventToSinks({
+    ? await deliverVoiceIntegrationEventToSinks({
         event,
         sinks: [webhookSink],
-      })))
+      })
     : { ...event };
 
   await runtimeStorage.events.set(storedEvent.id, storedEvent);

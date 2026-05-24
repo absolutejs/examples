@@ -350,7 +350,7 @@ const buildHealthyDemoVoiceSupportBundle = async (
   sessionSnapshot: VoiceSessionSnapshot;
   sessionId: string;
 }> => {
-  const {context} = input;
+  const { context } = input;
   const sessionId = context
     ? await context.time("supportBundle:sessionId", () =>
         resolveHealthyDemoSessionId({
@@ -773,7 +773,7 @@ const buildDemoVoiceProofPack = async (input: {
     loadObservabilityExport: async () =>
       context.time("observabilityExport:build", async () => {
         const bundle = await supportBundle;
-        const {sessionId} = bundle.sessionSnapshot;
+        const { sessionId } = bundle.sessionSnapshot;
         const operationsRecord = await context.cache(
           `operationsRecord:${sessionId}`,
           async () =>
@@ -846,8 +846,8 @@ const buildDemoVoiceProofPack = async (input: {
       };
     },
   });
-  const {productionReadiness} = proofPackInput;
-  const {providerSlo} = proofPackInput;
+  const { productionReadiness } = proofPackInput;
+  const { providerSlo } = proofPackInput;
   const operationsRecord = proofPackInput.operationsRecords?.[0];
   const sessionSnapshot = proofPackInput.sessionSnapshots?.[0];
   const callDebuggerReport = proofPackInput.callDebuggerReports?.[0];

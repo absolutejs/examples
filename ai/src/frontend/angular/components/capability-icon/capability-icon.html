@@ -1,0 +1,24 @@
+<span
+  class="cap-badge"
+  [style.align-items]="'center'"
+  [style.background]="icon.color + '18'"
+  [style.border-radius]="'4px'"
+  [style.display]="'inline-flex'"
+  [style.height.px]="bgSize"
+  [style.justify-content]="'center'"
+  [style.width.px]="bgSize"
+  [title]="icon.label"
+>
+  <svg
+    fill="none"
+    [attr.height]="iconSize"
+    [attr.stroke]="icon.color"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    [attr.width]="iconSize"
+  >
+    <path [attr.d]="icon.path" />
+  </svg>
+</span>

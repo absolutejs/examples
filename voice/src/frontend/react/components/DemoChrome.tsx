@@ -27,7 +27,9 @@ export const DemoChrome = (props: DemoChromeProps) => (
         <nav>
           {FRAMEWORKS.map((framework) => (
             <a
-              className={framework.id === "react" ? "active" : undefined} href={framework.href} key={framework.id}
+              className={framework.id === "react" ? "active" : undefined}
+              href={framework.href}
+              key={framework.id}
             >
               {framework.label}
             </a>

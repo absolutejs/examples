@@ -1,0 +1,52 @@
+<div class="demo-auth-menu" #container>
+  <button
+    class="demo-auth-trigger"
+    [disabled]="isBusy"
+    (click)="toggleOpen()"
+    type="button"
+  >
+    <span class="demo-auth-trigger-text">{{ accountLabel }}</span>
+    <span aria-hidden="true" class="demo-auth-trigger-chevron"
+      >{{ isOpen ? "−" : "+" }}</span
+    >
+  </button>
+
+  @if (isOpen) {
+  <div class="demo-auth-dropdown">
+    @if (user) {
+    <div class="demo-auth-account-summary">
+      <span class="demo-auth-kicker">AbsoluteJS account</span>
+      <strong>{{ accountLabel }}</strong>
+      @if (user.email) {
+      <span>{{ user.email }}</span>
+      }
+    </div>
+    <button
+      class="demo-auth-provider-button demo-auth-provider-button-secondary"
+      [disabled]="isBusy"
+      (click)="signOut()"
+      type="button"
+    >
+      <span>Sign out</span>
+    </button>
+    } @else {
+    <div class="demo-auth-account-summary">
+      <span class="demo-auth-kicker">AbsoluteJS account</span>
+      <strong>Sign in to unlock linked connectors</strong>
+      <span
+        >Use the same account you linked Gmail, Google Contacts, or Meta
+        bindings to in the auth example.</span
+      >
+    </div>
+    <div class="demo-auth-provider-list">
+      @for (provider of loginProviders; track provider.key) {
+      <a class="demo-auth-provider-button" [href]="provider.href">
+        <img alt="" aria-hidden="true" [src]="provider.iconPath" />
+        <span>Continue with {{ provider.label }}</span>
+      </a>
+      }
+    </div>
+    }
+  </div>
+  }
+</div>

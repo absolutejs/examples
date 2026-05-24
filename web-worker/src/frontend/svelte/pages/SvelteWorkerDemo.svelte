@@ -14,28 +14,30 @@
   let { cssPath }: WorkerDemoProps = $props();
 </script>
 
-<Nav {cssPath} />
+<div>
+  <Nav {cssPath} />
 
-<main>
-  <div class="page-title">
-    <img src="/assets/svg/svelte-logo.svg" height="32" alt="Svelte" />
-    <h1>Svelte</h1>
-  </div>
+  <main>
+    <div class="page-title">
+      <img src="/assets/svg/svelte-logo.svg" height="32" alt="Svelte" />
+      <h1>Svelte</h1>
+    </div>
 
-  <div class="worker-cards">
-    <HashCard />
-    <PrimeCard />
-    <SortCard />
-    <ThreadRaceCard />
-    <ImageCard />
-    <ParallelCard />
-  </div>
+    <div class="worker-cards">
+      <HashCard />
+      <PrimeCard />
+      <SortCard />
+      <ThreadRaceCard />
+      <ImageCard />
+      <ParallelCard />
+    </div>
 
-  <p class="footer">
-    <img src="/assets/png/absolutejs-temp.png" alt="" />
-    Powered by
-    <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
-      >AbsoluteJS</a
-    >
-  </p>
-</main>
+    <p class="footer">
+      <img src="/assets/png/absolutejs-temp.png" alt="" />
+      Powered by
+      <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
+        >AbsoluteJS</a
+      >
+    </p>
+  </main>
+</div>

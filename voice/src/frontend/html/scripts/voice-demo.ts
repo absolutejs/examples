@@ -4,20 +4,23 @@ import {
   defineVoiceSessionSnapshotElement,
   defineVoiceTurnLatencyElement,
 } from "@absolutejs/voice/client";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import {
   getInitialVoiceModelProvider,
   getInitialVoiceProfileId,
   getInitialVoiceRoutingMode,
   getInitialVoiceSpeechEngine,
 } from "../../../shared/demo";
+import {
+  VOICE_INTAKES_TOPIC,
+  VOICE_SYNC_PATH,
+  VOICE_TURN_TOPIC,
+} from "../../../constants/sync";
 import type { VoiceDemoMode, VoiceSpeechEngine } from "../../../types/voice";
 import { createCaptureController } from "./capture";
 import { wireCallControls } from "./callControls";
 import { wireConfigControls } from "./config";
-import {
-  AGENT_SQUAD_REFRESH_INTERVAL_MS,
-  createConversationRenderer,
-} from "./conversation";
+import { createConversationRenderer } from "./conversation";
 import { queryVoiceDemoElements } from "./dom";
 import { mountLiveOps } from "./liveOps";
 import { mountVoicePanels } from "./panels";
@@ -153,10 +156,20 @@ window.addEventListener("beforeunload", () => {
 render();
 void conversation.renderSavedIntakes();
 void conversation.renderAgentSquadStatus();
-const agentSquadRefreshTimer = window.setInterval(() => {
-  void conversation.renderAgentSquadStatus();
-}, AGENT_SQUAD_REFRESH_INTERVAL_MS);
+// Reactive push instead of a 3s agent-squad timer: agent-squad status advances
+// per committed turn (VOICE_TURN_TOPIC); saved intakes follow VOICE_INTAKES_TOPIC.
+const agentSquadSubscriber = createSyncSubscriber({
+  onEvent: () => void conversation.renderAgentSquadStatus(),
+  topics: [VOICE_TURN_TOPIC],
+  url: VOICE_SYNC_PATH,
+});
+const savedIntakesSubscriber = createSyncSubscriber({
+  onEvent: () => void conversation.renderSavedIntakes(),
+  topics: [VOICE_INTAKES_TOPIC],
+  url: VOICE_SYNC_PATH,
+});
 window.addEventListener("beforeunload", () => {
-  window.clearInterval(agentSquadRefreshTimer);
+  agentSquadSubscriber.close();
+  savedIntakesSubscriber.close();
   panels.close();
 });

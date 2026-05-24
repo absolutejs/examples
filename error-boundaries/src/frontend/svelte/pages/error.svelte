@@ -7,53 +7,59 @@
 
 <Head title="Error - Svelte" />
 
-<header>
-  <a class="logo" href="/"
-    ><img alt="AbsoluteJS" height="20" src="/assets/png/absolutejs-temp.png" /> AbsoluteJS</a
-  >
-  <nav>
-    <div class="nav-row">
-      <a href="/">Home</a>
-      <a href="/react">React</a>
-      <a href="/svelte">Svelte</a>
-      <a href="/vue">Vue</a>
-      <a href="/angular">Angular</a>
-    </div>
-    <div class="nav-row">
-      <a class="notfound" href="/this-page-does-not-exist">404</a>
-      <a class="broken" href="/broken-react">Broken React</a>
-      <a class="broken" href="/broken-svelte">Broken Svelte</a>
-      <a class="broken" href="/broken-vue">Broken Vue</a>
-      <a class="broken" href="/broken-angular">Broken Angular</a>
-    </div>
-  </nav>
-</header>
-
-<main>
-  <div class="page-title">
-    <h1>Something Went Wrong</h1>
-    <span class="error-badge">error.svelte</span>
-  </div>
-
-  <p class="section-desc">
-    This is the <strong>framework default</strong> Svelte error page. It renders when
-    a Svelte page throws during SSR.
-  </p>
-
-  <div class="error-box">
-    <pre>{message}</pre>
-  </div>
-
-  <a class="back-link" href="/">Back to Home</a>
-
-  <p class="footer">
-    <img alt="" src="/assets/png/absolutejs-temp.png" />
-    Powered by
-    <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
-      >AbsoluteJS</a
+<div class="page-shell">
+  <header>
+    <a class="logo" href="/"
+      ><img
+        alt="AbsoluteJS"
+        height="20"
+        src="/assets/png/absolutejs-temp.png"
+      /> AbsoluteJS</a
     >
-  </p>
-</main>
+    <nav>
+      <div class="nav-row">
+        <a href="/">Home</a>
+        <a href="/react">React</a>
+        <a href="/svelte">Svelte</a>
+        <a href="/vue">Vue</a>
+        <a href="/angular">Angular</a>
+      </div>
+      <div class="nav-row">
+        <a class="notfound" href="/this-page-does-not-exist">404</a>
+        <a class="broken" href="/broken-react">Broken React</a>
+        <a class="broken" href="/broken-svelte">Broken Svelte</a>
+        <a class="broken" href="/broken-vue">Broken Vue</a>
+        <a class="broken" href="/broken-angular">Broken Angular</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <h1>Something Went Wrong</h1>
+      <span class="error-badge">error.svelte</span>
+    </div>
+
+    <p class="section-desc">
+      This is the <strong>framework default</strong> Svelte error page. It renders
+      when a Svelte page throws during SSR.
+    </p>
+
+    <div class="error-box">
+      <pre>{message}</pre>
+    </div>
+
+    <a class="back-link" href="/">Back to Home</a>
+
+    <p class="footer">
+      <img alt="" src="/assets/png/absolutejs-temp.png" />
+      Powered by
+      <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
+        >AbsoluteJS</a
+      >
+    </p>
+  </main>
+</div>
 
 <style>
   :global(*, *::before, *::after) {
@@ -81,6 +87,12 @@
     line-height: 1.6;
     display: flex;
     flex-direction: column;
+  }
+  .page-shell {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 100%;
   }
   header {
     position: sticky;

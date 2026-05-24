@@ -215,7 +215,7 @@ export const voiceConfig = createVoiceConfiguration<
     operationsRecordHref: "/voice-operations/:sessionId",
     render: renderVoiceSessionsWithSupportActions,
     store: deliveryTraceStore,
-    replayHref: (session) => `/sessions/${  session.sessionId}`,
+    replayHref: (session) => `/sessions/${session.sessionId}`,
   },
   sessionReplay: {
     htmlPath: "/sessions/:sessionId",
@@ -725,7 +725,7 @@ export const voiceConfig = createVoiceConfiguration<
         const runtimeReport =
           await refreshRealCallEvidenceRuntimeAfterRecovery();
         const report = runtimeReport.history;
-        const {actionableProfiles} = report.defaults.summary;
+        const { actionableProfiles } = report.defaults.summary;
         const passing = actionableProfiles >= 2;
 
         return {

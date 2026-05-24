@@ -57,7 +57,11 @@ export const VoicePipelineCard = (props: VoicePipelineCardProps) => {
       >
         {VOICE_SPEECH_ENGINES.map((engine) => (
           <button
-            aria-pressed={props.speechEngine === engine.id} className={props.speechEngine === engine.id ? "is-active" : ""} key={engine.id} onClick={() => props.changeSpeechEngine(engine.id)} type="button"
+            aria-pressed={props.speechEngine === engine.id}
+            className={props.speechEngine === engine.id ? "is-active" : ""}
+            key={engine.id}
+            onClick={() => props.changeSpeechEngine(engine.id)}
+            type="button"
           >
             {engine.label}
           </button>
@@ -71,30 +75,31 @@ export const VoicePipelineCard = (props: VoicePipelineCardProps) => {
             <p className="voice-stage-note">
               Folded into OpenAI Realtime (direct speech-to-speech).
             </p>
-          ) : (
-            <>
-              <p className="voice-stage-providers">
-                Deepgram <small>primary</small> · AssemblyAI{" "}
-                <small>fallback</small>
-              </p>
-              <label className="voice-stage-control">
-                <span>Routing</span>
-                <select
-                  onChange={(event) =>
-                    props.changeRoutingMode(
-                      event.currentTarget.value as VoiceRoutingMode,
-                    )
-                  }
-                  value={props.routingMode}
-                >
-                  {VOICE_ROUTING_MODES.map((routing) => (
-                    <option key={routing.id} value={routing.id}>
-                      {routing.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </>
+          ) : null}
+          {isRealtime ? null : (
+            <p className="voice-stage-providers">
+              Deepgram <small>primary</small> · AssemblyAI{" "}
+              <small>fallback</small>
+            </p>
+          )}
+          {isRealtime ? null : (
+            <label className="voice-stage-control">
+              <span>Routing</span>
+              <select
+                onChange={(event) =>
+                  props.changeRoutingMode(
+                    event.currentTarget.value as VoiceRoutingMode,
+                  )
+                }
+                value={props.routingMode}
+              >
+                {VOICE_ROUTING_MODES.map((routing) => (
+                  <option key={routing.id} value={routing.id}>
+                    {routing.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           )}
         </section>
 

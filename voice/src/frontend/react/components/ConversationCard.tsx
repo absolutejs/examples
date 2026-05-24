@@ -130,24 +130,27 @@ export const ConversationCard = (props: ConversationCardProps) => (
         <button className="primary" onClick={() => void props.stopMic()}>
           {VOICE_DEMO_STOP_LABEL}
         </button>
-      ) : (
-        <>
-          <button
-            className="primary"
-            onClick={() => void props.startMode("guided")}
-          >
-            {VOICE_DEMO_GUIDED_LABEL}
-          </button>
-          <button onClick={() => void props.startMode("general")}>
-            {VOICE_DEMO_GENERAL_LABEL}
-          </button>
-        </>
+      ) : null}
+      {props.isCapturing ? null : (
+        <button
+          className="primary"
+          onClick={() => void props.startMode("guided")}
+        >
+          {VOICE_DEMO_GUIDED_LABEL}
+        </button>
+      )}
+      {props.isCapturing ? null : (
+        <button onClick={() => void props.startMode("general")}>
+          {VOICE_DEMO_GENERAL_LABEL}
+        </button>
       )}
     </div>
     <div className="voice-actions">
       {VOICE_CALL_CONTROL_ACTIONS.map((action) => (
         <button
-          key={action.action} onClick={() => props.runCallControl(action)} type="button"
+          key={action.action}
+          onClick={() => props.runCallControl(action)}
+          type="button"
         >
           {action.label}
         </button>

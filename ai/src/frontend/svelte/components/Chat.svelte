@@ -234,119 +234,127 @@
   };
 </script>
 
-<header>
-  <div class="header-left">
-    <button
-      class="sidebar-toggle"
-      onclick={() => (sidebarOpen = !sidebarOpen)}
-      title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-      type="button"
-    >
-      <svg
-        fill="none"
-        height="16"
-        stroke="currentColor"
-        stroke-linecap="round"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-        width="16"
+<div class="chat-shell">
+  <header>
+    <div class="header-left">
+      <button
+        class="sidebar-toggle"
+        onclick={() => (sidebarOpen = !sidebarOpen)}
+        title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+        type="button"
       >
-        <rect height="18" rx="2" width="18" x="3" y="3" />
-        <line x1="9" x2="9" y1="3" y2="21" />
-      </svg>
-    </button>
-    <a class="logo" href="/">
-      <img alt="AbsoluteJS" height="24" src="/assets/png/absolutejs-temp.png" />
-      AbsoluteJS
-    </a>
-  </div>
-  <nav>
-    <a href="/">React</a>
-    <a class="active" href="/svelte">Svelte</a>
-    <a href="/vue">Vue</a>
-    <a href="/angular">Angular</a>
-    <a href="/html">HTML</a>
-    <a href="/htmx">HTMX</a>
-  </nav>
-</header>
-
-<div class="app-layout">
-  <Sidebar
-    activeConversationId={activeConvId}
-    onDeleteConversation={handleDeleteConversation}
-    onNewChat={handleNewChat}
-    onSelectConversation={handleSelectConversation}
-    open={sidebarOpen}
-  />
-  <div class="app-main" bind:this={appMainEl}>
-    <div class="chat-container" class:has-messages={hasMessages}>
-      {#if !hasMessages}
-        <EmptyState onSendMessage={sendMessage} suggestions={SUGGESTIONS}>
-          {#snippet inputBox()}
-            <ChatInput
-              {hasMessages}
-              {isStreaming}
-              onCancel={() => stream.cancel()}
-              onProcessFiles={processFiles}
-              onRemoveFile={removePendingFile}
-              onSelectModel={(m) => (selectedModel = m)}
-              onSubmit={handleSubmit}
-              {pendingFiles}
-              {selectedModel}
-              {supportsAttachments}
-              {supportsPdf}
-              {supportsVision}
-            />
-          {/snippet}
-        </EmptyState>
-      {:else}
-        <div class="messages">
-          {#each messages as msg, idx (msg.id)}
-            <MessageItem
-              {copiedId}
-              message={msg}
-              messageIndex={idx}
-              onCopy={handleCopy}
-              onRetry={handleRetry}
-              {selectedModel}
-            />
-          {/each}
-          {#if showWaitingIndicator}
-            <div class="message" data-role="assistant">
-              <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          {/if}
-          <div bind:this={messagesEndEl}></div>
-        </div>
-        {#if error}
-          <div class="error-banner">Error: {error}</div>
-        {/if}
-        <ChatInput
-          {hasMessages}
-          {isStreaming}
-          onCancel={() => stream.cancel()}
-          onProcessFiles={processFiles}
-          onRemoveFile={removePendingFile}
-          onSelectModel={(m) => (selectedModel = m)}
-          onSubmit={handleSubmit}
-          {pendingFiles}
-          {selectedModel}
-          {supportsAttachments}
-          {supportsPdf}
-          {supportsVision}
+        <svg
+          fill="none"
+          height="16"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="16"
+        >
+          <rect height="18" rx="2" width="18" x="3" y="3" />
+          <line x1="9" x2="9" y1="3" y2="21" />
+        </svg>
+      </button>
+      <a class="logo" href="/">
+        <img
+          alt="AbsoluteJS"
+          height="24"
+          src="/assets/png/absolutejs-temp.png"
         />
-      {/if}
+        AbsoluteJS
+      </a>
     </div>
-    <p class="footer">
-      <img src="/assets/png/absolutejs-temp.png" alt="" />
-      Powered by
-      <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
-        >AbsoluteJS</a
-      >
-    </p>
+    <nav>
+      <a href="/">React</a>
+      <a class="active" href="/svelte">Svelte</a>
+      <a href="/vue">Vue</a>
+      <a href="/angular">Angular</a>
+      <a href="/html">HTML</a>
+      <a href="/htmx">HTMX</a>
+    </nav>
+  </header>
+
+  <div class="app-layout">
+    <Sidebar
+      activeConversationId={activeConvId}
+      onDeleteConversation={handleDeleteConversation}
+      onNewChat={handleNewChat}
+      onSelectConversation={handleSelectConversation}
+      open={sidebarOpen}
+    />
+    <div class="app-main" bind:this={appMainEl}>
+      <div class="chat-container" class:has-messages={hasMessages}>
+        {#if !hasMessages}
+          <EmptyState onSendMessage={sendMessage} suggestions={SUGGESTIONS}>
+            {#snippet inputBox()}
+              <ChatInput
+                {hasMessages}
+                {isStreaming}
+                onCancel={() => stream.cancel()}
+                onProcessFiles={processFiles}
+                onRemoveFile={removePendingFile}
+                onSelectModel={(m) => (selectedModel = m)}
+                onSubmit={handleSubmit}
+                {pendingFiles}
+                {selectedModel}
+                {supportsAttachments}
+                {supportsPdf}
+                {supportsVision}
+              />
+            {/snippet}
+          </EmptyState>
+        {:else}
+          <div class="messages">
+            {#each messages as msg, idx (msg.id)}
+              <MessageItem
+                {copiedId}
+                message={msg}
+                messageIndex={idx}
+                onCopy={handleCopy}
+                onRetry={handleRetry}
+                {selectedModel}
+              />
+            {/each}
+            {#if showWaitingIndicator}
+              <div class="message" data-role="assistant">
+                <div class="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            {/if}
+            <div bind:this={messagesEndEl}></div>
+          </div>
+          {#if error}
+            <div class="error-banner">Error: {error}</div>
+          {/if}
+          <ChatInput
+            {hasMessages}
+            {isStreaming}
+            onCancel={() => stream.cancel()}
+            onProcessFiles={processFiles}
+            onRemoveFile={removePendingFile}
+            onSelectModel={(m) => (selectedModel = m)}
+            onSubmit={handleSubmit}
+            {pendingFiles}
+            {selectedModel}
+            {supportsAttachments}
+            {supportsPdf}
+            {supportsVision}
+          />
+        {/if}
+      </div>
+      <p class="footer">
+        <img src="/assets/png/absolutejs-temp.png" alt="" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          target="_blank"
+          rel="noopener noreferrer">AbsoluteJS</a
+        >
+      </p>
+    </div>
   </div>
 </div>

@@ -2781,48 +2781,52 @@ export const ReactRAGVectorDemoFullLabApp = ({
                     >
                       <h4>Stable handoff</h4>
                       <div className="demo-key-value-grid">
-                        {stableHandoff ? (
-                          <>
-                            <div className="demo-key-value-row">
-                              <span>
-                                {stableHandoff.sourceRolloutLabel} {"->"}{" "}
-                                {stableHandoff.targetRolloutLabel}
-                              </span>
-                              <strong>
-                                {stableHandoff.readyForHandoff
-                                  ? "ready"
-                                  : "blocked"}
-                              </strong>
-                            </div>
-                            <p className="demo-metadata">
-                              {stableHandoff.candidateRetrievalId
-                                ? `candidate ${stableHandoff.candidateRetrievalId}`
-                                : "No candidate retrieval is attached to the handoff yet."}
-                              {stableHandoffDecision?.kind
-                                ? ` · latest ${stableHandoffDecision.kind}`
-                                : ""}
+                        {stableHandoff && (
+                          <div className="demo-key-value-row">
+                            <span>
+                              {stableHandoff.sourceRolloutLabel} {"->"}{" "}
+                              {stableHandoff.targetRolloutLabel}
+                            </span>
+                            <strong>
+                              {stableHandoff.readyForHandoff
+                                ? "ready"
+                                : "blocked"}
+                            </strong>
+                          </div>
+                        )}
+                        {stableHandoff && (
+                          <p className="demo-metadata">
+                            {stableHandoff.candidateRetrievalId
+                              ? `candidate ${stableHandoff.candidateRetrievalId}`
+                              : "No candidate retrieval is attached to the handoff yet."}
+                            {stableHandoffDecision?.kind
+                              ? ` · latest ${stableHandoffDecision.kind}`
+                              : ""}
+                          </p>
+                        )}
+                        {stableHandoff &&
+                          stableHandoffDisplayReasons.map((reason) => (
+                            <p
+                              className="demo-metadata"
+                              key={`stable-handoff-reason-${reason}`}
+                            >
+                              {reason}
                             </p>
-                            {stableHandoffDisplayReasons.map((reason) => (
-                              <p
-                                className="demo-metadata"
-                                key={`stable-handoff-reason-${reason}`}
-                              >
-                                {reason}
-                              </p>
-                            ))}
-                            {stableHandoffAutoComplete ? (
-                              <p className="demo-metadata">
-                                {stableHandoffAutoCompleteLabel}
-                              </p>
-                            ) : null}
-                            <div className="demo-key-value-row">
-                              <span>Drift events</span>
-                              <strong>
-                                {stableHandoffDrift?.totalCount ?? 0}
-                              </strong>
-                            </div>
-                          </>
-                        ) : (
+                          ))}
+                        {stableHandoff && stableHandoffAutoComplete ? (
+                          <p className="demo-metadata">
+                            {stableHandoffAutoCompleteLabel}
+                          </p>
+                        ) : null}
+                        {stableHandoff && (
+                          <div className="demo-key-value-row">
+                            <span>Drift events</span>
+                            <strong>
+                              {stableHandoffDrift?.totalCount ?? 0}
+                            </strong>
+                          </div>
+                        )}
+                        {!stableHandoff && (
                           <p className="demo-metadata">
                             No stable handoff posture is available yet.
                           </p>
@@ -3094,21 +3098,21 @@ export const ReactRAGVectorDemoFullLabApp = ({
                   </button>
                 </div>
                 {recentQueries.length > 0 && (
-                  <>
-                    <p className="demo-section-caption">Recent Searches</p>
-                    <div className="demo-badge-row">
-                      {recentQueries.map((entry) => (
-                        <button
-                          className="demo-state-chip"
-                          key={`${entry.label}-${entry.state.source}-${entry.state.documentId}-${entry.state.kind}`}
-                          onClick={() => rerunRecentQuery(entry.state)}
-                          type="button"
-                        >
-                          {entry.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
+                  <p className="demo-section-caption">Recent Searches</p>
+                )}
+                {recentQueries.length > 0 && (
+                  <div className="demo-badge-row">
+                    {recentQueries.map((entry) => (
+                      <button
+                        className="demo-state-chip"
+                        key={`${entry.label}-${entry.state.source}-${entry.state.documentId}-${entry.state.kind}`}
+                        onClick={() => rerunRecentQuery(entry.state)}
+                        type="button"
+                      >
+                        {entry.label}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
               {searchError && <p className="demo-error">{searchError}</p>}
@@ -3444,37 +3448,37 @@ export const ReactRAGVectorDemoFullLabApp = ({
                   <p className="demo-error">{rag.evaluate.error}</p>
                 )}
                 {evaluation && (
-                  <>
-                    <p className="demo-metadata">
-                      Benchmark summary: {formatEvaluationSummary(evaluation)}
-                    </p>
-                    <div className="demo-result-grid">
-                      {evaluation.cases.map((entry) => (
-                        <article
-                          className={`demo-result-item demo-evaluation-card demo-evaluation-${entry.status}`}
-                          key={entry.caseId}
-                        >
-                          <h4>{entry.label ?? entry.caseId}</h4>
-                          <p className="demo-result-source">{entry.query}</p>
-                          <p className="demo-evaluation-status">
-                            {entry.status.toUpperCase()}
-                          </p>
-                          <p className="demo-metadata">
-                            {formatEvaluationCaseSummary(entry)}
-                          </p>
-                          <p className="demo-metadata">
-                            expected: {formatEvaluationExpected(entry)}
-                          </p>
-                          <p className="demo-metadata">
-                            retrieved: {formatEvaluationRetrieved(entry)}
-                          </p>
-                          <p className="demo-result-text">
-                            missing: {formatEvaluationMissing(entry)}
-                          </p>
-                        </article>
-                      ))}
-                    </div>
-                  </>
+                  <p className="demo-metadata">
+                    Benchmark summary: {formatEvaluationSummary(evaluation)}
+                  </p>
+                )}
+                {evaluation && (
+                  <div className="demo-result-grid">
+                    {evaluation.cases.map((entry) => (
+                      <article
+                        className={`demo-result-item demo-evaluation-card demo-evaluation-${entry.status}`}
+                        key={entry.caseId}
+                      >
+                        <h4>{entry.label ?? entry.caseId}</h4>
+                        <p className="demo-result-source">{entry.query}</p>
+                        <p className="demo-evaluation-status">
+                          {entry.status.toUpperCase()}
+                        </p>
+                        <p className="demo-metadata">
+                          {formatEvaluationCaseSummary(entry)}
+                        </p>
+                        <p className="demo-metadata">
+                          expected: {formatEvaluationExpected(entry)}
+                        </p>
+                        <p className="demo-metadata">
+                          retrieved: {formatEvaluationRetrieved(entry)}
+                        </p>
+                        <p className="demo-result-text">
+                          missing: {formatEvaluationMissing(entry)}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -3598,223 +3602,265 @@ export const ReactRAGVectorDemoFullLabApp = ({
                     </p>
                   </article>
                 </div>
-                {qualityData ? (
-                  <>
-                    {qualityView === "overview" && (
-                      <div className="demo-result-grid">
-                        <article className="demo-result-item">
-                          <h4>Winners at a glance</h4>
-                          <div className="demo-key-value-grid">
-                            {formatQualityOverviewPresentation({
-                              groundingEvaluation:
-                                qualityData.groundingEvaluation,
-                              groundingProviderOverview:
-                                qualityData.providerGroundingComparison
-                                  ? formatGroundingProviderOverviewPresentation(
-                                      qualityData.providerGroundingComparison,
-                                    )
-                                  : undefined,
-                              rerankerComparison:
-                                qualityData.rerankerComparison,
-                              retrievalComparison:
-                                qualityData.retrievalComparison,
-                            }).rows.map((row) => (
+                {qualityData && qualityView === "overview" && (
+                  <div className="demo-result-grid">
+                    <article className="demo-result-item">
+                      <h4>Winners at a glance</h4>
+                      <div className="demo-key-value-grid">
+                        {formatQualityOverviewPresentation({
+                          groundingEvaluation: qualityData.groundingEvaluation,
+                          groundingProviderOverview:
+                            qualityData.providerGroundingComparison
+                              ? formatGroundingProviderOverviewPresentation(
+                                  qualityData.providerGroundingComparison,
+                                )
+                              : undefined,
+                          rerankerComparison: qualityData.rerankerComparison,
+                          retrievalComparison: qualityData.retrievalComparison,
+                        }).rows.map((row) => (
+                          <div
+                            className="demo-key-value-row"
+                            key={`${row.label}:${row.value}`}
+                          >
+                            <span>{row.label}</span>
+                            <strong>{row.value}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                    <article className="demo-result-item">
+                      <h4>Why this matters</h4>
+                      <div className="demo-insight-stack">
+                        {formatQualityOverviewNotes().map((insight) => (
+                          <p className="demo-insight-card" key={insight}>
+                            {insight}
+                          </p>
+                        ))}
+                      </div>
+                    </article>
+                  </div>
+                )}
+                {qualityData && qualityView === "strategies" && (
+                  <div className="demo-result-grid">
+                    {formatRetrievalComparisonPresentations(
+                      qualityData.retrievalComparison,
+                    ).map((card) => (
+                      <article
+                        className="demo-result-item demo-score-card"
+                        key={card.id}
+                      >
+                        <h4>{card.label}</h4>
+                        <p className="demo-score-headline">{card.summary}</p>
+                        <div className="demo-key-value-grid demo-trace-summary-grid">
+                          {card.traceSummaryRows.map((row) => (
+                            <div
+                              className="demo-key-value-row"
+                              key={`${card.id}-${row.label}`}
+                            >
+                              <span>{row.label}</span>
+                              <strong>{row.value}</strong>
+                            </div>
+                          ))}
+                        </div>
+                        <details className="demo-collapsible demo-trace-diff">
+                          <summary>
+                            <span>Trace diff vs leader</span>
+                            <strong>{card.diffLabel}</strong>
+                          </summary>
+                          <div className="demo-collapsible-content demo-trace-diff-grid">
+                            {card.diffRows.map((row) => (
                               <div
                                 className="demo-key-value-row"
-                                key={`${row.label}:${row.value}`}
+                                key={`${card.id}-diff-${row.label}`}
                               >
                                 <span>{row.label}</span>
                                 <strong>{row.value}</strong>
                               </div>
                             ))}
                           </div>
-                        </article>
-                        <article className="demo-result-item">
-                          <h4>Why this matters</h4>
-                          <div className="demo-insight-stack">
-                            {formatQualityOverviewNotes().map((insight) => (
-                              <p className="demo-insight-card" key={insight}>
-                                {insight}
-                              </p>
-                            ))}
-                          </div>
-                        </article>
-                      </div>
-                    )}
-                    {qualityView === "strategies" && (
-                      <>
-                        <div className="demo-result-grid">
-                          {formatRetrievalComparisonPresentations(
-                            qualityData.retrievalComparison,
-                          ).map((card) => (
-                            <article
-                              className="demo-result-item demo-score-card"
-                              key={card.id}
+                        </details>
+                      </article>
+                    ))}
+                  </div>
+                )}
+                {qualityData && qualityView === "strategies" && (
+                  <div className="demo-result-grid">
+                    {formatRerankerComparisonPresentations(
+                      qualityData.rerankerComparison,
+                    ).map((card) => (
+                      <article
+                        className="demo-result-item demo-score-card"
+                        key={card.id}
+                      >
+                        <h4>{card.label}</h4>
+                        <p className="demo-score-headline">{card.summary}</p>
+                        <div className="demo-key-value-grid demo-trace-summary-grid">
+                          {card.traceSummaryRows.map((row) => (
+                            <div
+                              className="demo-key-value-row"
+                              key={`${card.id}-${row.label}`}
                             >
-                              <h4>{card.label}</h4>
-                              <p className="demo-score-headline">
-                                {card.summary}
-                              </p>
-                              <div className="demo-key-value-grid demo-trace-summary-grid">
-                                {card.traceSummaryRows.map((row) => (
-                                  <div
-                                    className="demo-key-value-row"
-                                    key={`${card.id}-${row.label}`}
-                                  >
-                                    <span>{row.label}</span>
-                                    <strong>{row.value}</strong>
-                                  </div>
-                                ))}
-                              </div>
-                              <details className="demo-collapsible demo-trace-diff">
-                                <summary>
-                                  <span>Trace diff vs leader</span>
-                                  <strong>{card.diffLabel}</strong>
-                                </summary>
-                                <div className="demo-collapsible-content demo-trace-diff-grid">
-                                  {card.diffRows.map((row) => (
-                                    <div
-                                      className="demo-key-value-row"
-                                      key={`${card.id}-diff-${row.label}`}
-                                    >
-                                      <span>{row.label}</span>
-                                      <strong>{row.value}</strong>
-                                    </div>
-                                  ))}
-                                </div>
-                              </details>
-                            </article>
+                              <span>{row.label}</span>
+                              <strong>{row.value}</strong>
+                            </div>
                           ))}
                         </div>
-                        <div className="demo-result-grid">
-                          {formatRerankerComparisonPresentations(
-                            qualityData.rerankerComparison,
-                          ).map((card) => (
-                            <article
-                              className="demo-result-item demo-score-card"
-                              key={card.id}
-                            >
-                              <h4>{card.label}</h4>
-                              <p className="demo-score-headline">
-                                {card.summary}
+                        <details className="demo-collapsible demo-trace-diff">
+                          <summary>
+                            <span>Trace diff vs leader</span>
+                            <strong>{card.diffLabel}</strong>
+                          </summary>
+                          <div className="demo-collapsible-content demo-trace-diff-grid">
+                            {card.diffRows.map((row) => (
+                              <div
+                                className="demo-key-value-row"
+                                key={`${card.id}-diff-${row.label}`}
+                              >
+                                <span>{row.label}</span>
+                                <strong>{row.value}</strong>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      </article>
+                    ))}
+                  </div>
+                )}
+                {qualityData && qualityView === "grounding" && (
+                  <div className="demo-result-grid">
+                    {qualityData.groundingEvaluation.cases.map((entry) => (
+                      <details
+                        className="demo-result-item demo-collapsible"
+                        key={`grounding-${entry.caseId}`}
+                      >
+                        <summary>
+                          <span>{entry.label ?? entry.caseId}</span>
+                          <strong>
+                            {formatGroundingEvaluationCase(entry)}
+                          </strong>
+                        </summary>
+                        <div className="demo-collapsible-content">
+                          {formatGroundingEvaluationDetails(entry).map(
+                            (line) => (
+                              <p
+                                className="demo-metadata"
+                                key={`${entry.caseId}-${line}`}
+                              >
+                                {line}
                               </p>
-                              <div className="demo-key-value-grid demo-trace-summary-grid">
-                                {card.traceSummaryRows.map((row) => (
-                                  <div
-                                    className="demo-key-value-row"
-                                    key={`${card.id}-${row.label}`}
-                                  >
-                                    <span>{row.label}</span>
-                                    <strong>{row.value}</strong>
-                                  </div>
-                                ))}
+                            ),
+                          )}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                )}
+                {qualityData &&
+                  qualityView === "grounding" &&
+                  qualityData.providerGroundingComparison && (
+                    <div className="demo-result-grid">
+                      {formatGroundingProviderPresentations(
+                        qualityData.providerGroundingComparison.entries,
+                      ).map((card) => (
+                        <article
+                          className="demo-result-item demo-score-card"
+                          key={`provider-grounding-${card.id}`}
+                        >
+                          <h4>{card.label}</h4>
+                          <p className="demo-score-headline">{card.summary}</p>
+                        </article>
+                      ))}
+                      <article className="demo-result-item">
+                        <h4>Hardest cases</h4>
+                        <div className="demo-pill-row">
+                          {qualityData.providerGroundingComparison.difficultyLeaderboard.map(
+                            (entry) => (
+                              <span
+                                className="demo-pill"
+                                key={`provider-grounding-difficulty-${entry.caseId}`}
+                              >
+                                {formatGroundingCaseDifficultyEntry(entry)}
+                              </span>
+                            ),
+                          )}
+                        </div>
+                      </article>
+                    </div>
+                  )}
+                {qualityData &&
+                  qualityView === "grounding" &&
+                  qualityData.providerGroundingComparison && (
+                    <div className="demo-result-grid">
+                      {formatGroundingProviderCasePresentations(
+                        qualityData.providerGroundingComparison.caseComparisons,
+                      ).map((card) => (
+                        <details
+                          className="demo-result-item demo-collapsible"
+                          key={`provider-grounding-case-${card.caseId}`}
+                        >
+                          <summary>
+                            <span>{card.label}</span>
+                            <strong>{card.summary}</strong>
+                          </summary>
+                          <div className="demo-collapsible-content">
+                            {card.rows.map((row) => (
+                              <div
+                                className="demo-key-value-row"
+                                key={`${card.caseId}-${row.label}`}
+                              >
+                                <span>{row.label}</span>
+                                <strong>{row.value}</strong>
                               </div>
-                              <details className="demo-collapsible demo-trace-diff">
-                                <summary>
-                                  <span>Trace diff vs leader</span>
-                                  <strong>{card.diffLabel}</strong>
-                                </summary>
-                                <div className="demo-collapsible-content demo-trace-diff-grid">
-                                  {card.diffRows.map((row) => (
-                                    <div
-                                      className="demo-key-value-row"
-                                      key={`${card.id}-diff-${row.label}`}
-                                    >
-                                      <span>{row.label}</span>
-                                      <strong>{row.value}</strong>
-                                    </div>
-                                  ))}
-                                </div>
-                              </details>
-                            </article>
+                            ))}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  )}
+                {qualityData && qualityView === "history" && (
+                  <div className="demo-result-grid">
+                    {qualityData.retrievalComparison.entries.map((entry) => (
+                      <details
+                        className="demo-result-item demo-collapsible"
+                        key={`retrieval-history-${entry.retrievalId}`}
+                      >
+                        <summary>
+                          <span>{entry.label} history</span>
+                          <strong>
+                            {formatEvaluationHistorySummary(
+                              qualityData.retrievalHistories[entry.retrievalId],
+                            )[0] ?? "No runs yet"}
+                          </strong>
+                        </summary>
+                        <div className="demo-collapsible-content">
+                          {formatEvaluationHistoryRows(
+                            qualityData.retrievalHistories[entry.retrievalId],
+                          ).map((row) => (
+                            <div
+                              className="demo-key-value-row"
+                              key={`${entry.retrievalId}-${row.label}`}
+                            >
+                              <span>{row.label}</span>
+                              <strong>{row.value}</strong>
+                            </div>
                           ))}
-                        </div>
-                      </>
-                    )}
-                    {qualityView === "grounding" && (
-                      <>
-                        <div className="demo-result-grid">
-                          {qualityData.groundingEvaluation.cases.map(
-                            (entry) => (
+                          <div className="demo-result-grid">
+                            {formatEvaluationHistoryTracePresentations(
+                              qualityData.retrievalHistories[entry.retrievalId],
+                            ).map((traceCase) => (
                               <details
                                 className="demo-result-item demo-collapsible"
-                                key={`grounding-${entry.caseId}`}
+                                key={`${entry.retrievalId}-trace-${traceCase.caseId}`}
                               >
                                 <summary>
-                                  <span>{entry.label ?? entry.caseId}</span>
-                                  <strong>
-                                    {formatGroundingEvaluationCase(entry)}
-                                  </strong>
+                                  <span>{traceCase.label}</span>
+                                  <strong>{traceCase.summary}</strong>
                                 </summary>
                                 <div className="demo-collapsible-content">
-                                  {formatGroundingEvaluationDetails(entry).map(
-                                    (line) => (
-                                      <p
-                                        className="demo-metadata"
-                                        key={`${entry.caseId}-${line}`}
-                                      >
-                                        {line}
-                                      </p>
-                                    ),
-                                  )}
-                                </div>
-                              </details>
-                            ),
-                          )}
-                        </div>
-                        {qualityData.providerGroundingComparison && (
-                          <div className="demo-result-grid">
-                            {formatGroundingProviderPresentations(
-                              qualityData.providerGroundingComparison.entries,
-                            ).map((card) => (
-                              <article
-                                className="demo-result-item demo-score-card"
-                                key={`provider-grounding-${card.id}`}
-                              >
-                                <h4>{card.label}</h4>
-                                <p className="demo-score-headline">
-                                  {card.summary}
-                                </p>
-                              </article>
-                            ))}
-                            <article className="demo-result-item">
-                              <h4>Hardest cases</h4>
-                              <div className="demo-pill-row">
-                                {qualityData.providerGroundingComparison.difficultyLeaderboard.map(
-                                  (entry) => (
-                                    <span
-                                      className="demo-pill"
-                                      key={`provider-grounding-difficulty-${entry.caseId}`}
-                                    >
-                                      {formatGroundingCaseDifficultyEntry(
-                                        entry,
-                                      )}
-                                    </span>
-                                  ),
-                                )}
-                              </div>
-                            </article>
-                          </div>
-                        )}
-                        {qualityData.providerGroundingComparison && (
-                          <div className="demo-result-grid">
-                            {formatGroundingProviderCasePresentations(
-                              qualityData.providerGroundingComparison
-                                .caseComparisons,
-                            ).map((card) => (
-                              <details
-                                className="demo-result-item demo-collapsible"
-                                key={`provider-grounding-case-${card.caseId}`}
-                              >
-                                <summary>
-                                  <span>{card.label}</span>
-                                  <strong>{card.summary}</strong>
-                                </summary>
-                                <div className="demo-collapsible-content">
-                                  {card.rows.map((row) => (
+                                  {traceCase.rows.map((row) => (
                                     <div
                                       className="demo-key-value-row"
-                                      key={`${card.caseId}-${row.label}`}
+                                      key={`${entry.retrievalId}-${traceCase.caseId}-${row.label}`}
                                     >
                                       <span>{row.label}</span>
                                       <strong>{row.value}</strong>
@@ -3824,232 +3870,161 @@ export const ReactRAGVectorDemoFullLabApp = ({
                               </details>
                             ))}
                           </div>
-                        )}
-                      </>
-                    )}
-                    {qualityView === "history" && (
-                      <>
-                        <div className="demo-result-grid">
-                          {qualityData.retrievalComparison.entries.map(
-                            (entry) => (
-                              <details
-                                className="demo-result-item demo-collapsible"
-                                key={`retrieval-history-${entry.retrievalId}`}
-                              >
-                                <summary>
-                                  <span>{entry.label} history</span>
-                                  <strong>
-                                    {formatEvaluationHistorySummary(
-                                      qualityData.retrievalHistories[
-                                        entry.retrievalId
-                                      ],
-                                    )[0] ?? "No runs yet"}
-                                  </strong>
-                                </summary>
-                                <div className="demo-collapsible-content">
-                                  {formatEvaluationHistoryRows(
-                                    qualityData.retrievalHistories[
-                                      entry.retrievalId
-                                    ],
-                                  ).map((row) => (
-                                    <div
-                                      className="demo-key-value-row"
-                                      key={`${entry.retrievalId}-${row.label}`}
-                                    >
-                                      <span>{row.label}</span>
-                                      <strong>{row.value}</strong>
-                                    </div>
-                                  ))}
-                                  <div className="demo-result-grid">
-                                    {formatEvaluationHistoryTracePresentations(
-                                      qualityData.retrievalHistories[
-                                        entry.retrievalId
-                                      ],
-                                    ).map((traceCase) => (
-                                      <details
-                                        className="demo-result-item demo-collapsible"
-                                        key={`${entry.retrievalId}-trace-${traceCase.caseId}`}
-                                      >
-                                        <summary>
-                                          <span>{traceCase.label}</span>
-                                          <strong>{traceCase.summary}</strong>
-                                        </summary>
-                                        <div className="demo-collapsible-content">
-                                          {traceCase.rows.map((row) => (
-                                            <div
-                                              className="demo-key-value-row"
-                                              key={`${entry.retrievalId}-${traceCase.caseId}-${row.label}`}
-                                            >
-                                              <span>{row.label}</span>
-                                              <strong>{row.value}</strong>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </details>
-                                    ))}
-                                  </div>
-                                </div>
-                              </details>
-                            ),
-                          )}
                         </div>
-                        <div className="demo-result-grid">
-                          {qualityData.rerankerComparison.entries.map(
-                            (entry) => (
-                              <details
-                                className="demo-result-item demo-collapsible"
-                                key={`reranker-history-${entry.rerankerId}`}
-                              >
-                                <summary>
-                                  <span>{entry.label} history</span>
-                                  <strong>
-                                    {formatEvaluationHistorySummary(
-                                      qualityData.rerankerHistories[
-                                        entry.rerankerId
-                                      ],
-                                    )[0] ?? "No runs yet"}
-                                  </strong>
-                                </summary>
-                                <div className="demo-collapsible-content">
-                                  {formatEvaluationHistoryRows(
-                                    qualityData.rerankerHistories[
-                                      entry.rerankerId
-                                    ],
-                                  ).map((row) => (
-                                    <div
-                                      className="demo-key-value-row"
-                                      key={`${entry.rerankerId}-${row.label}`}
-                                    >
-                                      <span>{row.label}</span>
-                                      <strong>{row.value}</strong>
-                                    </div>
-                                  ))}
-                                  <div className="demo-result-grid">
-                                    {formatEvaluationHistoryTracePresentations(
-                                      qualityData.rerankerHistories[
-                                        entry.rerankerId
-                                      ],
-                                    ).map((traceCase) => (
-                                      <details
-                                        className="demo-result-item demo-collapsible"
-                                        key={`${entry.rerankerId}-trace-${traceCase.caseId}`}
-                                      >
-                                        <summary>
-                                          <span>{traceCase.label}</span>
-                                          <strong>{traceCase.summary}</strong>
-                                        </summary>
-                                        <div className="demo-collapsible-content">
-                                          {traceCase.rows.map((row) => (
-                                            <div
-                                              className="demo-key-value-row"
-                                              key={`${entry.rerankerId}-${traceCase.caseId}-${row.label}`}
-                                            >
-                                              <span>{row.label}</span>
-                                              <strong>{row.value}</strong>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </details>
-                                    ))}
-                                  </div>
-                                </div>
-                              </details>
-                            ),
-                          )}
-                        </div>
-                        {qualityData.providerGroundingComparison && (
+                      </details>
+                    ))}
+                  </div>
+                )}
+                {qualityData && qualityView === "history" && (
+                  <div className="demo-result-grid">
+                    {qualityData.rerankerComparison.entries.map((entry) => (
+                      <details
+                        className="demo-result-item demo-collapsible"
+                        key={`reranker-history-${entry.rerankerId}`}
+                      >
+                        <summary>
+                          <span>{entry.label} history</span>
+                          <strong>
+                            {formatEvaluationHistorySummary(
+                              qualityData.rerankerHistories[entry.rerankerId],
+                            )[0] ?? "No runs yet"}
+                          </strong>
+                        </summary>
+                        <div className="demo-collapsible-content">
+                          {formatEvaluationHistoryRows(
+                            qualityData.rerankerHistories[entry.rerankerId],
+                          ).map((row) => (
+                            <div
+                              className="demo-key-value-row"
+                              key={`${entry.rerankerId}-${row.label}`}
+                            >
+                              <span>{row.label}</span>
+                              <strong>{row.value}</strong>
+                            </div>
+                          ))}
                           <div className="demo-result-grid">
-                            {qualityData.providerGroundingComparison.entries.map(
-                              (entry) => (
-                                <details
-                                  className="demo-result-item demo-collapsible"
-                                  key={`provider-grounding-history-${entry.providerKey}`}
+                            {formatEvaluationHistoryTracePresentations(
+                              qualityData.rerankerHistories[entry.rerankerId],
+                            ).map((traceCase) => (
+                              <details
+                                className="demo-result-item demo-collapsible"
+                                key={`${entry.rerankerId}-trace-${traceCase.caseId}`}
+                              >
+                                <summary>
+                                  <span>{traceCase.label}</span>
+                                  <strong>{traceCase.summary}</strong>
+                                </summary>
+                                <div className="demo-collapsible-content">
+                                  {traceCase.rows.map((row) => (
+                                    <div
+                                      className="demo-key-value-row"
+                                      key={`${entry.rerankerId}-${traceCase.caseId}-${row.label}`}
+                                    >
+                                      <span>{row.label}</span>
+                                      <strong>{row.value}</strong>
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            ))}
+                          </div>
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                )}
+                {qualityData &&
+                  qualityView === "history" &&
+                  qualityData.providerGroundingComparison && (
+                    <div className="demo-result-grid">
+                      {qualityData.providerGroundingComparison.entries.map(
+                        (entry) => (
+                          <details
+                            className="demo-result-item demo-collapsible"
+                            key={`provider-grounding-history-${entry.providerKey}`}
+                          >
+                            <summary>
+                              <span>{entry.label} history</span>
+                              <strong>
+                                {formatGroundingHistorySummary(
+                                  qualityData.providerGroundingHistories[
+                                    entry.providerKey
+                                  ],
+                                )[0] ?? "No runs yet"}
+                              </strong>
+                            </summary>
+                            <div className="demo-collapsible-content">
+                              {[
+                                ...formatGroundingHistoryDetails(
+                                  qualityData.providerGroundingHistories[
+                                    entry.providerKey
+                                  ],
+                                ),
+                              ].map((line) => (
+                                <p
+                                  className="demo-metadata"
+                                  key={`${entry.providerKey}-${line}`}
                                 >
-                                  <summary>
-                                    <span>{entry.label} history</span>
-                                    <strong>
-                                      {formatGroundingHistorySummary(
-                                        qualityData.providerGroundingHistories[
-                                          entry.providerKey
-                                        ],
-                                      )[0] ?? "No runs yet"}
-                                    </strong>
-                                  </summary>
-                                  <div className="demo-collapsible-content">
-                                    {[
-                                      ...formatGroundingHistoryDetails(
-                                        qualityData.providerGroundingHistories[
-                                          entry.providerKey
-                                        ],
-                                      ),
-                                    ].map((line) => (
-                                      <p
-                                        className="demo-metadata"
-                                        key={`${entry.providerKey}-${line}`}
-                                      >
-                                        {line}
-                                      </p>
-                                    ))}
-                                    <div className="demo-result-grid">
-                                      {formatGroundingHistorySnapshotPresentations(
-                                        qualityData.providerGroundingHistories[
-                                          entry.providerKey
-                                        ],
-                                      ).map((snapshot) => (
-                                        <details
-                                          className="demo-result-item demo-collapsible"
-                                          key={`${entry.providerKey}-snapshot-${snapshot.caseId}`}
+                                  {line}
+                                </p>
+                              ))}
+                              <div className="demo-result-grid">
+                                {formatGroundingHistorySnapshotPresentations(
+                                  qualityData.providerGroundingHistories[
+                                    entry.providerKey
+                                  ],
+                                ).map((snapshot) => (
+                                  <details
+                                    className="demo-result-item demo-collapsible"
+                                    key={`${entry.providerKey}-snapshot-${snapshot.caseId}`}
+                                  >
+                                    <summary>
+                                      <span>{snapshot.label}</span>
+                                      <strong>{snapshot.summary}</strong>
+                                    </summary>
+                                    <div className="demo-collapsible-content">
+                                      {snapshot.rows.map((row) => (
+                                        <div
+                                          className="demo-key-value-row"
+                                          key={`${entry.providerKey}-${snapshot.caseId}-${row.label}`}
                                         >
-                                          <summary>
-                                            <span>{snapshot.label}</span>
-                                            <strong>{snapshot.summary}</strong>
-                                          </summary>
-                                          <div className="demo-collapsible-content">
-                                            {snapshot.rows.map((row) => (
-                                              <div
-                                                className="demo-key-value-row"
-                                                key={`${entry.providerKey}-${snapshot.caseId}-${row.label}`}
-                                              >
-                                                <span>{row.label}</span>
-                                                <strong>{row.value}</strong>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </details>
+                                          <span>{row.label}</span>
+                                          <strong>{row.value}</strong>
+                                        </div>
                                       ))}
                                     </div>
-                                  </div>
-                                </details>
-                              ),
-                            )}
-                            <details className="demo-result-item demo-collapsible">
-                              <summary>
-                                <span>Grounding difficulty history</span>
-                                <strong>
-                                  {formatGroundingDifficultyHistorySummary(
-                                    qualityData.providerGroundingDifficultyHistory,
-                                  )[0] ?? "No history yet"}
-                                </strong>
-                              </summary>
-                              <div className="demo-collapsible-content">
-                                {formatGroundingDifficultyHistoryDetails(
-                                  qualityData.providerGroundingDifficultyHistory,
-                                ).map((line) => (
-                                  <p
-                                    className="demo-metadata"
-                                    key={`provider-grounding-difficulty-history-${line}`}
-                                  >
-                                    {line}
-                                  </p>
+                                  </details>
                                 ))}
                               </div>
-                            </details>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </>
-                ) : (
+                            </div>
+                          </details>
+                        ),
+                      )}
+                      <details className="demo-result-item demo-collapsible">
+                        <summary>
+                          <span>Grounding difficulty history</span>
+                          <strong>
+                            {formatGroundingDifficultyHistorySummary(
+                              qualityData.providerGroundingDifficultyHistory,
+                            )[0] ?? "No history yet"}
+                          </strong>
+                        </summary>
+                        <div className="demo-collapsible-content">
+                          {formatGroundingDifficultyHistoryDetails(
+                            qualityData.providerGroundingDifficultyHistory,
+                          ).map((line) => (
+                            <p
+                              className="demo-metadata"
+                              key={`provider-grounding-difficulty-history-${line}`}
+                            >
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      </details>
+                    </div>
+                  )}
+                {!qualityData && (
                   <p className="demo-metadata">Loading quality dashboard…</p>
                 )}
               </div>
@@ -5358,293 +5333,289 @@ export const ReactRAGVectorDemoFullLabApp = ({
                           )}
                         {!rag.chunkPreview.isLoading &&
                           chunkPreview?.document.id === document.id && (
-                            <>
-                              <p className="demo-section-caption">
-                                Chunk Preview
-                              </p>
-                              <p className="demo-metadata">
-                                {chunkPreview.document.title} ·{" "}
-                                {formatOptionalContentFormat(
-                                  chunkPreview.document.format,
-                                )}{" "}
-                                ·{" "}
-                                {formatOptionalChunkStrategy(
-                                  chunkPreview.document.chunkStrategy,
-                                )}{" "}
-                                · {chunkPreview.chunks.length} chunk(s)
-                              </p>
-                              {chunkPreviewNavigation?.activeNode && (
-                                <div className="demo-chunk-nav">
-                                  <div className="demo-chunk-nav-row">
-                                    <button
-                                      disabled={
-                                        !chunkPreviewNavigation.previousNode
-                                      }
-                                      onClick={() =>
-                                        chunkPreviewNavigation.previousNode &&
-                                        rag.chunkPreview.selectChunk(
-                                          chunkPreviewNavigation.previousNode
-                                            .chunkId,
-                                        )
-                                      }
-                                      type="button"
-                                    >
-                                      Previous chunk
-                                    </button>
-                                    <p className="demo-metadata">
-                                      {formatChunkNavigationSectionLabel(
-                                        chunkPreviewNavigation,
-                                      )}{" "}
-                                      ·{" "}
-                                      {formatChunkNavigationNodeLabel(
-                                        chunkPreviewNavigation.activeNode,
-                                      )}
-                                    </p>
-                                    <button
-                                      disabled={
-                                        !chunkPreviewNavigation.nextNode
-                                      }
-                                      onClick={() =>
-                                        chunkPreviewNavigation.nextNode &&
-                                        rag.chunkPreview.selectChunk(
-                                          chunkPreviewNavigation.nextNode
-                                            .chunkId,
-                                        )
-                                      }
-                                      type="button"
-                                    >
-                                      Next chunk
-                                    </button>
-                                  </div>
-                                  {chunkPreviewNavigation.sectionNodes.length >
-                                    1 && (
-                                    <div className="demo-chunk-nav-strip">
-                                      {chunkPreviewNavigation.sectionNodes.map(
-                                        (node) => (
-                                          <button
-                                            className={
-                                              node.chunkId ===
-                                              activeChunkPreviewId
-                                                ? "demo-chunk-nav-chip demo-chunk-nav-chip-active"
-                                                : "demo-chunk-nav-chip"
-                                            }
-                                            key={node.chunkId}
-                                            onClick={() =>
-                                              rag.chunkPreview.selectChunk(
-                                                node.chunkId,
-                                              )
-                                            }
-                                            type="button"
-                                          >
-                                            {formatChunkNavigationNodeLabel(
-                                              node,
-                                            )}
-                                          </button>
-                                        ),
-                                      )}
-                                    </div>
+                            <p className="demo-section-caption">
+                              Chunk Preview
+                            </p>
+                          )}
+                        {!rag.chunkPreview.isLoading &&
+                          chunkPreview?.document.id === document.id && (
+                            <p className="demo-metadata">
+                              {chunkPreview.document.title} ·{" "}
+                              {formatOptionalContentFormat(
+                                chunkPreview.document.format,
+                              )}{" "}
+                              ·{" "}
+                              {formatOptionalChunkStrategy(
+                                chunkPreview.document.chunkStrategy,
+                              )}{" "}
+                              · {chunkPreview.chunks.length} chunk(s)
+                            </p>
+                          )}
+                        {!rag.chunkPreview.isLoading &&
+                          chunkPreview?.document.id === document.id &&
+                          chunkPreviewNavigation?.activeNode && (
+                            <div className="demo-chunk-nav">
+                              <div className="demo-chunk-nav-row">
+                                <button
+                                  disabled={
+                                    !chunkPreviewNavigation.previousNode
+                                  }
+                                  onClick={() =>
+                                    chunkPreviewNavigation.previousNode &&
+                                    rag.chunkPreview.selectChunk(
+                                      chunkPreviewNavigation.previousNode
+                                        .chunkId,
+                                    )
+                                  }
+                                  type="button"
+                                >
+                                  Previous chunk
+                                </button>
+                                <p className="demo-metadata">
+                                  {formatChunkNavigationSectionLabel(
+                                    chunkPreviewNavigation,
+                                  )}{" "}
+                                  ·{" "}
+                                  {formatChunkNavigationNodeLabel(
+                                    chunkPreviewNavigation.activeNode,
                                   )}
-                                  {(chunkPreviewNavigation.parentSection ||
-                                    chunkPreviewNavigation.siblingSections
-                                      .length > 0 ||
-                                    chunkPreviewNavigation.childSections
-                                      .length > 0) && (
-                                    <div className="demo-chunk-nav-strip">
-                                      {chunkPreviewNavigation.parentSection ? (
-                                        <button
-                                          className="demo-chunk-nav-chip"
-                                          onClick={() =>
-                                            rag.chunkPreview.selectParentSection()
-                                          }
-                                          type="button"
-                                        >
-                                          Parent ·{" "}
-                                          {formatChunkSectionGroupLabel(
-                                            chunkPreviewNavigation.parentSection,
-                                          )}
-                                        </button>
-                                      ) : null}
-                                      {chunkPreviewNavigation.siblingSections.map(
-                                        (section) => (
-                                          <button
-                                            className="demo-chunk-nav-chip"
-                                            key={section.id}
-                                            onClick={() =>
-                                              rag.chunkPreview.selectSiblingSection(
-                                                section.id,
-                                              )
-                                            }
-                                            type="button"
-                                          >
-                                            Sibling ·{" "}
-                                            {formatChunkSectionGroupLabel(
-                                              section,
-                                            )}
-                                          </button>
-                                        ),
-                                      )}
-                                      {chunkPreviewNavigation.childSections.map(
-                                        (section) => (
-                                          <button
-                                            className="demo-chunk-nav-chip"
-                                            key={section.id}
-                                            onClick={() =>
-                                              rag.chunkPreview.selectChildSection(
-                                                section.id,
-                                              )
-                                            }
-                                            type="button"
-                                          >
-                                            Child ·{" "}
-                                            {formatChunkSectionGroupLabel(
-                                              section,
-                                            )}
-                                          </button>
-                                        ),
-                                      )}
-                                    </div>
+                                </p>
+                                <button
+                                  disabled={!chunkPreviewNavigation.nextNode}
+                                  onClick={() =>
+                                    chunkPreviewNavigation.nextNode &&
+                                    rag.chunkPreview.selectChunk(
+                                      chunkPreviewNavigation.nextNode.chunkId,
+                                    )
+                                  }
+                                  type="button"
+                                >
+                                  Next chunk
+                                </button>
+                              </div>
+                              {chunkPreviewNavigation.sectionNodes.length >
+                                1 && (
+                                <div className="demo-chunk-nav-strip">
+                                  {chunkPreviewNavigation.sectionNodes.map(
+                                    (node) => (
+                                      <button
+                                        className={
+                                          node.chunkId === activeChunkPreviewId
+                                            ? "demo-chunk-nav-chip demo-chunk-nav-chip-active"
+                                            : "demo-chunk-nav-chip"
+                                        }
+                                        key={node.chunkId}
+                                        onClick={() =>
+                                          rag.chunkPreview.selectChunk(
+                                            node.chunkId,
+                                          )
+                                        }
+                                        type="button"
+                                      >
+                                        {formatChunkNavigationNodeLabel(node)}
+                                      </button>
+                                    ),
                                   )}
                                 </div>
                               )}
-                              {activeChunkPreviewSectionDiagnostic && (
-                                <article className="demo-result-item">
-                                  <h3>Active Section Diagnostic</h3>
-                                  <p className="demo-result-source">
-                                    {activeChunkPreviewSectionDiagnostic.label}
-                                  </p>
-                                  <p className="demo-metadata">
-                                    {
-                                      activeChunkPreviewSectionDiagnostic.summary
-                                    }
-                                  </p>
-                                  <p className="demo-metadata">
-                                    {formatSectionDiagnosticChannels(
-                                      activeChunkPreviewSectionDiagnostic,
-                                    )}
-                                  </p>
-                                  <p className="demo-metadata">
-                                    {formatSectionDiagnosticPipeline(
-                                      activeChunkPreviewSectionDiagnostic,
-                                    )}
-                                  </p>
+                              {(chunkPreviewNavigation.parentSection ||
+                                chunkPreviewNavigation.siblingSections.length >
+                                  0 ||
+                                chunkPreviewNavigation.childSections.length >
+                                  0) && (
+                                <div className="demo-chunk-nav-strip">
+                                  {chunkPreviewNavigation.parentSection ? (
+                                    <button
+                                      className="demo-chunk-nav-chip"
+                                      onClick={() =>
+                                        rag.chunkPreview.selectParentSection()
+                                      }
+                                      type="button"
+                                    >
+                                      Parent ·{" "}
+                                      {formatChunkSectionGroupLabel(
+                                        chunkPreviewNavigation.parentSection,
+                                      )}
+                                    </button>
+                                  ) : null}
+                                  {chunkPreviewNavigation.siblingSections.map(
+                                    (section) => (
+                                      <button
+                                        className="demo-chunk-nav-chip"
+                                        key={section.id}
+                                        onClick={() =>
+                                          rag.chunkPreview.selectSiblingSection(
+                                            section.id,
+                                          )
+                                        }
+                                        type="button"
+                                      >
+                                        Sibling ·{" "}
+                                        {formatChunkSectionGroupLabel(section)}
+                                      </button>
+                                    ),
+                                  )}
+                                  {chunkPreviewNavigation.childSections.map(
+                                    (section) => (
+                                      <button
+                                        className="demo-chunk-nav-chip"
+                                        key={section.id}
+                                        onClick={() =>
+                                          rag.chunkPreview.selectChildSection(
+                                            section.id,
+                                          )
+                                        }
+                                        type="button"
+                                      >
+                                        Child ·{" "}
+                                        {formatChunkSectionGroupLabel(section)}
+                                      </button>
+                                    ),
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        {!rag.chunkPreview.isLoading &&
+                          chunkPreview?.document.id === document.id &&
+                          activeChunkPreviewSectionDiagnostic && (
+                            <article className="demo-result-item">
+                              <h3>Active Section Diagnostic</h3>
+                              <p className="demo-result-source">
+                                {activeChunkPreviewSectionDiagnostic.label}
+                              </p>
+                              <p className="demo-metadata">
+                                {activeChunkPreviewSectionDiagnostic.summary}
+                              </p>
+                              <p className="demo-metadata">
+                                {formatSectionDiagnosticChannels(
+                                  activeChunkPreviewSectionDiagnostic,
+                                )}
+                              </p>
+                              <p className="demo-metadata">
+                                {formatSectionDiagnosticPipeline(
+                                  activeChunkPreviewSectionDiagnostic,
+                                )}
+                              </p>
+                              {formatSectionDiagnosticStageFlow(
+                                activeChunkPreviewSectionDiagnostic,
+                              ) && (
+                                <p className="demo-metadata">
                                   {formatSectionDiagnosticStageFlow(
                                     activeChunkPreviewSectionDiagnostic,
-                                  ) && (
-                                    <p className="demo-metadata">
-                                      {formatSectionDiagnosticStageFlow(
-                                        activeChunkPreviewSectionDiagnostic,
-                                      )}
-                                    </p>
                                   )}
+                                </p>
+                              )}
+                              {formatSectionDiagnosticStageBounds(
+                                activeChunkPreviewSectionDiagnostic,
+                              ) && (
+                                <p className="demo-metadata">
                                   {formatSectionDiagnosticStageBounds(
                                     activeChunkPreviewSectionDiagnostic,
-                                  ) && (
-                                    <p className="demo-metadata">
-                                      {formatSectionDiagnosticStageBounds(
-                                        activeChunkPreviewSectionDiagnostic,
-                                      )}
-                                    </p>
                                   )}
-                                  {formatSectionDiagnosticStageWeightRows(
-                                    activeChunkPreviewSectionDiagnostic,
-                                  ).map((line: string) => (
-                                    <p
-                                      className="demo-metadata"
-                                      key={`active-section-${line}`}
-                                    >
-                                      {line}
-                                    </p>
-                                  ))}
-                                  <p className="demo-metadata">
-                                    {formatSectionDiagnosticTopEntry(
-                                      activeChunkPreviewSectionDiagnostic,
-                                    )}
-                                  </p>
+                                </p>
+                              )}
+                              {formatSectionDiagnosticStageWeightRows(
+                                activeChunkPreviewSectionDiagnostic,
+                              ).map((line: string) => (
+                                <p
+                                  className="demo-metadata"
+                                  key={`active-section-${line}`}
+                                >
+                                  {line}
+                                </p>
+                              ))}
+                              <p className="demo-metadata">
+                                {formatSectionDiagnosticTopEntry(
+                                  activeChunkPreviewSectionDiagnostic,
+                                )}
+                              </p>
+                              {formatSectionDiagnosticCompetition(
+                                activeChunkPreviewSectionDiagnostic,
+                              ) && (
+                                <p className="demo-metadata">
                                   {formatSectionDiagnosticCompetition(
                                     activeChunkPreviewSectionDiagnostic,
-                                  ) && (
-                                    <p className="demo-metadata">
-                                      {formatSectionDiagnosticCompetition(
-                                        activeChunkPreviewSectionDiagnostic,
-                                      )}
-                                    </p>
                                   )}
+                                </p>
+                              )}
+                              {formatSectionDiagnosticReasons(
+                                activeChunkPreviewSectionDiagnostic,
+                              ).length > 0 && (
+                                <div className="demo-badge-row">
                                   {formatSectionDiagnosticReasons(
                                     activeChunkPreviewSectionDiagnostic,
-                                  ).length > 0 && (
-                                    <div className="demo-badge-row">
-                                      {formatSectionDiagnosticReasons(
-                                        activeChunkPreviewSectionDiagnostic,
-                                      ).map((reason) => (
-                                        <span
-                                          className="demo-state-chip"
-                                          key={`active-section-${reason}`}
-                                        >
-                                          {reason}
-                                        </span>
-                                      ))}
-                                      {formatSectionDiagnosticStageWeightReasons(
-                                        activeChunkPreviewSectionDiagnostic,
-                                      ).map((reason: string) => (
-                                        <span
-                                          className="demo-state-chip"
-                                          key={`active-section-${reason}`}
-                                        >
-                                          {reason}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                  {formatSectionDiagnosticDistributionRows(
-                                    activeChunkPreviewSectionDiagnostic,
-                                  ).map((line) => (
-                                    <p
-                                      className="demo-metadata"
-                                      key={`active-section-${line}`}
+                                  ).map((reason) => (
+                                    <span
+                                      className="demo-state-chip"
+                                      key={`active-section-${reason}`}
                                     >
-                                      {line}
-                                    </p>
+                                      {reason}
+                                    </span>
                                   ))}
-                                </article>
+                                  {formatSectionDiagnosticStageWeightReasons(
+                                    activeChunkPreviewSectionDiagnostic,
+                                  ).map((reason: string) => (
+                                    <span
+                                      className="demo-state-chip"
+                                      key={`active-section-${reason}`}
+                                    >
+                                      {reason}
+                                    </span>
+                                  ))}
+                                </div>
                               )}
-                              <div className="demo-result-grid">
-                                {chunkPreview.chunks.map((chunk) => (
-                                  <article
-                                    className={
-                                      chunk.chunkId === activeChunkPreviewId
-                                        ? "demo-result-item demo-result-item-active"
-                                        : "demo-result-item"
-                                    }
-                                    key={chunk.chunkId}
-                                  >
-                                    <h3>{chunk.chunkId}</h3>
-                                    <p className="demo-result-source">
-                                      source:{" "}
-                                      {chunk.source ??
-                                        chunkPreview.document.source}
-                                    </p>
-                                    <p className="demo-metadata">
-                                      chunk index:{" "}
-                                      {String(
-                                        (chunk.metadata?.chunkIndex as
-                                          | number
-                                          | undefined) ?? 0,
-                                      )}{" "}
-                                      / count:{" "}
-                                      {String(
-                                        (chunk.metadata?.chunkCount as
-                                          | number
-                                          | undefined) ??
-                                          chunkPreview.chunks.length,
-                                      )}
-                                    </p>
-                                    <p className="demo-result-text">
-                                      {chunk.text}
-                                    </p>
-                                  </article>
-                                ))}
-                              </div>
-                            </>
+                              {formatSectionDiagnosticDistributionRows(
+                                activeChunkPreviewSectionDiagnostic,
+                              ).map((line) => (
+                                <p
+                                  className="demo-metadata"
+                                  key={`active-section-${line}`}
+                                >
+                                  {line}
+                                </p>
+                              ))}
+                            </article>
+                          )}
+                        {!rag.chunkPreview.isLoading &&
+                          chunkPreview?.document.id === document.id && (
+                            <div className="demo-result-grid">
+                              {chunkPreview.chunks.map((chunk) => (
+                                <article
+                                  className={
+                                    chunk.chunkId === activeChunkPreviewId
+                                      ? "demo-result-item demo-result-item-active"
+                                      : "demo-result-item"
+                                  }
+                                  key={chunk.chunkId}
+                                >
+                                  <h3>{chunk.chunkId}</h3>
+                                  <p className="demo-result-source">
+                                    source:{" "}
+                                    {chunk.source ??
+                                      chunkPreview.document.source}
+                                  </p>
+                                  <p className="demo-metadata">
+                                    chunk index:{" "}
+                                    {String(
+                                      (chunk.metadata?.chunkIndex as
+                                        | number
+                                        | undefined) ?? 0,
+                                    )}{" "}
+                                    / count:{" "}
+                                    {String(
+                                      (chunk.metadata?.chunkCount as
+                                        | number
+                                        | undefined) ??
+                                        chunkPreview.chunks.length,
+                                    )}
+                                  </p>
+                                  <p className="demo-result-text">
+                                    {chunk.text}
+                                  </p>
+                                </article>
+                              ))}
+                            </div>
                           )}
                       </div>
                     </div>

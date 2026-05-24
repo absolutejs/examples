@@ -16,6 +16,9 @@ import type {
   VoiceReconnectClientState,
   VoiceStreamState,
 } from "@absolutejs/voice";
+import type { VoiceReactiveSource } from "@absolutejs/voice/client";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
+import { VOICE_SYNC_PATH } from "../constants/sync";
 import { VOICE_LIVE_OPS_ACTIONS } from "../constants/demoActions";
 import {
   VOICE_WAVE_HEIGHT,
@@ -28,6 +31,22 @@ import type {
   VoiceLiveOpsAction,
   VoiceLiveOpsActionResult,
 } from "../types/domain";
+
+// Bridges a @absolutejs/sync SSE topic to a voice widget store's reactiveSource:
+// the store calls refresh() whenever the server pushes that topic, with no
+// polling timer. Hand this to any widget's `reactiveSource` prop/option in place
+// of `intervalMs`. The store invokes the returned cleanup on close.
+export const voiceReactiveSource =
+  (topic: string): VoiceReactiveSource =>
+  (refresh) => {
+    const subscriber = createSyncSubscriber({
+      onEvent: refresh,
+      topics: [topic],
+      url: VOICE_SYNC_PATH,
+    });
+
+    return () => subscriber.close();
+  };
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -594,7 +613,7 @@ export const mountDemoBargeInProof = (
   };
 
   const onClick = (event: Event) => {
-    const {target} = event;
+    const { target } = event;
     if (
       target instanceof HTMLElement &&
       target.closest("[data-barge-in-test]")
@@ -840,7 +859,8 @@ export const postVoiceLiveOpsAction = async (input: {
   detail?: string;
   sessionId: string | null | undefined;
   tag?: string;
-}) => (await postCoreVoiceLiveOpsAction(
+}) =>
+  (await postCoreVoiceLiveOpsAction(
     {
       ...input,
       sessionId: input.sessionId ?? "",

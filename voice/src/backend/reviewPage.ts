@@ -570,7 +570,7 @@ export const renderVoiceReviewIndexPage = (
   const filteredReviews = filterVoiceReviews(reviews, filters);
   const opsSummary = listVoiceReviews(reviews).reduce(
     (summary, review) => {
-      const {outcome} = review.summary;
+      const { outcome } = review.summary;
       if (outcome) {
         summary.outcomes.set(outcome, (summary.outcomes.get(outcome) ?? 0) + 1);
       }

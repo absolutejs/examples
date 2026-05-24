@@ -20,7 +20,12 @@ import {
   VoiceTurnQuality,
 } from "@absolutejs/voice/vue";
 import { createVoiceOpsActionCenterActions } from "@absolutejs/voice/client";
+import { voiceReactiveSource } from "../../../shared/browser";
 import { VOICE_CALL_CONTROL_ACTIONS } from "../../../constants/demoActions";
+import {
+  VOICE_EVIDENCE_TOPIC,
+  VOICE_TURN_TOPIC,
+} from "../../../constants/sync";
 import type {
   VoiceDemoMode,
   VoiceModelProvider,
@@ -59,6 +64,11 @@ const props = withDefaults(defineProps<VueVoiceDemoProps>(), {
   initialRoutingMode: "balanced",
   initialSpeechEngine: "cascaded",
 });
+
+// Reactive push instead of polling: widgets refresh on SSE push for their
+// dashboard group, with no per-widget interval timer.
+const turnSource = voiceReactiveSource(VOICE_TURN_TOPIC);
+const evidenceSource = voiceReactiveSource(VOICE_EVIDENCE_TOPIC);
 
 const activeMode = ref<VoiceDemoMode | null>(null);
 const hasStartedModes = ref<Record<VoiceDemoMode, boolean>>({
@@ -178,17 +188,17 @@ const runCallControl = (
     <VoicePlatformCoverage
       class="voice-card voice-provider-health-card"
       description="Vue renders the package coverage component against the same proof-backed route used by the server."
-      :interval-ms="10000"
       :limit="4"
       path="/api/voice/platform-coverage"
+      :reactive-source="evidenceSource"
       title="Vapi Replacement Coverage"
     />
 
     <VoiceProofTrends
       class="voice-card voice-provider-health-card"
       description="Vue renders sustained proof freshness, provider p95, turn p95, and live p95 from the package proof-trends widget."
-      :interval-ms="10000"
       path="/api/voice/proof-trends"
+      :reactive-source="evidenceSource"
       title="Sustained Proof Trends"
     />
 
@@ -242,8 +252,8 @@ const runCallControl = (
     <VoiceReconnectProfileEvidence
       class="voice-card voice-provider-health-card"
       description="Vue renders persisted real browser reconnect/resume traces from the package reconnect evidence primitive."
-      :interval-ms="10000"
       path="/api/voice/reconnect-profile-evidence"
+      :reactive-source="evidenceSource"
       title="Persisted Reconnect Evidence"
     />
 
@@ -255,55 +265,55 @@ const runCallControl = (
     <VoiceReadinessFailures
       class="voice-card voice-provider-health-card"
       description="Vue renders structured deploy-gate explanations from production readiness JSON when calibrated gates warn or fail."
-      :interval-ms="10000"
       path="/api/production-readiness"
+      :reactive-source="evidenceSource"
       title="Readiness Gate Explanations"
     />
 
     <VoiceSessionSnapshot
       class="voice-card voice-provider-health-card"
       description="Vue renders a downloadable support bundle with session media graph, provider routing, and turn-quality evidence."
-      :interval-ms="5000"
       path="/api/voice/session-snapshot/latest"
+      :reactive-source="turnSource"
       title="Session Debug Snapshot"
     />
 
     <VoiceSessionObservability
       class="voice-card voice-provider-health-card"
       description="Vue renders one per-call support report with turn waterfalls, provider recovery, tools, handoffs, guardrails, and incident handoff links."
-      :interval-ms="5000"
       path="/api/voice/session-observability/demo-incident-bundle"
+      :reactive-source="turnSource"
       title="Session Observability"
     />
 
     <VoiceCallDebuggerLaunch
       class="voice-card voice-provider-health-card"
       description="Vue opens the latest full call debugger with snapshot, replay, provider path, transcript, and incident markdown."
-      :interval-ms="5000"
       path="/api/voice-call-debugger/latest"
+      :reactive-source="turnSource"
       title="Debug Latest Call"
     />
 
     <VoiceRoutingStatus
       class="voice-card voice-routing-card"
-      :interval-ms="4000"
+      :reactive-source="turnSource"
     />
 
     <AgentSquadCard :agent-squad-status="agentSquadStatus" />
 
     <VoiceProviderStatus
       class="voice-card voice-provider-health-card"
-      :interval-ms="5000"
+      :reactive-source="turnSource"
     />
 
     <VoiceProviderCapabilities
       class="voice-card voice-provider-health-card"
-      :interval-ms="5000"
+      :reactive-source="evidenceSource"
     />
 
     <VoiceProviderContracts
       class="voice-card voice-provider-health-card"
-      :interval-ms="5000"
+      :reactive-source="evidenceSource"
     />
 
     <VoiceProviderSimulationControls
@@ -318,14 +328,14 @@ const runCallControl = (
 
     <VoiceTurnQuality
       class="voice-card voice-provider-health-card"
-      :interval-ms="5000"
+      :reactive-source="turnSource"
     />
 
     <VoiceTurnLatency
       class="voice-card voice-provider-health-card"
-      :interval-ms="5000"
       proof-label="Run latency proof"
       proof-path="/api/turn-latency/proof"
+      :reactive-source="turnSource"
     />
 
     <CampaignDialerCard
@@ -336,12 +346,12 @@ const runCallControl = (
 
     <VoiceOpsStatus
       class="voice-card voice-workflow-card"
-      :interval-ms="5000"
+      :reactive-source="turnSource"
     />
 
     <VoiceDeliveryRuntime
       class="voice-card voice-workflow-card"
-      :interval-ms="5000"
+      :reactive-source="turnSource"
     />
 
     <VoiceOpsActionCenter

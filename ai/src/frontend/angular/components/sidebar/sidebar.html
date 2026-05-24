@@ -1,0 +1,37 @@
+<div class="sidebar" [ngClass]="{ open: open }">
+  <div class="sidebar-header">
+    <span class="sidebar-title">Chats</span>
+    <button
+      class="new-chat-btn"
+      (click)="newChat.emit()"
+      title="New chat"
+      type="button"
+    >
+      <svg
+        fill="none"
+        height="16"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="16"
+      >
+        <line x1="12" x2="12" y1="5" y2="19" />
+        <line x1="5" x2="19" y1="12" y2="12" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="sidebar-list">
+    @if (conversations().length === 0) {
+    <div class="sidebar-empty">No conversations yet</div>
+    } @for (conv of conversations(); track conv.id) {
+    <app-conversation-item
+      [conversation]="conv"
+      [active]="conv.id === activeConversationId"
+      (selectConversation)="selectConversation.emit($event)"
+      (deleteConversation)="handleDelete($event)"
+    />
+    }
+  </div>
+</div>

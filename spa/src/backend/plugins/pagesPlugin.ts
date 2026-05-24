@@ -2,7 +2,7 @@ import type SvelteSpa from "../../frontend/svelte/pages/SvelteSpa.svelte";
 import type VueI18n from "../../frontend/vue/pages/VueI18n.vue";
 import type VuePinia from "../../frontend/vue/pages/VuePinia.vue";
 import type VueSpa from "../../frontend/vue/pages/VueSpa.vue";
-import type * as AngularSpaPage from "../../frontend/angular/pages/angular-spa";
+import type * as AngularSpaPage from "../../frontend/angular/pages/angular-spa/angular-spa";
 import { Elysia } from "elysia";
 import { asset, generateHeadElement } from "@absolutejs/absolute";
 import { handleAngularPageRequest } from "@absolutejs/absolute/angular";

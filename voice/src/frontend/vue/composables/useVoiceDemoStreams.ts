@@ -8,6 +8,11 @@ import {
   createVoiceProfileComparisonViewModel,
   createVoiceTraceTimelineViewModel,
 } from "@absolutejs/voice/client";
+import { voiceReactiveSource } from "../../../shared/browser";
+import {
+  VOICE_EVIDENCE_TOPIC,
+  VOICE_TURN_TOPIC,
+} from "../../../constants/sync";
 import {
   getVoiceLeadMessage,
   getVoiceModePrompt,
@@ -24,8 +29,6 @@ import type {
 } from "../../../types/voice";
 
 const RECONNECT_REPORT_PATH = "/api/voice/reconnect-traces";
-const TRACE_TIMELINE_INTERVAL_MS = 5_000;
-const PROFILE_COMPARISON_INTERVAL_MS = 10_000;
 const TRACE_TIMELINE_LIMIT = 2;
 
 export type VueVoiceStream = ReturnType<typeof useVoiceStream<SavedIntake>>;
@@ -83,12 +86,12 @@ export const useVoiceDemoStreams = (
     { reconnectReportPath: RECONNECT_REPORT_PATH },
   );
   const traceTimeline = useVoiceTraceTimeline("/api/voice-traces", {
-    intervalMs: TRACE_TIMELINE_INTERVAL_MS,
+    reactiveSource: voiceReactiveSource(VOICE_TURN_TOPIC),
   });
   const profileComparison = useVoiceProfileComparison(
     "/api/voice/real-call-profile-history",
     {
-      intervalMs: PROFILE_COMPARISON_INTERVAL_MS,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const profileComparisonModel = computed(() =>

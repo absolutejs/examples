@@ -66,28 +66,28 @@ export const useDemoConfig = (input: DemoConfigInput): DemoConfig => {
   };
 
   const changeModelProviderFromEvent = (event: Event) => {
-    const {target} = event;
+    const { target } = event;
     if (target instanceof HTMLSelectElement) {
       changeModelProvider(target.value as VoiceModelProvider);
     }
   };
 
   const changeProfileIdFromEvent = (event: Event) => {
-    const {target} = event;
+    const { target } = event;
     if (target instanceof HTMLSelectElement) {
       changeProfileId(target.value as VoiceProfileId);
     }
   };
 
   const changeRoutingModeFromEvent = (event: Event) => {
-    const {target} = event;
+    const { target } = event;
     if (target instanceof HTMLSelectElement) {
       changeRoutingMode(target.value as VoiceRoutingMode);
     }
   };
 
   const changeSpeechEngineFromEvent = (event: Event) => {
-    const {target} = event;
+    const { target } = event;
     if (target instanceof HTMLSelectElement) {
       changeSpeechEngine(target.value as VoiceSpeechEngine);
     }

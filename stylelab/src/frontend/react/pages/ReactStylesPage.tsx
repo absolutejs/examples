@@ -50,71 +50,67 @@ const NestedFeatureList = () => (
 );
 
 const StyleShowcase = () => (
-  <>
-    <section className="feature-grid">
-      <article className="feature-card feature-card-primary">
-        <span className="feature-label">Variables</span>
-        <h2>Design tokens</h2>
-        <p>
-          Colors, spacing, shadows, and surfaces come from stylesheet values.
-        </p>
-        <div className="swatch-row">
-          <span className="swatch swatch-one" />
-          <span className="swatch swatch-two" />
-          <span className="swatch swatch-three" />
-        </div>
-      </article>
-      <article className="feature-card feature-card-mixin">
-        <span className="feature-label">Mixins</span>
-        <h2>Reusable patterns</h2>
-        <p>Buttons and panels share one reusable recipe with variant inputs.</p>
-        <div className="button-row">
-          <button className="demo-button demo-button-primary" type="button">
-            Primary
-          </button>
-          <button className="demo-button demo-button-secondary" type="button">
-            Secondary
-          </button>
-        </div>
-      </article>
-      <article className="feature-card feature-card-nesting">
-        <span className="feature-label">Nesting</span>
-        <h2>Scoped structure</h2>
-        <NestedFeatureList />
-      </article>
-      <article className="feature-card feature-card-functions">
-        <span className="feature-label">Functions</span>
-        <h2>Computed output</h2>
-        <p>Generated shades and sizing are produced inside the stylesheet.</p>
-        <div className="generated-scale">
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
-      </article>
-      <article className="feature-card feature-card-responsive">
-        <span className="feature-label">Responsive rules</span>
-        <h2>Adaptive layout</h2>
-        <p>Breakpoints adjust the grid, spacing, and header rhythm.</p>
-        <div className="responsive-bars">
-          <span />
-          <span />
-          <span />
-        </div>
-      </article>
-      <article className="feature-card feature-card-generated">
-        <span className="feature-label">Generated classes</span>
-        <h2>Utility output</h2>
-        <p>Loops emit repeatable utility selectors from one compact source.</p>
-        <div className="utility-row">
-          <span className="utility-chip utility-chip-1">1</span>
-          <span className="utility-chip utility-chip-2">2</span>
-          <span className="utility-chip utility-chip-3">3</span>
-        </div>
-      </article>
-    </section>
-  </>
+  <section className="feature-grid">
+    <article className="feature-card feature-card-primary">
+      <span className="feature-label">Variables</span>
+      <h2>Design tokens</h2>
+      <p>Colors, spacing, shadows, and surfaces come from stylesheet values.</p>
+      <div className="swatch-row">
+        <span className="swatch swatch-one" />
+        <span className="swatch swatch-two" />
+        <span className="swatch swatch-three" />
+      </div>
+    </article>
+    <article className="feature-card feature-card-mixin">
+      <span className="feature-label">Mixins</span>
+      <h2>Reusable patterns</h2>
+      <p>Buttons and panels share one reusable recipe with variant inputs.</p>
+      <div className="button-row">
+        <button className="demo-button demo-button-primary" type="button">
+          Primary
+        </button>
+        <button className="demo-button demo-button-secondary" type="button">
+          Secondary
+        </button>
+      </div>
+    </article>
+    <article className="feature-card feature-card-nesting">
+      <span className="feature-label">Nesting</span>
+      <h2>Scoped structure</h2>
+      <NestedFeatureList />
+    </article>
+    <article className="feature-card feature-card-functions">
+      <span className="feature-label">Functions</span>
+      <h2>Computed output</h2>
+      <p>Generated shades and sizing are produced inside the stylesheet.</p>
+      <div className="generated-scale">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    </article>
+    <article className="feature-card feature-card-responsive">
+      <span className="feature-label">Responsive rules</span>
+      <h2>Adaptive layout</h2>
+      <p>Breakpoints adjust the grid, spacing, and header rhythm.</p>
+      <div className="responsive-bars">
+        <span />
+        <span />
+        <span />
+      </div>
+    </article>
+    <article className="feature-card feature-card-generated">
+      <span className="feature-label">Generated classes</span>
+      <h2>Utility output</h2>
+      <p>Loops emit repeatable utility selectors from one compact source.</p>
+      <div className="utility-row">
+        <span className="utility-chip utility-chip-1">1</span>
+        <span className="utility-chip utility-chip-2">2</span>
+        <span className="utility-chip utility-chip-3">3</span>
+      </div>
+    </article>
+  </section>
 );
 
 const Logo = () => (

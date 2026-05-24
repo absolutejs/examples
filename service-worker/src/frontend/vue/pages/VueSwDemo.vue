@@ -16,29 +16,34 @@ function onRegistered(reg: ServiceWorkerRegistration | null) {
 </script>
 
 <template>
-  <Nav />
+  <div>
+    <Nav />
 
-  <main>
-    <div class="page-title">
-      <img src="/assets/svg/vue-logo.svg" height="32" alt="Vue" />
-      <h1>Vue</h1>
-    </div>
+    <main>
+      <div class="page-title">
+        <img src="/assets/svg/vue-logo.svg" height="32" alt="Vue" />
+        <h1>Vue</h1>
+      </div>
 
-    <div class="sw-cards">
-      <RegistrationCard @registered="onRegistered" />
-      <CacheCard :swReady="swReady" />
-      <PingCard :swReady="swReady" />
-      <FetchCard :swReady="swReady" />
-      <LifecycleCard :swReady="swReady" />
-      <OfflineCard :swReady="swReady" />
-    </div>
+      <div class="sw-cards">
+        <RegistrationCard @registered="onRegistered" />
+        <CacheCard :swReady="swReady" />
+        <PingCard :swReady="swReady" />
+        <FetchCard :swReady="swReady" />
+        <LifecycleCard :swReady="swReady" />
+        <OfflineCard :swReady="swReady" />
+      </div>
 
-    <p class="footer">
-      <img src="/assets/png/absolutejs-temp.png" alt="" />
-      Powered by
-      <a href="https://absolutejs.com" target="_blank" rel="noopener noreferrer"
-        >AbsoluteJS</a
-      >
-    </p>
-  </main>
+      <p class="footer">
+        <img src="/assets/png/absolutejs-temp.png" alt="" />
+        Powered by
+        <a
+          href="https://absolutejs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          >AbsoluteJS</a
+        >
+      </p>
+    </main>
+  </div>
 </template>

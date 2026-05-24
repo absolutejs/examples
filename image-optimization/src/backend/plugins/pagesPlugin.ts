@@ -9,7 +9,7 @@ import { handleReactPageRequest } from "@absolutejs/absolute/react";
 import { handleSveltePageRequest } from "@absolutejs/absolute/svelte";
 import { handleVuePageRequest } from "@absolutejs/absolute/vue";
 import { Elysia } from "elysia";
-import type * as AngularImageDemoPage from "../../frontend/angular/pages/angular-image-demo";
+import type * as AngularImageDemoPage from "../../frontend/angular/pages/angular-image-demo/angular-image-demo";
 import type SvelteImageDemo from "../../frontend/svelte/pages/SvelteImageDemo.svelte";
 import type VueImageDemo from "../../frontend/vue/pages/VueImageDemo.vue";
 import { ReactImageDemo } from "../../frontend/react/pages/ReactImageDemo";

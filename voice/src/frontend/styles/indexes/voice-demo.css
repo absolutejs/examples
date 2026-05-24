@@ -9,10 +9,7 @@
   --accent: #5fbeeb;
   --accent-soft: rgba(95, 190, 235, 0.14);
   --accent-line: rgba(95, 190, 235, 0.34);
-  --display-font:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  --display-font: system-ui, -apple-system, sans-serif;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
 }
 

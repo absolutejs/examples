@@ -334,13 +334,13 @@ defineExpose({ sidebarOpen });
         </a>
       </p>
     </div>
+    <input
+      ref="fileInputRef"
+      :accept="fileAccept"
+      multiple
+      style="display: none"
+      type="file"
+      @change="handleFileInputChange"
+    />
   </div>
-  <input
-    ref="fileInputRef"
-    :accept="fileAccept"
-    multiple
-    style="display: none"
-    type="file"
-    @change="handleFileInputChange"
-  />
 </template>

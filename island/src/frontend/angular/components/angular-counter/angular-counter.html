@@ -1,0 +1,10 @@
+<div class="island-card island-card-angular">
+  <div class="island-header">
+    <img alt="Angular" height="20" src="/assets/svg/angular.svg" />
+    <span>{{ label }}</span>
+  </div>
+  <strong>Local: {{ count() }}</strong>
+  <strong>Shared: {{ sharedCount() }}</strong>
+  <button (click)="increment()" type="button">Increment Angular</button>
+  <button (click)="incrementShared()" type="button">Increment Shared</button>
+</div>

@@ -3,7 +3,7 @@ import { createTypedIsland as createTypedAngularIsland } from "@absolutejs/absol
 import { createTypedIsland as createTypedReactIsland } from "@absolutejs/absolute/react";
 import { createTypedIsland as createTypedSvelteIsland } from "@absolutejs/absolute/svelte";
 import { createTypedIsland as createTypedVueIsland } from "@absolutejs/absolute/vue";
-import { AngularCounter } from "../angular/components/AngularCounter";
+import { AngularCounter } from "../angular/components/angular-counter/angular-counter";
 import { ReactCounter } from "../react/components/ReactCounter";
 import SvelteCounter from "../svelte/components/SvelteCounter.svelte";
 import { VueCounter } from "../vue/components/VueCounter";

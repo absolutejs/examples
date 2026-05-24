@@ -113,10 +113,10 @@ const runTelephonyWebhookVerificationProof = async () => {
   const telnyxRawBody = JSON.stringify(telnyxBody);
   const telnyxTimestamp = String(Math.floor(Date.now() / 1000));
   const staleTelnyxTimestamp = String(Math.floor(Date.now() / 1000) - 600);
-  const telnyxKeyPair = (await crypto.subtle.generateKey("Ed25519", true, [
+  const telnyxKeyPair = await crypto.subtle.generateKey("Ed25519", true, [
     "sign",
     "verify",
-  ]));
+  ]);
   const telnyxPublicKey = base64FromBytes(
     await crypto.subtle.exportKey("raw", telnyxKeyPair.publicKey),
   );

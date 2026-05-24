@@ -1,4 +1,5 @@
 import { Injectable, signal } from "@angular/core";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import {
   fetchBargeInReport,
   fetchVoiceRealCallEvidenceWorkerHealth,
@@ -6,6 +7,10 @@ import {
   renderDemoBargeInProofHTML,
   renderVoiceRealCallEvidenceWorkerHealthHTML,
 } from "../../../shared/browser";
+import {
+  VOICE_SYNC_PATH,
+  VOICE_WORKER_HEALTH_TOPIC,
+} from "../../../constants/sync";
 
 const REAL_CALL_WORKER_DESCRIPTION =
   "Angular renders whether rolling real-call evidence is automatic or manual, backed by the same worker health route used by readiness.";
@@ -19,7 +24,9 @@ export class VoiceServerHtmlPanelsService {
     }),
   );
   private bargeInProofTimer: ReturnType<typeof setInterval> | null = null;
-  private realCallWorkerTimer: ReturnType<typeof setInterval> | null = null;
+  private realCallWorkerSubscriber: ReturnType<
+    typeof createSyncSubscriber
+  > | null = null;
 
   async refreshBargeInProof() {
     try {
@@ -58,18 +65,24 @@ export class VoiceServerHtmlPanelsService {
     this.bargeInProofTimer = setInterval(() => {
       void this.refreshBargeInProof();
     }, 3_000);
+    // Reactive instead of polled: the worker loop republishes worker-health on
+    // every collect tick over @absolutejs/sync's SSE stream, so refetch on event
+    // instead of a 10s timer.
     void this.refreshRealCallWorkerHealth();
-    this.realCallWorkerTimer = setInterval(() => {
-      void this.refreshRealCallWorkerHealth();
-    }, 10_000);
+    this.realCallWorkerSubscriber = createSyncSubscriber({
+      onEvent: () => {
+        void this.refreshRealCallWorkerHealth();
+      },
+      topics: [VOICE_WORKER_HEALTH_TOPIC],
+      url: VOICE_SYNC_PATH,
+    });
   }
 
   stop() {
     if (this.bargeInProofTimer) {
       clearInterval(this.bargeInProofTimer);
     }
-    if (this.realCallWorkerTimer) {
-      clearInterval(this.realCallWorkerTimer);
-    }
+    this.realCallWorkerSubscriber?.close();
+    this.realCallWorkerSubscriber = null;
   }
 }

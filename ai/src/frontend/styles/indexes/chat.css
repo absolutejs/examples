@@ -17,6 +17,12 @@ body {
   overflow: hidden;
 }
 
+/* Single-root wrapper for the page shell; dissolves so the header and
+   .app-layout remain direct flex children of the body column. */
+.chat-shell {
+  display: contents;
+}
+
 .app-layout {
   display: flex;
   flex: 1;
@@ -959,6 +965,12 @@ nav a.active {
 }
 
 /* ── Model Picker Modal ────────────────────────── */
+
+/* Zero-footprint wrapper so the overlay/modal stay positioned relative to
+   .picker-anchor exactly as if rendered as direct siblings. */
+.picker-portal {
+  display: contents;
+}
 
 .picker-overlay {
   inset: 0;

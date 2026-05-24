@@ -1,0 +1,62 @@
+<header>
+  <a href="/" class="logo">
+    <img src="/assets/png/absolutejs-temp.png" height="24" alt="AbsoluteJS" />
+    AbsoluteJS
+  </a>
+  <nav>
+    <a href="/react">React</a>
+    <a href="/svelte">Svelte</a>
+    <a href="/vue">Vue</a>
+    <a href="/angular" class="active">Angular</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-title">
+    <img alt="Angular" height="32" src="/assets/svg/angular.svg" />
+    <h1>Angular</h1>
+    <span class="badge">SPA via @angular/router</span>
+  </div>
+
+  <p class="section-desc">
+    Refresh on any sub-route — the server renders the right view because the
+    page handler forwards <code>request.url</code> into
+    <code>renderApplication</code>, and the page exports a
+    <code>routes</code> array that the build auto-wires into
+    <code>provideRouter</code>.
+  </p>
+
+  <div class="portal-state">
+    <span> Persistent layout state: <strong>{{ currentPath() }}</strong> </span>
+    <span class="clicks">
+      <button (click)="clicks.set(clicks() + 1)">
+        Layout clicks: {{ clicks() }}
+      </button>
+    </span>
+  </div>
+
+  <div class="portal-layout">
+    <aside class="portal-sidebar">
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Home
+      </a>
+      <a routerLink="/settings" routerLinkActive="active"> Settings </a>
+      <a routerLink="/profile" routerLinkActive="active"> Profile </a>
+    </aside>
+    <section class="portal-content">
+      <router-outlet />
+    </section>
+  </div>
+
+  <p class="footer">
+    <img alt="" src="/assets/png/absolutejs-temp.png" />
+    Powered by
+    <a href="https://absolutejs.com" rel="noopener noreferrer" target="_blank">
+      AbsoluteJS
+    </a>
+  </p>
+</main>

@@ -17,7 +17,9 @@ import {
   createVoiceDrizzleTelephonyWebhookIdempotencyStore,
 } from "@absolutejs/voice/drizzle";
 import { db } from "../../db/client";
+import { VOICE_INTAKES_TOPIC } from "../constants/sync";
 import { escapeHtml, stringifyForHtml } from "./helpers";
+import { reactiveHub } from "./sync";
 import { savedIntakesStore } from "./stores";
 
 const SAVED_INTAKE_LIMIT = 12;
@@ -31,6 +33,9 @@ const persistIntake = async (intake: SavedIntake) => {
   for (const stale of all.slice(SAVED_INTAKE_LIMIT)) {
     await savedIntakesStore.remove(stale.id);
   }
+
+  // Notify subscribed "saved captures" widgets to refetch — no polling.
+  reactiveHub.publish(VOICE_INTAKES_TOPIC);
 };
 
 const guidedWorkflowContract = createVoiceWorkflowContractPreset<SavedIntake>(

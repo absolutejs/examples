@@ -22,8 +22,12 @@ import {
   mountVoiceReadinessFailures,
   renderVoicePlatformCoverageHTML,
 } from "@absolutejs/voice/client";
-import { mountDemoBargeInProof } from "../../../shared/browser";
-import { mountVoiceLiveOpsPanel } from "../../../shared/browser";
+import {
+  mountDemoBargeInProof,
+  mountVoiceLiveOpsPanel,
+  voiceReactiveSource,
+} from "../../../shared/browser";
+import { VOICE_EVIDENCE_TOPIC } from "../../../constants/sync";
 
 defineVoiceCallDebuggerLaunchElement();
 defineVoiceDeliveryRuntimeElement();
@@ -52,7 +56,7 @@ if (platformCoverageHost instanceof HTMLElement) {
   const platformCoverage = createVoicePlatformCoverageStore(
     "/api/voice/platform-coverage",
     {
-      intervalMs: 10_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     },
   );
   const renderPlatformCoverage = () => {
@@ -74,7 +78,7 @@ const proofTrendsHost = document.querySelector("#proof-trends-card");
 if (proofTrendsHost instanceof HTMLElement) {
   mountVoiceProofTrends(proofTrendsHost, "/api/voice/proof-trends", {
     description: `${framework.toUpperCase()} renders sustained proof freshness and p95 metrics from the package proof-trends widget.`,
-    intervalMs: 10_000,
+    reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
     title: "Sustained Proof Trends",
   });
 }
@@ -88,7 +92,7 @@ if (readinessFailuresHost instanceof HTMLElement) {
     "/api/production-readiness",
     {
       description: `${framework.toUpperCase()} renders structured deploy-gate explanations from production readiness JSON when calibrated gates warn or fail.`,
-      intervalMs: 10_000,
+      reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
       title: "Readiness Gate Explanations",
     },
   );

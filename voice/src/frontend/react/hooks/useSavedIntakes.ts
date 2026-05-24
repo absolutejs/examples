@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import { fetchSavedIntakes } from "../../../shared/browser";
+import { VOICE_INTAKES_TOPIC, VOICE_SYNC_PATH } from "../../../constants/sync";
 import type { SavedIntake } from "../../../types/domain";
 
-const SAVED_INTAKES_INTERVAL_MS = 4_000;
-
+// Reactive instead of polled: load once, then refetch only when the server pushes
+// a "voice:intakes" change over @absolutejs/sync's SSE stream. No 4s timer.
 export const useSavedIntakes = () => {
   const [savedIntakes, setSavedIntakes] = useState<SavedIntake[]>([]);
 
@@ -13,11 +15,13 @@ export const useSavedIntakes = () => {
     };
 
     refresh();
-    const intervalId = window.setInterval(refresh, SAVED_INTAKES_INTERVAL_MS);
+    const subscriber = createSyncSubscriber({
+      onEvent: refresh,
+      topics: [VOICE_INTAKES_TOPIC],
+      url: VOICE_SYNC_PATH,
+    });
 
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    return () => subscriber.close();
   }, []);
 
   return savedIntakes;

@@ -1,7 +1,7 @@
 import { file } from "bun";
 import { basename, dirname, join } from "node:path";
 import { Elysia, status } from "elysia";
-import type * as AngularRAGVectorDemoPage from "../../../frontend/angular/pages/angular-rag-vector-demo";
+import type * as AngularRAGVectorDemoPage from "../../../frontend/angular/pages/angular-rag-vector-demo/angular-rag-vector-demo";
 import type SvelteRAGVectorDemo from "../../../frontend/svelte/pages/SvelteRAGVectorDemo.svelte";
 import type VueRAGVectorDemo from "../../../frontend/vue/pages/VueRAGVectorDemo.vue";
 import {

@@ -1,0 +1,53 @@
+<div class="voice-hero-layout">
+  <div>
+    <span class="voice-framework-pill">Angular Service</span>
+    <h2>Chat-style voice demo in Angular</h2>
+    <p class="voice-brand-copy">{{ description }}</p>
+    <div class="voice-badges">
+      <span class="voice-badge">Deepgram Flux</span>
+      <span class="voice-badge">Phrase hint correction</span>
+      <span class="voice-badge">Reconnect-aware sessions</span>
+    </div>
+  </div>
+  <div class="voice-metrics">
+    <div class="voice-metric">
+      <span class="voice-metric-label">Connection</span>
+      <span class="voice-metric-value">
+        {{ isConnected ? "Connected" : "Waiting" }}
+      </span>
+    </div>
+    <div class="voice-metric">
+      <span class="voice-metric-label">Scenario</span>
+      <span class="voice-metric-value"
+        >{{ activeMode ? getVoiceModeLabel(activeMode) : "Choose one" }}</span
+      >
+    </div>
+    <div class="voice-metric">
+      <span class="voice-metric-label">Saved captures</span>
+      <span class="voice-metric-value">{{ savedIntakesCount }}</span>
+    </div>
+    <div class="voice-metric">
+      <span class="voice-metric-label">Model</span>
+      <span class="voice-metric-value"
+        >{{ getVoiceProviderLabel(modelProvider) }}</span
+      >
+    </div>
+    <div class="voice-metric">
+      <span class="voice-metric-label">Routing</span>
+      <span class="voice-metric-value"
+        >{{ getVoiceRoutingLabel(routingMode) }}</span
+      >
+    </div>
+    <div class="voice-metric">
+      <span class="voice-metric-label">Guarded profile</span>
+      <span class="voice-metric-value"
+        >{{ formatVoiceProfileSwitchGuardLabel(profileSwitchGuardDecision)
+        }}</span
+      >
+      <span class="voice-metric-label"
+        >{{ formatVoiceProfileSwitchGuardSummary(profileSwitchGuardDecision)
+        }}</span
+      >
+    </div>
+  </div>
+</div>

@@ -1,0 +1,59 @@
+<span class="voice-framework-pill">Model Provider</span>
+<h2>Choose the assistant brain</h2>
+<p class="voice-footnote">
+  Switch providers before starting the microphone. The voice route receives the
+  selected provider on every session.
+</p>
+<label class="voice-provider-select">
+  <span>Provider</span>
+  <select (change)="modelProviderChange.emit($any($event.target).value)">
+    @for (provider of modelProviders; track provider.id) {
+    <option
+      value="{{ provider.id }}"
+      [attr.selected]="provider.id === modelProvider ? '' : null"
+    >
+      {{ provider.label }}
+    </option>
+    }
+  </select>
+</label>
+<label class="voice-provider-select">
+  <span>Voice profile</span>
+  <select (change)="profileIdChange.emit($any($event.target).value)">
+    @for (profile of voiceProfiles; track profile.id) {
+    <option
+      value="{{ profile.id }}"
+      [attr.selected]="profile.id === profileId ? '' : null"
+    >
+      {{ profile.label }}
+    </option>
+    }
+  </select>
+</label>
+<label class="voice-provider-select">
+  <span>STT routing</span>
+  <select (change)="routingModeChange.emit($any($event.target).value)">
+    @for (routing of routingModes; track routing.id) {
+    <option
+      value="{{ routing.id }}"
+      [attr.selected]="routing.id === routingMode ? '' : null"
+    >
+      {{ routing.label }}
+    </option>
+    }
+  </select>
+</label>
+<label class="voice-provider-select">
+  <span>Speech engine</span>
+  <select (change)="speechEngineChange.emit($any($event.target).value)">
+    @for (engine of speechEngines; track engine.id) {
+    <option
+      value="{{ engine.id }}"
+      [attr.selected]="engine.id === speechEngine ? '' : null"
+    >
+      {{ engine.label }}
+    </option>
+    }
+  </select>
+</label>
+<p class="voice-footnote">{{ routingDescription }}</p>

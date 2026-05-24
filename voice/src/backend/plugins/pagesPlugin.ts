@@ -12,7 +12,7 @@ import { handleReactPageRequest } from "@absolutejs/absolute/react";
 import { handleSveltePageRequest } from "@absolutejs/absolute/svelte";
 import { handleVuePageRequest } from "@absolutejs/absolute/vue";
 import { ReactVoiceDemo } from "../../frontend/react/pages/ReactVoiceDemo";
-import type * as AngularVoiceDemoPage from "../../frontend/angular/pages/angular-voice-demo";
+import type * as AngularVoiceDemoPage from "../../frontend/angular/pages/angular-voice-demo/angular-voice-demo";
 import type SvelteVoiceDemo from "../../frontend/svelte/pages/SvelteVoiceDemo.svelte";
 import type VueVoiceDemo from "../../frontend/vue/pages/VueVoiceDemo.vue";
 import { FRAMEWORKS } from "../../constants/navigation";
@@ -154,15 +154,18 @@ export const pagesPlugin = (manifest: Record<string, string>) =>
         },
       }),
     )
-    .get("/svelte", async ({ query }) => handleSveltePageRequest<typeof SvelteVoiceDemo>({
+    .get("/svelte", async ({ query }) =>
+      handleSveltePageRequest<typeof SvelteVoiceDemo>({
         pagePath: asset(manifest, "SvelteVoiceDemo"),
         indexPath: asset(manifest, "SvelteVoiceDemoIndex"),
         props: {
           cssPath: asset(manifest, "VoiceDemoCSS"),
           ...resolveVoiceDemoSelectionProps(query),
         },
-      }))
-    .get("/vue", async ({ query }) => handleVuePageRequest<typeof VueVoiceDemo>({
+      }),
+    )
+    .get("/vue", async ({ query }) =>
+      handleVuePageRequest<typeof VueVoiceDemo>({
         pagePath: asset(manifest, "VueVoiceDemo"),
         indexPath: asset(manifest, "VueVoiceDemoIndex"),
         props: resolveVoiceDemoSelectionProps(query),
@@ -170,7 +173,8 @@ export const pagesPlugin = (manifest: Record<string, string>) =>
           cssPath: asset(manifest, "VoiceDemoCSS"),
           title: "AbsoluteJS Voice Intake - Vue",
         }),
-      }))
+      }),
+    )
     .get("/html", () => handleHTMLPageRequest(asset(manifest, "HtmlVoiceDemo")))
     .get("/htmx", () => handleHTMXPageRequest(asset(manifest, "HtmxVoiceDemo")))
     .get("/angular", async ({ query }) =>

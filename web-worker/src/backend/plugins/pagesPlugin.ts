@@ -10,7 +10,7 @@ import { handleVuePageRequest } from "@absolutejs/absolute/vue";
 import { handleAngularPageRequest } from "@absolutejs/absolute/angular";
 import type SvelteWorkerDemo from "../../frontend/svelte/pages/SvelteWorkerDemo.svelte";
 import type VueWorkerDemo from "../../frontend/vue/pages/VueWorkerDemo.vue";
-import type * as AngularWorkerDemoPage from "../../frontend/angular/pages/angular-worker-demo";
+import type * as AngularWorkerDemoPage from "../../frontend/angular/pages/angular-worker-demo/angular-worker-demo";
 import { ReactWorkerDemo } from "../../frontend/react/pages/ReactWorkerDemo";
 
 export const pagesPlugin = (manifest: Record<string, string>) => {

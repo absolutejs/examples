@@ -65,26 +65,32 @@ export const MessageItem = ({
 }: MessageItemProps) => (
   <div className="message" data-role={message.role} key={message.id}>
     {message.role === "assistant" && (
-      <AssistantContent
-        copiedId={copiedId}
-        message={message}
-        messageIndex={messageIndex}
-        onCopy={onCopy}
-        onRetry={onRetry}
-        selectedModel={selectedModel}
-      />
+      <ToolCallsBlock messageId={message.id} toolCalls={message.toolCalls} />
     )}
-    {message.role === "user" && <UserContent message={message} />}
+    {message.role === "assistant" && <ThinkingBlock message={message} />}
+    {message.role === "assistant" && (
+      <GeneratedImages images={message.images} />
+    )}
+    {message.role === "assistant" && <AssistantBody message={message} />}
+    {message.role === "assistant" &&
+      !message.isStreaming &&
+      message.content && (
+        <UsageBadge
+          copiedId={copiedId}
+          message={message}
+          messageIndex={messageIndex}
+          onCopy={onCopy}
+          onRetry={onRetry}
+          selectedModel={selectedModel}
+        />
+      )}
+    {message.role === "user" &&
+      message.attachments &&
+      message.attachments.length > 0 && (
+        <UserAttachments attachments={message.attachments} />
+      )}
+    {message.role === "user" && <span>{stripPrefix(message.content)}</span>}
   </div>
-);
-
-const UserContent = ({ message }: { message: Message }) => (
-  <>
-    {message.attachments && message.attachments.length > 0 && (
-      <UserAttachments attachments={message.attachments} />
-    )}
-    <span>{stripPrefix(message.content)}</span>
-  </>
 );
 
 const UserAttachments = ({ attachments }: { attachments: Attachment[] }) => (
@@ -117,41 +123,6 @@ const UserAttachments = ({ attachments }: { attachments: Attachment[] }) => (
       ),
     )}
   </div>
-);
-
-type AssistantContentProps = {
-  copiedId: string | null;
-  message: Message;
-  messageIndex: number;
-  onCopy: (id: string, content: string) => void;
-  onRetry: (idx: number) => void;
-  selectedModel: ModelDef;
-};
-
-const AssistantContent = ({
-  copiedId,
-  message,
-  messageIndex,
-  onCopy,
-  onRetry,
-  selectedModel,
-}: AssistantContentProps) => (
-  <>
-    <ToolCallsBlock messageId={message.id} toolCalls={message.toolCalls} />
-    <ThinkingBlock message={message} />
-    <GeneratedImages images={message.images} />
-    <AssistantBody message={message} />
-    {!message.isStreaming && message.content && (
-      <UsageBadge
-        copiedId={copiedId}
-        message={message}
-        messageIndex={messageIndex}
-        onCopy={onCopy}
-        onRetry={onRetry}
-        selectedModel={selectedModel}
-      />
-    )}
-  </>
 );
 
 const ToolCallsBlock = ({
@@ -304,22 +275,23 @@ const UsageBadge = ({
       </span>
     )}
     {message.usage && (
-      <>
-        <span className="usage-item">
-          <span className="usage-label">in</span>
-          {message.usage.inputTokens.toLocaleString()} tokens
-        </span>
-        <span className="usage-item">
-          <span className="usage-label">out</span>
-          {message.usage.outputTokens.toLocaleString()} tokens
-        </span>
-        {renderCostItem(
-          message.model ?? selectedModel.id,
-          message.usage.inputTokens,
-          message.usage.outputTokens,
-        )}
-      </>
+      <span className="usage-item">
+        <span className="usage-label">in</span>
+        {message.usage.inputTokens.toLocaleString()} tokens
+      </span>
     )}
+    {message.usage && (
+      <span className="usage-item">
+        <span className="usage-label">out</span>
+        {message.usage.outputTokens.toLocaleString()} tokens
+      </span>
+    )}
+    {message.usage &&
+      renderCostItem(
+        message.model ?? selectedModel.id,
+        message.usage.inputTokens,
+        message.usage.outputTokens,
+      )}
     <MessageActions
       copiedId={copiedId}
       message={message}

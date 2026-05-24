@@ -259,16 +259,18 @@
         <absolute-voice-session-snapshot
           class="voice-card voice-provider-health-card"
           description="HTML renders a downloadable support bundle with session media graph, provider routing, and turn-quality evidence."
-          interval-ms="5000"
           path="/api/voice/session-snapshot/latest"
+          reactive-topic="voice:turn"
+          reactive-path="/api/sync"
           title="Session Debug Snapshot"
         ></absolute-voice-session-snapshot>
 
         <absolute-voice-call-debugger-launch
           class="voice-card voice-provider-health-card"
           description="HTML opens the latest full call debugger with snapshot, replay, provider path, transcript, and incident markdown."
-          interval-ms="5000"
           path="/api/voice-call-debugger/latest"
+          reactive-topic="voice:turn"
+          reactive-path="/api/sync"
           title="Debug Latest Call"
         ></absolute-voice-call-debugger-launch>
 
@@ -358,9 +360,10 @@
 
         <absolute-voice-turn-latency
           class="voice-card voice-provider-health-card"
-          interval-ms="5000"
           proof-label="Run latency proof"
           proof-path="/api/turn-latency/proof"
+          reactive-topic="voice:turn"
+          reactive-path="/api/sync"
         ></absolute-voice-turn-latency>
 
         <article
@@ -392,7 +395,8 @@
 
         <absolute-voice-delivery-runtime
           class="voice-card voice-workflow-card"
-          interval-ms="5000"
+          reactive-topic="voice:turn"
+          reactive-path="/api/sync"
         ></absolute-voice-delivery-runtime>
 
         <div
@@ -410,16 +414,18 @@
         <absolute-voice-trace-timeline
           class="voice-card voice-provider-health-card"
           incident-bundle-base-path="/voice-incidents"
-          interval-ms="5000"
           limit="2"
           operations-record-base-path="/voice-operations"
+          reactive-topic="voice:turn"
+          reactive-path="/api/sync"
         ></absolute-voice-trace-timeline>
 
         <absolute-voice-session-observability
           class="voice-card voice-provider-health-card"
           description="HTML renders one per-call support report with turn waterfalls, provider recovery, tools, handoffs, guardrails, and incident handoff links."
-          interval-ms="5000"
           path="/api/voice/session-observability/demo-incident-bundle"
+          reactive-topic="voice:turn"
+          reactive-path="/api/sync"
           title="Session Observability"
         ></absolute-voice-session-observability>
 

@@ -10,14 +10,19 @@ import {
   createVoiceProfileSwitchRecommendationStore,
   renderVoiceProfileSwitchRecommendationHTML,
 } from "@absolutejs/voice/client";
+import { createSyncSubscriber } from "@absolutejs/sync/client";
 import {
   fetchVoiceRealCallEvidenceWorkerHealth,
   formatErrorMessage,
   renderVoiceRealCallEvidenceWorkerHealthHTML,
+  voiceReactiveSource,
 } from "../../../shared/browser";
+import {
+  VOICE_EVIDENCE_TOPIC,
+  VOICE_SYNC_PATH,
+  VOICE_WORKER_HEALTH_TOPIC,
+} from "../../../constants/sync";
 
-const PROFILE_SWITCH_INTERVAL_MS = 10_000;
-const REAL_CALL_WORKER_INTERVAL_MS = 10_000;
 const REAL_CALL_WORKER_DESCRIPTION =
   "Vue renders whether rolling real-call evidence is automatic or manual, backed by the same worker health route used by readiness.";
 const PROFILE_SWITCH_WIDGET_OPTIONS = {
@@ -55,7 +60,7 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     createVoiceProfileSwitchRecommendationStore(
       "/api/voice/profile-switch-recommendation",
       {
-        intervalMs: PROFILE_SWITCH_INTERVAL_MS,
+        reactiveSource: voiceReactiveSource(VOICE_EVIDENCE_TOPIC),
       },
     );
   const profileSwitchHTML = ref(
@@ -80,7 +85,8 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
     ).join(", "),
   );
 
-  let realCallWorkerTimer: ReturnType<typeof setInterval> | null = null;
+  let realCallWorkerSubscriber: ReturnType<typeof createSyncSubscriber> | null =
+    null;
   let unsubscribeProfileSwitch = () => {};
 
   const refreshRealCallWorkerHealth = async () => {
@@ -157,15 +163,16 @@ export const useServerHtmlPanels = (): ServerHtmlPanels => {
         error: formatErrorMessage(error),
       };
     });
-    realCallWorkerTimer = setInterval(() => {
-      void refreshRealCallWorkerHealth();
-    }, REAL_CALL_WORKER_INTERVAL_MS);
+    realCallWorkerSubscriber = createSyncSubscriber({
+      onEvent: () => void refreshRealCallWorkerHealth(),
+      topics: [VOICE_WORKER_HEALTH_TOPIC],
+      url: VOICE_SYNC_PATH,
+    });
   });
 
   onUnmounted(() => {
-    if (realCallWorkerTimer) {
-      clearInterval(realCallWorkerTimer);
-    }
+    realCallWorkerSubscriber?.close();
+    realCallWorkerSubscriber = null;
     unsubscribeProfileSwitch();
     profileSwitchRecommendation.close();
   });

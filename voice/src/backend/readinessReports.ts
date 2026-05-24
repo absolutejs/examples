@@ -524,7 +524,8 @@ const readLatestVapiCoverageSummary =
     }
   };
 
-const readLatestVapiCoverage = async () => (await readLatestVapiCoverageSummary()).coverage;
+const readLatestVapiCoverage = async () =>
+  (await readLatestVapiCoverageSummary()).coverage;
 
 const renderCoverageStatus = (coverage: VapiCoverageResult | undefined) => {
   if (!coverage) {

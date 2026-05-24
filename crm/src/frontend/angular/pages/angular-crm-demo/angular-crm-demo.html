@@ -1,0 +1,134 @@
+<div class="crm-page">
+  <div class="crm-shell">
+    <header class="crm-header">
+      <div class="crm-header__brand">
+        <strong>&#64;absolutejs/crm</strong>
+        <span>{{ pageTagline }}</span>
+      </div>
+      <nav class="crm-nav" aria-label="Frameworks">
+        @for (framework of frameworks; track framework.id) {
+        <a
+          [href]="framework.href"
+          [class.is-active]="framework.id === 'angular'"
+        >
+          {{ framework.label }}
+        </a>
+        }
+      </nav>
+    </header>
+    <section class="crm-hero">
+      <h1>{{ pageHeadline }}</h1>
+      <p>{{ pageSubheadline }}</p>
+      <p style="margin-top: 0.75rem">
+        <strong>Angular: </strong>{{ frameworkDescription }}
+      </p>
+    </section>
+    <div class="crm-grid">
+      <div class="crm-card">
+        <h2>Lead capture form</h2>
+        <form class="crm-form" (submit)="handleSubmit($event)">
+          <div class="crm-form__row">
+            <label>
+              First name
+              <input
+                name="firstName"
+                [value]="form().firstName"
+                (input)="updateField('firstName', $event)"
+                required
+              />
+            </label>
+            <label>
+              Last name
+              <input
+                name="lastName"
+                [value]="form().lastName"
+                (input)="updateField('lastName', $event)"
+                required
+              />
+            </label>
+          </div>
+          <label>
+            Email
+            <input
+              type="email"
+              name="email"
+              [value]="form().email"
+              (input)="updateField('email', $event)"
+              required
+            />
+          </label>
+          <div class="crm-form__row">
+            <label>
+              Phone
+              <input
+                name="phone"
+                [value]="form().phone"
+                (input)="updateField('phone', $event)"
+              />
+            </label>
+            <label>
+              Company
+              <input
+                name="company"
+                [value]="form().company"
+                (input)="updateField('company', $event)"
+              />
+            </label>
+          </div>
+          <label>
+            Notes
+            <textarea
+              name="notes"
+              [value]="form().notes ?? ''"
+              (input)="updateField('notes', $event)"
+              rows="3"
+            ></textarea>
+          </label>
+          <button
+            class="crm-form__submit"
+            type="submit"
+            [disabled]="submitting()"
+          >
+            {{ submitting() ? "Submitting…" : "Capture lead" }}
+          </button>
+          @if (status(); as currentStatus) {
+          <div [class]="'crm-status is-' + currentStatus.kind" role="status">
+            {{ currentStatus.message }}
+          </div>
+          }
+        </form>
+        <pre class="crm-snippet">{{ snippet }}</pre>
+      </div>
+      <div class="crm-card">
+        <h2>Recent contacts</h2>
+        <div class="crm-contacts">
+          @if (contacts().length === 0) {
+          <p style="color: var(--muted)">
+            No leads yet — submit the form to see one land here.
+          </p>
+          } @for (contact of contacts(); track contact.id) {
+          <article class="crm-contact">
+            <span class="crm-contact__time">
+              {{ formatTime(contact.createdAt) }}
+            </span>
+            <div class="crm-contact__name">
+              {{ contact.firstName || "" }} {{ contact.lastName ? " " +
+              contact.lastName : "" }} @if (!contact.firstName &&
+              !contact.lastName) { (unnamed) }
+            </div>
+            <div class="crm-contact__meta">
+              {{ contact.email || "—" }} @if (contact.phone) { · {{
+              contact.phone }} } @if (contact.company) { · {{ contact.company }}
+              }
+            </div>
+          </article>
+          }
+        </div>
+      </div>
+    </div>
+    <footer class="crm-footer">
+      Backed by &#64;absolutejs/crm runtime — same backend for all 6 framework
+      pages.
+    </footer>
+  </div>
+</div>

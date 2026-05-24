@@ -1,4 +1,4 @@
-import type * as AngularSwDemoPage from "../../frontend/angular/pages/angular-sw-demo";
+import type * as AngularSwDemoPage from "../../frontend/angular/pages/angular-sw-demo/angular-sw-demo";
 import type SvelteSwDemo from "../../frontend/svelte/pages/SvelteSwDemo.svelte";
 import type VueSwDemo from "../../frontend/vue/pages/VueSwDemo.vue";
 import { Elysia } from "elysia";

@@ -1027,7 +1027,7 @@ const seedDemoOutcomeProof = async () => {
 
   for (const proof of proofSessions) {
     const session = createProofSession(proof);
-    const {mode} = proof;
+    const { mode } = proof;
     const result = buildSavedIntake(session, mode);
     session.turns = session.turns.map((turn, index) =>
       index === session.turns.length - 1 ? { ...turn, result } : turn,
@@ -1257,7 +1257,7 @@ const formatLiveOpsActionLabel = (action: VoiceLiveOpsAction) => {
 const handleLiveOpsAction = async (body: unknown) => {
   const input =
     body && typeof body === "object" ? (body as Record<string, unknown>) : {};
-  const {action} = input;
+  const { action } = input;
   const sessionId = toStringValue(input.sessionId);
 
   if (!sessionId || !isLiveOpsAction(action)) {

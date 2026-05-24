@@ -64,6 +64,11 @@ import {
   voiceProfileProviderAliases,
 } from "./providers";
 import { runtimeDirectory } from "./stores";
+import { reactiveHub } from "./sync";
+import {
+  VOICE_EVIDENCE_TOPIC,
+  VOICE_WORKER_HEALTH_TOPIC,
+} from "../constants/sync";
 import type { VoiceSTTProvider, VoiceTTSProvider } from "./providers";
 
 const renderRealCallProfileRecoveryHTML = () => `<!doctype html>
@@ -566,6 +571,13 @@ const realCallEvidenceRuntimeWorkerLoop =
   createVoiceRealCallEvidenceRuntimeWorkerLoop({
     pollIntervalMs: realCallEvidenceRuntimeAutocollectIntervalMs,
     runtime: realCallEvidenceRuntime,
+    // One server-side tick fans out to every subscribed dashboard via SSE,
+    // replacing each browser's 10s worker-health poll. A fresh collect also
+    // refreshes the accumulated evidence surfaces.
+    onCollect: () => {
+      reactiveHub.publish(VOICE_WORKER_HEALTH_TOPIC);
+      reactiveHub.publish(VOICE_EVIDENCE_TOPIC);
+    },
     onError: (error) => {
       console.error("Real-call evidence auto-collector failed:", error);
     },
@@ -628,7 +640,8 @@ const runRecoveryProofScript = async (
   }
 };
 
-const refreshRealCallEvidenceRuntimeAfterRecovery = async () => await realCallEvidenceRuntime.collect();
+const refreshRealCallEvidenceRuntimeAfterRecovery = async () =>
+  await realCallEvidenceRuntime.collect();
 
 const getRecoveryProofChromePort = (profileId?: string) => {
   if (profileId === "meeting-recorder") {
@@ -859,9 +872,8 @@ const readRealCallProfileHistory = async () => {
   };
 };
 
-const readRealCallProfileDefaultsReport = async () => buildVoiceRealCallProfileHistoryReport(
-    await readRealCallProfileHistory(),
-  );
+const readRealCallProfileDefaultsReport = async () =>
+  buildVoiceRealCallProfileHistoryReport(await readRealCallProfileHistory());
 
 const resolveProfileProviderRoute = async <TProvider extends string>(input: {
   availableProviders: readonly TProvider[];
