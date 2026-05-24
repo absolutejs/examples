@@ -1,8 +1,14 @@
 import { isUserSessionId, protectRoutePlugin } from "@absolutejs/auth";
+import { resolveAuthHtmxRenderers } from "@absolutejs/auth/ui";
 import { isValidProviderOption } from "citra";
 import { eq, or } from "drizzle-orm";
 import { Elysia } from "elysia";
+import {
+  CONNECTOR_TARGETS,
+  FEATURED_LOGIN_PROVIDERS,
+} from "../../frontend/shared/navData";
 import { authorizationHref } from "../../frontend/shared/oauth";
+import { providerData } from "../../frontend/shared/providerData";
 import { schema, User } from "../shared/auth/schema";
 import {
   deleteDBAuthIdentityMergeRequest,
@@ -15,17 +21,17 @@ import {
   buildLinkedProviderPayload,
 } from "../shared/payloads";
 import { AuthRuntime } from "../shared/runtime";
-import {
-  renderAccount,
-  renderAuthMenu,
-  renderConnectorLinks,
-  renderConnectors,
-  renderIdentities,
-  renderProtected,
-  renderProviderLogin,
-} from "../htmx/render";
 
 const SEE_OTHER = 303;
+
+// The auth HTMX fragments ship in @absolutejs/auth — resolve them with this
+// app's provider data + OAuth href builder. Pass `render` to override any one.
+const renderers = resolveAuthHtmxRenderers({
+  authorizationHref,
+  connectorTargets: CONNECTOR_TARGETS,
+  featuredLoginProviders: FEATURED_LOGIN_PROVIDERS,
+  providerData,
+});
 
 const html = (markup: string) =>
   new Response(markup, {
@@ -44,24 +50,26 @@ export const htmxFragmentsPlugin = ({
 
   return new Elysia()
     .use(protectRoutePlugin<User>({ authSessionStore }))
-    .get("/htmx/login", () => html(renderProviderLogin("Sign in with", true)))
-    .get("/htmx/link", () => html(renderProviderLogin("Link", false)))
-    .get("/htmx/connector-links", () => html(renderConnectorLinks()))
+    .get("/htmx/login", () =>
+      html(renderers.providerLogin("Sign in with", true)),
+    )
+    .get("/htmx/link", () => html(renderers.providerLogin("Link", false)))
+    .get("/htmx/connector-links", () => html(renderers.connectorLinks()))
     .get("/htmx/auth-menu", ({ protectRoute }) =>
       protectRoute(
-        (user) => html(renderAuthMenu(user)),
-        () => html(renderAuthMenu(null)),
+        (user) => html(renderers.authMenu(user)),
+        () => html(renderers.authMenu(null)),
       ),
     )
     .get("/htmx/me", ({ protectRoute }) =>
       protectRoute(
-        (user) => html(renderProtected(user)),
+        (user) => html(renderers.protected(user)),
         () => html(signInPrompt),
       ),
     )
     .get("/htmx/account", ({ protectRoute }) =>
       protectRoute(
-        (user) => html(renderAccount(user)),
+        (user) => html(renderers.account(user)),
         () => html(signInPrompt),
       ),
     )
@@ -70,7 +78,7 @@ export const htmxFragmentsPlugin = ({
         const search = typeof query.query === "string" ? query.query : "";
 
         return html(
-          renderIdentities(
+          renderers.identities(
             await buildAuthIdentityPayload(deps, user.sub),
             search,
           ),
@@ -90,7 +98,10 @@ export const htmxFragmentsPlugin = ({
         }
 
         return html(
-          renderIdentities(await buildAuthIdentityPayload(deps, user.sub), ""),
+          renderers.identities(
+            await buildAuthIdentityPayload(deps, user.sub),
+            "",
+          ),
         );
       }),
     )
@@ -106,7 +117,10 @@ export const htmxFragmentsPlugin = ({
         }
 
         return html(
-          renderIdentities(await buildAuthIdentityPayload(deps, user.sub), ""),
+          renderers.identities(
+            await buildAuthIdentityPayload(deps, user.sub),
+            "",
+          ),
         );
       }),
     )
@@ -123,7 +137,10 @@ export const htmxFragmentsPlugin = ({
         }
 
         return html(
-          renderIdentities(await buildAuthIdentityPayload(deps, user.sub), ""),
+          renderers.identities(
+            await buildAuthIdentityPayload(deps, user.sub),
+            "",
+          ),
         );
       }),
     )
@@ -132,7 +149,10 @@ export const htmxFragmentsPlugin = ({
         await deleteDBAuthIdentityMergeRequest({ db, id: params.id });
 
         return html(
-          renderIdentities(await buildAuthIdentityPayload(deps, user.sub), ""),
+          renderers.identities(
+            await buildAuthIdentityPayload(deps, user.sub),
+            "",
+          ),
         );
       }),
     )
@@ -140,7 +160,9 @@ export const htmxFragmentsPlugin = ({
       protectRoute(
         async (user) =>
           html(
-            renderConnectors(await buildLinkedProviderPayload(deps, user.sub)),
+            renderers.connectors(
+              await buildLinkedProviderPayload(deps, user.sub),
+            ),
           ),
         () => html(signInPrompt),
       ),
@@ -153,7 +175,9 @@ export const htmxFragmentsPlugin = ({
         }
 
         return html(
-          renderConnectors(await buildLinkedProviderPayload(deps, user.sub)),
+          renderers.connectors(
+            await buildLinkedProviderPayload(deps, user.sub),
+          ),
         );
       }),
     )
@@ -168,7 +192,9 @@ export const htmxFragmentsPlugin = ({
         }
 
         return html(
-          renderConnectors(await buildLinkedProviderPayload(deps, user.sub)),
+          renderers.connectors(
+            await buildLinkedProviderPayload(deps, user.sub),
+          ),
         );
       }),
     )
