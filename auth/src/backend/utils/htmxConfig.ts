@@ -1,4 +1,4 @@
-import type { AuthHtmxConfig } from "@absolutejs/auth";
+import { defineAuthHtmxConfig } from "@absolutejs/auth";
 import type {
   LinkedProviderBindingStore,
   LinkedProviderGrantStore,
@@ -8,20 +8,20 @@ import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import {
   CONNECTOR_TARGETS,
   FEATURED_LOGIN_PROVIDERS,
-} from "../frontend/shared/navData";
-import { authorizationHref } from "../frontend/shared/oauth";
-import { providerData } from "../frontend/shared/providerData";
-import { schema, SchemaType } from "./shared/auth/schema";
+} from "../../frontend/shared/navData";
+import { authorizationHref } from "../../frontend/shared/oauth";
+import { providerData } from "../../frontend/shared/providerData";
+import { schema, SchemaType } from "../shared/auth/schema";
 import {
   deleteDBAuthIdentityMergeRequest,
   mergeUserAccounts,
   removeDBAuthIdentity,
   setPrimaryAuthIdentity,
-} from "./shared/handlers/userHandlers";
+} from "../shared/handlers/userHandlers";
 import {
   buildAuthIdentityPayload,
   buildLinkedProviderPayload,
-} from "./shared/payloads";
+} from "../shared/payloads";
 
 type AuthHtmxConfigDeps = {
   bindingStore: LinkedProviderBindingStore;
@@ -36,10 +36,10 @@ export const buildAuthHtmxConfig = ({
   bindingStore,
   db,
   grantStore,
-}: AuthHtmxConfigDeps): AuthHtmxConfig => {
+}: AuthHtmxConfigDeps) => {
   const deps = { bindingStore, db, grantStore };
 
-  return {
+  return defineAuthHtmxConfig({
     authorizationHref,
     connectorTargets: CONNECTOR_TARGETS,
     deleteAccount: async ({ userSub }) => {
@@ -85,5 +85,5 @@ export const buildAuthHtmxConfig = ({
       removeDBAuthIdentity({ db, id: identityId }),
     setPrimaryIdentity: ({ identityId, userSub }) =>
       setPrimaryAuthIdentity({ db, identityId, userSub }),
-  };
+  });
 };

@@ -3,12 +3,12 @@ import { auth, createNeonAuthSessionStore } from "@absolutejs/auth";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { Elysia } from "elysia";
-import { buildAuthHtmxConfig } from "./htmxConfig";
 import { apiPlugin } from "./plugins/apiPlugin";
 import { pagesPlugin } from "./plugins/pagesPlugin";
 import { authConfig } from "./shared/auth/config";
 import { schema, User } from "./shared/auth/schema";
 import { createDrizzleLinkedProviderStores } from "./shared/linkedProviders/stores";
+import { buildAuthHtmxConfig } from "./utils/htmxConfig";
 
 const { absolutejs, manifest } = await prepare();
 const databaseUrl = getEnv("DATABASE_URL");
