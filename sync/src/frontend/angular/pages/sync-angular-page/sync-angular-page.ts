@@ -35,12 +35,17 @@ export class SyncAngularPageComponent {
   status = this.handle.status;
   title = signal("");
   tasks = computed(() =>
-    [...this.handle.data()].sort((a, b) => a.createdAt - b.createdAt),
+    [...this.handle.data()].sort(
+      (first, second) => first.createdAt - second.createdAt,
+    ),
   );
   doneCount = computed(() => this.tasks().filter((task) => task.done).length);
 
   setTitle(event: Event) {
-    this.title.set((event.target as HTMLInputElement).value);
+    const { target } = event;
+    if (target instanceof HTMLInputElement) {
+      this.title.set(target.value);
+    }
   }
 
   add(event: Event) {

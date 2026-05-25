@@ -1,5 +1,4 @@
-import type { FormEvent } from "react";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useSyncCollection } from "@absolutejs/sync/react";
 
 type Task = {
@@ -8,6 +7,33 @@ type Task = {
   done: boolean;
   createdAt: number;
 };
+
+type TaskItemProps = {
+  task: Task;
+  onToggle: (task: Task) => void;
+  onRemove: (task: Task) => void;
+};
+
+const TaskItem = ({ task, onToggle, onRemove }: TaskItemProps) => (
+  <li className={task.done ? "task-item done" : "task-item"}>
+    <label>
+      <input
+        checked={task.done}
+        onChange={() => onToggle(task)}
+        type="checkbox"
+      />
+      <span>{task.title}</span>
+    </label>
+    <button
+      aria-label="Remove"
+      className="task-remove"
+      onClick={() => onRemove(task)}
+      type="button"
+    >
+      ×
+    </button>
+  </li>
+);
 
 // One live collection, served over the engine's WebSocket. The hook hydrates
 // once then applies diffs; mutations are optimistic and reconcile on ack.
@@ -23,7 +49,9 @@ export const SyncReactContent = () => {
   });
   const [title, setTitle] = useState("");
 
-  const tasks = [...data].sort((a, b) => a.createdAt - b.createdAt);
+  const tasks = [...data].sort(
+    (first, second) => first.createdAt - second.createdAt,
+  );
   const doneCount = tasks.filter((task) => task.done).length;
 
   const add = (event: FormEvent) => {
@@ -100,27 +128,12 @@ export const SyncReactContent = () => {
 
         <ul className="task-list">
           {tasks.map((task) => (
-            <li
-              className={task.done ? "task-item done" : "task-item"}
+            <TaskItem
               key={task.id}
-            >
-              <label>
-                <input
-                  checked={task.done}
-                  onChange={() => toggle(task)}
-                  type="checkbox"
-                />
-                <span>{task.title}</span>
-              </label>
-              <button
-                aria-label="Remove"
-                className="task-remove"
-                onClick={() => remove(task)}
-                type="button"
-              >
-                ×
-              </button>
-            </li>
+              onRemove={remove}
+              onToggle={toggle}
+              task={task}
+            />
           ))}
           {tasks.length === 0 && <li className="task-empty">No tasks yet.</li>}
         </ul>

@@ -18,18 +18,15 @@ export type Task = {
 
 const tasks = new Map<string, Task>();
 
-[
+const seed: ReadonlyArray<readonly [string, boolean]> = [
   ["Open this page in a second tab — or another framework", true],
   ["Add a task below; every connected client updates at once", false],
   ["Toggle or delete one from any framework's page", false],
-].forEach(([title, done], index) => {
+];
+
+seed.forEach(([title, done], index) => {
   const id = `seed-${index}`;
-  tasks.set(id, {
-    createdAt: index,
-    done: done as boolean,
-    id,
-    title: title as string,
-  });
+  tasks.set(id, { createdAt: index, done, id, title });
 });
 
 const engine = createSyncEngine();
@@ -39,10 +36,10 @@ const engine = createSyncEngine();
 // what they're allowed to read.
 engine.register(
   defineCollection<Task>({
+    name: "tasks",
     hydrate: () => [...tasks.values()],
     key: (task) => task.id,
     match: () => true,
-    name: "tasks",
   }),
 );
 
@@ -51,6 +48,7 @@ engine.register(
 // each optimistically first, then reconciles when the server confirms.
 engine.registerMutation(
   defineMutation({
+    name: "addTask",
     handler: async (args: { title?: string }, _ctx, actions) => {
       const title = (args.title ?? "").trim();
       if (!title) {
@@ -67,12 +65,12 @@ engine.registerMutation(
 
       return task;
     },
-    name: "addTask",
   }),
 );
 
 engine.registerMutation(
   defineMutation({
+    name: "toggleTask",
     handler: async (args: { id: string }, _ctx, actions) => {
       const task = tasks.get(args.id);
       if (!task) {
@@ -84,12 +82,12 @@ engine.registerMutation(
 
       return next;
     },
-    name: "toggleTask",
   }),
 );
 
 engine.registerMutation(
   defineMutation({
+    name: "removeTask",
     handler: async (args: { id: string }, _ctx, actions) => {
       const task = tasks.get(args.id);
       if (!task) {
@@ -100,7 +98,6 @@ engine.registerMutation(
 
       return { id: task.id };
     },
-    name: "removeTask",
   }),
 );
 
