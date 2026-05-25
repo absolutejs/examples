@@ -1,18 +1,19 @@
 {
 	"compilerOptions": {
-		"target": "ESNext",
-		"module": "ESNext",
-		"moduleResolution": "bundler",
-		"jsx": "react-jsx",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"strict": true,
-		"skipLibCheck": true,
+		"incremental": true,
+		"jsx": "react-jsx",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
 		"noEmit": true,
 		"noUncheckedIndexedAccess": true,
-		"lib": ["DOM", "DOM.Iterable", "ESNext"],
+		"skipLibCheck": true,
+		"strict": true,
+		"target": "ESNext",
+		"tsBuildInfoFile": ".absolutejs/tsconfig.tsbuildinfo",
 		"types": ["bun"]
 	},
-	"include": ["**/*.ts", "**/*.tsx"],
-	"exclude": ["node_modules", "build", "indexes"]
+	"include": ["src/**/*", "absolute.config.ts"]
 }
