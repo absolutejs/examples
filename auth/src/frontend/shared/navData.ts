@@ -6,14 +6,6 @@ type ConnectorTarget = {
   provider: Lowercase<ProviderOption>;
 };
 
-export type FrameworkId =
-  | "react"
-  | "vue"
-  | "svelte"
-  | "angular"
-  | "html"
-  | "htmx";
-
 export const CONNECTOR_TARGETS: ConnectorTarget[] = [
   {
     description: "Gmail + Google Contacts read access",
@@ -31,14 +23,6 @@ export const FEATURED_LOGIN_PROVIDERS: Lowercase<ProviderOption>[] = [
   "github",
   "discord",
   "facebook",
-];
-export const FRAMEWORKS: { id: FrameworkId; label: string }[] = [
-  { id: "react", label: "React" },
-  { id: "vue", label: "Vue" },
-  { id: "svelte", label: "Svelte" },
-  { id: "angular", label: "Angular" },
-  { id: "html", label: "HTML" },
-  { id: "htmx", label: "HTMX" },
 ];
 export const NAV_ITEMS: { label: string; path: string }[] = [
   { label: "Home", path: "" },

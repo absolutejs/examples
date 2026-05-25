@@ -75,9 +75,3 @@ export const buildLinkedProviderPayload = async (
   };
 };
 
-export type AuthIdentityPayload = Awaited<
-  ReturnType<typeof buildAuthIdentityPayload>
->;
-export type LinkedProviderPayload = Awaited<
-  ReturnType<typeof buildLinkedProviderPayload>
->;

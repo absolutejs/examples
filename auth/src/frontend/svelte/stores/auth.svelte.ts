@@ -8,7 +8,7 @@ export const authState = $state<{ loading: boolean; user: AuthUser | null }>({
 
 let started = false;
 
-export const refreshAuth = async () => {
+const refreshAuth = async () => {
   authState.loading = true;
   authState.user = await fetchAuthStatus();
   authState.loading = false;

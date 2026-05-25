@@ -23,7 +23,7 @@ export type AuthIdentity = {
   isPrimary: boolean;
 };
 
-export type AuthIdentityMergeRequest = {
+type AuthIdentityMergeRequest = {
   id: string;
   target_user_sub: string;
   source_user_sub: string;

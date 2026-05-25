@@ -50,7 +50,7 @@ const extractOptionalProviderString = ({
   }
 };
 
-export const buildCanonicalUserFieldsFromIdentity = ({
+const buildCanonicalUserFieldsFromIdentity = ({
   authProvider,
   userIdentity,
 }: {
@@ -93,7 +93,7 @@ export const buildCanonicalUserFieldsFromIdentity = ({
       null,
   };
 };
-export const createDBUser = async ({
+const createDBUser = async ({
   sub,
   db,
   email,
@@ -129,7 +129,7 @@ type UpdateDBUserProps = {
   fields: Partial<NewUser>;
 };
 
-export const updateDBUser = async ({
+const updateDBUser = async ({
   userSub,
   db,
   fields,
@@ -148,7 +148,7 @@ type UpdateDBUserPrimaryAuthIdentityProps = {
   primaryAuthIdentityId: string;
 };
 
-export const updateDBUserPrimaryAuthIdentity = async ({
+const updateDBUserPrimaryAuthIdentity = async ({
   userSub,
   db,
   primaryAuthIdentityId,
@@ -206,7 +206,7 @@ const buildProviderSubjectFromIdentity = ({
   );
 };
 
-export const createDBAuthIdentity = async ({
+const createDBAuthIdentity = async ({
   auth_provider,
   db,
   id,
@@ -234,7 +234,7 @@ type GetDBAuthIdentityProps = {
   providerSubject: string;
 };
 
-export const createDBAuthIdentityMergeRequest = async ({
+const createDBAuthIdentityMergeRequest = async ({
   db,
   ...values
 }: NewAuthIdentityMergeRequest & { db: NeonHttpDatabase<SchemaType> }) => {
@@ -245,7 +245,7 @@ export const createDBAuthIdentityMergeRequest = async ({
 
   return request;
 };
-export const getDBAuthIdentity = async ({
+const getDBAuthIdentity = async ({
   authProvider,
   db,
   providerSubject,
@@ -263,7 +263,7 @@ export const getDBAuthIdentity = async ({
 
   return identity;
 };
-export const getDBAuthIdentityById = async ({
+const getDBAuthIdentityById = async ({
   db,
   id,
 }: {
@@ -278,7 +278,7 @@ export const getDBAuthIdentityById = async ({
 
   return identity;
 };
-export const getDBAuthIdentityMergeRequest = async ({
+const getDBAuthIdentityMergeRequest = async ({
   db,
   id,
 }: {
@@ -450,7 +450,7 @@ export const linkUserIdentity = async ({
     status: "created" as const,
   };
 };
-export const updateDBAuthIdentityMergeRequestStatus = async ({
+const updateDBAuthIdentityMergeRequestStatus = async ({
   db,
   id,
   status,
@@ -467,29 +467,6 @@ export const updateDBAuthIdentityMergeRequestStatus = async ({
     .returning();
 
   return request;
-};
-
-type SyncDBUserFromAuthIdentityProps = {
-  db: NeonHttpDatabase<SchemaType>;
-  identity: AuthIdentity;
-  userSub: string;
-};
-
-export const syncDBUserFromAuthIdentity = async ({
-  db,
-  identity,
-  userSub,
-}: SyncDBUserFromAuthIdentityProps) => {
-  const fields = buildCanonicalUserFieldsFromIdentity({
-    authProvider: identity.auth_provider,
-    userIdentity: identity.metadata ?? {},
-  });
-
-  return updateDBUser({
-    db,
-    fields,
-    userSub,
-  });
 };
 
 type SetPrimaryAuthIdentityProps = {

@@ -56,7 +56,7 @@ const toBinding = (row: LinkedProviderBindingRow): LinkedProviderBinding => ({
   username: row.username ?? undefined,
 });
 
-export const createDrizzleLinkedProviderBindingStore = (
+const createDrizzleLinkedProviderBindingStore = (
   db: NeonHttpDatabase<SchemaType>,
 ): LinkedProviderBindingStore => ({
   getBinding: async (id) => {
@@ -133,7 +133,7 @@ export const createDrizzleLinkedProviderBindingStore = (
       });
   },
 });
-export const createDrizzleLinkedProviderGrantStore = (
+const createDrizzleLinkedProviderGrantStore = (
   db: NeonHttpDatabase<SchemaType>,
 ): LinkedProviderGrantStore => ({
   getGrant: async (id) => {

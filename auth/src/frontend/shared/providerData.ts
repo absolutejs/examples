@@ -1,6 +1,6 @@
 import type { ProviderOption } from "citra";
 
-export type ProviderInfo = {
+type ProviderInfo = {
   name: string;
   logoUrl: string;
   primaryColor: string;

@@ -18,7 +18,7 @@ export type Context = Record<string, never>;
   styleUrl: "./angular-auth.css",
   templateUrl: "./angular-auth.html",
 })
-export class AngularAuthComponent {
+class AngularAuthComponent {
   readonly auth = inject(AuthService);
 
   constructor() {

@@ -18,13 +18,10 @@ import {
 import { SchemaType } from "../../../db/schema";
 import { createDrizzleLinkedProviderStores } from "./stores";
 
-export const FACEBOOK_PAGES_READ_ENGAGEMENT_SCOPE = "pages_read_engagement";
-export const FACEBOOK_PAGES_SHOW_LIST_SCOPE = "pages_show_list";
-export const GMAIL_READONLY_SCOPE =
+const GMAIL_READONLY_SCOPE =
   "https://www.googleapis.com/auth/gmail.readonly";
-export const GOOGLE_CONTACTS_READONLY_SCOPE =
+const GOOGLE_CONTACTS_READONLY_SCOPE =
   "https://www.googleapis.com/auth/contacts.readonly";
-export const INSTAGRAM_BASIC_SCOPE = "instagram_basic";
 
 const META_GRAPH_BASE_URL = "https://graph.facebook.com/v22.0";
 

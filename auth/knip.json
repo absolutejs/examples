@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "drizzle": false,
   "entry": [
     "src/backend/server.ts",
     "absolute.config.ts",
@@ -11,6 +12,6 @@
     "src/frontend/html/scripts/**/*.ts"
   ],
   "ignore": ["src/frontend/htmx/*.min.js"],
-  "ignoreDependencies": ["svelte-check", "vue-tsc"],
+  "ignoreDependencies": ["react-refresh", "svelte-check", "vue-tsc"],
   "project": ["src/**/*.{ts,tsx,vue,svelte,js}"]
 }
