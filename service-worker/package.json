@@ -41,6 +41,7 @@
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "lint": "absolute eslint",
+    "ls": "absolute ls",
     "ps": "absolute ps",
     "serve": "./compiled-server",
     "start": "absolute start",

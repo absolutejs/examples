@@ -54,6 +54,7 @@
     "format": "absolute prettier --write",
     "knip": "knip",
     "lint": "absolute eslint",
+    "ls": "absolute ls",
     "ps": "absolute ps",
     "start": "absolute start",
     "typecheck": "absolute typecheck"

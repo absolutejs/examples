@@ -42,6 +42,7 @@
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "lint": "absolute eslint",
+    "ls": "absolute ls",
     "ps": "absolute ps",
     "start": "absolute start",
     "test": "playwright test",
