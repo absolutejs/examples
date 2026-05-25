@@ -40,6 +40,7 @@
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "lint": "absolute eslint",
+    "ps": "absolute ps",
     "serve": "./compiled-server",
     "start": "absolute start",
     "typecheck": "bun run vue-tsc --noEmit"

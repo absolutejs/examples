@@ -40,6 +40,7 @@
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "lint": "absolute eslint",
+    "ps": "absolute ps",
     "start": "absolute start",
     "typecheck": "absolute typecheck"
   },
