@@ -43,10 +43,23 @@ const TaskItem = ({ task, onToggle, onRemove }: TaskItemProps) => (
   </li>
 );
 
-const wsUrl = () =>
+// Connect read-only when the page URL carries ?role=viewer — the server enforces
+// it (declarative write permission), so a viewer's writes are rejected.
+const roleParam = () =>
   typeof window === "undefined"
-    ? "ws://localhost/sync/ws"
-    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
+    ? null
+    : new URLSearchParams(window.location.search).get("role");
+
+const wsUrl = () => {
+  if (typeof window === "undefined") {
+    return "ws://localhost/sync/ws";
+  }
+  const role = roleParam();
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const query = role ? `?role=${encodeURIComponent(role)}` : "";
+
+  return `${protocol}://${window.location.host}/sync/ws${query}`;
+};
 
 const randomName = () => `User-${globalThis.crypto.randomUUID().split("-")[0]}`;
 
@@ -92,10 +105,24 @@ export const SyncReactContent = () => {
   });
   const { members, selfId, setTyping } = usePresence("tasks");
   const [title, setTitle] = useState("");
+  // Read role after mount (avoids an SSR/hydration mismatch on the badge).
+  const [viewer, setViewer] = useState(false);
+  const [denied, setDenied] = useState(false);
+
+  useEffect(() => {
+    setViewer(roleParam() === "viewer");
+  }, []);
 
   useEffect(() => {
     setTyping(title.trim().length > 0);
   }, [title]);
+
+  // Run a mutation, surfacing a server permission rejection instead of letting
+  // the promise go unhandled (the optimistic change rolls back automatically).
+  const submit = (options: Parameters<typeof mutate>[0]) => {
+    setDenied(false);
+    void mutate(options).catch(() => setDenied(true));
+  };
 
   const tasks = [...data].sort(
     (first, second) => first.createdAt - second.createdAt,
@@ -115,7 +142,7 @@ export const SyncReactContent = () => {
     // Mint the id client-side so the optimistic row and the server-confirmed
     // row are the same node (no swap, no flicker).
     const id = globalThis.crypto.randomUUID();
-    void mutate({
+    submit({
       args: { id, title: value },
       name: "addTask",
       optimistic: (draft) =>
@@ -124,14 +151,14 @@ export const SyncReactContent = () => {
   };
 
   const toggle = (task: Task) =>
-    void mutate({
+    submit({
       args: { id: task.id },
       name: "toggleTask",
       optimistic: (draft) => draft.set({ ...task, done: !task.done }),
     });
 
   const remove = (task: Task) =>
-    void mutate({
+    submit({
       args: { id: task.id },
       name: "removeTask",
       optimistic: (draft) => draft.delete(task.id),
@@ -172,6 +199,18 @@ export const SyncReactContent = () => {
             {typing.length > 0 ? `${typing.join(", ")} typing…` : ""}
           </span>
         </div>
+
+        {viewer && (
+          <p className="presence-bar" data-testid="viewer-banner">
+            Read-only viewer — the server rejects writes (declarative
+            permission).
+          </p>
+        )}
+        {denied && (
+          <p className="presence-bar" data-testid="write-denied">
+            Server rejected the write — you're read-only.
+          </p>
+        )}
 
         <form className="task-form" onSubmit={add}>
           <input

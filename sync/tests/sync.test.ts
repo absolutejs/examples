@@ -256,3 +256,27 @@ test("presence: online count and typing propagate across clients", async ({
 
   await context.close();
 });
+
+test("declarative permissions: a viewer can read but the server rejects its writes", async ({
+  page,
+}) => {
+  // Connect read-only (?role=viewer); the engine's write rule denies viewers.
+  await page.goto("/?role=viewer");
+  await expect(page.locator(".sync-status")).toContainText("Live", {
+    timeout: 15000,
+  });
+  // Reads work — the snapshot rendered — and we're flagged read-only.
+  await expect(page.locator(".task-item").first()).toBeVisible();
+  await expect(page.getByTestId("viewer-banner")).toBeVisible();
+
+  // Attempt a write: it applies optimistically, the server rejects it, and the
+  // optimistic row rolls back — so it never persists.
+  const title = uniqueTitle("viewer-denied");
+  await taskInput(page).fill(title);
+  await taskInput(page).press("Enter");
+
+  await expect(page.getByTestId("write-denied")).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(taskRow(page, title)).toHaveCount(0, { timeout: 10000 });
+});

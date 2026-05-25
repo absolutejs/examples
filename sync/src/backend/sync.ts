@@ -51,7 +51,20 @@ const transaction: TransactionRunner = async (run) => {
   return result;
 };
 
+// The per-connection auth context. A client may connect read-only by passing
+// `?role=viewer` on the socket URL; everyone else is an editor.
+type Ctx = { role?: string };
+
 const engine = createSyncEngine({ transaction });
+
+// Declarative, server-enforced permissions: anyone may read (the list is shared,
+// so it stays live across tabs), but a "viewer" can't write. The `write` rule
+// covers insert/update/delete, so a viewer's addTask/toggleTask/removeTask is
+// rejected by the engine before it touches the store — the client's optimistic
+// change then rolls back. Default clients (no role) are editors.
+engine.registerPermissions<Task, Ctx>("tasks", {
+  write: (ctx) => ctx.role !== "viewer",
+});
 
 // Teach the engine how to read the table — this powers reactive queries' ctx.db.
 engine.registerReader("tasks", {
@@ -132,4 +145,21 @@ engine.registerMutation(
 // Ephemeral presence (who's online / typing) rides the same socket.
 const presence = createPresenceHub();
 
-export const syncPlugin = syncSocket({ engine, presence });
+// Pull a string query param off the socket's upgrade data without a type
+// assertion (the example's lint forbids `as`).
+const queryParam = (data: Record<string, unknown>, name: string) => {
+  const { query } = data;
+  if (typeof query !== "object" || query === null) {
+    return undefined;
+  }
+  const value: unknown = Reflect.get(query, name);
+
+  return typeof value === "string" ? value : undefined;
+};
+
+export const syncPlugin = syncSocket({
+  engine,
+  presence,
+  // Read the role off the socket's query string into the per-connection ctx.
+  resolveContext: (data) => ({ role: queryParam(data, "role") }),
+});
