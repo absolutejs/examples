@@ -251,6 +251,9 @@ export default defineConfig([
   {
     files: ["eslint.config.mjs"],
     rules: {
+      // This is build-time tooling, never bundled into the server, so deriving a
+      // path from import.meta.url here is safe (the rule targets runtime code).
+      "absolute/no-import-meta-path": "off",
       "no-magic-numbers": "off",
     },
   },
