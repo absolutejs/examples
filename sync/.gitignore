@@ -3,6 +3,8 @@ dist/
 build/
 .absolutejs/
 .cache/
+test-results/
+playwright-report/
 *.log
 .DS_Store
 **/*.env
