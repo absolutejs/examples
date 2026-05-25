@@ -97,7 +97,8 @@ export type DemoBackendMode =
   | "sqlite-native"
   | "sqlite-fallback"
   | "postgres"
-  | "pinecone";
+  | "pinecone"
+  | "sync";
 export type DemoReleaseWorkspace = "alpha" | "beta";
 export type DemoFrameworkId =
   | "react"
@@ -2097,6 +2098,7 @@ const demoBackends: DemoBackendDescriptor[] = [
   { available: true, id: "sqlite-fallback", label: "SQLite Fallback" },
   { available: true, id: "postgres", label: "PostgreSQL" },
   { available: true, id: "pinecone", label: "Pinecone" },
+  { available: true, id: "sync", label: "Sync (live)" },
 ];
 const MAX_RECENT_QUERIES = 4;
 export const DEMO_RERANKER_LABEL = "Absolute heuristic";
@@ -3703,7 +3705,8 @@ export const isBackendMode = (value: unknown): value is DemoBackendMode =>
   value === "sqlite-native" ||
   value === "sqlite-fallback" ||
   value === "postgres" ||
-  value === "pinecone";
+  value === "pinecone" ||
+  value === "sync";
 export const isFrameworkId = (value: unknown): value is DemoFrameworkId =>
   value === "react" ||
   value === "svelte" ||
@@ -3729,6 +3732,10 @@ export const getRAGPathForMode = (mode: DemoBackendMode) => {
       return "/rag/sqlite-fallback";
     case "postgres":
       return "/rag/postgres";
+    case "pinecone":
+      return "/rag/pinecone";
+    case "sync":
+      return "/rag/sync";
     case "sqlite-native":
     default:
       return "/rag/sqlite-native";

@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import {
   createRAGCollection,
+  createSyncRAGStore,
   loadRAGDocumentsFromDirectory,
   prepareRAGDocument,
   type RAGBackendCapabilities,
@@ -16,6 +17,7 @@ import { createPostgresRAGStore } from "@absolutejs/rag-postgres";
 import { createSQLiteRAG } from "@absolutejs/rag-sqlite";
 import type { SQLiteRAG } from "@absolutejs/rag-sqlite";
 import { createPineconeRAG } from "@absolutejs/rag-pinecone";
+import type { SyncEngine } from "@absolutejs/sync/engine";
 import type { Database } from "bun:sqlite";
 import { ragDemoExtractors } from "./ragDemoExtractors";
 
@@ -24,7 +26,8 @@ export type DemoBackendMode =
   | "sqlite-native"
   | "sqlite-fallback"
   | "postgres"
-  | "pinecone";
+  | "pinecone"
+  | "sync";
 export type DemoContentFormat = RAGContentFormat;
 export type DemoChunkingStrategy = RAGChunkingStrategy;
 
@@ -68,10 +71,21 @@ type PineconeRagAdapter = {
   getStatus?: () => RAGVectorStoreStatus;
   store: RAGVectorStore;
 };
+// The sync backend keeps the store's engine + live retrieval collection so the
+// rag server can mount a syncSocket for live retrieval.
+type SyncRagAdapter = {
+  collection: RAGCollection;
+  engine: SyncEngine;
+  getCapabilities?: () => RAGBackendCapabilities;
+  getStatus?: () => RAGVectorStoreStatus;
+  retrievalCollection: string;
+  store: RAGVectorStore;
+};
 type DemoRAGAdapter =
   | SQLiteRagAdapter
   | PostgresRagAdapter
-  | PineconeRagAdapter;
+  | PineconeRagAdapter
+  | SyncRagAdapter;
 
 export type DemoRAGBackend = DemoBackendDescriptor & {
   rag?: DemoRAGAdapter;
@@ -86,6 +100,7 @@ const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
   "sqlite-fallback",
   "postgres",
   "pinecone",
+  "sync",
 ];
 
 const RAG_DEMO_PINECONE_DIMENSIONS = 1024;
@@ -251,6 +266,23 @@ const createSQLiteFallbackRAG = (
     },
   });
 
+const createSyncDemoRAG = (): SyncRagAdapter => {
+  // createSyncRAGStore is a drop-in RAGVectorStore (deterministic demo
+  // embeddings, dim 24 to match the other backends) that ALSO exposes a live
+  // retrieval collection over a sync engine — mounted as a WebSocket below.
+  const store = createSyncRAGStore({ dimensions: 24 });
+  const collection = createRAGCollection({ store });
+
+  return {
+    collection,
+    engine: store.engine,
+    retrievalCollection: store.retrievalCollection,
+    store,
+    getCapabilities: () => store.getCapabilities!(),
+    getStatus: () => store.getStatus!(),
+  };
+};
+
 const createPostgresDemoRAG = (
   connectionString: string,
 ): PostgresRagAdapter => {
@@ -320,6 +352,8 @@ const getBackendPath = (mode: DemoBackendMode) => {
       return "/rag/postgres";
     case "pinecone":
       return "/rag/pinecone";
+    case "sync":
+      return "/rag/sync";
     case "sqlite-native":
     default:
       return "/rag/sqlite-native";
@@ -334,6 +368,7 @@ export const createRAGBackends = (
 ) => {
   const sqliteNative = createSQLiteNativeRAG(opts);
   const sqliteFallback = createSQLiteFallbackRAG(opts);
+  const sync = createSyncDemoRAG();
   const postgresUrl =
     typeof opts.postgresUrl === "string" ? opts.postgresUrl.trim() : "";
   const pineconeReady = isPineconeReady(opts.pinecone);
@@ -390,6 +425,13 @@ export const createRAGBackends = (
           path: getBackendPath("pinecone"),
           reason: PINECONE_DISABLED_REASON,
         },
+    sync: {
+      available: true,
+      id: "sync",
+      label: "Sync (live)",
+      path: getBackendPath("sync"),
+      rag: sync,
+    },
   };
 
   const list = (): DemoBackendDescriptor[] =>

@@ -9,10 +9,11 @@
         "@absolutejs/ai": "^0.0.9",
         "@absolutejs/auth": "0.22.7",
         "@absolutejs/linked-providers": "0.0.2",
-        "@absolutejs/rag": "^0.0.20",
+        "@absolutejs/rag": "^0.0.21",
         "@absolutejs/rag-pinecone": "^0.0.3",
         "@absolutejs/rag-postgres": "^0.0.6",
         "@absolutejs/rag-sqlite": "^0.0.6",
+        "@absolutejs/sync": "^0.7.0",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
         "@angular/compiler-cli": "^21.0.0",
@@ -82,13 +83,15 @@
 
     "@absolutejs/native-windows-x64": ["@absolutejs/native-windows-x64@0.19.0-beta.1008", "", { "os": "win32", "cpu": "x64" }, "sha512-mXIL6AzV0gznwXz6gF+dtT4DIwxKMriF+WYxcjAPlf4xWD0S3ZS8jafHwQXi0RJn0pIX4TIIOhRz0JnVlka3zA=="],
 
-    "@absolutejs/rag": ["@absolutejs/rag@0.0.20", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-rG67G0Q//Keq7nOBBGBoJzJ1Mn58gyvv6kBRrb8422ECBBOr+xgxoDVvkFLLkqRw9V0gFRPcTVJhZSgZq7yTvg=="],
+    "@absolutejs/rag": ["@absolutejs/rag@0.0.21", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2", "@absolutejs/sync": "^0.6.0" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-l2KSupbCVGwNsef4wBSBs1LCHzao9RD14/ab4Fp+Lk+tINM8Q0V5dBzFj3A0KrHqoZHVo9UDMTktfLmA6z/BGQ=="],
 
     "@absolutejs/rag-pinecone": ["@absolutejs/rag-pinecone@0.0.3", "", { "dependencies": { "@absolutejs/rag": "^0.0.20" }, "peerDependencies": { "@pinecone-database/pinecone": ">=6.0.0 <7.0.0" } }, "sha512-GPgCFUQa3Kebe2Qv8hcRwp0Z9ML4pcWIHYc5POoKWnD8eKynZJtOf50zrOyjEdxq1lTYVBptQ/GPuenvJaV52w=="],
 
     "@absolutejs/rag-postgres": ["@absolutejs/rag-postgres@0.0.6", "", { "dependencies": { "@absolutejs/rag": "^0.0.20" } }, "sha512-6wrvkzOHTlbJosEM5iiZT1kwXlev1twiUHe4qEhCJvqMOGsXxttaEKwO1944tZk6Tn1+34BWhnBKzvHhfYjbbw=="],
 
     "@absolutejs/rag-sqlite": ["@absolutejs/rag-sqlite@0.0.6", "", { "dependencies": { "@absolutejs/rag": "^0.0.20" }, "optionalDependencies": { "@absolutejs/absolute-rag-sqlite-darwin-arm64": "0.0.2", "@absolutejs/absolute-rag-sqlite-darwin-x64": "0.0.2", "@absolutejs/absolute-rag-sqlite-linux-arm64": "0.0.2", "@absolutejs/absolute-rag-sqlite-linux-x64": "0.0.2", "@absolutejs/absolute-rag-sqlite-windows-x64": "0.0.2" } }, "sha512-F0UCP8afx67BhDqFmsIdFBelSjZrQppffRj1PN575A8MKhxmB3JM7l9lRxZDADVSr5I7835/XG67Kqw3PKUi2g=="],
+
+    "@absolutejs/sync": ["@absolutejs/sync@0.7.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "@elysiajs/cron", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-Emc4mQBikyctrS+7F/TwZpo1O4RBshkrnFSOjUc+Bf5C8zBAN2A19gTMlUrLx4pqS1DO2hQTPpUw6nODNTPSkQ=="],
 
     "@angular/common": ["@angular/common@21.2.10", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/core": "21.2.10", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-WLyi/CRLtgALg2mmaqIuKuPnE4i+8PGt/uuz26pVqx+ASh28/TWr5KSCAMomgxEc8kt4OE7lopoQsTihrQCfEw=="],
 
@@ -695,6 +698,14 @@
     "zone.js": ["zone.js@0.15.1", "", {}, "sha512-XE96n56IQpJM7NAoXswY3XRLcWFW83xe0BiAOeMD7K5k5xecOeul3Qcpx6GqEeeHNkW5DWL5zOyTbEfB4eti8w=="],
 
     "zustand": ["zustand@5.0.12", "", { "peerDependencies": { "@types/react": ">=18.0.0", "immer": ">=9.0.6", "react": ">=18.0.0", "use-sync-external-store": ">=1.2.0" }, "optionalPeers": ["@types/react", "immer", "react", "use-sync-external-store"] }, "sha512-i77ae3aZq4dhMlRhJVCYgMLKuSiZAaUPAct2AksxQ+gOtimhGMdXljRT21P5BNpeT4kXlLIckvkPM029OljD7g=="],
+
+    "@absolutejs/rag/@absolutejs/sync": ["@absolutejs/sync@0.6.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "@elysiajs/cron", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-gkQ+7noAyrKHjzt/3rwSZr6C65rTpjHdgtLi/mVWhZBYZfWfOgW/JLrzLaIP27VNUiw4NVv/fFJYMXQ7P3/yMA=="],
+
+    "@absolutejs/rag-pinecone/@absolutejs/rag": ["@absolutejs/rag@0.0.20", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-rG67G0Q//Keq7nOBBGBoJzJ1Mn58gyvv6kBRrb8422ECBBOr+xgxoDVvkFLLkqRw9V0gFRPcTVJhZSgZq7yTvg=="],
+
+    "@absolutejs/rag-postgres/@absolutejs/rag": ["@absolutejs/rag@0.0.20", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-rG67G0Q//Keq7nOBBGBoJzJ1Mn58gyvv6kBRrb8422ECBBOr+xgxoDVvkFLLkqRw9V0gFRPcTVJhZSgZq7yTvg=="],
+
+    "@absolutejs/rag-sqlite/@absolutejs/rag": ["@absolutejs/rag@0.0.20", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-rG67G0Q//Keq7nOBBGBoJzJ1Mn58gyvv6kBRrb8422ECBBOr+xgxoDVvkFLLkqRw9V0gFRPcTVJhZSgZq7yTvg=="],
 
     "@angular/compiler-cli/chokidar": ["chokidar@5.0.0", "", { "dependencies": { "readdirp": "^5.0.0" } }, "sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw=="],
 

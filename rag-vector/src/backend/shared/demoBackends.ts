@@ -2,7 +2,8 @@ type DemoBackendMode =
   | "sqlite-native"
   | "sqlite-fallback"
   | "postgres"
-  | "pinecone";
+  | "pinecone"
+  | "sync";
 
 export type DemoBackendDescriptor = {
   id: DemoBackendMode;
@@ -24,6 +25,7 @@ const RAG_DEMO_BACKEND_ORDER: DemoBackendMode[] = [
   "sqlite-fallback",
   "postgres",
   "pinecone",
+  "sync",
 ];
 
 const getBackendPath = (mode: DemoBackendMode) => {
@@ -34,11 +36,16 @@ const getBackendPath = (mode: DemoBackendMode) => {
       return "/rag/postgres";
     case "pinecone":
       return "/rag/pinecone";
+    case "sync":
+      return "/rag/sync";
     case "sqlite-native":
     default:
       return "/rag/sqlite-native";
   }
 };
+
+const sqliteLabel = (mode: DemoBackendMode) =>
+  mode === "sqlite-native" ? "SQLite Native" : "SQLite Fallback";
 
 const PINECONE_DISABLED_REASON =
   "Set PINECONE_API_KEY and PINECONE_INDEX_NAME to enable the Pinecone backend.";
@@ -100,7 +107,7 @@ export const listDemoBackends = (
     return {
       available: true,
       id,
-      label: id === "sqlite-native" ? "SQLite Native" : "SQLite Fallback",
+      label: id === "sync" ? "Sync (live)" : sqliteLabel(id),
       path: getBackendPath(id),
     };
   });

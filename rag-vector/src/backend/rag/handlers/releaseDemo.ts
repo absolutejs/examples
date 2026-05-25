@@ -323,6 +323,7 @@ export const createDemoReleaseController = ({
     postgres: createStores("postgres"),
     "sqlite-fallback": createStores("sqlite-fallback"),
     "sqlite-native": createStores("sqlite-native"),
+    sync: createStores("sync"),
   };
 
   const seedRun = async ({

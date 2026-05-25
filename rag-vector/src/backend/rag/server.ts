@@ -1,6 +1,7 @@
 import { file } from "bun";
 import { networking } from "@absolutejs/absolute";
-import { Elysia } from "elysia";
+import { syncSocket } from "@absolutejs/sync";
+import { Elysia, t } from "elysia";
 import { join } from "node:path";
 import {
   buildDemoUploadIngestInput,
@@ -22,6 +23,29 @@ import { createDemoUiStatePlugin } from "./plugins/demoUiStatePlugin";
 import { createRagBackendPlugin } from "./plugins/ragBackendPlugin";
 
 const runtime = createRagRuntime();
+
+// Live retrieval for the "sync" backend: mount its engine as a WebSocket at a
+// single-segment /rag/* path the web's ragProxyPlugin already forwards. Clients
+// subscribe to the retrieval collection (params = the query) and results re-rank
+// as documents are ingested.
+const syncBackendRag = runtime.ragBackends.backends.sync.rag;
+const syncRetrievalSocket =
+  syncBackendRag && "engine" in syncBackendRag
+    ? new Elysia()
+        .use(syncSocket({ engine: syncBackendRag.engine, path: "/rag/synclive" }))
+        .post(
+          "/rag/synclive/ingest",
+          async ({ body }) => {
+            await syncBackendRag.store.upsert({
+              chunks: [{ chunkId: crypto.randomUUID(), text: body.text }],
+            });
+
+            return { ingested: true };
+          },
+          { body: t.Object({ text: t.String() }) },
+        )
+    : new Elysia();
+
 let handleInternalRequest: DemoInternalRequestHandler = async () =>
   new Response("RAG service is not ready yet.", { status: 503 });
 const dispatchInternalRequest: DemoInternalRequestHandler = (request) =>
@@ -446,6 +470,7 @@ const service = new Elysia()
       ].join("");
     }),
   )
+  .use(syncRetrievalSocket)
   .use(networking)
   .on("error", (error) => {
     const { request } = error;

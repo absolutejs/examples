@@ -970,6 +970,7 @@ export const createRagDemoState = ({
     postgres: 0,
     "sqlite-fallback": 0,
     "sqlite-native": 0,
+    sync: 0,
   };
   const syncStatePath = join(
     process.cwd(),

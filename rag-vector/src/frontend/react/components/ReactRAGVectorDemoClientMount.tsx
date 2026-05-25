@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DemoBackendMode } from "../../demo-backends";
 import { ReactRAGJourney } from "../pages/ReactRAGJourney";
+import { ReactSyncLiveRetrieval } from "./ReactSyncLiveRetrieval";
 
 const ReactRAGVectorDemoLoadingShell = () => (
   <main className="demo-layout">
@@ -34,6 +35,15 @@ export const ReactRAGVectorDemoClientMount = ({
 
   if (!hydrated) {
     return <ReactRAGVectorDemoLoadingShell />;
+  }
+
+  if (mode === "sync") {
+    return (
+      <>
+        <ReactSyncLiveRetrieval />
+        <ReactRAGJourney mode={mode} />
+      </>
+    );
   }
 
   return <ReactRAGJourney mode={mode} />;
