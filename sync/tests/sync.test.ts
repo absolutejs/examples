@@ -264,6 +264,23 @@ const pulseCount = async (page: Page) => {
   return match ? Number.parseInt(match[1], 10) : 0;
 };
 
+test("devtools dashboard shows live engine state", async ({ page }) => {
+  await page.goto("/sync/devtools");
+  // The SSE feed connects.
+  await expect(page.locator("#status")).toHaveText("live", { timeout: 15000 });
+  // The snapshot lists registered collections.
+  await expect(page.locator("#collections")).toContainText("tasks", {
+    timeout: 15000,
+  });
+  // The cron "pulse" schedule emits change activity every second — it streams in.
+  await expect(page.locator("#activity")).toContainText("change", {
+    timeout: 15000,
+  });
+  await expect(page.locator("#activity")).toContainText("pulse", {
+    timeout: 15000,
+  });
+});
+
 test("scheduled functions: a server-side cron job pushes live updates", async ({
   page,
 }) => {

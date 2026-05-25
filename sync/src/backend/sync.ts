@@ -7,7 +7,7 @@ import {
   defineSearchCollection,
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
-import { createPresenceHub, syncSocket } from "@absolutejs/sync";
+import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
 import { scheduled } from "@absolutejs/sync/scheduled";
 import { createSyncRAGStore } from "@absolutejs/rag";
 import { Elysia } from "elysia";
@@ -277,4 +277,7 @@ export const syncPlugin = new Elysia()
       resolveContext: (data) => ({ role: queryParam(data, "role") }),
     }),
   )
-  .use(scheduled({ engine }));
+  .use(scheduled({ engine }))
+  // Live devtools dashboard at /sync/devtools — collections, subscription
+  // counts, mutations, schedules, and a streaming change/mutation feed.
+  .use(syncDevtools({ engine }));
