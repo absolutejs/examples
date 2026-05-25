@@ -1,19 +1,24 @@
 import {
   createSyncEngine,
-  defineCollection,
   defineMutation,
+  defineReactiveQuery,
+  type TransactionRunner,
 } from "@absolutejs/sync/engine";
-import { syncSocket } from "@absolutejs/sync";
+import { createPresenceHub, syncSocket } from "@absolutejs/sync";
 
-// The row our live collection is made of. In a real app these are rows in your
-// own database (read via Drizzle/Prisma); here an in-memory Map is enough to
-// show the Tier 3 sync engine: hydrate once, then push { added, removed,
-// changed } diffs to every subscriber over one WebSocket.
+// The row our live data is made of. In a real app these are rows in your own
+// database (read via Drizzle/Prisma); here an in-memory Map stands in so the
+// example shows the engine surfaces, not a DB driver.
 export type Task = {
   id: string;
   title: string;
   done: boolean;
   createdAt: number;
+};
+
+type Tx = {
+  set: (task: Task) => void;
+  delete: (id: string) => void;
 };
 
 const tasks = new Map<string, Task>();
@@ -23,47 +28,80 @@ const seed: ReadonlyArray<readonly [string, boolean]> = [
   ["Add a task below; every connected client updates at once", false],
   ["Toggle or delete one from any framework's page", false],
 ];
-
 seed.forEach(([title, done], index) => {
   const id = `seed-${index}`;
   tasks.set(id, { createdAt: index, done, id, title });
 });
 
-const engine = createSyncEngine();
+// A toy transaction: stage writes against a copy and commit only if the handler
+// resolves (a throw rolls back). Real apps pass their DB's runner, e.g.
+// `(run) => db.transaction(run)` or `(run) => prisma.$transaction(run)`.
+const transaction: TransactionRunner = async (run) => {
+  const staging = new Map(tasks);
+  const txn: Tx = {
+    delete: (id) => staging.delete(id),
+    set: (task) => staging.set(task.id, task),
+  };
+  const result = await run(txn);
+  tasks.clear();
+  for (const [id, task] of staging) {
+    tasks.set(id, task);
+  }
 
-// One reactive collection. `match: () => true` keeps every task in the set; a
-// real app would scope rows with `authorize`/`match` so a user only ever syncs
-// what they're allowed to read.
-engine.register(
-  defineCollection<Task>({
+  return result;
+};
+
+const engine = createSyncEngine({ transaction });
+
+// Teach the engine how to read the table — this powers reactive queries' ctx.db.
+engine.registerReader("tasks", {
+  all: () => [...tasks.values()],
+});
+
+// The task list is a read-set-tracked reactive query: it just reads the table
+// and re-runs whenever the table changes. No `match`, no manual diffing.
+engine.registerReactive(
+  defineReactiveQuery<Task>({
     name: "tasks",
-    hydrate: () => [...tasks.values()],
     key: (task) => task.id,
-    match: () => true,
+    run: ({ db }) => db.all<Task>("tasks"),
   }),
 );
 
-// Mutations are the change source: they write the store and emit the row change,
-// which the engine turns into a diff for every subscriber. The browser applies
-// each optimistically first, then reconciles when the server confirms.
+// Teach the engine how to persist the table (inside the transaction). Now
+// actions.insert/update/delete write AND emit the live change in one step.
+engine.registerWriter<Task, unknown, Tx>("tasks", {
+  delete: (row: { id: string }, _ctx, txn) => {
+    txn.delete(row.id);
+  },
+  insert: (data: { title: string }, _ctx, txn) => {
+    const task: Task = {
+      createdAt: Date.now(),
+      done: false,
+      id: crypto.randomUUID(),
+      title: data.title,
+    };
+    txn.set(task);
+
+    return task;
+  },
+  update: (task: Task, _ctx, txn) => {
+    txn.set(task);
+
+    return task;
+  },
+});
+
 engine.registerMutation(
   defineMutation({
     name: "addTask",
-    handler: async (args: { title?: string }, _ctx, actions) => {
+    handler: (args: { title?: string }, _ctx, actions) => {
       const title = (args.title ?? "").trim();
       if (!title) {
         return null;
       }
-      const task: Task = {
-        createdAt: Date.now(),
-        done: false,
-        id: crypto.randomUUID(),
-        title,
-      };
-      tasks.set(task.id, task);
-      await actions.change("tasks", { op: "insert", row: task });
 
-      return task;
+      return actions.insert<Task>("tasks", { title });
     },
   }),
 );
@@ -71,16 +109,13 @@ engine.registerMutation(
 engine.registerMutation(
   defineMutation({
     name: "toggleTask",
-    handler: async (args: { id: string }, _ctx, actions) => {
-      const task = tasks.get(args.id);
-      if (!task) {
+    handler: (args: { id: string }, _ctx, actions) => {
+      const current = tasks.get(args.id);
+      if (!current) {
         return null;
       }
-      const next: Task = { ...task, done: !task.done };
-      tasks.set(next.id, next);
-      await actions.change("tasks", { op: "update", row: next });
 
-      return next;
+      return actions.update<Task>("tasks", { ...current, done: !current.done });
     },
   }),
 );
@@ -88,19 +123,12 @@ engine.registerMutation(
 engine.registerMutation(
   defineMutation({
     name: "removeTask",
-    handler: async (args: { id: string }, _ctx, actions) => {
-      const task = tasks.get(args.id);
-      if (!task) {
-        return null;
-      }
-      tasks.delete(task.id);
-      await actions.change("tasks", { op: "delete", row: task });
-
-      return { id: task.id };
-    },
+    handler: (args: { id: string }, _ctx, actions) =>
+      actions.delete("tasks", { id: args.id }),
   }),
 );
 
-// First-class Elysia WebSocket: one socket multiplexes the subscription and the
-// mutations. The client connects at /sync/ws.
-export const syncPlugin = syncSocket({ engine });
+// Ephemeral presence (who's online / typing) rides the same socket.
+const presence = createPresenceHub();
+
+export const syncPlugin = syncSocket({ engine, presence });

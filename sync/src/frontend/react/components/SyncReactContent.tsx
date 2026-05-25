@@ -1,5 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSyncCollection } from "@absolutejs/sync/react";
+import {
+  createPresence,
+  type PresenceClient,
+  type PresenceMember,
+} from "@absolutejs/sync/client";
 
 type Task = {
   id: string;
@@ -7,6 +12,8 @@ type Task = {
   done: boolean;
   createdAt: number;
 };
+
+type Presence = { name: string; typing: boolean };
 
 type TaskItemProps = {
   task: Task;
@@ -35,24 +42,62 @@ const TaskItem = ({ task, onToggle, onRemove }: TaskItemProps) => (
   </li>
 );
 
-// One live collection, served over the engine's WebSocket. The hook hydrates
-// once then applies diffs; mutations are optimistic and reconcile on ack.
 const wsUrl = () =>
   typeof window === "undefined"
     ? "ws://localhost/sync/ws"
     : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
+
+const randomName = () => `User-${globalThis.crypto.randomUUID().split("-")[0]}`;
+
+// Ephemeral presence for the shared "tasks" room: who's online + who's typing.
+const usePresence = (room: string) => {
+  const [members, setMembers] = useState<PresenceMember<Presence>[]>([]);
+  const [selfId, setSelfId] = useState<string>();
+  const clientRef = useRef<PresenceClient<Presence> | null>(null);
+  const nameRef = useRef(randomName());
+
+  useEffect(() => {
+    const presence = createPresence<Presence>({
+      room,
+      state: { name: nameRef.current, typing: false },
+      url: wsUrl(),
+    });
+    clientRef.current = presence;
+    setSelfId(presence.id);
+    const unsubscribe = presence.subscribe(setMembers);
+
+    return () => {
+      unsubscribe();
+      presence.close();
+      clientRef.current = null;
+    };
+  }, [room]);
+
+  const setTyping = (typing: boolean) =>
+    clientRef.current?.set({ name: nameRef.current, typing });
+
+  return { members, selfId, setTyping };
+};
 
 export const SyncReactContent = () => {
   const { data, status, mutate } = useSyncCollection<Task>({
     collection: "tasks",
     url: wsUrl(),
   });
+  const { members, selfId, setTyping } = usePresence("tasks");
   const [title, setTitle] = useState("");
+
+  useEffect(() => {
+    setTyping(title.trim().length > 0);
+  }, [title]);
 
   const tasks = [...data].sort(
     (first, second) => first.createdAt - second.createdAt,
   );
   const doneCount = tasks.filter((task) => task.done).length;
+  const typing = members
+    .filter((member) => member.id !== selfId && member.state.typing)
+    .map((member) => member.state.name);
 
   const add = (event: FormEvent) => {
     event.preventDefault();
@@ -97,10 +142,9 @@ export const SyncReactContent = () => {
       </div>
 
       <p className="section-desc">
-        A live collection from the sync engine. The page hydrates once over a
-        WebSocket, then the server pushes <code>added/removed/changed</code>{" "}
-        diffs — no polling. Edits apply optimistically and reconcile when the
-        server confirms.
+        A reactive query from the sync engine over a WebSocket: writes are
+        transactional and go live automatically (read-set tracking), edits are
+        optimistic, and presence shows who else is here — open another tab.
       </p>
 
       <section className="sync-card">
@@ -111,6 +155,15 @@ export const SyncReactContent = () => {
           </div>
           <span className="sync-stat">
             {doneCount}/{tasks.length} done
+          </span>
+        </div>
+
+        <div className="presence-bar">
+          <span className="presence-online" data-testid="presence-online">
+            {members.length} online
+          </span>
+          <span className="presence-typing">
+            {typing.length > 0 ? `${typing.join(", ")} typing…` : ""}
           </span>
         </div>
 

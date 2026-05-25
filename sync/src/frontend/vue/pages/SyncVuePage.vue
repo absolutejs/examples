@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useSyncCollection } from "@absolutejs/sync/vue";
+import { createPresence } from "@absolutejs/sync/client";
+import type { PresenceClient, PresenceMember } from "@absolutejs/sync/client";
 import Nav from "../components/Nav.vue";
 
 type Task = {
@@ -9,6 +11,8 @@ type Task = {
   done: boolean;
   createdAt: number;
 };
+
+type Presence = { name: string; typing: boolean };
 
 const wsUrl =
   typeof window === "undefined"
@@ -26,6 +30,35 @@ const tasks = computed(() =>
 );
 const doneCount = computed(
   () => tasks.value.filter((task) => task.done).length,
+);
+
+// Presence: who's online + who's typing in the shared "tasks" room.
+const members = ref<PresenceMember<Presence>[]>([]);
+const selfId = ref<string>();
+const presenceName = `User-${Math.random().toString(36).slice(2, 6)}`;
+let presence: PresenceClient<Presence> | null = null;
+
+onMounted(() => {
+  presence = createPresence<Presence>({
+    room: "tasks",
+    state: { name: presenceName, typing: false },
+    url: wsUrl,
+  });
+  selfId.value = presence.id;
+  presence.subscribe((next) => {
+    members.value = next;
+  });
+});
+onUnmounted(() => presence?.close());
+watch(title, (value) =>
+  presence?.set({ name: presenceName, typing: value.trim().length > 0 }),
+);
+
+const online = computed(() => members.value.length);
+const typing = computed(() =>
+  members.value
+    .filter((member) => member.id !== selfId.value && member.state.typing)
+    .map((member) => member.state.name),
 );
 
 const add = (event: Event) => {
@@ -87,6 +120,15 @@ const remove = (task: Task) =>
             {{ status === "ready" ? "Live — /sync/ws" : "Connecting…" }}
           </div>
           <span class="sync-stat">{{ doneCount }}/{{ tasks.length }} done</span>
+        </div>
+
+        <div class="presence-bar">
+          <span class="presence-online" data-testid="presence-online"
+            >{{ online }} online</span
+          >
+          <span class="presence-typing">{{
+            typing.length > 0 ? `${typing.join(", ")} typing…` : ""
+          }}</span>
         </div>
 
         <form class="task-form" @submit="add">

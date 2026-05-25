@@ -53,6 +53,16 @@
           <span class="sync-stat" id="stat">0/0 done</span>
         </div>
 
+        <div class="presence-bar">
+          <span
+            class="presence-online"
+            data-testid="presence-online"
+            id="online"
+            >0 online</span
+          >
+          <span class="presence-typing" id="typing"></span>
+        </div>
+
         <form class="task-form" id="form">
           <input aria-label="New task" id="input" placeholder="Add a task…" />
           <button class="primary" type="submit">Add</button>
@@ -93,10 +103,34 @@
       const statEl = document.getElementById("stat");
       const formEl = document.getElementById("form");
       const inputEl = document.getElementById("input");
+      const onlineEl = document.getElementById("online");
+      const typingEl = document.getElementById("typing");
+
+      // Presence (who's online / typing) rides the same socket.
+      const ROOM = "tasks";
+      const memberId = crypto.randomUUID();
+      const presenceName = "User-" + Math.random().toString(36).slice(2, 6);
+      const members = new Map();
+      const renderPresence = () => {
+        onlineEl.textContent = members.size + " online";
+        const typers = [...members]
+          .filter(([id, state]) => id !== memberId && state.typing)
+          .map(([, state]) => state.name);
+        typingEl.textContent =
+          typers.length > 0 ? typers.join(", ") + " typing…" : "";
+      };
 
       let rows = [];
       let mutationId = 0;
       const ws = new WebSocket(wsUrl);
+      const setTyping = (typing) =>
+        ws.send(
+          JSON.stringify({
+            type: "presence-set",
+            room: ROOM,
+            state: { name: presenceName, typing },
+          }),
+        );
       const mutate = (name, args) =>
         ws.send(
           JSON.stringify({
@@ -155,6 +189,14 @@
         ws.send(
           JSON.stringify({ type: "subscribe", id: SUB, collection: SUB }),
         );
+        ws.send(
+          JSON.stringify({
+            type: "presence-join",
+            room: ROOM,
+            memberId,
+            state: { name: presenceName, typing: false },
+          }),
+        );
       });
       ws.addEventListener("close", () => {
         dotEl.classList.remove("dot-live");
@@ -172,8 +214,18 @@
           for (const row of frame.changed) byId.set(row.id, row);
           rows = [...byId.values()];
           render();
+        } else if (frame.type === "presence" && frame.room === ROOM) {
+          for (const member of frame.joined)
+            members.set(member.id, member.state);
+          for (const member of frame.updated)
+            members.set(member.id, member.state);
+          for (const id of frame.left) members.delete(id);
+          renderPresence();
         }
       });
+      inputEl.addEventListener("input", () =>
+        setTyping(inputEl.value.trim().length > 0),
+      );
 
       formEl.addEventListener("submit", (event) => {
         event.preventDefault();

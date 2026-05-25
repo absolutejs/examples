@@ -75,6 +75,11 @@ for (const framework of FRAMEWORKS) {
       });
       // The seed snapshot rendered.
       await expect(page.locator(".task-item").first()).toBeVisible();
+      // Presence joined (at least this client shows as online).
+      await expect(page.getByTestId("presence-online")).toContainText(
+        "online",
+        { timeout: 15000 },
+      );
 
       expect(errors, `console errors on ${framework.name}`).toHaveLength(0);
       expect(warnings, `hydration warnings on ${framework.name}`).toHaveLength(
@@ -142,6 +147,50 @@ test("a change in one client appears live in another", async ({ browser }) => {
   // Remove on React → disappears on Svelte.
   await taskRow(reactPage, title).locator(".task-remove").click();
   await expect(taskRow(sveltePage, title)).toHaveCount(0, { timeout: 15000 });
+
+  await context.close();
+});
+
+const onlineCount = async (page: Page) => {
+  const text = await page.getByTestId("presence-online").textContent();
+
+  return Number.parseInt(text ?? "0", 10);
+};
+
+test("presence: online count and typing propagate across clients", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    baseURL: "http://localhost:3000",
+  });
+  const a = await context.newPage();
+  const b = await context.newPage();
+  await a.goto("/");
+  await b.goto("/");
+  await expect(a.getByTestId("presence-online")).toContainText("online", {
+    timeout: 15000,
+  });
+  await expect(b.getByTestId("presence-online")).toContainText("online", {
+    timeout: 15000,
+  });
+
+  // Both clients are counted (>= 2; the room may have other tabs in the suite).
+  await expect
+    .poll(() => onlineCount(a), { timeout: 15000 })
+    .toBeGreaterThanOrEqual(2);
+
+  // Typing in B shows up on A.
+  await b.locator('input[aria-label="New task"]').fill("hey there");
+  await expect(a.locator(".presence-typing")).toContainText("typing", {
+    timeout: 15000,
+  });
+
+  // B closing drops A's online count (auto-cleanup on disconnect).
+  const before = await onlineCount(a);
+  await b.close();
+  await expect
+    .poll(() => onlineCount(a), { timeout: 15000 })
+    .toBeLessThan(before);
 
   await context.close();
 });

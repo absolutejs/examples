@@ -192,6 +192,38 @@ code {
   font-size: 0.8rem;
 }
 
+.presence-bar {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 1.1rem;
+}
+
+.presence-online {
+  align-items: center;
+  color: #71717a;
+  display: flex;
+  font-size: 0.8rem;
+  gap: 0.4rem;
+}
+
+.presence-online::before {
+  background: #5fbeeb;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(95, 190, 235, 0.15);
+  content: "";
+  height: 7px;
+  width: 7px;
+}
+
+.presence-typing {
+  color: #5fbeeb;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
 .task-form {
   display: flex;
   gap: 0.5rem;

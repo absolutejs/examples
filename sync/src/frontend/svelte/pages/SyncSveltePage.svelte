@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { createSyncCollectionStore } from "@absolutejs/sync/svelte";
+  import { createPresence } from "@absolutejs/sync/client";
+  import type { PresenceClient, PresenceMember } from "@absolutejs/sync/client";
   import Nav from "../components/Nav.svelte";
 
   type Task = {
@@ -9,6 +11,8 @@
     done: boolean;
     createdAt: number;
   };
+
+  type Presence = { name: string; typing: boolean };
 
   let { cssPath = undefined }: { cssPath?: string } = $props();
 
@@ -30,6 +34,34 @@
     [...$collection.data].sort((a, b) => a.createdAt - b.createdAt),
   );
   const doneCount = $derived(tasks.filter((task) => task.done).length);
+
+  // Presence: who's online + who's typing in the shared "tasks" room.
+  let members = $state<PresenceMember<Presence>[]>([]);
+  let selfId = $state<string | undefined>(undefined);
+  const presenceName = `User-${Math.random().toString(36).slice(2, 6)}`;
+  let presence: PresenceClient<Presence> | null = null;
+  if (typeof window !== "undefined") {
+    presence = createPresence<Presence>({
+      room: "tasks",
+      state: { name: presenceName, typing: false },
+      url: wsUrl,
+    });
+    selfId = presence.id;
+    presence.subscribe((next) => {
+      members = next;
+    });
+  }
+  onDestroy(() => presence?.close());
+  $effect(() => {
+    presence?.set({ name: presenceName, typing: title.trim().length > 0 });
+  });
+
+  const online = $derived(members.length);
+  const typing = $derived(
+    members
+      .filter((member) => member.id !== selfId && member.state.typing)
+      .map((member) => member.state.name),
+  );
 
   const add = (event: Event) => {
     event.preventDefault();
@@ -90,6 +122,15 @@
           {$collection.status === "ready" ? "Live — /sync/ws" : "Connecting…"}
         </div>
         <span class="sync-stat">{doneCount}/{tasks.length} done</span>
+      </div>
+
+      <div class="presence-bar">
+        <span class="presence-online" data-testid="presence-online"
+          >{online} online</span
+        >
+        <span class="presence-typing"
+          >{typing.length > 0 ? `${typing.join(", ")} typing…` : ""}</span
+        >
       </div>
 
       <form class="task-form" onsubmit={add}>

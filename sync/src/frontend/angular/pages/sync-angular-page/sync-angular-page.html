@@ -36,6 +36,15 @@
       <span class="sync-stat">{{ doneCount() }}/{{ tasks().length }} done</span>
     </div>
 
+    <div class="presence-bar">
+      <span class="presence-online" data-testid="presence-online"
+        >{{ online() }} online</span
+      >
+      <span class="presence-typing"
+        >{{ typing().length > 0 ? typing().join(", ") + " typing…" : "" }}</span
+      >
+    </div>
+
     <form class="task-form" (submit)="add($event)">
       <input
         aria-label="New task"
