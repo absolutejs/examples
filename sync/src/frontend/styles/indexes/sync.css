@@ -173,6 +173,109 @@ code {
   background: rgba(95, 190, 235, 0.25);
 }
 
+/* -- Live task list ----------------------------------- */
+
+.sync-card {
+  text-align: left;
+}
+
+.sync-bar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.sync-stat {
+  color: #5fbeeb;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+}
+
+.task-form {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.task-form input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  color: #e4e4e7;
+  flex: 1;
+  font-size: 0.9rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.task-form input:focus {
+  border-color: rgba(95, 190, 235, 0.5);
+  outline: none;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  list-style: none;
+  width: 100%;
+}
+
+.task-item {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  transition: opacity 0.2s ease;
+}
+
+.task-item label {
+  align-items: center;
+  color: #e4e4e7;
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  font-size: 0.9rem;
+  gap: 0.6rem;
+}
+
+.task-item input[type="checkbox"] {
+  accent-color: #5fbeeb;
+  height: 16px;
+  width: 16px;
+}
+
+.task-item.done label span {
+  color: #52525b;
+  text-decoration: line-through;
+}
+
+.task-remove {
+  background: transparent;
+  border: none;
+  color: #52525b;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 0.3rem;
+  transition: color 0.2s ease;
+}
+
+.task-remove:hover {
+  color: #f87171;
+}
+
+.task-empty {
+  color: #52525b;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.2rem;
+  text-align: center;
+}
+
 /* -- Footer ------------------------------------------- */
 
 .footer {

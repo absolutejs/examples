@@ -1,49 +1,64 @@
-import { useEffect, useState } from "react";
-import { createSyncSubscriber } from "@absolutejs/sync/client";
+import type { FormEvent } from "react";
+import { useState } from "react";
+import { useSyncCollection } from "@absolutejs/sync/react";
 
-const COUNTER_TOPIC = "counter";
+type Task = {
+  id: string;
+  title: string;
+  done: boolean;
+  createdAt: number;
+};
+
+// One live collection, served over the engine's WebSocket. The hook hydrates
+// once then applies diffs; mutations are optimistic and reconcile on ack.
+const wsUrl = () =>
+  typeof window === "undefined"
+    ? "ws://localhost/sync/ws"
+    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
 
 export const SyncReactContent = () => {
-  const [count, setCount] = useState(0);
-  const [connected, setConnected] = useState(false);
+  const { data, status, mutate } = useSyncCollection<Task>({
+    collection: "tasks",
+    url: wsUrl(),
+  });
+  const [title, setTitle] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    void fetch("/api/state")
-      .then((response) => response.json())
-      .then((data: { count: number }) => {
-        if (active) {
-          setCount(data.count);
-        }
-      });
+  const tasks = [...data].sort((a, b) => a.createdAt - b.createdAt);
+  const doneCount = tasks.filter((task) => task.done).length;
 
-    // One SSE subscription replaces polling: the server pushes the new value to
-    // every connected client the instant anyone bumps it.
-    const subscriber = createSyncSubscriber({
-      onError: () => setConnected(false),
-      onEvent: (event) => {
-        const payload = event.payload as { count?: number } | undefined;
-        if (payload?.count !== undefined) {
-          setCount(payload.count);
-        }
-      },
-      onOpen: () => setConnected(true),
-      topics: [COUNTER_TOPIC],
-      url: "/sync",
+  const add = (event: FormEvent) => {
+    event.preventDefault();
+    const value = title.trim();
+    if (!value) {
+      return;
+    }
+    setTitle("");
+    void mutate({
+      args: { title: value },
+      name: "addTask",
+      optimistic: (draft) =>
+        draft.set({
+          createdAt: Date.now(),
+          done: false,
+          id: `temp-${Date.now()}`,
+          title: value,
+        }),
+    });
+  };
+
+  const toggle = (task: Task) =>
+    void mutate({
+      args: { id: task.id },
+      name: "toggleTask",
+      optimistic: (draft) => draft.set({ ...task, done: !task.done }),
     });
 
-    return () => {
-      active = false;
-      subscriber.close();
-    };
-  }, []);
-
-  const bump = () => {
-    void fetch("/api/bump", { method: "POST" });
-  };
-  const reset = () => {
-    void fetch("/api/reset", { method: "POST" });
-  };
+  const remove = (task: Task) =>
+    void mutate({
+      args: { id: task.id },
+      name: "removeTask",
+      optimistic: (draft) => draft.delete(task.id),
+    });
 
   return (
     <main>
@@ -54,31 +69,67 @@ export const SyncReactContent = () => {
       </div>
 
       <p className="section-desc">
-        This counter lives on the server. Each page subscribes to the{" "}
-        <code>counter</code> topic over a single Server-Sent Events stream and
-        re-renders the moment the value changes — no polling, no refresh.
+        A live collection from the sync engine. The page hydrates once over a
+        WebSocket, then the server pushes <code>added/removed/changed</code>{" "}
+        diffs — no polling. Edits apply optimistically and reconcile when the
+        server confirms.
       </p>
 
       <section className="sync-card">
-        <div className="sync-status">
-          <span className={connected ? "dot dot-live" : "dot"} />
-          {connected ? "Live — subscribed to /sync" : "Connecting…"}
+        <div className="sync-bar">
+          <div className="sync-status">
+            <span className={status === "ready" ? "dot dot-live" : "dot"} />
+            {status === "ready" ? "Live — /sync/ws" : "Connecting…"}
+          </div>
+          <span className="sync-stat">
+            {doneCount}/{tasks.length} done
+          </span>
         </div>
-        <div className="sync-count">{count}</div>
-        <div className="sync-actions">
-          <button className="primary" onClick={bump} type="button">
-            Bump counter
+
+        <form className="task-form" onSubmit={add}>
+          <input
+            aria-label="New task"
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Add a task…"
+            value={title}
+          />
+          <button className="primary" type="submit">
+            Add
           </button>
-          <button onClick={reset} type="button">
-            Reset
-          </button>
-        </div>
+        </form>
+
+        <ul className="task-list">
+          {tasks.map((task) => (
+            <li
+              className={task.done ? "task-item done" : "task-item"}
+              key={task.id}
+            >
+              <label>
+                <input
+                  checked={task.done}
+                  onChange={() => toggle(task)}
+                  type="checkbox"
+                />
+                <span>{task.title}</span>
+              </label>
+              <button
+                aria-label="Remove"
+                className="task-remove"
+                onClick={() => remove(task)}
+                type="button"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+          {tasks.length === 0 && <li className="task-empty">No tasks yet.</li>}
+        </ul>
       </section>
 
       <p className="section-desc">
         Open <code>/vue</code>, <code>/svelte</code>, <code>/angular</code>,{" "}
-        <code>/html</code>, or <code>/htmx</code> in another tab and bump from
-        any of them — every open client updates at once.
+        <code>/html</code>, or <code>/htmx</code> in another tab and edit from
+        any of them — every open client stays in sync.
       </p>
 
       <p className="footer">

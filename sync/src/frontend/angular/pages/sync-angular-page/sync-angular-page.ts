@@ -1,61 +1,84 @@
-import { CommonModule } from "@angular/common";
-import { Component, type OnDestroy, type OnInit, signal } from "@angular/core";
-import {
-  createSyncSubscriber,
-  type SyncSubscriber,
-} from "@absolutejs/sync/client";
+import { Component, computed, inject, signal } from "@angular/core";
+import { SyncCollectionService } from "@absolutejs/sync/angular";
+
+type Task = {
+  id: string;
+  title: string;
+  done: boolean;
+  createdAt: number;
+};
 
 // This page has no per-request DI context, so the SSR handler's
 // `requestContext` is an empty object.
 export type Context = Record<string, never>;
 
+const wsUrl = () =>
+  typeof window === "undefined"
+    ? "ws://localhost/sync/ws"
+    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
+
 @Component({
-  imports: [CommonModule],
+  imports: [],
   selector: "sync-angular-page",
   standalone: true,
   templateUrl: "./sync-angular-page.html",
 })
-export class SyncAngularPageComponent implements OnInit, OnDestroy {
-  count = signal(0);
-  connected = signal(false);
-  private subscriber?: SyncSubscriber;
+export class SyncAngularPageComponent {
+  // Inject the service and connect; it returns signals fed by the WS diff
+  // stream. The socket only opens in the browser, so SSR stays inert.
+  private sync = inject(SyncCollectionService);
+  private handle = this.sync.connect<Task>({
+    collection: "tasks",
+    url: wsUrl(),
+  });
 
-  ngOnInit() {
-    // Runs during SSR too; the live subscription is browser-only.
-    if (typeof window === "undefined") {
+  status = this.handle.status;
+  title = signal("");
+  tasks = computed(() =>
+    [...this.handle.data()].sort((a, b) => a.createdAt - b.createdAt),
+  );
+  doneCount = computed(() => this.tasks().filter((task) => task.done).length);
+
+  setTitle(event: Event) {
+    this.title.set((event.target as HTMLInputElement).value);
+  }
+
+  add(event: Event) {
+    event.preventDefault();
+    const value = this.title().trim();
+    if (!value) {
       return;
     }
-
-    void fetch("/api/state")
-      .then((response) => response.json())
-      .then((data: { count: number }) => this.count.set(data.count));
-
-    this.subscriber = createSyncSubscriber({
-      onError: () => this.connected.set(false),
-      onEvent: (event) => {
-        const payload = event.payload as { count?: number } | undefined;
-        if (payload?.count !== undefined) {
-          this.count.set(payload.count);
-        }
-      },
-      onOpen: () => this.connected.set(true),
-      topics: ["counter"],
-      url: "/sync",
+    this.title.set("");
+    void this.handle.mutate({
+      args: { title: value },
+      name: "addTask",
+      optimistic: (draft) =>
+        draft.set({
+          createdAt: Date.now(),
+          done: false,
+          id: `temp-${Date.now()}`,
+          title: value,
+        }),
     });
   }
 
-  ngOnDestroy() {
-    this.subscriber?.close();
+  toggle(task: Task) {
+    void this.handle.mutate({
+      args: { id: task.id },
+      name: "toggleTask",
+      optimistic: (draft) => draft.set({ ...task, done: !task.done }),
+    });
   }
 
-  bump() {
-    void fetch("/api/bump", { method: "POST" });
-  }
-
-  reset() {
-    void fetch("/api/reset", { method: "POST" });
+  remove(task: Task) {
+    void this.handle.mutate({
+      args: { id: task.id },
+      name: "removeTask",
+      optimistic: (draft) => draft.delete(task.id),
+    });
   }
 }
 
 export default SyncAngularPageComponent;
-export const factory = () => new SyncAngularPageComponent();
+export const factory = () => SyncAngularPageComponent;

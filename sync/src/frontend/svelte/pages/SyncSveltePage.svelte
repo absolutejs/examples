@@ -1,49 +1,69 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import {
-    createSyncSubscriber,
-    type SyncSubscriber,
-  } from "@absolutejs/sync/client";
+  import { onDestroy } from "svelte";
+  import { createSyncCollectionStore } from "@absolutejs/sync/svelte";
   import Nav from "../components/Nav.svelte";
+
+  type Task = {
+    id: string;
+    title: string;
+    done: boolean;
+    createdAt: number;
+  };
 
   let { cssPath = undefined }: { cssPath?: string } = $props();
 
-  let count = $state(0);
-  let connected = $state(false);
+  const wsUrl =
+    typeof window === "undefined"
+      ? "ws://localhost/sync/ws"
+      : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
 
-  onMount(() => {
-    void fetch("/api/state")
-      .then((response) => response.json())
-      .then((data: { count: number }) => {
-        count = data.count;
-      });
+  // A real Svelte store: `$collection` is the live { data, status, error }.
+  const collection = createSyncCollectionStore<Task>({
+    collection: "tasks",
+    url: wsUrl,
+  });
+  onDestroy(() => collection.destroy());
 
-    const subscriber: SyncSubscriber = createSyncSubscriber({
-      onError: () => {
-        connected = false;
-      },
-      onEvent: (event) => {
-        const payload = event.payload as { count?: number } | undefined;
-        if (payload?.count !== undefined) {
-          count = payload.count;
-        }
-      },
-      onOpen: () => {
-        connected = true;
-      },
-      topics: ["counter"],
-      url: "/sync",
+  let title = $state("");
+
+  const tasks = $derived(
+    [...$collection.data].sort((a, b) => a.createdAt - b.createdAt),
+  );
+  const doneCount = $derived(tasks.filter((task) => task.done).length);
+
+  const add = (event: Event) => {
+    event.preventDefault();
+    const value = title.trim();
+    if (!value) {
+      return;
+    }
+    title = "";
+    void collection.mutate({
+      args: { title: value },
+      name: "addTask",
+      optimistic: (draft) =>
+        draft.set({
+          createdAt: Date.now(),
+          done: false,
+          id: `temp-${Date.now()}`,
+          title: value,
+        }),
+    });
+  };
+
+  const toggle = (task: Task) =>
+    void collection.mutate({
+      args: { id: task.id },
+      name: "toggleTask",
+      optimistic: (draft) => draft.set({ ...task, done: !task.done }),
     });
 
-    return () => subscriber.close();
-  });
-
-  const bump = () => {
-    void fetch("/api/bump", { method: "POST" });
-  };
-  const reset = () => {
-    void fetch("/api/reset", { method: "POST" });
-  };
+  const remove = (task: Task) =>
+    void collection.mutate({
+      args: { id: task.id },
+      name: "removeTask",
+      optimistic: (draft) => draft.delete(task.id),
+    });
 </script>
 
 <div>
@@ -57,29 +77,59 @@
     </div>
 
     <p class="section-desc">
-      This counter lives on the server. Each page subscribes to the
-      <code>counter</code> topic over a single Server-Sent Events stream and re-renders
-      the moment the value changes — no polling, no refresh.
+      A live collection from the sync engine. The page hydrates once over a
+      WebSocket, then the server pushes <code>added/removed/changed</code> diffs —
+      no polling. Edits apply optimistically and reconcile when the server confirms.
     </p>
 
     <section class="sync-card">
-      <div class="sync-status">
-        <span class={connected ? "dot dot-live" : "dot"}></span>
-        {connected ? "Live — subscribed to /sync" : "Connecting…"}
+      <div class="sync-bar">
+        <div class="sync-status">
+          <span class={$collection.status === "ready" ? "dot dot-live" : "dot"}
+          ></span>
+          {$collection.status === "ready" ? "Live — /sync/ws" : "Connecting…"}
+        </div>
+        <span class="sync-stat">{doneCount}/{tasks.length} done</span>
       </div>
-      <div class="sync-count">{count}</div>
-      <div class="sync-actions">
-        <button class="primary" type="button" onclick={bump}
-          >Bump counter</button
-        >
-        <button type="button" onclick={reset}>Reset</button>
-      </div>
+
+      <form class="task-form" onsubmit={add}>
+        <input
+          aria-label="New task"
+          bind:value={title}
+          placeholder="Add a task…"
+        />
+        <button class="primary" type="submit">Add</button>
+      </form>
+
+      <ul class="task-list">
+        {#each tasks as task (task.id)}
+          <li class={task.done ? "task-item done" : "task-item"}>
+            <label>
+              <input
+                checked={task.done}
+                onchange={() => toggle(task)}
+                type="checkbox"
+              />
+              <span>{task.title}</span>
+            </label>
+            <button
+              aria-label="Remove"
+              class="task-remove"
+              onclick={() => remove(task)}
+              type="button">×</button
+            >
+          </li>
+        {/each}
+        {#if tasks.length === 0}
+          <li class="task-empty">No tasks yet.</li>
+        {/if}
+      </ul>
     </section>
 
     <p class="section-desc">
       Open <code>/</code>, <code>/vue</code>, <code>/angular</code>,
-      <code>/html</code>, or <code>/htmx</code> in another tab and bump from any of
-      them — every open client updates at once.
+      <code>/html</code>, or <code>/htmx</code> in another tab and edit from any of
+      them — every open client stays in sync.
     </p>
 
     <p class="footer">

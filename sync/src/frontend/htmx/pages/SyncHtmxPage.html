@@ -38,27 +38,33 @@
       </div>
 
       <p class="section-desc">
-        The mutations post over the wire and the live value arrives on the
-        native <code>EventSource</code> stream — the sync plugin's standard SSE
-        endpoint needs no framework runtime to stay live.
+        A no-build page on a native <code>WebSocket</code>: it subscribes once,
+        renders the <code>snapshot</code>, and applies each
+        <code>diff</code> the server pushes — the same live collection, no
+        framework runtime required.
       </p>
 
       <section class="sync-card">
-        <div class="sync-status">
-          <span class="dot" id="dot"></span>
-          <span id="status">Connecting…</span>
+        <div class="sync-bar">
+          <div class="sync-status">
+            <span class="dot" id="dot"></span>
+            <span id="status">Connecting…</span>
+          </div>
+          <span class="sync-stat" id="stat">0/0 done</span>
         </div>
-        <div class="sync-count" id="count">0</div>
-        <div class="sync-actions">
-          <button class="primary" type="button" id="bump">Bump counter</button>
-          <button type="button" id="reset">Reset</button>
-        </div>
+
+        <form class="task-form" id="form">
+          <input aria-label="New task" id="input" placeholder="Add a task…" />
+          <button class="primary" type="submit">Add</button>
+        </form>
+
+        <ul class="task-list" id="list"></ul>
       </section>
 
       <p class="section-desc">
         Open <code>/</code>, <code>/vue</code>, <code>/svelte</code>,
-        <code>/angular</code>, or <code>/html</code> in another tab and bump
-        from any of them — every open client updates at once.
+        <code>/angular</code>, or <code>/html</code> in another tab and edit
+        from any of them — every open client stays in sync.
       </p>
 
       <p class="footer">
@@ -74,47 +80,108 @@
     </main>
 
     <script type="module">
-      const countEl = document.getElementById("count");
+      const SUB = "tasks";
+      const wsUrl =
+        (location.protocol === "https:" ? "wss" : "ws") +
+        "://" +
+        location.host +
+        "/sync/ws";
+
+      const listEl = document.getElementById("list");
       const dotEl = document.getElementById("dot");
       const statusEl = document.getElementById("status");
-      const setCount = (value) => {
-        countEl.textContent = String(value);
-      };
+      const statEl = document.getElementById("stat");
+      const formEl = document.getElementById("form");
+      const inputEl = document.getElementById("input");
 
-      fetch("/api/state")
-        .then((response) => response.json())
-        .then((data) => setCount(data.count));
+      let rows = [];
+      let mutationId = 0;
+      const ws = new WebSocket(wsUrl);
+      const mutate = (name, args) =>
+        ws.send(
+          JSON.stringify({
+            type: "mutate",
+            mutationId: ++mutationId,
+            name,
+            args,
+          }),
+        );
 
-      const source = new EventSource("/sync?topics=counter");
-      source.onopen = () => {
-        dotEl.classList.add("dot-live");
-        statusEl.textContent = "Live — subscribed to /sync";
-      };
-      source.onerror = () => {
-        dotEl.classList.remove("dot-live");
-        statusEl.textContent = "Reconnecting…";
-      };
-      source.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.payload && data.payload.count !== undefined) {
-            setCount(data.payload.count);
-          }
-        } catch {
-          /* ignore heartbeats */
+      const render = () => {
+        const tasks = [...rows].sort((a, b) => a.createdAt - b.createdAt);
+        statEl.textContent =
+          tasks.filter((task) => task.done).length +
+          "/" +
+          tasks.length +
+          " done";
+        listEl.replaceChildren();
+        if (tasks.length === 0) {
+          const li = document.createElement("li");
+          li.className = "task-empty";
+          li.textContent = "No tasks yet.";
+          listEl.append(li);
+
+          return;
+        }
+        for (const task of tasks) {
+          const li = document.createElement("li");
+          li.className = task.done ? "task-item done" : "task-item";
+          const label = document.createElement("label");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = task.done;
+          checkbox.addEventListener("change", () =>
+            mutate("toggleTask", { id: task.id }),
+          );
+          const span = document.createElement("span");
+          span.textContent = task.title;
+          label.append(checkbox, span);
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "task-remove";
+          remove.setAttribute("aria-label", "Remove");
+          remove.textContent = "×";
+          remove.addEventListener("click", () =>
+            mutate("removeTask", { id: task.id }),
+          );
+          li.append(label, remove);
+          listEl.append(li);
         }
       };
 
-      document
-        .getElementById("bump")
-        .addEventListener("click", () =>
-          fetch("/api/bump", { method: "POST" }),
+      ws.addEventListener("open", () => {
+        dotEl.classList.add("dot-live");
+        statusEl.textContent = "Live — /sync/ws";
+        ws.send(
+          JSON.stringify({ type: "subscribe", id: SUB, collection: SUB }),
         );
-      document
-        .getElementById("reset")
-        .addEventListener("click", () =>
-          fetch("/api/reset", { method: "POST" }),
-        );
+      });
+      ws.addEventListener("close", () => {
+        dotEl.classList.remove("dot-live");
+        statusEl.textContent = "Reconnecting…";
+      });
+      ws.addEventListener("message", (event) => {
+        const frame = JSON.parse(event.data);
+        if (frame.type === "snapshot" && frame.id === SUB) {
+          rows = frame.rows;
+          render();
+        } else if (frame.type === "diff" && frame.id === SUB) {
+          const byId = new Map(rows.map((row) => [row.id, row]));
+          for (const row of frame.removed) byId.delete(row.id);
+          for (const row of frame.added) byId.set(row.id, row);
+          for (const row of frame.changed) byId.set(row.id, row);
+          rows = [...byId.values()];
+          render();
+        }
+      });
+
+      formEl.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const value = inputEl.value.trim();
+        if (!value) return;
+        inputEl.value = "";
+        mutate("addTask", { title: value });
+      });
     </script>
   </body>
 </html>

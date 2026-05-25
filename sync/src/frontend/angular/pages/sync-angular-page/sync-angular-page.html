@@ -21,29 +21,61 @@
   </div>
 
   <p class="section-desc">
-    This counter lives on the server. Each page subscribes to the
-    <code>counter</code> topic over a single Server-Sent Events stream and
-    re-renders the moment the value changes — no polling, no refresh.
+    A live collection from the sync engine. The page hydrates once over a
+    WebSocket, then the server pushes <code>added/removed/changed</code> diffs —
+    no polling. Edits apply optimistically and reconcile when the server
+    confirms.
   </p>
 
   <section class="sync-card">
-    <div class="sync-status">
-      <span [class]="connected() ? 'dot dot-live' : 'dot'"></span>
-      {{ connected() ? "Live — subscribed to /sync" : "Connecting…" }}
+    <div class="sync-bar">
+      <div class="sync-status">
+        <span [class]="status() === 'ready' ? 'dot dot-live' : 'dot'"></span>
+        {{ status() === "ready" ? "Live — /sync/ws" : "Connecting…" }}
+      </div>
+      <span class="sync-stat">{{ doneCount() }}/{{ tasks().length }} done</span>
     </div>
-    <div class="sync-count">{{ count() }}</div>
-    <div class="sync-actions">
-      <button class="primary" type="button" (click)="bump()">
-        Bump counter
-      </button>
-      <button type="button" (click)="reset()">Reset</button>
-    </div>
+
+    <form class="task-form" (submit)="add($event)">
+      <input
+        aria-label="New task"
+        placeholder="Add a task…"
+        [value]="title()"
+        (input)="setTitle($event)"
+      />
+      <button class="primary" type="submit">Add</button>
+    </form>
+
+    <ul class="task-list">
+      @for (task of tasks(); track task.id) {
+      <li [class]="task.done ? 'task-item done' : 'task-item'">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="task.done"
+            (change)="toggle(task)"
+          />
+          <span>{{ task.title }}</span>
+        </label>
+        <button
+          aria-label="Remove"
+          class="task-remove"
+          type="button"
+          (click)="remove(task)"
+        >
+          ×
+        </button>
+      </li>
+      } @if (tasks().length === 0) {
+      <li class="task-empty">No tasks yet.</li>
+      }
+    </ul>
   </section>
 
   <p class="section-desc">
     Open <code>/</code>, <code>/svelte</code>, <code>/vue</code>,
-    <code>/html</code>, or <code>/htmx</code> in another tab and bump from any
-    of them — every open client updates at once.
+    <code>/html</code>, or <code>/htmx</code> in another tab and edit from any
+    of them — every open client stays in sync.
   </p>
 
   <p class="footer">
