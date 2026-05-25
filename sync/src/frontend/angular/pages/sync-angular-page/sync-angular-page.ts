@@ -105,16 +105,12 @@ export class SyncAngularPageComponent implements OnDestroy {
       return;
     }
     this.title.set("");
+    const id = globalThis.crypto.randomUUID();
     void this.handle.mutate({
-      args: { title: value },
+      args: { id, title: value },
       name: "addTask",
       optimistic: (draft) =>
-        draft.set({
-          createdAt: Date.now(),
-          done: false,
-          id: `temp-${Date.now()}`,
-          title: value,
-        }),
+        draft.set({ createdAt: Date.now(), done: false, id, title: value }),
     });
   }
 

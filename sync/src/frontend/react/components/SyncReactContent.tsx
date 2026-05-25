@@ -106,16 +106,14 @@ export const SyncReactContent = () => {
       return;
     }
     setTitle("");
+    // Mint the id client-side so the optimistic row and the server-confirmed
+    // row are the same node (no swap, no flicker).
+    const id = globalThis.crypto.randomUUID();
     void mutate({
-      args: { title: value },
+      args: { id, title: value },
       name: "addTask",
       optimistic: (draft) =>
-        draft.set({
-          createdAt: Date.now(),
-          done: false,
-          id: `temp-${Date.now()}`,
-          title: value,
-        }),
+        draft.set({ createdAt: Date.now(), done: false, id, title: value }),
     });
   };
 

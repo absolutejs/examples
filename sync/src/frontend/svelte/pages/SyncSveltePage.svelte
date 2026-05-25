@@ -70,16 +70,12 @@
       return;
     }
     title = "";
+    const id = globalThis.crypto.randomUUID();
     void collection.mutate({
-      args: { title: value },
+      args: { id, title: value },
       name: "addTask",
       optimistic: (draft) =>
-        draft.set({
-          createdAt: Date.now(),
-          done: false,
-          id: `temp-${Date.now()}`,
-          title: value,
-        }),
+        draft.set({ createdAt: Date.now(), done: false, id, title: value }),
     });
   };
 

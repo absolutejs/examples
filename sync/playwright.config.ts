@@ -8,16 +8,23 @@ export default defineConfig({
   timeout: 30000,
   reporter: [["list"]],
   // The suite drives one shared, server-authoritative collection, so run serially
-  // to keep mutations deterministic; retry to absorb the occasional pre-hydration
-  // submit race.
+  // to keep mutations deterministic; retry to absorb occasional Chromium-in-CI
+  // process crashes (the functional races are fixed via client-generated ids).
   workers: 1,
-  retries: 2,
+  retries: 3,
   use: {
     baseURL: "http://localhost:3000",
-    // Containers/CI give a tiny /dev/shm, which crashes Chromium ("Target page
-    // has been closed"); write shared memory to /tmp and skip the sandbox instead.
+    // Stability flags for constrained containers/CI, where Chromium otherwise
+    // crashes mid-run ("Target page has been closed"): write shared memory to
+    // /tmp, skip the sandbox, and drop GPU/rasterizer work.
     launchOptions: {
-      args: ["--disable-dev-shm-usage", "--no-sandbox"],
+      args: [
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-accelerated-2d-canvas",
+      ],
     },
   },
   webServer: {

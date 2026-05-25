@@ -74,11 +74,12 @@ engine.registerWriter<Task, unknown, Tx>("tasks", {
   delete: (row: { id: string }, _ctx, txn) => {
     txn.delete(row.id);
   },
-  insert: (data: { title: string }, _ctx, txn) => {
+  insert: (data: { id?: string; title: string }, _ctx, txn) => {
     const task: Task = {
       createdAt: Date.now(),
       done: false,
-      id: crypto.randomUUID(),
+      // Honor a client-generated id so optimistic and confirmed rows match.
+      id: data.id ?? crypto.randomUUID(),
       title: data.title,
     };
     txn.set(task);
@@ -95,13 +96,13 @@ engine.registerWriter<Task, unknown, Tx>("tasks", {
 engine.registerMutation(
   defineMutation({
     name: "addTask",
-    handler: (args: { title?: string }, _ctx, actions) => {
+    handler: (args: { id?: string; title?: string }, _ctx, actions) => {
       const title = (args.title ?? "").trim();
       if (!title) {
         return null;
       }
 
-      return actions.insert<Task>("tasks", { title });
+      return actions.insert<Task>("tasks", { id: args.id, title });
     },
   }),
 );
