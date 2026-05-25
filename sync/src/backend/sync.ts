@@ -5,6 +5,7 @@ import {
   defineReactiveQuery,
   defineSchedule,
   defineSearchCollection,
+  field,
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
@@ -70,6 +71,19 @@ const engine = createSyncEngine({ transaction });
 // change then rolls back. Default clients (no role) are editors.
 engine.registerPermissions<Task, Ctx>("tasks", {
   write: (ctx) => ctx.role !== "viewer",
+});
+
+// Declarative schema: the engine validates every task write against these field
+// types before it touches the store (a bad write throws SchemaError and rolls
+// back). `createdAt`/`done` are optional so addTask's { id, title } passes; the
+// writer fills them in. (id is optional too — the writer mints one if omitted.)
+engine.registerSchema<Task>("tasks", {
+  fields: {
+    createdAt: field.optional(field.number),
+    done: field.optional(field.boolean),
+    id: field.optional(field.string),
+    title: field.string,
+  },
 });
 
 // Teach the engine how to read the table — this powers reactive queries' ctx.db.
