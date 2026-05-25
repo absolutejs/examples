@@ -4360,11 +4360,11 @@ const buildVectorModeMessage = (
   const vectorMode = status.vectorMode as string;
 
   if (vectorMode === "native_vec0") {
-    return `Packaged native vec0 is active. Retrieval is using the ${backendLabel} backend shipped through @absolutejs/absolute-rag-sqlite.`;
+    return `Packaged native vec0 is active. Retrieval is using the ${backendLabel} backend shipped through @absolutejs/rag-sqlite.`;
   }
 
   if (vectorMode === "native_pgvector") {
-    return `PostgreSQL pgvector is active. Retrieval is using the ${backendLabel} backend shipped through @absolutejs/absolute-rag-postgresql.`;
+    return `PostgreSQL pgvector is active. Retrieval is using the ${backendLabel} backend shipped through @absolutejs/rag-postgres.`;
   }
 
   return (

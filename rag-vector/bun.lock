@@ -6,12 +6,13 @@
       "name": "absolutejs-rag-vector-example",
       "dependencies": {
         "@absolutejs/absolute": "0.19.0-beta.1047",
-        "@absolutejs/absolute-rag-pinecone": "^0.0.2",
-        "@absolutejs/absolute-rag-sqlite": "0.0.5",
-        "@absolutejs/ai": "0.0.5",
+        "@absolutejs/ai": "^0.0.9",
         "@absolutejs/auth": "0.22.7",
         "@absolutejs/linked-providers": "0.0.2",
-        "@absolutejs/rag": "0.0.19",
+        "@absolutejs/rag": "^0.0.20",
+        "@absolutejs/rag-pinecone": "^0.0.3",
+        "@absolutejs/rag-postgres": "^0.0.6",
+        "@absolutejs/rag-sqlite": "^0.0.6",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
         "@angular/compiler-cli": "^21.0.0",
@@ -53,10 +54,6 @@
   "packages": {
     "@absolutejs/absolute": ["@absolutejs/absolute@0.19.0-beta.1047", "", { "dependencies": { "@elysiajs/openapi": "^1.4.15", "@elysiajs/server-timing": "^1.4.0", "@elysiajs/static": "^1.4.0", "zustand": "^5.0.12" }, "optionalDependencies": { "@absolutejs/native-darwin-arm64": "0.19.0-beta.1008", "@absolutejs/native-darwin-x64": "0.19.0-beta.1008", "@absolutejs/native-linux-arm64": "0.19.0-beta.1008", "@absolutejs/native-linux-x64": "0.19.0-beta.1008", "@absolutejs/native-windows-arm64": "0.19.0-beta.1008", "@absolutejs/native-windows-x64": "0.19.0-beta.1008" }, "peerDependencies": { "@angular/animations": "^21.0.0", "@angular/common": "^21.0.0", "@angular/compiler": "^21.0.0", "@angular/compiler-cli": "^21.0.0", "@angular/core": "^21.0.0", "@angular/platform-browser": "^21.0.0", "@angular/platform-server": "^21.0.0", "@angular/router": "^21.0.0", "@angular/ssr": "^21.0.0", "@vue/compiler-sfc": "^3.5.27", "elysia": "^1.4.0", "less": "^4.6.0", "postcss": "^8.5.0", "react": "^19.2.0", "react-dom": "^19.2.0", "react-router": "^7.0.0", "rxjs": "^7.8.0", "sass": "^1.99.0", "sharp": ">=0.33.0", "stylus": "^0.64.0", "svelte": "^5.35.2", "tailwindcss": "^4.1.0", "typescript": "^5.9.3", "vue": "^3.5.27" }, "optionalPeers": ["@angular/animations", "@angular/common", "@angular/compiler", "@angular/compiler-cli", "@angular/core", "@angular/platform-browser", "@angular/platform-server", "@angular/router", "@angular/ssr", "@vue/compiler-sfc", "less", "postcss", "react", "react-dom", "react-router", "rxjs", "sass", "sharp", "stylus", "svelte", "tailwindcss", "typescript", "vue"], "bin": { "absolute": "dist/cli/index.js" } }, "sha512-gaoCJGgG4CLGWg81gXnhLC98NNxaaNyVCgozASNXYh6B3bamX3bstMPokKkSXYVfri0K8uGOAAmbi+eFAKVocQ=="],
 
-    "@absolutejs/absolute-rag-pinecone": ["@absolutejs/absolute-rag-pinecone@0.0.2", "", { "dependencies": { "@pinecone-database/pinecone": ">=5.0.0 <7.0.0" }, "peerDependencies": { "@absolutejs/rag": ">=0.0.3 <0.1.0" } }, "sha512-l+kpocvRV0Z+LDTMDteNSoiOlqqRO/CaZ2KpJqZ5N17QMhRmAeqtU4+W05aKfgxyceDqT67ggLOSAHHc3TCOgg=="],
-
-    "@absolutejs/absolute-rag-sqlite": ["@absolutejs/absolute-rag-sqlite@0.0.5", "", { "optionalDependencies": { "@absolutejs/absolute-rag-sqlite-darwin-arm64": "0.0.2", "@absolutejs/absolute-rag-sqlite-darwin-x64": "0.0.2", "@absolutejs/absolute-rag-sqlite-linux-arm64": "0.0.2", "@absolutejs/absolute-rag-sqlite-linux-x64": "0.0.2", "@absolutejs/absolute-rag-sqlite-windows-x64": "0.0.2" }, "peerDependencies": { "@absolutejs/rag": ">=0.0.3 <0.1.0" } }, "sha512-bVk+Rj24ctbzo1ATEXm8UysW+5aTsFJAl45kiKwbrxdZC9SgldUU2BPjCaoBsIzb4HqQIVTAKjbnvech2BtOQg=="],
-
     "@absolutejs/absolute-rag-sqlite-darwin-arm64": ["@absolutejs/absolute-rag-sqlite-darwin-arm64@0.0.2", "", { "os": "darwin", "cpu": "arm64" }, "sha512-U4D4tKPPNWrxEN3TO2J4ApkHP5uE9IFM+Xh2fxzS1RLbXncjCSFkn/SxH+/mQWCWBBLY18YqU+jRNIF9Ld8X8Q=="],
 
     "@absolutejs/absolute-rag-sqlite-darwin-x64": ["@absolutejs/absolute-rag-sqlite-darwin-x64@0.0.2", "", { "os": "darwin", "cpu": "x64" }, "sha512-gRW14nCxVhzXN1LWs53l68tvk4QlBGWYe7OvM4JE/8SY4LIdp3s1Nv7poxVeiEIbBdepcs6F/QYnltuVxT0fKA=="],
@@ -67,7 +64,7 @@
 
     "@absolutejs/absolute-rag-sqlite-windows-x64": ["@absolutejs/absolute-rag-sqlite-windows-x64@0.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-2Kvnpv7Kw815iMT4UvOmWKJiYXbRF6/aaC/oUWzqy0O+1D4bhff4UFtoYbQGmIIc4IsRAcpk6bcdvbQ6YxpJ/Q=="],
 
-    "@absolutejs/ai": ["@absolutejs/ai@0.0.5", "", { "dependencies": { "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-xdxJuoyEdHb41Rgm8G7Y8yMGo/iOPSsu8+VIGr6CIl0czG0YXHI96gqCxHQYNWba9C7bMVvfGKEYmrmTP01PYA=="],
+    "@absolutejs/ai": ["@absolutejs/ai@0.0.9", "", { "dependencies": { "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-/NitawL0138Isc8gHQDTB3VaBV50XN9y7BDLeUJIZ3ND3Q6PiOmEUWLtuaL5p1J0gTF3GyZDO1mRByIJOoA9fg=="],
 
     "@absolutejs/auth": ["@absolutejs/auth@0.22.7", "", { "dependencies": { "@absolutejs/linked-providers": "0.0.2", "@neondatabase/serverless": "1.0.0", "citra": "0.25.11", "drizzle-orm": "0.41.0" }, "peerDependencies": { "elysia": ">= 1.4.26" } }, "sha512-Lj+0UzP1Ot5M9r1MlMYUrTe2P7Ty3uZBhjaXa8Cr+SHn7C2LyjNBfoVWJQq0X6SGthru7kejqhahxPIx2DInVA=="],
 
@@ -85,7 +82,13 @@
 
     "@absolutejs/native-windows-x64": ["@absolutejs/native-windows-x64@0.19.0-beta.1008", "", { "os": "win32", "cpu": "x64" }, "sha512-mXIL6AzV0gznwXz6gF+dtT4DIwxKMriF+WYxcjAPlf4xWD0S3ZS8jafHwQXi0RJn0pIX4TIIOhRz0JnVlka3zA=="],
 
-    "@absolutejs/rag": ["@absolutejs/rag@0.0.19", "", { "dependencies": { "@absolutejs/ai": "0.0.5", "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-ntkCJ6aoF+f8w1S9V+VmDsll6N3+3bcIDqlfwyd3fj0kCw+b4Efd/QArsi+8Z3hLP/HIV2xcwgUzKwyV7PkZkQ=="],
+    "@absolutejs/rag": ["@absolutejs/rag@0.0.20", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-rG67G0Q//Keq7nOBBGBoJzJ1Mn58gyvv6kBRrb8422ECBBOr+xgxoDVvkFLLkqRw9V0gFRPcTVJhZSgZq7yTvg=="],
+
+    "@absolutejs/rag-pinecone": ["@absolutejs/rag-pinecone@0.0.3", "", { "dependencies": { "@absolutejs/rag": "^0.0.20" }, "peerDependencies": { "@pinecone-database/pinecone": ">=6.0.0 <7.0.0" } }, "sha512-GPgCFUQa3Kebe2Qv8hcRwp0Z9ML4pcWIHYc5POoKWnD8eKynZJtOf50zrOyjEdxq1lTYVBptQ/GPuenvJaV52w=="],
+
+    "@absolutejs/rag-postgres": ["@absolutejs/rag-postgres@0.0.6", "", { "dependencies": { "@absolutejs/rag": "^0.0.20" } }, "sha512-6wrvkzOHTlbJosEM5iiZT1kwXlev1twiUHe4qEhCJvqMOGsXxttaEKwO1944tZk6Tn1+34BWhnBKzvHhfYjbbw=="],
+
+    "@absolutejs/rag-sqlite": ["@absolutejs/rag-sqlite@0.0.6", "", { "dependencies": { "@absolutejs/rag": "^0.0.20" }, "optionalDependencies": { "@absolutejs/absolute-rag-sqlite-darwin-arm64": "0.0.2", "@absolutejs/absolute-rag-sqlite-darwin-x64": "0.0.2", "@absolutejs/absolute-rag-sqlite-linux-arm64": "0.0.2", "@absolutejs/absolute-rag-sqlite-linux-x64": "0.0.2", "@absolutejs/absolute-rag-sqlite-windows-x64": "0.0.2" } }, "sha512-F0UCP8afx67BhDqFmsIdFBelSjZrQppffRj1PN575A8MKhxmB3JM7l9lRxZDADVSr5I7835/XG67Kqw3PKUi2g=="],
 
     "@angular/common": ["@angular/common@21.2.10", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/core": "21.2.10", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-WLyi/CRLtgALg2mmaqIuKuPnE4i+8PGt/uuz26pVqx+ASh28/TWr5KSCAMomgxEc8kt4OE7lopoQsTihrQCfEw=="],
 

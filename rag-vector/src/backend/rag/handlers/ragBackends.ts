@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import {
-  createPostgresRAGStore,
   createRAGCollection,
   loadRAGDocumentsFromDirectory,
   prepareRAGDocument,
@@ -13,9 +12,10 @@ import {
   type RAGVectorStore,
   type RAGVectorStoreStatus,
 } from "@absolutejs/rag";
-import { createSQLiteRAG } from "@absolutejs/absolute-rag-sqlite";
-import type { SQLiteRAG } from "@absolutejs/absolute-rag-sqlite";
-import { createPineconeRAG } from "@absolutejs/absolute-rag-pinecone";
+import { createPostgresRAGStore } from "@absolutejs/rag-postgres";
+import { createSQLiteRAG } from "@absolutejs/rag-sqlite";
+import type { SQLiteRAG } from "@absolutejs/rag-sqlite";
+import { createPineconeRAG } from "@absolutejs/rag-pinecone";
 import type { Database } from "bun:sqlite";
 import { ragDemoExtractors } from "./ragDemoExtractors";
 
