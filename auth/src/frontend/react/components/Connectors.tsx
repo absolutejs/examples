@@ -1,7 +1,6 @@
 import { CONNECTOR_TARGETS } from "../../shared/navData";
-import { authorizationHref } from "../../shared/oauth";
-import { providerData } from "../../shared/providerData";
 import type { AuthUser } from "../../shared/types";
+import { ConnectorCard } from "./ConnectorCard";
 import { LinkedProvidersPanel } from "./LinkedProvidersPanel";
 import { NotAuthorized } from "./NotAuthorized";
 
@@ -33,23 +32,12 @@ export const Connectors = ({ loading, user }: ConnectorsProps) => {
       </div>
       <div className="grid-2">
         {CONNECTOR_TARGETS.map((target) => (
-          <div className="card text-left" key={target.provider}>
-            <h2 className="card__title row">
-              <img
-                alt=""
-                className="entity__logo"
-                src={providerData[target.provider].logoUrl}
-              />
-              {target.label}
-            </h2>
-            <p className="muted">{target.description}</p>
-            <a
-              className="btn btn--primary"
-              href={authorizationHref(target.provider, "connector")}
-            >
-              Link {target.label}
-            </a>
-          </div>
+          <ConnectorCard
+            description={target.description}
+            key={target.provider}
+            label={target.label}
+            provider={target.provider}
+          />
         ))}
       </div>
       <LinkedProvidersPanel />

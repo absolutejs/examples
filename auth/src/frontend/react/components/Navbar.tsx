@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { NAV_ITEMS } from "../../shared/navData";
 import type { AuthUser } from "../../shared/types";
+import { NavbarLink } from "./NavbarLink";
 
 type NavbarProps = {
   basePath: string;
@@ -13,25 +14,17 @@ export const Navbar = ({ basePath, onSignOut, user }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
 
-  const linkTo = (path: string) =>
-    path === "" ? basePath : `${basePath}/${path}`;
-
   const renderLinks = (onNavigate?: () => void) =>
-    NAV_ITEMS.map((item) => {
-      const target = linkTo(item.path);
-
-      return (
-        <Link
-          aria-current={pathname === target ? "page" : undefined}
-          className="navbar__link"
-          key={item.path}
-          onClick={onNavigate}
-          to={target}
-        >
-          {item.label}
-        </Link>
-      );
-    });
+    NAV_ITEMS.map((item) => (
+      <NavbarLink
+        basePath={basePath}
+        key={item.path}
+        label={item.label}
+        onNavigate={onNavigate}
+        path={item.path}
+        pathname={pathname}
+      />
+    ));
 
   const greeting = user?.email ?? user?.first_name ?? "Account";
 
@@ -83,7 +76,7 @@ export const Navbar = ({ basePath, onSignOut, user }: NavbarProps) => {
           </button>
         </div>
         {renderLinks(() => setMenuOpen(false))}
-        {user ? (
+        {user && (
           <button
             className="btn btn--ghost"
             onClick={() => {
@@ -94,7 +87,7 @@ export const Navbar = ({ basePath, onSignOut, user }: NavbarProps) => {
           >
             Sign out
           </button>
-        ) : null}
+        )}
       </div>
     </header>
   );

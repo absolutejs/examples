@@ -17,9 +17,7 @@ export const Home = ({ user }: { user: AuthUser | null }) => (
         View the protected page
       </Link>
     ) : (
-      <div className="card login-card text-left">
-        <ProviderLogin action="login" />
-      </div>
+      <ProviderLogin action="login" className="card login-card text-left" />
     )}
   </section>
 );

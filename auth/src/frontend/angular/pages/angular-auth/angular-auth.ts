@@ -11,16 +11,6 @@ import { AuthService } from "../../services/auth.service";
 
 export type Context = Record<string, never>;
 
-// Routes are relative to the page's mount. The build statically detects this
-// `export const routes` and auto-wires provideRouter(routes) plus the inferred
-// `{ provide: APP_BASE_HREF, useValue: "/angular/" }` from the /angular/* mount.
-export const routes: Routes = [
-  { component: HomeComponent, path: "" },
-  { component: ProtectedComponent, path: "protected" },
-  { component: SettingsComponent, path: "settings" },
-  { component: ConnectorsComponent, path: "connectors" },
-];
-
 @Component({
   imports: [CommonModule, NavbarComponent, RouterOutlet, ToastComponent],
   selector: "angular-auth-page",
@@ -34,6 +24,16 @@ export class AngularAuthComponent {
   constructor() {
     afterNextRender(() => this.auth.start());
   }
-}
+};
+
+// Routes are relative to the page's mount. The build statically detects this
+// `export const routes` and auto-wires provideRouter(routes) plus the inferred
+// `{ provide: APP_BASE_HREF, useValue: "/angular/" }` from the /angular/* mount.
+export const routes: Routes = [
+  { component: HomeComponent, path: "" },
+  { component: ProtectedComponent, path: "protected" },
+  { component: SettingsComponent, path: "settings" },
+  { component: ConnectorsComponent, path: "connectors" },
+];
 
 export default AngularAuthComponent;

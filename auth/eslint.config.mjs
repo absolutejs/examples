@@ -1,6 +1,4 @@
 // eslint.config.mjs
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 import pluginJs from "@eslint/js";
 import stylistic from "@stylistic/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
@@ -10,8 +8,6 @@ import promisePlugin from "eslint-plugin-promise";
 import securityPlugin from "eslint-plugin-security";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
   {
@@ -50,7 +46,7 @@ export default defineConfig([
       parserOptions: {
         createDefaultProgram: true,
         project: "./tsconfig.json",
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: process.cwd(),
       },
     },
     plugins: { "@stylistic": stylistic },
@@ -250,6 +246,11 @@ export default defineConfig([
   },
   {
     files: ["eslint.config.mjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
     rules: {
       "no-magic-numbers": "off",
     },

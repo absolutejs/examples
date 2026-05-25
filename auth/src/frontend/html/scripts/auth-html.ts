@@ -227,28 +227,17 @@ const renderUserArea = () => {
   }
 };
 
-const renderView = () => {
-  const view = must("view");
-  const path = window.location.pathname;
-
-  if (path === "/html/protected") {
-    view.innerHTML = currentUser
-      ? `<section class="auth-section stack"><div><h1 class="page-heading">Protected page</h1><p class="muted">Your authenticated session resolves to this user record.</p></div><pre class="json">${highlightJson(currentUser)}</pre></section>`
-      : notAuthorizedHtml();
+const renderSettingsView = (view: HTMLElement) => {
+  if (!currentUser) {
+    view.innerHTML = notAuthorizedHtml();
 
     return;
   }
 
-  if (path === "/html/settings") {
-    if (!currentUser) {
-      view.innerHTML = notAuthorizedHtml();
-
-      return;
-    }
-    const fullName = [currentUser.first_name, currentUser.last_name]
-      .filter((part) => typeof part === "string" && part.length > 0)
-      .join(" ");
-    view.innerHTML = `<section class="auth-section stack">
+  const fullName = [currentUser.first_name, currentUser.last_name]
+    .filter((part) => typeof part === "string" && part.length > 0)
+    .join(" ");
+  view.innerHTML = `<section class="auth-section stack">
       <div><h1 class="page-heading">Account settings</h1><p class="muted">Manage the login identities linked to your account.</p></div>
       <div class="grid-2">
         <div class="card"><h2 class="card__title">Canonical account</h2><p class="muted">Absolute Auth keeps one canonical user and links every OAuth identity to it. Conflicting identities raise a merge request.</p></div>
@@ -272,31 +261,52 @@ const renderView = () => {
         <div class="auth-modal__actions"><button class="btn btn--ghost" type="button" data-action="close-delete">Cancel</button><button class="btn btn--danger" type="button" data-action="confirm-delete" data-role="confirm-button" disabled>Delete account</button></div>
       </dialog>
     </section>`;
-    if (!identityPayload) {
-      void loadIdentities();
-    }
+  if (!identityPayload) {
+    void loadIdentities();
+  }
+};
+
+const renderConnectorsView = (view: HTMLElement) => {
+  if (!currentUser) {
+    view.innerHTML = notAuthorizedHtml();
+
+    return;
+  }
+
+  const targets = CONNECTOR_TARGETS.map(
+    (target) =>
+      `<div class="card text-left"><h2 class="card__title row"><img class="entity__logo" alt="" src="${providerData[target.provider].logoUrl}" />${target.label}</h2><p class="muted">${escapeHtml(target.description)}</p><a class="btn btn--primary" href="${authorizationHref(target.provider, "connector")}">Link ${target.label}</a></div>`,
+  ).join("");
+  view.innerHTML = `<section class="auth-section stack">
+      <div><h1 class="page-heading">Connectors</h1><p class="muted">Link external accounts to grant the demo extra data scopes.</p></div>
+      <div class="grid-2">${targets}</div>
+      <div class="panel"><div class="panel__header"><div><h2 class="panel__title">Linked connectors</h2><p class="muted">OAuth grants and discovered external accounts.</p></div><button class="btn btn--ghost btn--sm" type="button" data-action="refresh-connectors">Refresh</button></div><div id="connector-panel">${connectorsPanelHtml()}</div></div>
+    </section>`;
+  if (!linkedPayload) {
+    void loadConnectors();
+  }
+};
+
+const renderView = () => {
+  const view = must("view");
+  const path = window.location.pathname;
+
+  if (path === "/html/protected") {
+    view.innerHTML = currentUser
+      ? `<section class="auth-section stack"><div><h1 class="page-heading">Protected page</h1><p class="muted">Your authenticated session resolves to this user record.</p></div><pre class="json">${highlightJson(currentUser)}</pre></section>`
+      : notAuthorizedHtml();
+
+    return;
+  }
+
+  if (path === "/html/settings") {
+    renderSettingsView(view);
 
     return;
   }
 
   if (path === "/html/connectors") {
-    if (!currentUser) {
-      view.innerHTML = notAuthorizedHtml();
-
-      return;
-    }
-    const targets = CONNECTOR_TARGETS.map(
-      (target) =>
-        `<div class="card text-left"><h2 class="card__title row"><img class="entity__logo" alt="" src="${providerData[target.provider].logoUrl}" />${target.label}</h2><p class="muted">${escapeHtml(target.description)}</p><a class="btn btn--primary" href="${authorizationHref(target.provider, "connector")}">Link ${target.label}</a></div>`,
-    ).join("");
-    view.innerHTML = `<section class="auth-section stack">
-      <div><h1 class="page-heading">Connectors</h1><p class="muted">Link external accounts to grant the demo extra data scopes.</p></div>
-      <div class="grid-2">${targets}</div>
-      <div class="panel"><div class="panel__header"><div><h2 class="panel__title">Linked connectors</h2><p class="muted">OAuth grants and discovered external accounts.</p></div><button class="btn btn--ghost btn--sm" type="button" data-action="refresh-connectors">Refresh</button></div><div id="connector-panel">${connectorsPanelHtml()}</div></div>
-    </section>`;
-    if (!linkedPayload) {
-      void loadConnectors();
-    }
+    renderConnectorsView(view);
 
     return;
   }
@@ -382,6 +392,27 @@ const runConnector = async (
 const closestAction = (target: EventTarget | null) =>
   target instanceof Element ? target.closest("[data-action]") : null;
 
+const openDeleteDialog = () => {
+  const dialog = document.getElementById("delete-dialog");
+  if (dialog instanceof HTMLDialogElement) {
+    dialog.showModal();
+  }
+};
+
+const closeDeleteDialog = () => {
+  const dialog = document.getElementById("delete-dialog");
+  if (dialog instanceof HTMLDialogElement) {
+    dialog.close();
+  }
+};
+
+const setDeleteConfirmEnabled = (value: string) => {
+  const button = document.querySelector('[data-role="confirm-button"]');
+  if (button instanceof HTMLButtonElement) {
+    button.disabled = value !== "DELETE";
+  }
+};
+
 const handleClick = (event: MouseEvent) => {
   const trigger = closestAction(event.target);
   if (!(trigger instanceof HTMLElement)) {
@@ -409,15 +440,9 @@ const handleClick = (event: MouseEvent) => {
   } else if (action === "remove-grant") {
     void runConnector(() => removeGrant(id), "Grant removed");
   } else if (action === "open-delete") {
-    const dialog = document.getElementById("delete-dialog");
-    if (dialog instanceof HTMLDialogElement) {
-      dialog.showModal();
-    }
+    openDeleteDialog();
   } else if (action === "close-delete") {
-    const dialog = document.getElementById("delete-dialog");
-    if (dialog instanceof HTMLDialogElement) {
-      dialog.close();
-    }
+    closeDeleteDialog();
   } else if (action === "confirm-delete") {
     void deleteAccount()
       .then(() => {
@@ -448,10 +473,7 @@ const handleInput = (event: Event) => {
     target.dataset.role === "confirm" &&
     target instanceof HTMLInputElement
   ) {
-    const button = document.querySelector('[data-role="confirm-button"]');
-    if (button instanceof HTMLButtonElement) {
-      button.disabled = target.value !== "DELETE";
-    }
+    setDeleteConfirmEnabled(target.value);
   }
 };
 

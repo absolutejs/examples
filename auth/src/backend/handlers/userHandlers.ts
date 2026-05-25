@@ -67,7 +67,7 @@ export const buildCanonicalUserFieldsFromIdentity = ({
     userIdentity,
   });
   const fullNameParts = fullName?.split(/\s+/).filter(Boolean) ?? [];
-  const fallbackFirstName = fullNameParts[0];
+  const [fallbackFirstName] = fullNameParts;
   const fallbackLastName =
     fullNameParts.length > 1 ? fullNameParts.slice(1).join(" ") : undefined;
 
@@ -123,15 +123,17 @@ export const getDBUser = async ({ userSub, db }: GetDBUserProps) => {
 
   return user;
 };
+type UpdateDBUserProps = {
+  userSub: string;
+  db: NeonHttpDatabase<SchemaType>;
+  fields: Partial<NewUser>;
+};
+
 export const updateDBUser = async ({
   userSub,
   db,
   fields,
-}: {
-  userSub: string;
-  db: NeonHttpDatabase<SchemaType>;
-  fields: Partial<NewUser>;
-}) => {
+}: UpdateDBUserProps) => {
   const [user] = await db
     .update(schema.users)
     .set(fields)
@@ -140,15 +142,17 @@ export const updateDBUser = async ({
 
   return user;
 };
+type UpdateDBUserPrimaryAuthIdentityProps = {
+  userSub: string;
+  db: NeonHttpDatabase<SchemaType>;
+  primaryAuthIdentityId: string;
+};
+
 export const updateDBUserPrimaryAuthIdentity = async ({
   userSub,
   db,
   primaryAuthIdentityId,
-}: {
-  userSub: string;
-  db: NeonHttpDatabase<SchemaType>;
-  primaryAuthIdentityId: string;
-}) =>
+}: UpdateDBUserPrimaryAuthIdentityProps) =>
   updateDBUser({
     db,
     fields: { primary_auth_identity_id: primaryAuthIdentityId },
@@ -165,17 +169,19 @@ const createIdentityId = ({
 
 const createAccountId = () => crypto.randomUUID();
 
+type CreateMergeRequestIdProps = {
+  sourceUserSub: string;
+  targetUserSub: string;
+  authProvider: string;
+  providerSubject: string;
+};
+
 const createMergeRequestId = ({
   sourceUserSub,
   targetUserSub,
   authProvider,
   providerSubject,
-}: {
-  sourceUserSub: string;
-  targetUserSub: string;
-  authProvider: string;
-  providerSubject: string;
-}) =>
+}: CreateMergeRequestIdProps) =>
   `merge:${targetUserSub}:${sourceUserSub}:${authProvider}:${providerSubject}`;
 
 const buildProviderSubjectFromIdentity = ({
@@ -222,15 +228,28 @@ export const createDBAuthIdentity = async ({
   return identity;
 };
 
+type GetDBAuthIdentityProps = {
+  authProvider: string;
+  db: NeonHttpDatabase<SchemaType>;
+  providerSubject: string;
+};
+
+export const createDBAuthIdentityMergeRequest = async ({
+  db,
+  ...values
+}: NewAuthIdentityMergeRequest & { db: NeonHttpDatabase<SchemaType> }) => {
+  const [request] = await db
+    .insert(schema.authIdentityMergeRequests)
+    .values(values)
+    .returning();
+
+  return request;
+};
 export const getDBAuthIdentity = async ({
   authProvider,
   db,
   providerSubject,
-}: {
-  authProvider: string;
-  db: NeonHttpDatabase<SchemaType>;
-  providerSubject: string;
-}) => {
+}: GetDBAuthIdentityProps) => {
   const [identity] = await db
     .select()
     .from(schema.authIdentities)
@@ -244,7 +263,6 @@ export const getDBAuthIdentity = async ({
 
   return identity;
 };
-
 export const getDBAuthIdentityById = async ({
   db,
   id,
@@ -260,44 +278,6 @@ export const getDBAuthIdentityById = async ({
 
   return identity;
 };
-
-export const listDBAuthIdentitiesByUser = async ({
-  db,
-  userSub,
-}: {
-  db: NeonHttpDatabase<SchemaType>;
-  userSub: string;
-}) =>
-  await db
-    .select()
-    .from(schema.authIdentities)
-    .where(eq(schema.authIdentities.user_sub, userSub))
-    .execute();
-
-export const removeDBAuthIdentity = async ({
-  db,
-  id,
-}: {
-  db: NeonHttpDatabase<SchemaType>;
-  id: string;
-}) => {
-  await db
-    .delete(schema.authIdentities)
-    .where(eq(schema.authIdentities.id, id));
-};
-
-export const createDBAuthIdentityMergeRequest = async ({
-  db,
-  ...values
-}: NewAuthIdentityMergeRequest & { db: NeonHttpDatabase<SchemaType> }) => {
-  const [request] = await db
-    .insert(schema.authIdentityMergeRequests)
-    .values(values)
-    .returning();
-
-  return request;
-};
-
 export const getDBAuthIdentityMergeRequest = async ({
   db,
   id,
@@ -313,7 +293,18 @@ export const getDBAuthIdentityMergeRequest = async ({
 
   return request;
 };
-
+export const listDBAuthIdentitiesByUser = async ({
+  db,
+  userSub,
+}: {
+  db: NeonHttpDatabase<SchemaType>;
+  userSub: string;
+}) =>
+  db
+    .select()
+    .from(schema.authIdentities)
+    .where(eq(schema.authIdentities.user_sub, userSub))
+    .execute();
 export const listDBAuthIdentityMergeRequestsByTarget = async ({
   db,
   targetUserSub,
@@ -321,11 +312,31 @@ export const listDBAuthIdentityMergeRequestsByTarget = async ({
   db: NeonHttpDatabase<SchemaType>;
   targetUserSub: string;
 }) =>
-  await db
+  db
     .select()
     .from(schema.authIdentityMergeRequests)
     .where(eq(schema.authIdentityMergeRequests.target_user_sub, targetUserSub))
     .execute();
+export const removeDBAuthIdentity = async ({
+  db,
+  id,
+}: {
+  db: NeonHttpDatabase<SchemaType>;
+  id: string;
+}) => {
+  await db
+    .delete(schema.authIdentities)
+    .where(eq(schema.authIdentities.id, id));
+};
+
+type UpsertDBAuthIdentityMergeRequestProps = {
+  authProvider: string;
+  db: NeonHttpDatabase<SchemaType>;
+  metadata?: Record<string, unknown>;
+  providerSubject: string;
+  sourceUserSub: string;
+  targetUserSub: string;
+};
 
 export const upsertDBAuthIdentityMergeRequest = async ({
   authProvider,
@@ -334,14 +345,7 @@ export const upsertDBAuthIdentityMergeRequest = async ({
   providerSubject,
   sourceUserSub,
   targetUserSub,
-}: {
-  authProvider: string;
-  db: NeonHttpDatabase<SchemaType>;
-  metadata?: Record<string, unknown>;
-  providerSubject: string;
-  sourceUserSub: string;
-  targetUserSub: string;
-}) => {
+}: UpsertDBAuthIdentityMergeRequestProps) => {
   const id = createMergeRequestId({
     authProvider,
     providerSubject,
@@ -375,28 +379,11 @@ export const upsertDBAuthIdentityMergeRequest = async ({
   });
 };
 
-export const updateDBAuthIdentityMergeRequestStatus = async ({
-  db,
-  id,
-  status,
-  metadata,
-}: {
+type UpdateDBAuthIdentityMergeRequestStatusProps = {
   db: NeonHttpDatabase<SchemaType>;
   id: string;
   status: string;
   metadata?: Record<string, unknown>;
-}) => {
-  const [request] = await db
-    .update(schema.authIdentityMergeRequests)
-    .set({
-      metadata,
-      status,
-      updated_at: new Date(),
-    })
-    .where(eq(schema.authIdentityMergeRequests.id, id))
-    .returning();
-
-  return request;
 };
 
 export const deleteDBAuthIdentityMergeRequest = async ({
@@ -410,7 +397,6 @@ export const deleteDBAuthIdentityMergeRequest = async ({
     .delete(schema.authIdentityMergeRequests)
     .where(eq(schema.authIdentityMergeRequests.id, id));
 };
-
 export const linkUserIdentity = async ({
   authProvider,
   db,
@@ -464,16 +450,36 @@ export const linkUserIdentity = async ({
     status: "created" as const,
   };
 };
+export const updateDBAuthIdentityMergeRequestStatus = async ({
+  db,
+  id,
+  status,
+  metadata,
+}: UpdateDBAuthIdentityMergeRequestStatusProps) => {
+  const [request] = await db
+    .update(schema.authIdentityMergeRequests)
+    .set({
+      metadata,
+      status,
+      updated_at: new Date(),
+    })
+    .where(eq(schema.authIdentityMergeRequests.id, id))
+    .returning();
+
+  return request;
+};
+
+type SyncDBUserFromAuthIdentityProps = {
+  db: NeonHttpDatabase<SchemaType>;
+  identity: AuthIdentity;
+  userSub: string;
+};
 
 export const syncDBUserFromAuthIdentity = async ({
   db,
   identity,
   userSub,
-}: {
-  db: NeonHttpDatabase<SchemaType>;
-  identity: AuthIdentity;
-  userSub: string;
-}) => {
+}: SyncDBUserFromAuthIdentityProps) => {
   const fields = buildCanonicalUserFieldsFromIdentity({
     authProvider: identity.auth_provider,
     userIdentity: identity.metadata ?? {},
@@ -486,15 +492,17 @@ export const syncDBUserFromAuthIdentity = async ({
   });
 };
 
+type SetPrimaryAuthIdentityProps = {
+  db: NeonHttpDatabase<SchemaType>;
+  identityId: string;
+  userSub: string;
+};
+
 export const setPrimaryAuthIdentity = async ({
   db,
   identityId,
   userSub,
-}: {
-  db: NeonHttpDatabase<SchemaType>;
-  identityId: string;
-  userSub: string;
-}) => {
+}: SetPrimaryAuthIdentityProps) => {
   const identity = await getDBAuthIdentityById({ db, id: identityId });
   if (identity === undefined || identity.user_sub !== userSub) {
     throw new Error("Auth identity not found");
@@ -515,15 +523,70 @@ export const setPrimaryAuthIdentity = async ({
   return identity;
 };
 
+type MergeUserAccountsProps = {
+  db: NeonHttpDatabase<SchemaType>;
+  mergeRequestId: string;
+  targetUserSub: string;
+};
+
+export const createUser = async ({
+  userIdentity,
+  authProvider,
+  db,
+}: UserFunctionProps<SchemaType>) => {
+  const userSub = createAccountId();
+
+  const user = await createDBUser({
+    db,
+    primary_auth_identity_id: null,
+    sub: userSub,
+    ...buildCanonicalUserFieldsFromIdentity({
+      authProvider,
+      userIdentity,
+    }),
+  });
+
+  const linkedIdentity = await linkUserIdentity({
+    authProvider,
+    db,
+    userIdentity,
+    userSub,
+  });
+
+  await updateDBUserPrimaryAuthIdentity({
+    db,
+    primaryAuthIdentityId: linkedIdentity.identity.id,
+    userSub,
+  });
+
+  return getDBUser({ db, userSub }) ?? user;
+};
+export const getUser = async ({
+  userIdentity,
+  authProvider,
+  db,
+}: UserFunctionProps<SchemaType>) => {
+  const providerSubject = buildProviderSubjectFromIdentity({
+    authProvider,
+    userIdentity,
+  });
+  const identity = await getDBAuthIdentity({
+    authProvider,
+    db,
+    providerSubject,
+  });
+
+  if (identity !== undefined) {
+    return getDBUser({ db, userSub: identity.user_sub });
+  }
+
+  return undefined;
+};
 export const mergeUserAccounts = async ({
   db,
   mergeRequestId,
   targetUserSub,
-}: {
-  db: NeonHttpDatabase<SchemaType>;
-  mergeRequestId: string;
-  targetUserSub: string;
-}) => {
+}: MergeUserAccountsProps) => {
   const mergeRequest = await getDBAuthIdentityMergeRequest({
     db,
     id: mergeRequestId,
@@ -603,60 +666,3 @@ export const mergeUserAccounts = async ({
 
   return mergeRequest;
 };
-
-export const createUser = async ({
-  userIdentity,
-  authProvider,
-  db,
-}: UserFunctionProps<SchemaType>) => {
-  const userSub = createAccountId();
-
-  const user = await createDBUser({
-    sub: userSub,
-    db,
-    primary_auth_identity_id: null,
-    ...buildCanonicalUserFieldsFromIdentity({
-      authProvider,
-      userIdentity,
-    }),
-  });
-
-  const linkedIdentity = await linkUserIdentity({
-    authProvider,
-    db,
-    userIdentity,
-    userSub,
-  });
-
-  await updateDBUserPrimaryAuthIdentity({
-    db,
-    primaryAuthIdentityId: linkedIdentity.identity.id,
-    userSub,
-  });
-
-  return getDBUser({ db, userSub }) ?? user;
-};
-
-export const getUserByIdentity = async ({
-  userIdentity,
-  authProvider,
-  db,
-}: UserFunctionProps<SchemaType>) => {
-  const providerSubject = buildProviderSubjectFromIdentity({
-    authProvider,
-    userIdentity,
-  });
-  const identity = await getDBAuthIdentity({
-    authProvider,
-    db,
-    providerSubject,
-  });
-
-  if (identity !== undefined) {
-    return getDBUser({ db, userSub: identity.user_sub });
-  }
-
-  return undefined;
-};
-
-export const getUser = getUserByIdentity;

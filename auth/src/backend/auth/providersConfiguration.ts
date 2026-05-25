@@ -158,14 +158,6 @@ export const providersConfiguration = defineProvidersConfiguration({
     },
   },
   facebook: {
-    login: {
-      credentials: {
-        clientId: getEnvVar("FACEBOOK_CLIENT_ID"),
-        clientSecret: getEnvVar("FACEBOOK_CLIENT_SECRET"),
-        redirectUri: getEnvVar("OAUTH2_CALLBACK_URI"),
-      },
-      scope: ["email"],
-    },
     connector: {
       credentials: {
         clientId: getEnvVar("FACEBOOK_CONNECTOR_CLIENT_ID"),
@@ -173,6 +165,14 @@ export const providersConfiguration = defineProvidersConfiguration({
         redirectUri: getEnvVar("OAUTH2_CALLBACK_URI"),
       },
       scope: ["pages_show_list", "pages_read_engagement", "instagram_basic"],
+    },
+    login: {
+      credentials: {
+        clientId: getEnvVar("FACEBOOK_CLIENT_ID"),
+        clientSecret: getEnvVar("FACEBOOK_CLIENT_SECRET"),
+        redirectUri: getEnvVar("OAUTH2_CALLBACK_URI"),
+      },
+      scope: ["email"],
     },
   },
   figma: {
@@ -208,18 +208,6 @@ export const providersConfiguration = defineProvidersConfiguration({
     scope: ["openid"],
   },
   google: {
-    login: {
-      credentials: {
-        clientId: getEnvVar("GOOGLE_CLIENT_ID"),
-        clientSecret: getEnvVar("GOOGLE_CLIENT_SECRET"),
-        redirectUri: getEnvVar("OAUTH2_CALLBACK_URI"),
-      },
-      scope: ["profile", "email", "openid"],
-      searchParams: [
-        ["access_type", "offline"],
-        ["prompt", "consent"],
-      ],
-    },
     connector: {
       credentials: {
         clientId: getEnvVar("GOOGLE_CLIENT_ID"),
@@ -233,6 +221,18 @@ export const providersConfiguration = defineProvidersConfiguration({
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/contacts.readonly",
       ],
+      searchParams: [
+        ["access_type", "offline"],
+        ["prompt", "consent"],
+      ],
+    },
+    login: {
+      credentials: {
+        clientId: getEnvVar("GOOGLE_CLIENT_ID"),
+        clientSecret: getEnvVar("GOOGLE_CLIENT_SECRET"),
+        redirectUri: getEnvVar("OAUTH2_CALLBACK_URI"),
+      },
+      scope: ["profile", "email", "openid"],
       searchParams: [
         ["access_type", "offline"],
         ["prompt", "consent"],

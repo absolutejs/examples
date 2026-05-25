@@ -1,5 +1,10 @@
+import type {
+  LinkedProviderBinding,
+  LinkedProviderGrant,
+} from "@absolutejs/linked-providers";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import {
+  type AnyPgTable,
   bigint,
   jsonb,
   pgTable,
@@ -89,7 +94,9 @@ export const linkedProviderGrants = pgTable("linked_provider_grants", {
   provider_family: varchar("provider_family", { length: 64 }).notNull(),
   provider_subject: varchar("provider_subject", { length: 255 }).notNull(),
   refresh_token_ciphertext: text("refresh_token_ciphertext"),
-  status: varchar("status", { length: 64 }).notNull(),
+  status: varchar("status", { length: 64 })
+    .$type<LinkedProviderGrant["status"]>()
+    .notNull(),
   token_type: varchar("token_type", { length: 64 }),
   updated_at: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -113,7 +120,9 @@ export const linkedProviderBindings = pgTable("linked_provider_bindings", {
   id: varchar("id", { length: 255 }).primaryKey(),
   label: varchar("label", { length: 255 }),
   metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
-  status: varchar("status", { length: 64 }).notNull(),
+  status: varchar("status", { length: 64 })
+    .$type<LinkedProviderBinding["status"]>()
+    .notNull(),
   updated_at: timestamp("updated_at").notNull().defaultNow(),
   username: varchar("username", { length: 255 }),
 });
@@ -126,7 +135,7 @@ export const schema = {
   linkedProviderBindings,
   linkedProviderGrants,
   users,
-};
+} satisfies Record<string, AnyPgTable>;
 
 export type SchemaType = typeof schema;
 

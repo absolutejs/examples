@@ -4,7 +4,7 @@ import type {
   LinkedProviderPayload,
 } from "./types";
 
-const request = async <T>(path: string, method = "GET"): Promise<T> => {
+const request = async <T>(path: string, method = "GET") => {
   const response = await fetch(path, { method });
 
   if (!response.ok) {
@@ -13,7 +13,9 @@ const request = async <T>(path: string, method = "GET"): Promise<T> => {
     throw new Error(message || response.statusText);
   }
 
-  return response.json();
+  const data: T = await response.json();
+
+  return data;
 };
 
 export const deleteAccount = () =>
@@ -25,14 +27,14 @@ export const dismissMergeRequest = (id: string) =>
   );
 export const fetchAuthIdentities = () =>
   request<AuthIdentityPayload>("/api/auth-identities");
-export const fetchAuthStatus = async (): Promise<AuthUser | null> => {
+export const fetchAuthStatus = async () => {
   const response = await fetch("/oauth2/status");
 
   if (!response.ok) {
     return null;
   }
 
-  const data = await response.json();
+  const data: { user?: AuthUser | null } = await response.json();
 
   return data.user ?? null;
 };

@@ -34,7 +34,7 @@ const toGrant = (row: LinkedProviderGrantRow): LinkedProviderGrant => ({
   providerFamily: row.provider_family,
   providerSubject: row.provider_subject,
   refreshTokenCiphertext: row.refresh_token_ciphertext ?? undefined,
-  status: row.status as LinkedProviderGrant["status"],
+  status: row.status,
   tokenType: row.token_type ?? undefined,
   updatedAt: row.updated_at.getTime(),
 });
@@ -51,7 +51,7 @@ const toBinding = (row: LinkedProviderBindingRow): LinkedProviderBinding => ({
   id: row.id,
   label: row.label ?? undefined,
   metadata: row.metadata ?? undefined,
-  status: row.status as LinkedProviderBinding["status"],
+  status: row.status,
   updatedAt: row.updated_at.getTime(),
   username: row.username ?? undefined,
 });

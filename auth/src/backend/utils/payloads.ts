@@ -10,11 +10,15 @@ import {
   listDBAuthIdentityMergeRequestsByTarget,
 } from "../handlers/userHandlers";
 
-type PayloadDeps = {
+export type PayloadDeps = {
   bindingStore: LinkedProviderBindingStore;
   db: NeonHttpDatabase<SchemaType>;
   grantStore: LinkedProviderGrantStore;
 };
+
+type AuthIdentityWithPrimary = Awaited<
+  ReturnType<typeof listDBAuthIdentitiesByUser>
+>[number] & { isPrimary: boolean };
 
 export const buildAuthIdentityPayload = async (
   { db }: PayloadDeps,
@@ -27,20 +31,21 @@ export const buildAuthIdentityPayload = async (
   ]);
 
   const primaryIdentityId = user?.primary_auth_identity_id;
-  const identities = Object.groupBy(
-    identityRows.map((identity) => ({
+  const identities = identityRows
+    .map((identity) => ({
       ...identity,
       isPrimary:
         primaryIdentityId !== null && primaryIdentityId !== undefined
           ? identity.id === primaryIdentityId
           : `${identity.auth_provider.toUpperCase()}|${identity.provider_subject}` ===
             userSub,
-    })),
-    (identity) => identity.auth_provider.toLowerCase(),
-  ) as Record<
-    string,
-    Array<(typeof identityRows)[number] & { isPrimary: boolean }>
-  >;
+    }))
+    .reduce<Record<string, AuthIdentityWithPrimary[]>>((groups, identity) => {
+      const key = identity.auth_provider.toLowerCase();
+      (groups[key] ??= []).push(identity);
+
+      return groups;
+    }, {});
 
   return {
     identities,

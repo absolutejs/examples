@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { TOAST_DURATION } from "../../../../constants";
+import { Toast } from "./Toast";
 
 type ToastTone = "success" | "error" | "info";
 
@@ -38,22 +39,12 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       {children}
       <div className="toast-stack">
         {toasts.map((toast) => (
-          <div
-            className={
-              toast.tone === "info" ? "toast" : `toast toast--${toast.tone}`
-            }
+          <Toast
             key={toast.id}
-          >
-            <span>{toast.message}</span>
-            <button
-              aria-label="Dismiss notification"
-              className="toast__close"
-              onClick={() => removeToast(toast.id)}
-              type="button"
-            >
-              ×
-            </button>
-          </div>
+            message={toast.message}
+            onDismiss={() => removeToast(toast.id)}
+            tone={toast.tone}
+          />
         ))}
       </div>
     </ToastContext.Provider>

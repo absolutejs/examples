@@ -107,10 +107,12 @@ const fetchMetaAccounts = async (accessToken: string) => {
     );
   }
 
-  return (await response.json()) as MetaAccountsResponse;
+  const data: MetaAccountsResponse = await response.json();
+
+  return data;
 };
 
-const buildGoogleGrantAndBinding = async (input: {
+type BuildGoogleGrantAndBindingInput = {
   authProvider: ProviderOption;
   authorization: ResolvedOAuthAuthorization;
   authClient?: string;
@@ -118,7 +120,11 @@ const buildGoogleGrantAndBinding = async (input: {
   db: NeonHttpDatabase<SchemaType>;
   ownerRefOverride?: string;
   tokenResponse: OAuth2TokenResponse;
-}) => {
+};
+
+const buildGoogleGrantAndBinding = async (
+  input: BuildGoogleGrantAndBindingInput,
+) => {
   const {
     authClient,
     authProvider,
@@ -143,10 +149,11 @@ const buildGoogleGrantAndBinding = async (input: {
     );
   }
 
-  const ownerRef = ownerRefOverride;
   const grantedScopes = getGrantedScopes(tokenResponse, configuredScopes);
   const now = Date.now();
-  const existingGrant = (await grantStore.listGrantsByOwner(ownerRef)).find(
+  const existingGrant = (
+    await grantStore.listGrantsByOwner(ownerRefOverride)
+  ).find(
     (grant) =>
       grant.authProviderKey === authProvider &&
       grant.providerSubject === providerSubject,
@@ -165,7 +172,7 @@ const buildGoogleGrantAndBinding = async (input: {
       providerClient: authClient,
       providerIdentity: authorization.userIdentity,
     },
-    ownerRef,
+    ownerRef: ownerRefOverride,
     providerFamily: "google",
     providerSubject,
     refreshTokenCiphertext: authorization.refreshToken,
@@ -242,116 +249,147 @@ const buildGoogleGrantAndBinding = async (input: {
     });
   }
 
-  for (const binding of bindings) {
-    await bindingStore.saveBinding(binding);
-  }
+  await Promise.all(
+    bindings.map((binding) => bindingStore.saveBinding(binding)),
+  );
 
   return { binding: bindings[0], bindings, grant };
 };
 
-const buildMetaBindings = async (input: {
+type BuildMetaBindingsInput = {
   grantId: string;
   grantedScopes: string[];
   providerSubject: string;
   now: number;
   existingBindings: LinkedProviderBinding[];
   accessToken?: string;
-}) => {
-  const {
-    grantId,
-    grantedScopes,
-    providerSubject,
-    now,
-    existingBindings,
-    accessToken,
-  } = input;
-  const bindings: LinkedProviderBinding[] = [];
-  let discoveryError: string | undefined;
+};
 
+type BuildMetaPageBindingsInput = {
+  page: MetaPageAccount;
+  grantId: string;
+  grantedScopes: string[];
+  providerSubject: string;
+  now: number;
+  existingBindings: LinkedProviderBinding[];
+};
+
+const buildMetaPageBindings = ({
+  page,
+  grantId,
+  grantedScopes,
+  providerSubject,
+  now,
+  existingBindings,
+}: BuildMetaPageBindingsInput) => {
+  if (typeof page.id !== "string" || page.id.trim().length === 0) {
+    return [];
+  }
+
+  const pageId = page.id.trim();
+  const existingPageBinding = existingBindings.find(
+    (candidate) =>
+      candidate.connectorProvider === "facebook" &&
+      candidate.externalAccountId === pageId,
+  );
+  const pageBinding: LinkedProviderBinding = {
+    availableScopes: grantedScopes,
+    capabilities: ["posts.read", "pages.read"],
+    connectorProvider: "facebook",
+    createdAt: existingPageBinding?.createdAt ?? now,
+    externalAccountId: pageId,
+    externalAccountType: "page",
+    grantId,
+    id: existingPageBinding?.id ?? `facebook:${providerSubject}:${pageId}`,
+    label: page.name?.trim() || `Facebook Page ${pageId}`,
+    metadata: {
+      fanCount: page.fan_count,
+      pageAccessToken: page.access_token,
+      pageCategory: page.category,
+      pageLink: page.link,
+      providerSubject,
+    },
+    status: "active",
+    updatedAt: now,
+    username: undefined,
+  };
+
+  const instagram = page.instagram_business_account;
+  if (typeof instagram?.id !== "string" || instagram.id.trim().length === 0) {
+    return [pageBinding];
+  }
+
+  const instagramId = instagram.id.trim();
+  const existingInstagramBinding = existingBindings.find(
+    (candidate) =>
+      candidate.connectorProvider === "instagram" &&
+      candidate.externalAccountId === instagramId,
+  );
+  const instagramBinding: LinkedProviderBinding = {
+    availableScopes: grantedScopes,
+    capabilities: ["media.read", "profile.read"],
+    connectorProvider: "instagram",
+    createdAt: existingInstagramBinding?.createdAt ?? now,
+    externalAccountId: instagramId,
+    externalAccountType: "instagram_business",
+    grantId,
+    id:
+      existingInstagramBinding?.id ??
+      `instagram:${providerSubject}:${instagramId}`,
+    label: instagram.name?.trim() || instagram.username?.trim() || instagramId,
+    metadata: {
+      biography: instagram.biography,
+      instagramUsername: instagram.username,
+      parentPageAccessToken: page.access_token,
+      parentPageId: pageId,
+      parentPageName: page.name,
+      profilePictureUrl: instagram.profile_picture_url,
+      providerSubject,
+      website: instagram.website,
+    },
+    status: "active",
+    updatedAt: now,
+    username: instagram.username?.trim() || undefined,
+  };
+
+  return [pageBinding, instagramBinding];
+};
+
+const buildMetaBindings = async ({
+  grantId,
+  grantedScopes,
+  providerSubject,
+  now,
+  existingBindings,
+  accessToken,
+}: BuildMetaBindingsInput) => {
   if (!accessToken) {
-    return { bindings, discoveryError: "Meta access token unavailable" };
+    return { bindings: [], discoveryError: "Meta access token unavailable" };
   }
 
   try {
     const accounts = await fetchMetaAccounts(accessToken);
-    for (const page of accounts.data ?? []) {
-      if (typeof page.id !== "string" || page.id.trim().length === 0) {
-        continue;
-      }
-
-      const pageId = page.id.trim();
-      const existingPageBinding = existingBindings.find(
-        (candidate) =>
-          candidate.connectorProvider === "facebook" &&
-          candidate.externalAccountId === pageId,
-      );
-      bindings.push({
-        availableScopes: grantedScopes,
-        capabilities: ["posts.read", "pages.read"],
-        connectorProvider: "facebook",
-        createdAt: existingPageBinding?.createdAt ?? now,
-        externalAccountId: pageId,
-        externalAccountType: "page",
+    const bindings = (accounts.data ?? []).flatMap((page) =>
+      buildMetaPageBindings({
+        existingBindings,
+        grantedScopes,
         grantId,
-        id: existingPageBinding?.id ?? `facebook:${providerSubject}:${pageId}`,
-        label: page.name?.trim() || `Facebook Page ${pageId}`,
-        metadata: {
-          fanCount: page.fan_count,
-          pageAccessToken: page.access_token,
-          pageCategory: page.category,
-          pageLink: page.link,
-          providerSubject,
-        },
-        status: "active",
-        updatedAt: now,
-        username: undefined,
-      });
+        now,
+        page,
+        providerSubject,
+      }),
+    );
 
-      const instagram = page.instagram_business_account;
-      if (typeof instagram?.id === "string" && instagram.id.trim().length > 0) {
-        const instagramId = instagram.id.trim();
-        const existingInstagramBinding = existingBindings.find(
-          (candidate) =>
-            candidate.connectorProvider === "instagram" &&
-            candidate.externalAccountId === instagramId,
-        );
-        bindings.push({
-          availableScopes: grantedScopes,
-          capabilities: ["media.read", "profile.read"],
-          connectorProvider: "instagram",
-          createdAt: existingInstagramBinding?.createdAt ?? now,
-          externalAccountId: instagramId,
-          externalAccountType: "instagram_business",
-          grantId,
-          id:
-            existingInstagramBinding?.id ??
-            `instagram:${providerSubject}:${instagramId}`,
-          label:
-            instagram.name?.trim() || instagram.username?.trim() || instagramId,
-          metadata: {
-            biography: instagram.biography,
-            instagramUsername: instagram.username,
-            parentPageAccessToken: page.access_token,
-            parentPageId: pageId,
-            parentPageName: page.name,
-            profilePictureUrl: instagram.profile_picture_url,
-            providerSubject,
-            website: instagram.website,
-          },
-          status: "active",
-          updatedAt: now,
-          username: instagram.username?.trim() || undefined,
-        });
-      }
-    }
+    return { bindings, discoveryError: undefined };
   } catch (error) {
-    discoveryError = error instanceof Error ? error.message : String(error);
+    return {
+      bindings: [],
+      discoveryError: error instanceof Error ? error.message : String(error),
+    };
   }
-
-  return { bindings, discoveryError };
 };
 
-const buildFacebookGrantAndBindings = async (input: {
+type BuildFacebookGrantAndBindingsInput = {
   authClient?: string;
   authProvider: ProviderOption;
   authorization: ResolvedOAuthAuthorization;
@@ -359,7 +397,11 @@ const buildFacebookGrantAndBindings = async (input: {
   db: NeonHttpDatabase<SchemaType>;
   ownerRefOverride?: string;
   tokenResponse: OAuth2TokenResponse;
-}) => {
+};
+
+const buildFacebookGrantAndBindings = async (
+  input: BuildFacebookGrantAndBindingsInput,
+) => {
   const {
     authClient,
     authProvider,
@@ -384,10 +426,11 @@ const buildFacebookGrantAndBindings = async (input: {
     );
   }
 
-  const ownerRef = ownerRefOverride;
   const grantedScopes = getGrantedScopes(tokenResponse, configuredScopes);
   const now = Date.now();
-  const existingGrant = (await grantStore.listGrantsByOwner(ownerRef)).find(
+  const existingGrant = (
+    await grantStore.listGrantsByOwner(ownerRefOverride)
+  ).find(
     (grant) =>
       grant.authProviderKey === authProvider &&
       grant.providerSubject === providerSubject,
@@ -417,7 +460,7 @@ const buildFacebookGrantAndBindings = async (input: {
       providerClient: authClient,
       providerIdentity: authorization.userIdentity,
     },
-    ownerRef,
+    ownerRef: ownerRefOverride,
     providerFamily: "meta",
     providerSubject,
     refreshTokenCiphertext: authorization.refreshToken,
@@ -427,11 +470,22 @@ const buildFacebookGrantAndBindings = async (input: {
   };
 
   await grantStore.saveGrant(grant);
-  for (const binding of bindings) {
-    await bindingStore.saveBinding(binding);
-  }
+  await Promise.all(
+    bindings.map((binding) => bindingStore.saveBinding(binding)),
+  );
 
   return { binding: bindings[0], bindings, grant };
+};
+
+type PersistLinkedProviderCallbackAuthorizationProps = {
+  authProvider: ProviderOption;
+  authClient?: string;
+  configuredScopes?: string[];
+  db: NeonHttpDatabase<SchemaType>;
+  ownerRefOverride?: string;
+  providerInstance: OAuth2Client<ProviderOption>;
+  resolvedAuthorization?: ResolvedOAuthAuthorization;
+  tokenResponse: OAuth2TokenResponse;
 };
 
 export const persistLinkedProviderCallbackAuthorization = async ({
@@ -443,16 +497,7 @@ export const persistLinkedProviderCallbackAuthorization = async ({
   providerInstance,
   resolvedAuthorization,
   tokenResponse,
-}: {
-  authProvider: ProviderOption;
-  authClient?: string;
-  configuredScopes?: string[];
-  db: NeonHttpDatabase<SchemaType>;
-  ownerRefOverride?: string;
-  providerInstance: OAuth2Client<ProviderOption>;
-  resolvedAuthorization?: ResolvedOAuthAuthorization;
-  tokenResponse: OAuth2TokenResponse;
-}) => {
+}: PersistLinkedProviderCallbackAuthorizationProps) => {
   const authorization =
     resolvedAuthorization ??
     (await resolveOAuthAuthorization({

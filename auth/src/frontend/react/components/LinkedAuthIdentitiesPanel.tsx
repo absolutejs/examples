@@ -9,6 +9,8 @@ import {
 import { providerData } from "../../shared/providerData";
 import type { AuthIdentityPayload } from "../../shared/types";
 import { useAuthIdentities } from "../hooks/useAuthIdentities";
+import { IdentityGroup } from "./IdentityGroup";
+import { MergeRequestCard } from "./MergeRequestCard";
 import { useToast } from "./toast/ToastProvider";
 
 const providerLabel = (key: string) =>
@@ -85,57 +87,37 @@ export const LinkedAuthIdentitiesPanel = () => {
         </button>
       </div>
 
-      {error ? <div className="error-banner">{error}</div> : null}
+      {error && <div className="error-banner">{error}</div>}
 
-      {pendingMerges.length > 0 ? (
+      {pendingMerges.length > 0 && (
         <div className="stack">
           <h3 className="provider-heading">Merge requests</h3>
           <div className="entity-list">
             {pendingMerges.map((request) => (
-              <div className="entity card--danger" key={request.id}>
-                <div className="entity__meta">
-                  <span className="entity__title">
-                    {providerLabel(request.conflicting_auth_provider)} conflict
-                  </span>
-                  <span className="entity__sub">
-                    Subject {request.conflicting_provider_subject}
-                  </span>
-                </div>
-                <div className="entity__actions">
-                  <button
-                    className="btn btn--primary btn--sm"
-                    disabled={busyId === request.id}
-                    onClick={() =>
-                      run(
-                        request.id,
-                        () => mergeAccount(request.id),
-                        "Accounts merged",
-                      )
-                    }
-                    type="button"
-                  >
-                    Merge
-                  </button>
-                  <button
-                    className="btn btn--ghost btn--sm"
-                    disabled={busyId === request.id}
-                    onClick={() =>
-                      run(
-                        request.id,
-                        () => dismissMergeRequest(request.id),
-                        "Merge request dismissed",
-                      )
-                    }
-                    type="button"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
+              <MergeRequestCard
+                busy={busyId === request.id}
+                conflictLabel={providerLabel(request.conflicting_auth_provider)}
+                key={request.id}
+                onDismiss={() =>
+                  run(
+                    request.id,
+                    () => dismissMergeRequest(request.id),
+                    "Merge request dismissed",
+                  )
+                }
+                onMerge={() =>
+                  run(
+                    request.id,
+                    () => mergeAccount(request.id),
+                    "Accounts merged",
+                  )
+                }
+                subject={request.conflicting_provider_subject}
+              />
             ))}
           </div>
         </div>
-      ) : null}
+      )}
 
       <input
         className="search-input"
@@ -144,76 +126,26 @@ export const LinkedAuthIdentitiesPanel = () => {
         value={query}
       />
 
-      {loading && !payload ? (
-        <p className="muted">Loading identities…</p>
-      ) : null}
+      {loading && !payload && <p className="muted">Loading identities…</p>}
 
-      {payload && groups.length === 0 ? (
+      {payload && groups.length === 0 && (
         <div className="empty-state">No identities match your search.</div>
-      ) : null}
+      )}
 
       {groups.map((group) => (
-        <div className="provider-group" key={group.provider}>
-          <h3 className="provider-heading">
-            {providerLogo(group.provider) ? (
-              <img
-                alt=""
-                className="entity__logo"
-                src={providerLogo(group.provider)}
-              />
-            ) : null}
-            {providerLabel(group.provider)}
-          </h3>
-          <div className="entity-list">
-            {group.identities.map((identity) => (
-              <div className="entity" key={identity.id}>
-                <div className="entity__main">
-                  <div className="entity__meta">
-                    <span className="entity__title">
-                      {identity.provider_subject}
-                      {identity.isPrimary ? (
-                        <span className="pill pill--primary">Primary</span>
-                      ) : null}
-                    </span>
-                    <span className="entity__sub">{identity.id}</span>
-                  </div>
-                </div>
-                <div className="entity__actions">
-                  {identity.isPrimary ? null : (
-                    <button
-                      className="btn btn--neutral btn--sm"
-                      disabled={busyId === identity.id}
-                      onClick={() =>
-                        run(
-                          identity.id,
-                          () => setPrimaryIdentity(identity.id),
-                          "Primary identity updated",
-                        )
-                      }
-                      type="button"
-                    >
-                      Set primary
-                    </button>
-                  )}
-                  <button
-                    className="btn btn--danger btn--sm"
-                    disabled={busyId === identity.id}
-                    onClick={() =>
-                      run(
-                        identity.id,
-                        () => removeIdentity(identity.id),
-                        "Identity removed",
-                      )
-                    }
-                    type="button"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <IdentityGroup
+          busyId={busyId}
+          identities={group.identities}
+          key={group.provider}
+          label={providerLabel(group.provider)}
+          logo={providerLogo(group.provider)}
+          onRemove={(id) =>
+            run(id, () => removeIdentity(id), "Identity removed")
+          }
+          onSetPrimary={(id) =>
+            run(id, () => setPrimaryIdentity(id), "Primary identity updated")
+          }
+        />
       ))}
     </div>
   );

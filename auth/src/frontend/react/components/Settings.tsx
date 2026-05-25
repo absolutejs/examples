@@ -51,9 +51,7 @@ export const Settings = ({ loading, onDeleted, user }: SettingsProps) => {
       <div className="card text-left">
         <h2 className="card__title">Link another login provider</h2>
         <p className="muted">Adds a new way to sign in to this same account.</p>
-        <div className="login-card">
-          <ProviderLogin action="link" />
-        </div>
+        <ProviderLogin action="link" className="login-card" />
       </div>
       <LinkedAuthIdentitiesPanel />
       <DeleteAccountSection onDeleted={onDeleted} />

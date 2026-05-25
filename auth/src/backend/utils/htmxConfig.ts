@@ -44,9 +44,9 @@ export const authHtmxConfig = ({
     providerData,
     deleteAccount: async ({ userSub }) => {
       const grants = await grantStore.listGrantsByOwner(userSub);
-      for (const grant of grants) {
-        await grantStore.removeGrant?.(grant.id);
-      }
+      await Promise.all(
+        grants.map((grant) => grantStore.removeGrant?.(grant.id)),
+      );
       await db
         .delete(schema.authIdentityMergeRequests)
         .where(

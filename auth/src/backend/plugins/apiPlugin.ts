@@ -16,7 +16,9 @@ import {
 import {
   buildAuthIdentityPayload,
   buildLinkedProviderPayload,
+  type PayloadDeps,
 } from "../utils/payloads";
+
 const flattenIdentityGroups = <T>(identities: Record<string, T[]>) =>
   Object.values(identities).flat();
 
@@ -33,7 +35,7 @@ export const apiPlugin = ({
   db,
   grantStore,
 }: ApiPluginDeps) => {
-  const deps = { bindingStore, db, grantStore };
+  const deps: PayloadDeps = { bindingStore, db, grantStore };
 
   return new Elysia({ prefix: "/api" })
     .use(protectRoutePlugin<User>({ authSessionStore }))
@@ -46,11 +48,10 @@ export const apiPlugin = ({
     .delete("/account", ({ protectRoute }) =>
       protectRoute(async (user) => {
         const grants = await grantStore.listGrantsByOwner(user.sub);
+        const { removeGrant } = grantStore;
 
-        for (const grant of grants) {
-          if (typeof grantStore.removeGrant === "function") {
-            await grantStore.removeGrant(grant.id);
-          }
+        if (typeof removeGrant === "function") {
+          await Promise.all(grants.map((grant) => removeGrant(grant.id)));
         }
 
         await db

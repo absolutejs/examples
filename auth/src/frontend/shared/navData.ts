@@ -1,5 +1,11 @@
 import type { ProviderOption } from "citra";
 
+type ConnectorTarget = {
+  description: string;
+  label: string;
+  provider: Lowercase<ProviderOption>;
+};
+
 export type FrameworkId =
   | "react"
   | "vue"
@@ -8,11 +14,7 @@ export type FrameworkId =
   | "html"
   | "htmx";
 
-export const CONNECTOR_TARGETS: {
-  description: string;
-  label: string;
-  provider: Lowercase<ProviderOption>;
-}[] = [
+export const CONNECTOR_TARGETS: ConnectorTarget[] = [
   {
     description: "Gmail + Google Contacts read access",
     label: "Google",
