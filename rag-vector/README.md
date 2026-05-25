@@ -96,7 +96,7 @@ Requirements:
 
 The Pinecone backend is enabled when both `PINECONE_API_KEY` and
 `PINECONE_INDEX_NAME` are set. The package
-(`@absolutejs/absolute-rag-pinecone`) does not auto-provision indexes — create
+(`@absolutejs/rag-pinecone`) does not auto-provision indexes — create
 the index in the Pinecone console first.
 
 ### Create the index
@@ -196,7 +196,7 @@ curl -s -X POST 'http://localhost:3000/rag/search?mode=postgres' \
 
 ## Notes
 
-- `sqlite-native` uses `@absolutejs/absolute-rag-sqlite`
-- `postgres` uses `@absolutejs/absolute-rag-postgresql`
+- `sqlite-native` uses `@absolutejs/rag-sqlite`
+- `postgres` uses `@absolutejs/rag-postgres`
 - PostgreSQL is optional; the example still works without it
 - Windows arm64 support is still limited on the SQLite native line because upstream `sqlite-vec` does not currently ship that target
