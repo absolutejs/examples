@@ -38,6 +38,7 @@
   "name": "absolutejs-service-worker-example",
   "scripts": {
     "compile": "absolute compile",
+    "config": "absolute config",
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "lint": "absolute eslint",

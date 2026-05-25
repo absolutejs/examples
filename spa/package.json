@@ -41,6 +41,7 @@
   },
   "name": "absolutejs-spa-example",
   "scripts": {
+    "config": "absolute config",
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "knip": "knip",

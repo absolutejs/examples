@@ -36,6 +36,7 @@
   },
   "name": "absolutejs-out-of-order-streaming-example",
   "scripts": {
+    "config": "absolute config",
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "lint": "absolute eslint",

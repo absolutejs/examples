@@ -38,6 +38,7 @@
   },
   "name": "absolute-ai-example",
   "scripts": {
+    "config": "absolute config",
     "dev": "absolute dev",
     "format": "absolute prettier --write",
     "lint": "absolute eslint",

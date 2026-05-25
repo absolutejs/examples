@@ -48,6 +48,7 @@
   "private": true,
   "scripts": {
     "build": "absolute build",
+    "config": "absolute config",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "dev": "absolute dev",

@@ -46,6 +46,7 @@
   "name": "absolutejs-rag-vector-example",
   "private": true,
   "scripts": {
+    "config": "absolute config",
     "dev": "absolute workspace dev",
     "format": "absolute prettier --write",
     "knip": "knip",

@@ -6,6 +6,7 @@
 	"description": "Runnable showcase for citra — authorize, callback, refresh, revoke, and fetch-profile against every supported OAuth2 provider.",
 	"scripts": {
 		"build": "absolute build",
+		"config": "absolute config",
 		"dev": "absolute dev",
 		"start": "absolute start",
 		"format": "absolute prettier --write",
