@@ -7,7 +7,8 @@ import {
   defineSearchCollection,
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
-import { createPresenceHub, scheduled, syncSocket } from "@absolutejs/sync";
+import { createPresenceHub, syncSocket } from "@absolutejs/sync";
+import { scheduled } from "@absolutejs/sync/scheduled";
 import { createSyncRAGStore } from "@absolutejs/rag";
 import { Elysia } from "elysia";
 
