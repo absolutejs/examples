@@ -1,0 +1,13 @@
+node_modules/
+build/
+.absolutejs/
+.cache/
+*.log
+.DS_Store
+**/*.env
+
+# Generated AbsoluteJS hydration entries
+indexes/
+
+# Personal OAuth2 identities used for local testing — never commit
+utils/exampleIdentities.ts
