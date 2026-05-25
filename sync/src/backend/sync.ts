@@ -1,7 +1,9 @@
 import {
   createSyncEngine,
+  createTextIndex,
   defineMutation,
   defineReactiveQuery,
+  defineSearchCollection,
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncSocket } from "@absolutejs/sync";
@@ -78,6 +80,20 @@ engine.registerReactive(
     name: "tasks",
     key: (task) => task.id,
     run: ({ db }) => db.all<Task>("tasks"),
+  }),
+);
+
+// Live full-text search over task titles: a BM25 index kept current from the
+// "tasks" change feed. The subscription's params are the query string; the
+// ranked top-K stream back as a normal collection, each row tagged with _score.
+engine.registerSearch(
+  defineSearchCollection<Task>({
+    name: "taskSearch",
+    table: "tasks",
+    index: () =>
+      createTextIndex<Task>({ fields: ["title"], key: (task) => task.id }),
+    key: (task) => task.id,
+    source: () => [...tasks.values()],
   }),
 );
 

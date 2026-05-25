@@ -14,6 +14,9 @@ type Task = {
   createdAt: number;
 };
 
+// A search hit is a task plus the relevance score the engine tags it with.
+type TaskHit = Task & { _score?: number };
+
 type Presence = { name: string; typing: boolean };
 
 type TaskItemProps = {
@@ -49,6 +52,12 @@ const roleParam = () =>
   typeof window === "undefined"
     ? null
     : new URLSearchParams(window.location.search).get("role");
+
+const SearchResultItem = ({ task }: { task: TaskHit }) => (
+  <li className="task-item">
+    <span>{task.title}</span>
+  </li>
+);
 
 const wsUrl = () => {
   if (typeof window === "undefined") {
@@ -105,6 +114,17 @@ export const SyncReactContent = () => {
   });
   const { members, selfId, setTyping } = usePresence("tasks");
   const [title, setTitle] = useState("");
+  // Live full-text search: a separate collection whose params are the query
+  // string; the engine streams back the ranked top-K (each row tagged _score).
+  const [search, setSearch] = useState("");
+  const searchHits = useSyncCollection<TaskHit>({
+    collection: "taskSearch",
+    params: search,
+    url: wsUrl(),
+  });
+  const results = [...searchHits.data].sort(
+    (first, second) => (second._score ?? 0) - (first._score ?? 0),
+  );
   // Read role after mount (avoids an SSR/hydration mismatch on the badge).
   const [viewer, setViewer] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -235,6 +255,32 @@ export const SyncReactContent = () => {
           ))}
           {tasks.length === 0 && <li className="task-empty">No tasks yet.</li>}
         </ul>
+      </section>
+
+      <section className="sync-card">
+        <p className="section-desc" data-testid="search-label">
+          Live full-text search (BM25) over task titles — a server-side index
+          kept current from the same change feed; results re-rank as tasks
+          change.
+        </p>
+        <form className="task-form" onSubmit={(event) => event.preventDefault()}>
+          <input
+            aria-label="Search tasks"
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search tasks…"
+            value={search}
+          />
+        </form>
+        {search.trim().length > 0 && (
+          <ul className="task-list" data-testid="search-results">
+            {results.map((task) => (
+              <SearchResultItem key={task.id} task={task} />
+            ))}
+            {results.length === 0 && (
+              <li className="task-empty">No matches.</li>
+            )}
+          </ul>
+        )}
       </section>
 
       <p className="section-desc">

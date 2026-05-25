@@ -257,6 +257,29 @@ test("presence: online count and typing propagate across clients", async ({
   await context.close();
 });
 
+test("live full-text search returns matching tasks, live as they're added", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".sync-status")).toContainText("Live", {
+    timeout: 15000,
+  });
+
+  // Add a task with a unique word, then search for it.
+  const word = `zebra${Date.now()}`;
+  await addTask(page, `${word} sprint planning`);
+
+  await page.locator('input[aria-label="Search tasks"]').fill(word);
+  const results = page.getByTestId("search-results");
+  // The just-added task shows up in the live search index.
+  await expect(results.locator(".task-item", { hasText: word })).toBeVisible({
+    timeout: 10000,
+  });
+  // A query with no matches yields the empty state.
+  await page.locator('input[aria-label="Search tasks"]').fill("qqzzxx-nomatch");
+  await expect(results).toContainText("No matches", { timeout: 10000 });
+});
+
 test("declarative permissions: a viewer can read but the server rejects its writes", async ({
   page,
 }) => {
