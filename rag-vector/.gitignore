@@ -3,7 +3,6 @@ dist/
 build/
 .absolutejs/
 .cache/
-bun.lock
 *.log
 rag-store.sqlite
 .DS_Store
