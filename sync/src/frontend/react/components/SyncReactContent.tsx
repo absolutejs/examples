@@ -17,6 +17,9 @@ type Task = {
 // A search hit is a task plus the relevance score the engine tags it with.
 type TaskHit = Task & { _score?: number };
 
+// The row a server-side scheduled function ticks once a second.
+type Pulse = { id: string; count: number; at: number };
+
 type Presence = { name: string; typing: boolean };
 
 type TaskItemProps = {
@@ -125,6 +128,12 @@ export const SyncReactContent = () => {
   const results = [...searchHits.data].sort(
     (first, second) => (second._score ?? 0) - (first._score ?? 0),
   );
+  // A scheduled (cron) function on the server ticks this row live — no polling.
+  const pulse = useSyncCollection<Pulse>({
+    collection: "pulse",
+    url: wsUrl(),
+  });
+  const [serverPulse] = pulse.data;
   // Read role after mount (avoids an SSR/hydration mismatch on the badge).
   const [viewer, setViewer] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -198,6 +207,14 @@ export const SyncReactContent = () => {
         optimistic, and presence shows who else is here — open another tab. Rows
         are cached in IndexedDB, so they're instant on reload and survive
         offline (the socket resumes from the cached version).
+      </p>
+
+      <p className="section-desc" data-testid="server-pulse">
+        Server pulse #{serverPulse?.count ?? 0}
+        {serverPulse
+          ? ` · ${new Date(serverPulse.at).toLocaleTimeString()}`
+          : ""}{" "}
+        — a scheduled cron function on the server, pushed live (no polling).
       </p>
 
       <section className="sync-card">

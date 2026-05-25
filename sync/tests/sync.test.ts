@@ -257,6 +257,34 @@ test("presence: online count and typing propagate across clients", async ({
   await context.close();
 });
 
+const pulseCount = async (page: Page) => {
+  const text = await page.getByTestId("server-pulse").textContent();
+  const match = text?.match(/#(\d+)/);
+
+  return match ? Number.parseInt(match[1], 10) : 0;
+};
+
+test("scheduled functions: a server-side cron job pushes live updates", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".sync-status")).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(page.getByTestId("server-pulse")).toContainText("Server pulse", {
+    timeout: 15000,
+  });
+
+  // The pulse arrives, then the scheduled function advances it live (every 1s).
+  await expect.poll(() => pulseCount(page), { timeout: 15000 }).toBeGreaterThan(
+    0,
+  );
+  const first = await pulseCount(page);
+  await expect
+    .poll(() => pulseCount(page), { timeout: 15000 })
+    .toBeGreaterThan(first);
+});
+
 test("live full-text search returns matching tasks, live as they're added", async ({
   page,
 }) => {

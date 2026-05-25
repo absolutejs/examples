@@ -3,10 +3,12 @@ import {
   createTextIndex,
   defineMutation,
   defineReactiveQuery,
+  defineSchedule,
   defineSearchCollection,
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
-import { createPresenceHub, syncSocket } from "@absolutejs/sync";
+import { createPresenceHub, scheduled, syncSocket } from "@absolutejs/sync";
+import { Elysia } from "elysia";
 
 // The row our live data is made of. In a real app these are rows in your own
 // database (read via Drizzle/Prisma); here an in-memory Map stands in so the
@@ -97,6 +99,50 @@ engine.registerSearch(
   }),
 );
 
+// A scheduled function: a server-side cron job whose writes go live. Every
+// second it upserts a single "pulse" row; subscribers see it tick with no
+// polling. This is the reactive half of C — cron decides when, the engine makes
+// the effect live (a real app would also enqueue durable work here).
+type Pulse = { id: string; count: number; at: number };
+// Replaced (not mutated) on each write: the engine diffs rows by value but
+// short-circuits when old and new are the *same object*, so a reader that
+// returned a mutated-in-place singleton would never emit a change.
+let pulse: Pulse = { at: Date.now(), count: 0, id: "server" };
+
+const writePulse = (data: Pulse) => {
+  pulse = { at: data.at, count: data.count, id: "server" };
+
+  return pulse;
+};
+const ignorePulseDelete = () => {
+  // The pulse row is a singleton — never deleted.
+};
+engine.registerReader("pulse", { all: () => [pulse] });
+engine.registerWriter<Pulse>("pulse", {
+  delete: ignorePulseDelete,
+  insert: writePulse,
+  update: writePulse,
+});
+engine.registerReactive(
+  defineReactiveQuery<Pulse>({
+    name: "pulse",
+    key: (row) => row.id,
+    run: ({ db }) => db.all<Pulse>("pulse"),
+  }),
+);
+engine.registerSchedule(
+  defineSchedule({
+    name: "pulse",
+    pattern: "*/1 * * * * *", // every second (6-field; leading field is seconds)
+    run: ({ actions }) =>
+      void actions.update("pulse", {
+        at: Date.now(),
+        count: pulse.count + 1,
+        id: "server",
+      }),
+  }),
+);
+
 // Teach the engine how to persist the table (inside the transaction). Now
 // actions.insert/update/delete write AND emit the live change in one step.
 engine.registerWriter<Task, unknown, Tx>("tasks", {
@@ -173,9 +219,15 @@ const queryParam = (data: Record<string, unknown>, name: string) => {
   return typeof value === "string" ? value : undefined;
 };
 
-export const syncPlugin = syncSocket({
-  engine,
-  presence,
-  // Read the role off the socket's query string into the per-connection ctx.
-  resolveContext: (data) => ({ role: queryParam(data, "role") }),
-});
+// Compose the socket with the scheduled-functions plugin (cron triggers fire on
+// server start). One `.use(syncPlugin)` mounts both.
+export const syncPlugin = new Elysia()
+  .use(
+    syncSocket({
+      engine,
+      presence,
+      // Read the role off the socket's query string into the per-connection ctx.
+      resolveContext: (data) => ({ role: queryParam(data, "role") }),
+    }),
+  )
+  .use(scheduled({ engine }));
