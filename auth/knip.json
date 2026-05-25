@@ -12,6 +12,6 @@
     "src/frontend/html/scripts/**/*.ts"
   ],
   "ignore": ["src/frontend/htmx/*.min.js"],
-  "ignoreDependencies": ["react-refresh", "svelte-check", "vue-tsc"],
+  "ignoreDependencies": ["svelte-check", "vue-tsc"],
   "project": ["src/**/*.{ts,tsx,vue,svelte,js}"]
 }
