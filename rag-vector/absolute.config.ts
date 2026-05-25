@@ -64,6 +64,9 @@ export default defineConfig({
     htmxDirectory: "./src/frontend/htmx",
     port: 3000,
     reactDirectory: "./src/frontend/react",
+    // The cold multi-framework build can exceed the default 30s readiness probe
+    // (esp. in CI / constrained envs); allow more time before the controller aborts.
+    ready: { path: "/hmr-status", timeoutMs: 180_000 },
     stylesConfig: "./src/frontend/styles/indexes",
     svelteDirectory: "./src/frontend/svelte",
     vueDirectory: "./src/frontend/vue",
