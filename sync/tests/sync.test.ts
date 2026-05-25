@@ -285,6 +285,30 @@ test("scheduled functions: a server-side cron job pushes live updates", async ({
     .toBeGreaterThan(first);
 });
 
+test("live RAG retrieval re-ranks as documents are ingested", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".sync-status")).toContainText("Live", {
+    timeout: 15000,
+  });
+
+  const word = `zephyr${Date.now()}`;
+  // Subscribe to the retrieval query first — nothing matches yet.
+  await page.locator('input[aria-label="Retrieval query"]').fill(word);
+  await expect(page.getByTestId("rag-results")).toContainText("No matches", {
+    timeout: 10000,
+  });
+
+  // Ingest a matching document — the sync-backed store re-ranks live.
+  const ingest = page.locator('input[aria-label="Ingest document"]');
+  await ingest.fill(`an internal note about ${word} energy systems`);
+  await ingest.press("Enter");
+  await expect(
+    page.getByTestId("rag-results").locator(".task-item", { hasText: word }),
+  ).toBeVisible({ timeout: 10000 });
+});
+
 test("live full-text search returns matching tasks, live as they're added", async ({
   page,
 }) => {

@@ -20,6 +20,14 @@ type TaskHit = Task & { _score?: number };
 // The row a server-side scheduled function ticks once a second.
 type Pulse = { id: string; count: number; at: number };
 
+// A live RAG retrieval hit (from @absolutejs/rag's sync-backed store).
+type RagHit = {
+  chunkId: string;
+  chunkText: string;
+  title?: string;
+  _score?: number;
+};
+
 type Presence = { name: string; typing: boolean };
 
 type TaskItemProps = {
@@ -59,6 +67,15 @@ const roleParam = () =>
 const SearchResultItem = ({ task }: { task: TaskHit }) => (
   <li className="task-item">
     <span>{task.title}</span>
+  </li>
+);
+
+const RagHitItem = ({ hit }: { hit: RagHit }) => (
+  <li className="task-item">
+    <span>
+      {hit.title ? `${hit.title}: ` : ""}
+      {hit.chunkText}
+    </span>
   </li>
 );
 
@@ -134,6 +151,28 @@ export const SyncReactContent = () => {
     url: wsUrl(),
   });
   const [serverPulse] = pulse.data;
+  // Live RAG retrieval via @absolutejs/rag's sync-backed store: the query is the
+  // params; results re-rank live as documents are ingested. (Keyed by chunkId.)
+  const [ragQuery, setRagQuery] = useState("");
+  const [ragDoc, setRagDoc] = useState("");
+  const ragHits = useSyncCollection<RagHit>({
+    collection: "ragRetrieval",
+    params: ragQuery,
+    url: wsUrl(),
+    key: (hit) => hit.chunkId,
+  });
+  const ragResults = [...ragHits.data].sort(
+    (first, second) => (second._score ?? 0) - (first._score ?? 0),
+  );
+  const ingestDoc = (event: FormEvent) => {
+    event.preventDefault();
+    const text = ragDoc.trim();
+    if (!text) {
+      return;
+    }
+    setRagDoc("");
+    void ragHits.mutate({ args: { text }, name: "ingestDoc" });
+  };
   // Read role after mount (avoids an SSR/hydration mismatch on the badge).
   const [viewer, setViewer] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -294,6 +333,46 @@ export const SyncReactContent = () => {
               <SearchResultItem key={task.id} task={task} />
             ))}
             {results.length === 0 && (
+              <li className="task-empty">No matches.</li>
+            )}
+          </ul>
+        )}
+      </section>
+
+      <section className="sync-card">
+        <p className="section-desc" data-testid="rag-label">
+          Live RAG retrieval via <code>@absolutejs/rag</code>'s sync-backed store
+          — type a query, then ingest a document below: matching results re-rank
+          live for every client, with no vector DB to run.
+        </p>
+        <form
+          className="task-form"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <input
+            aria-label="Retrieval query"
+            onChange={(event) => setRagQuery(event.target.value)}
+            placeholder="Ask the knowledge base…"
+            value={ragQuery}
+          />
+        </form>
+        <form className="task-form" onSubmit={ingestDoc}>
+          <input
+            aria-label="Ingest document"
+            onChange={(event) => setRagDoc(event.target.value)}
+            placeholder="Ingest a document…"
+            value={ragDoc}
+          />
+          <button className="primary" type="submit">
+            Ingest
+          </button>
+        </form>
+        {ragQuery.trim().length > 0 && (
+          <ul className="task-list" data-testid="rag-results">
+            {ragResults.map((hit) => (
+              <RagHitItem hit={hit} key={hit.chunkId} />
+            ))}
+            {ragResults.length === 0 && (
               <li className="task-empty">No matches.</li>
             )}
           </ul>

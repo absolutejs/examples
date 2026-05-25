@@ -8,6 +8,7 @@ import {
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, scheduled, syncSocket } from "@absolutejs/sync";
+import { createSyncRAGStore } from "@absolutejs/rag";
 import { Elysia } from "elysia";
 
 // The row our live data is made of. In a real app these are rows in your own
@@ -201,6 +202,51 @@ engine.registerMutation(
     name: "removeTask",
     handler: (args: { id: string }, _ctx, actions) =>
       actions.delete("tasks", { id: args.id }),
+  }),
+);
+
+// Live RAG retrieval, composed from @absolutejs/rag: createSyncRAGStore is a
+// drop-in RAGVectorStore, but because it rides this same engine, retrieval is
+// LIVE — subscribe to its collection with a query and results re-rank as
+// documents are ingested. No vector DB, no extra socket: it just works.
+const ragStore = createSyncRAGStore({ engine });
+export const ragCollection = ragStore.retrievalCollection;
+
+void ragStore.upsert({
+  chunks: [
+    {
+      chunkId: "kb-1",
+      text: "AbsoluteJS Sync keeps live collections in sync over a WebSocket with row-level diffs.",
+      title: "Sync engine",
+    },
+    {
+      chunkId: "kb-2",
+      text: "Scheduled functions run on a cron pattern and their writes go live through the change feed.",
+      title: "Scheduled functions",
+    },
+    {
+      chunkId: "kb-3",
+      text: "Declarative permissions gate reads and writes with row-level rules.",
+      title: "Permissions",
+    },
+  ],
+});
+
+// Ingesting a document re-ranks every live retrieval subscriber for free.
+engine.registerMutation(
+  defineMutation({
+    name: "ingestDoc",
+    handler: async (args: { id?: string; text?: string }) => {
+      const text = (args.text ?? "").trim();
+      if (!text) {
+        return null;
+      }
+      await ragStore.upsert({
+        chunks: [{ chunkId: args.id ?? crypto.randomUUID(), text }],
+      });
+
+      return null;
+    },
   }),
 );
 
