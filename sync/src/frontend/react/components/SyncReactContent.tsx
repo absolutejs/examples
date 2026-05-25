@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSyncCollection } from "@absolutejs/sync/react";
 import {
   createPresence,
+  indexedDbCollectionCache,
   type PresenceClient,
   type PresenceMember,
 } from "@absolutejs/sync/client";
@@ -49,6 +50,10 @@ const wsUrl = () =>
 
 const randomName = () => `User-${globalThis.crypto.randomUUID().split("-")[0]}`;
 
+// Local-first: persist confirmed rows in IndexedDB so the list is instant on
+// reload and available offline. The socket resumes from the cached version.
+const taskCache = indexedDbCollectionCache<Task>({ key: "tasks" });
+
 // Ephemeral presence for the shared "tasks" room: who's online + who's typing.
 const usePresence = (room: string) => {
   const [members, setMembers] = useState<PresenceMember<Presence>[]>([]);
@@ -81,6 +86,7 @@ const usePresence = (room: string) => {
 
 export const SyncReactContent = () => {
   const { data, status, mutate } = useSyncCollection<Task>({
+    cache: taskCache,
     collection: "tasks",
     url: wsUrl(),
   });
@@ -142,7 +148,9 @@ export const SyncReactContent = () => {
       <p className="section-desc">
         A reactive query from the sync engine over a WebSocket: writes are
         transactional and go live automatically (read-set tracking), edits are
-        optimistic, and presence shows who else is here — open another tab.
+        optimistic, and presence shows who else is here — open another tab. Rows
+        are cached in IndexedDB, so they're instant on reload and survive
+        offline (the socket resumes from the cached version).
       </p>
 
       <section className="sync-card">

@@ -1,5 +1,11 @@
 import { defineConfig } from "@playwright/test";
 
+// Honor PORT so the suite can dodge a busy :3000 (e.g. another `absolute` server
+// already running locally); defaults to 3000 for CI. The command inherits PORT,
+// and the pages derive the WS URL from window.location, so any port works.
+const port = process.env.PORT ?? "3000";
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: "tests",
   // Keep artifacts under node_modules/.cache so `absolute dev`'s file watcher
@@ -13,7 +19,7 @@ export default defineConfig({
   workers: 1,
   retries: 3,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
     // Stability flags for constrained containers/CI, where Chromium otherwise
     // crashes mid-run ("Target page has been closed"): write shared memory to
     // /tmp, skip the sandbox, and drop GPU/rasterizer work.
@@ -31,7 +37,8 @@ export default defineConfig({
     // Production server (builds then serves) — no dev watcher/HMR, so page loads
     // stay stable under the suite's rapid sequential navigations.
     command: "absolute start",
-    url: "http://localhost:3000",
+    url: baseURL,
+    env: { PORT: port },
     reuseExistingServer: true,
     // The command cold-builds every framework bundle first, so allow startup time.
     timeout: 180000,

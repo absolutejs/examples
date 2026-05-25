@@ -116,10 +116,73 @@ for (const framework of FRAMEWORKS) {
   });
 }
 
-test("a change in one client appears live in another", async ({ browser }) => {
-  const context = await browser.newContext({
-    baseURL: "http://localhost:3000",
+// Read the titles persisted in the IndexedDB local-first cache (the React/Vue/
+// Svelte/Angular pages write confirmed rows under `tasks`).
+const cachedTitles = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<string[]>((resolve) => {
+        const open = indexedDB.open("absolutejs-sync", 1);
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains("collections")) {
+            resolve([]);
+            return;
+          }
+          const request = db
+            .transaction("collections", "readonly")
+            .objectStore("collections")
+            .get("tasks");
+          request.onsuccess = () => {
+            const snapshot = request.result as
+              | { rows?: { title: string }[] }
+              | undefined;
+            resolve((snapshot?.rows ?? []).map((row) => row.title));
+          };
+          request.onerror = () => resolve([]);
+        };
+        open.onerror = () => resolve([]);
+      }),
+  );
+
+test("local-first: cached rows render after reload with the socket offline", async ({
+  page,
+}) => {
+  // Online first: add a task so the server confirms it and the client caches it.
+  await page.goto("/");
+  await expect(page.locator(".sync-status")).toContainText("Live", {
+    timeout: 15000,
   });
+  const title = uniqueTitle("local-first");
+  await addTask(page, title);
+
+  // Wait until the confirmed row has been written to the IndexedDB cache.
+  await expect
+    .poll(async () => (await cachedTitles(page)).includes(title), {
+      timeout: 10000,
+    })
+    .toBe(true);
+
+  // Go offline: intercept the sync socket and never wire it to the server, so a
+  // reload gets no snapshot — whatever renders must come from the local cache.
+  await page.routeWebSocket(/\/sync\/ws$/, () => {
+    // Accept the client's connection but stay silent (no server, no replies).
+  });
+  await page.reload();
+
+  // The task is still there: served from the IndexedDB cache (offline read)…
+  await expect(taskRow(page, title)).toBeVisible({ timeout: 15000 });
+  // …and it is not a live connection — the socket never delivered a snapshot.
+  await expect(page.locator(".sync-status")).toContainText("Connecting", {
+    timeout: 5000,
+  });
+});
+
+test("a change in one client appears live in another", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ baseURL });
   const reactPage = await context.newPage();
   const sveltePage = await context.newPage();
 
@@ -159,10 +222,9 @@ const onlineCount = async (page: Page) => {
 
 test("presence: online count and typing propagate across clients", async ({
   browser,
+  baseURL,
 }) => {
-  const context = await browser.newContext({
-    baseURL: "http://localhost:3000",
-  });
+  const context = await browser.newContext({ baseURL });
   const a = await context.newPage();
   const b = await context.newPage();
   await a.goto("/");

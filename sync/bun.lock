@@ -6,7 +6,7 @@
       "name": "absolutejs-sync-example",
       "dependencies": {
         "@absolutejs/absolute": "0.19.0-beta.1047",
-        "@absolutejs/sync": "^0.2.0",
+        "@absolutejs/sync": "^0.3.0",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
         "@angular/compiler-cli": "^21.0.0",
@@ -58,7 +58,7 @@
 
     "@absolutejs/native-windows-x64": ["@absolutejs/native-windows-x64@0.19.0-beta.1008", "", { "os": "win32", "cpu": "x64" }, "sha512-mXIL6AzV0gznwXz6gF+dtT4DIwxKMriF+WYxcjAPlf4xWD0S3ZS8jafHwQXi0RJn0pIX4TIIOhRz0JnVlka3zA=="],
 
-    "@absolutejs/sync": ["@absolutejs/sync@0.2.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-Kz8nDKmtcBqZMCbCmzU+G3qgcNzZMzsrxTo12WQxzqNJ2D00W+MQWTNDryqHmPwfYQDbkXBe3ZNnmeJzxikTQg=="],
+    "@absolutejs/sync": ["@absolutejs/sync@0.3.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-g4o8We214B5oV+xe0zaABuYVVTY4ItoetqvBxJn36kCjczeP9TN8VUAGps/EZZW2QR9DVrK1l1hoZ++2rjk/dg=="],
 
     "@angular/common": ["@angular/common@21.2.14", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/core": "21.2.14", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-J6K7cE7uKOKmg4+sxLeGfsmaYDjP5l1XCiMMI0WPT0t68uxLk8g3MzV5Trqfb6ZnRxWcfp9c4c+XxAvMBB7ymA=="],
 

@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { createSyncCollectionStore } from "@absolutejs/sync/svelte";
-  import { createPresence } from "@absolutejs/sync/client";
+  import {
+    createPresence,
+    indexedDbCollectionCache,
+  } from "@absolutejs/sync/client";
   import type { PresenceClient, PresenceMember } from "@absolutejs/sync/client";
   import Nav from "../components/Nav.svelte";
 
@@ -21,8 +24,12 @@
       ? "ws://localhost/sync/ws"
       : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
 
+  // Local-first: persist confirmed rows in IndexedDB for instant reads on reload
+  // and offline; the socket resumes from the cached version.
+  const taskCache = indexedDbCollectionCache<Task>({ key: "tasks" });
   // A real Svelte store: `$collection` is the live { data, status, error }.
   const collection = createSyncCollectionStore<Task>({
+    cache: taskCache,
     collection: "tasks",
     url: wsUrl,
   });

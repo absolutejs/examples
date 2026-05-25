@@ -8,6 +8,7 @@ import {
 import { SyncCollectionService } from "@absolutejs/sync/angular";
 import {
   createPresence,
+  indexedDbCollectionCache,
   type PresenceClient,
   type PresenceMember,
 } from "@absolutejs/sync/client";
@@ -34,6 +35,10 @@ const wsUrl = () =>
 // there's no hydration mismatch).
 const randomName = () => `User-${globalThis.crypto.randomUUID().split("-")[0]}`;
 
+// Local-first: persist confirmed rows in IndexedDB for instant reads on reload
+// and offline; the socket resumes from the cached version.
+const taskCache = indexedDbCollectionCache<Task>({ key: "tasks" });
+
 @Component({
   imports: [],
   selector: "sync-angular-page",
@@ -45,6 +50,7 @@ export class SyncAngularPageComponent implements OnDestroy {
   // stream. The socket only opens in the browser, so SSR stays inert.
   private sync = inject(SyncCollectionService);
   private handle = this.sync.connect<Task>({
+    cache: taskCache,
     collection: "tasks",
     url: wsUrl(),
   });

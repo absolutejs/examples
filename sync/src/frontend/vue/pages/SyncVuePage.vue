@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useSyncCollection } from "@absolutejs/sync/vue";
-import { createPresence } from "@absolutejs/sync/client";
+import {
+  createPresence,
+  indexedDbCollectionCache,
+} from "@absolutejs/sync/client";
 import type { PresenceClient, PresenceMember } from "@absolutejs/sync/client";
 import Nav from "../components/Nav.vue";
 
@@ -19,7 +22,11 @@ const wsUrl =
     ? "ws://localhost/sync/ws"
     : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
 
+// Local-first: persist confirmed rows in IndexedDB for instant reads on reload
+// and offline; the socket resumes from the cached version.
+const taskCache = indexedDbCollectionCache<Task>({ key: "tasks" });
 const { data, status, mutate } = useSyncCollection<Task>({
+  cache: taskCache,
   collection: "tasks",
   url: wsUrl,
 });
