@@ -15,6 +15,7 @@ export type ProviderKey =
   | "google"
   | "meta"
   | "mistral"
+  | "mock"
   | "moonshot"
   | "ollama"
   | "openai"
@@ -63,6 +64,15 @@ export const COST_LABELS: Record<CostTier, string> = {
   "very-high": "$$$+",
 };
 export const MODELS: ModelDef[] = [
+  // ── Mock (offline, no API key) ─────────────────
+  {
+    capabilities: ["fast"],
+    cost: "free",
+    description: "Offline echo provider — no API key needed; great for demos",
+    id: "mock-echo",
+    name: "Mock (offline)",
+    provider: "mock",
+  },
   // ── Anthropic ──────────────────────────────────
   {
     capabilities: ["tool-calling", "vision", "pdf", "reasoning"],
@@ -424,6 +434,7 @@ const PROVIDERS_LIST: ProviderDef[] = [
     name: "Moonshot",
   },
   { color: "#888", id: "ollama", name: "Ollama" },
+  { color: "#0ea5e9", id: "mock", name: "Mock" },
 ];
 export const PROVIDER_IDS = PROVIDERS_LIST.map((prov) => prov.id);
 export const PROVIDERS = PROVIDERS_LIST;

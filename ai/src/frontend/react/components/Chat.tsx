@@ -8,6 +8,7 @@ import {
   type RefObject,
 } from "react";
 import { useAIStream } from "@absolutejs/ai/react";
+import { useSyncCollection } from "@absolutejs/sync/react";
 import type { AIMessage } from "@absolutejs/ai";
 import {
   COPY_FEEDBACK_MS,
@@ -82,8 +83,48 @@ const SUGGESTIONS: SuggestionCategoryDef[] = [
   },
 ];
 
-const DEFAULT_MODEL =
-  MODELS.find((mod) => mod.id === "claude-sonnet-4-6") ?? MODELS[0];
+// Default to the offline mock so the demo works with no API key; real providers
+// are still selectable in the model picker.
+const DEFAULT_MODEL = MODELS.find((mod) => mod.id === "mock-echo") ?? MODELS[0];
+
+// The sync engine's conversation socket is mounted on this same server.
+const wsUrl = () => {
+  if (typeof window === "undefined") {
+    return "ws://localhost/sync/ws";
+  }
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+
+  return `${protocol}://${window.location.host}/sync/ws`;
+};
+
+const MirrorMessage = ({ message }: { message: AIMessage }) => (
+  <li data-role={message.role}>{message.content}</li>
+);
+
+// A second subscriber to the conversation, fed entirely by the sync-backed
+// store — what another tab/device would see, live, without its own chat socket.
+const LiveMirror = ({ conversationId }: { conversationId: string | null }) => {
+  const mirror = useSyncCollection<AIMessage>({
+    collection: "aiMessages",
+    params: conversationId ?? "",
+    url: wsUrl(),
+    key: (message) => message.id,
+  });
+  if (!conversationId) {
+    return null;
+  }
+
+  return (
+    <aside className="live-mirror" data-testid="live-mirror">
+      <h3>Live mirror — what other devices see</h3>
+      <ul>
+        {mirror.data.map((message) => (
+          <MirrorMessage key={message.id} message={message} />
+        ))}
+      </ul>
+    </aside>
+  );
+};
 
 const TypingIndicator = () => (
   <div className="message" data-role="assistant">
@@ -308,6 +349,7 @@ export const Chat = () => {
           sendMessage={sendMessage}
           showWaitingIndicator={showWaitingIndicator}
         />
+        <LiveMirror conversationId={activeConvId} />
       </div>
     </div>
   );

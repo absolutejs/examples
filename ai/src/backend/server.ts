@@ -1,5 +1,6 @@
 import { networking, prepare } from "@absolutejs/absolute";
-import { aiChat } from "@absolutejs/ai";
+import { aiChat, createSyncConversationStore } from "@absolutejs/ai";
+import { syncSocket } from "@absolutejs/sync";
 import { Elysia } from "elysia";
 import { SYSTEM_PROMPT, getProvider, parseMessage } from "./handlers/providers";
 import { tools } from "./handlers/tools";
@@ -64,6 +65,11 @@ const THINKING_MODELS = new Set([
 const getThinking = (_provider: string, model: string) =>
   THINKING_MODELS.has(model) ? { budgetTokens: 8000 } : undefined;
 
+// A sync-backed conversation store: every persisted message flows through the
+// sync engine's change feed, so other tabs/devices subscribed to the same
+// conversation see messages stream in live (mounted at /sync/ws below).
+const conversationStore = createSyncConversationStore();
+
 const server = new Elysia()
   .use(absolutejs)
   .use(pagesPlugin(manifest))
@@ -72,11 +78,13 @@ const server = new Elysia()
       maxTurns: 5,
       parseProvider: parseMessage,
       provider: getProvider,
+      store: conversationStore,
       systemPrompt: SYSTEM_PROMPT,
       thinking: getThinking,
       tools: getTools,
     }),
   )
+  .use(syncSocket({ engine: conversationStore.engine }))
   .use(networking)
   .on("error", (error) => {
     const { request } = error;

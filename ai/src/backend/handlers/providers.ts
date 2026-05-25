@@ -12,6 +12,25 @@ import {
   mistralai,
 } from "@absolutejs/ai/providers";
 
+// Derive the provider config shape from a real provider so the mock stays typed
+// without importing internal types (and without an explicit return annotation).
+type ProviderConfig = ReturnType<typeof anthropic>;
+
+// An offline echo provider: no API key, deterministic — powers the keyless demo
+// and e2e. Streams a short reply in two chunks so the UI still shows streaming.
+const mockProvider: ProviderConfig = {
+  stream: async function* (params) {
+    const last = [...params.messages].pop();
+    const said =
+      typeof last?.content === "string" ? last.content : "your message";
+    const reply = `Mock reply (offline echo): you said "${said}".`;
+    const mid = Math.ceil(reply.length / 2);
+    yield { content: reply.slice(0, mid), type: "text" };
+    yield { content: reply.slice(mid), type: "text" };
+    yield { type: "done" };
+  },
+};
+
 export const SYSTEM_PROMPT = [
   "You are a helpful AI assistant.",
   "You have access to a product database for an online store with tools to search and look up items.",
@@ -52,6 +71,8 @@ export const getProvider = (name: string) => {
       return moonshot({ apiKey: getEnv("MOONSHOT_API_KEY") });
     case "ollama":
       return ollama({ baseUrl: process.env.OLLAMA_URL });
+    case "mock":
+      return mockProvider;
     default:
       throw new Error(`Unknown provider: ${name}`);
   }
