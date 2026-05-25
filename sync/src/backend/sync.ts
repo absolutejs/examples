@@ -9,6 +9,7 @@ import {
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
+import { mergeTextState, type TextState } from "@absolutejs/sync/crdt";
 import { scheduled } from "@absolutejs/sync/scheduled";
 import { createSyncRAGStore } from "@absolutejs/rag";
 import { Elysia } from "elysia";
@@ -217,6 +218,59 @@ engine.registerMutation(
     name: "removeTask",
     handler: (args: { id: string }, _ctx, actions) =>
       actions.delete("tasks", { id: args.id }),
+  }),
+);
+
+// Conflict-free collaborative editing (CRDT), from @absolutejs/sync/crdt. A
+// single shared document row holds an RGA text-CRDT state. The editDoc mutation
+// MERGES the client's incoming state into the stored one (merge is commutative
+// and idempotent) instead of overwriting — so two clients typing at once both
+// survive and converge, with no per-keystroke server round-trip and no clobber.
+// No engine changes: the CRDT state just rides the change feed as a row field.
+type DocRow = { id: string; state: TextState };
+const docs = new Map<string, DocRow>();
+docs.set("shared", { id: "shared", state: { elements: [] } });
+
+const writeDoc = (row: DocRow) => {
+  // Replace the row (new object) so the engine's value diff emits the change.
+  docs.set(row.id, row);
+
+  return row;
+};
+const ignoreDocDelete = () => {
+  // The shared document is a singleton — never deleted.
+};
+engine.registerReader("doc", { all: () => [...docs.values()] });
+engine.registerWriter<DocRow>("doc", {
+  delete: ignoreDocDelete,
+  insert: writeDoc,
+  update: writeDoc,
+});
+engine.registerReactive(
+  defineReactiveQuery<DocRow>({
+    name: "doc",
+    key: (row) => row.id,
+    run: ({ db }) => db.all<DocRow>("doc"),
+  }),
+);
+engine.registerMutation(
+  defineMutation({
+    name: "editDoc",
+    handler: (
+      args: { id?: string; state?: TextState },
+      _ctx,
+      actions,
+    ) => {
+      const id = args.id ?? "shared";
+      const incoming = args.state ?? { elements: [] };
+      const current = docs.get(id)?.state ?? { elements: [] };
+
+      // Merge, don't overwrite — concurrent edits combine and converge.
+      return actions.update<DocRow>("doc", {
+        id,
+        state: mergeTextState(current, incoming),
+      });
+    },
   }),
 );
 

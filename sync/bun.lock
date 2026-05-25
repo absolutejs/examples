@@ -7,7 +7,7 @@
       "dependencies": {
         "@absolutejs/absolute": "0.19.0-beta.1047",
         "@absolutejs/rag": "0.0.21",
-        "@absolutejs/sync": "^0.9.0",
+        "@absolutejs/sync": "^0.10.0",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
         "@angular/compiler-cli": "^21.0.0",
@@ -66,7 +66,7 @@
 
     "@absolutejs/rag": ["@absolutejs/rag@0.0.21", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2", "@absolutejs/sync": "^0.6.0" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-l2KSupbCVGwNsef4wBSBs1LCHzao9RD14/ab4Fp+Lk+tINM8Q0V5dBzFj3A0KrHqoZHVo9UDMTktfLmA6z/BGQ=="],
 
-    "@absolutejs/sync": ["@absolutejs/sync@0.9.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "@elysiajs/cron", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-7c6/QoTLudRlMMHkm3OE46jsPREDtGjMwPcqrfc4yNNrdtN401uOi5yrnsjjamAS4tpgjHpD4VWHFPtI5e1Vjg=="],
+    "@absolutejs/sync": ["@absolutejs/sync@0.10.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "@elysiajs/cron", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-U0AW0EUu+fEx11NcSx7GVs3z7IiCGZwWfADYWU1Ui8XCVxWQj5JgxuoWpLFseqUOKX4gRjtapLEuHYhsWcRLkQ=="],
 
     "@angular/common": ["@angular/common@21.2.14", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/core": "21.2.14", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-J6K7cE7uKOKmg4+sxLeGfsmaYDjP5l1XCiMMI0WPT0t68uxLk8g3MzV5Trqfb6ZnRxWcfp9c4c+XxAvMBB7ymA=="],
 

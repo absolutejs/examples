@@ -6,6 +6,11 @@ import {
   type PresenceClient,
   type PresenceMember,
 } from "@absolutejs/sync/client";
+import {
+  createTextCrdt,
+  type TextCrdt,
+  type TextState,
+} from "@absolutejs/sync/crdt";
 
 type Task = {
   id: string;
@@ -27,6 +32,9 @@ type RagHit = {
   title?: string;
   _score?: number;
 };
+
+// The shared collaborative document: a row whose `state` is a text-CRDT value.
+type DocRow = { id: string; state: TextState };
 
 type Presence = { name: string; typing: boolean };
 
@@ -173,6 +181,48 @@ export const SyncReactContent = () => {
     setRagDoc("");
     void ragHits.mutate({ args: { text }, name: "ingestDoc" });
   };
+  // Conflict-free collaborative editing: a per-tab CRDT replica edits one shared
+  // document. Local edits go to the engine as merged state; the engine merges
+  // them into the stored state and pushes the result back, so concurrent edits
+  // from other tabs converge here without clobbering (and without a round-trip
+  // per keystroke — we hold the live text locally).
+  const replicaRef = useRef(globalThis.crypto.randomUUID());
+  const docCrdtRef = useRef<TextCrdt | null>(null);
+  if (docCrdtRef.current === null) {
+    docCrdtRef.current = createTextCrdt(replicaRef.current);
+  }
+  const [docText, setDocText] = useState("");
+  const docCollection = useSyncCollection<DocRow>({
+    collection: "doc",
+    url: wsUrl(),
+  });
+  const sharedDoc = docCollection.data.find((row) => row.id === "shared");
+  const sharedState = sharedDoc?.state;
+  useEffect(() => {
+    const crdt = docCrdtRef.current;
+    if (!crdt || !sharedState) {
+      return;
+    }
+    // Merge remote state into our replica (idempotent for our own echoes), then
+    // show the merged text — both tabs' edits are present.
+    crdt.merge(sharedState);
+    const merged = crdt.text();
+    setDocText((previous) => (previous === merged ? previous : merged));
+  }, [sharedState]);
+
+  const editDoc = (value: string) => {
+    const crdt = docCrdtRef.current;
+    if (!crdt) {
+      return;
+    }
+    crdt.setText(value);
+    setDocText(value);
+    void docCollection.mutate({
+      args: { id: "shared", state: crdt.state() },
+      name: "editDoc",
+    });
+  };
+
   // Read role after mount (avoids an SSR/hydration mismatch on the badge).
   const [viewer, setViewer] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -377,6 +427,24 @@ export const SyncReactContent = () => {
             )}
           </ul>
         )}
+      </section>
+
+      <section className="sync-card">
+        <p className="section-desc" data-testid="crdt-label">
+          Conflict-free collaborative editing (CRDT) via{" "}
+          <code>@absolutejs/sync/crdt</code> — a shared text field whose edits
+          MERGE instead of overwriting. Open another tab and type at the same
+          time: both edits survive and converge, with no clobbering and no
+          per-keystroke server round-trip.
+        </p>
+        <textarea
+          aria-label="Shared document"
+          className="crdt-editor"
+          data-testid="crdt-editor"
+          onChange={(event) => editDoc(event.target.value)}
+          rows={4}
+          value={docText}
+        />
       </section>
 
       <p className="section-desc">

@@ -349,6 +349,61 @@ test("live full-text search returns matching tasks, live as they're added", asyn
   await expect(results).toContainText("No matches", { timeout: 10000 });
 });
 
+test("CRDT: concurrent edits from two clients merge and converge", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ baseURL });
+  const a = await context.newPage();
+  const b = await context.newPage();
+  const editor = (page: Page) => page.getByTestId("crdt-editor");
+
+  await a.goto("/");
+  await b.goto("/");
+  await expect(a.locator(".sync-status")).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(b.locator(".sync-status")).toContainText("Live", {
+    timeout: 15000,
+  });
+
+  // Both clients hydrate the same shared document, so they start converged.
+  await expect
+    .poll(async () => (await editor(a).inputValue()) === (await editor(b).inputValue()), {
+      timeout: 15000,
+    })
+    .toBe(true);
+  const base = await editor(a).inputValue();
+
+  // Both type a distinct marker at the same time, before either edit has synced
+  // — the conflict-free part: neither overwrites the other.
+  const stamp = Date.now();
+  const markerA = `alpha${stamp}`;
+  const markerB = `bravo${stamp}`;
+  await Promise.all([
+    editor(a).fill(`${base} ${markerA}`),
+    editor(b).fill(`${base} ${markerB}`),
+  ]);
+
+  // Both markers survive on both clients (merge, not last-write-wins)…
+  for (const page of [a, b]) {
+    await expect(editor(page)).toHaveValue(new RegExp(markerA), {
+      timeout: 15000,
+    });
+    await expect(editor(page)).toHaveValue(new RegExp(markerB), {
+      timeout: 15000,
+    });
+  }
+  // …and the two clients converge on identical text.
+  await expect
+    .poll(async () => (await editor(a).inputValue()) === (await editor(b).inputValue()), {
+      timeout: 15000,
+    })
+    .toBe(true);
+
+  await context.close();
+});
+
 test("declarative permissions: a viewer can read but the server rejects its writes", async ({
   page,
 }) => {
