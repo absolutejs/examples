@@ -9,6 +9,7 @@ import {
   type PresenceClient,
   type PresenceMember,
 } from "@absolutejs/sync/client";
+import { createYjsText } from "@absolutejs/sync-yjs";
 
 type Task = {
   id: string;
@@ -182,6 +183,16 @@ export const SyncReactContent = () => {
   // Concurrent edits from other tabs converge here with no clobbering.
   const doc = useCollaborativeText({
     collection: "doc",
+    field: "state",
+    id: "shared",
+    url: wsUrl(),
+  });
+
+  // The exact same hook, backed by Yjs via @absolutejs/sync-yjs — the only change
+  // is `create: createYjsText`. Proves the adapter swap is transparent.
+  const note = useCollaborativeText<string>({
+    collection: "notes",
+    create: createYjsText,
     field: "state",
     id: "shared",
     url: wsUrl(),
@@ -408,6 +419,24 @@ export const SyncReactContent = () => {
           onChange={(event) => doc.setText(event.target.value)}
           rows={4}
           value={doc.text}
+        />
+      </section>
+
+      <section className="sync-card">
+        <p className="section-desc" data-testid="yjs-label">
+          The same <code>useCollaborativeText</code> hook, backed by{" "}
+          <strong>Yjs</strong> via <code>@absolutejs/sync-yjs</code> — the only
+          change is <code>create: createYjsText</code> on the client and{" "}
+          <code>yjsText</code> on the server. The engine, the merge, and the hook
+          are identical; swap the CRDT backend, keep the call sites.
+        </p>
+        <textarea
+          aria-label="Shared note"
+          className="crdt-editor"
+          data-testid="yjs-editor"
+          onChange={(event) => note.setText(event.target.value)}
+          rows={4}
+          value={note.text}
         />
       </section>
 

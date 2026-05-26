@@ -10,6 +10,7 @@ import {
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
 import { rgaText, type TextState } from "@absolutejs/sync/crdt";
+import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
 import { createSyncRAGStore } from "@absolutejs/rag";
 import { Elysia } from "elysia";
@@ -263,6 +264,44 @@ engine.registerReactive(
 // One line: declare `state` a CRDT field. The engine merges it on write and
 // exposes a ready-made "doc:merge" mutation — no editDoc handler needed.
 engine.registerCrdt<DocRow>("doc", { state: rgaText });
+
+// The SAME pattern with a different CRDT backend: @absolutejs/sync-yjs wraps Yjs
+// (the production-grade staple) behind the same contract. Swapping rgaText for
+// yjsText is the only change — the engine, the merge, and the client hook are
+// identical. Here the state is a base64 Yjs update (a string) instead of an RGA.
+type NoteRow = { id: string; state: string };
+const notes = new Map<string, NoteRow>();
+notes.set("shared", { id: "shared", state: "" });
+
+const writeNote = (row: NoteRow) => {
+  notes.set(row.id, row);
+
+  return row;
+};
+const ignoreNoteDelete = () => {
+  // The shared note is a singleton — never deleted.
+};
+engine.registerReader("notes", {
+  all: () => [...notes.values()],
+  get: (id) => notes.get(String(id)),
+  key: (row) =>
+    typeof row === "object" && row !== null && "id" in row
+      ? String(Reflect.get(row, "id"))
+      : "",
+});
+engine.registerWriter<NoteRow>("notes", {
+  delete: ignoreNoteDelete,
+  insert: writeNote,
+  update: writeNote,
+});
+engine.registerReactive(
+  defineReactiveQuery<NoteRow>({
+    name: "notes",
+    key: (row) => row.id,
+    run: ({ db }) => db.all<NoteRow>("notes"),
+  }),
+);
+engine.registerCrdt<NoteRow>("notes", { state: yjsText });
 
 // Live RAG retrieval, composed from @absolutejs/rag: createSyncRAGStore is a
 // drop-in RAGVectorStore, but because it rides this same engine, retrieval is

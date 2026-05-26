@@ -451,6 +451,56 @@ for (const framework of [
   });
 }
 
+test("CRDT: the Yjs adapter merges concurrent edits and converges", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ baseURL });
+  const a = await context.newPage();
+  const b = await context.newPage();
+  const editor = (page: Page) => page.getByTestId("yjs-editor");
+
+  await a.goto("/");
+  await b.goto("/");
+  for (const page of [a, b]) {
+    await expect(page.locator(".sync-status")).toContainText("Live", {
+      timeout: 15000,
+    });
+    await expect(editor(page)).toBeVisible({ timeout: 15000 });
+  }
+
+  // Both clients start from the same Yjs-backed note, then type concurrently.
+  await expect
+    .poll(async () => (await editor(a).inputValue()) === (await editor(b).inputValue()), {
+      timeout: 15000,
+    })
+    .toBe(true);
+  const base = await editor(a).inputValue();
+  const stamp = Date.now();
+  const markerA = `yjsa${stamp}`;
+  const markerB = `yjsb${stamp}`;
+  await Promise.all([
+    editor(a).fill(`${base} ${markerA}`),
+    editor(b).fill(`${base} ${markerB}`),
+  ]);
+
+  for (const page of [a, b]) {
+    await expect(editor(page)).toHaveValue(new RegExp(markerA), {
+      timeout: 15000,
+    });
+    await expect(editor(page)).toHaveValue(new RegExp(markerB), {
+      timeout: 15000,
+    });
+  }
+  await expect
+    .poll(async () => (await editor(a).inputValue()) === (await editor(b).inputValue()), {
+      timeout: 15000,
+    })
+    .toBe(true);
+
+  await context.close();
+});
+
 test("declarative permissions: a viewer can read but the server rejects its writes", async ({
   page,
 }) => {
