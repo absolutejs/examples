@@ -9,7 +9,7 @@ import {
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
-import { mergeTextState, type TextState } from "@absolutejs/sync/crdt";
+import { rgaText, type TextState } from "@absolutejs/sync/crdt";
 import { scheduled } from "@absolutejs/sync/scheduled";
 import { createSyncRAGStore } from "@absolutejs/rag";
 import { Elysia } from "elysia";
@@ -221,12 +221,12 @@ engine.registerMutation(
   }),
 );
 
-// Conflict-free collaborative editing (CRDT), from @absolutejs/sync/crdt. A
-// single shared document row holds an RGA text-CRDT state. The editDoc mutation
-// MERGES the client's incoming state into the stored one (merge is commutative
-// and idempotent) instead of overwriting — so two clients typing at once both
-// survive and converge, with no per-keystroke server round-trip and no clobber.
-// No engine changes: the CRDT state just rides the change feed as a row field.
+// Conflict-free collaborative editing (CRDT), declared in one line. A single
+// shared document row holds an RGA text-CRDT state; engine.registerCrdt tells the
+// engine that field is a CRDT, so it MERGES incoming writes into the stored state
+// (commutative + idempotent) instead of overwriting — two clients typing at once
+// both survive and converge, no per-keystroke round-trip, no clobber, no merge
+// code. It also auto-registers a "doc:merge" mutation the client hook calls.
 type DocRow = { id: string; state: TextState };
 const docs = new Map<string, DocRow>();
 docs.set("shared", { id: "shared", state: { elements: [] } });
@@ -240,7 +240,14 @@ const writeDoc = (row: DocRow) => {
 const ignoreDocDelete = () => {
   // The shared document is a singleton — never deleted.
 };
-engine.registerReader("doc", { all: () => [...docs.values()] });
+// `get` lets the engine load the committed row to merge CRDT fields against.
+engine.registerReader("doc", {
+  all: () => [...docs.values()],
+  get: (id) => docs.get(String(id)),
+  key: (row) => (typeof row === "object" && row !== null && "id" in row
+    ? String(Reflect.get(row, "id"))
+    : ""),
+});
 engine.registerWriter<DocRow>("doc", {
   delete: ignoreDocDelete,
   insert: writeDoc,
@@ -253,26 +260,9 @@ engine.registerReactive(
     run: ({ db }) => db.all<DocRow>("doc"),
   }),
 );
-engine.registerMutation(
-  defineMutation({
-    name: "editDoc",
-    handler: (
-      args: { id?: string; state?: TextState },
-      _ctx,
-      actions,
-    ) => {
-      const id = args.id ?? "shared";
-      const incoming = args.state ?? { elements: [] };
-      const current = docs.get(id)?.state ?? { elements: [] };
-
-      // Merge, don't overwrite — concurrent edits combine and converge.
-      return actions.update<DocRow>("doc", {
-        id,
-        state: mergeTextState(current, incoming),
-      });
-    },
-  }),
-);
+// One line: declare `state` a CRDT field. The engine merges it on write and
+// exposes a ready-made "doc:merge" mutation — no editDoc handler needed.
+engine.registerCrdt<DocRow>("doc", { state: rgaText });
 
 // Live RAG retrieval, composed from @absolutejs/rag: createSyncRAGStore is a
 // drop-in RAGVectorStore, but because it rides this same engine, retrieval is
