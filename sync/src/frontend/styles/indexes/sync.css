@@ -366,3 +366,339 @@ code {
     font-size: 3.5rem;
   }
 }
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Issue tracker styles, scoped under `.issues-app` so they don't bleed into the
+ * primitives showcase above. The dark theme is opt-in via the wrapper element;
+ * the rest of the React page keeps the primitives-section styling.
+ * ────────────────────────────────────────────────────────────────────────── */
+.issues-app {
+	--issues-bg: #0e0f12;
+	--issues-panel: #16181d;
+	--issues-panel-2: #1c1f25;
+	--issues-border: rgba(255, 255, 255, 0.08);
+	--issues-text: #e4e4e7;
+	--issues-muted: #9aa0a8;
+	--issues-accent: #5fbeeb;
+	--issues-open: #f6c87a;
+	--issues-ip: #9aa6ff;
+	--issues-done: #6cd28b;
+	--issues-danger: #ee5c7e;
+
+	background: var(--issues-bg);
+	border-radius: 0.6rem;
+	color: var(--issues-text);
+	display: flex;
+	flex-direction: column;
+	margin-top: 2rem;
+	min-height: 520px;
+	overflow: hidden;
+}
+
+.issues-app * {
+	box-sizing: border-box;
+}
+
+.issues-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.6rem 1rem;
+	border-bottom: 1px solid var(--issues-border);
+	background: var(--issues-panel);
+}
+
+.issues-bar h2 {
+	font-size: 1rem;
+	margin: 0;
+	font-weight: 600;
+}
+
+.issues-bar-right {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	color: var(--issues-muted);
+	font-size: 0.85rem;
+}
+
+.issues-app .conn-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #555;
+}
+
+.issues-app .conn-live {
+	background: var(--issues-done);
+	box-shadow: 0 0 0 3px rgba(108, 210, 139, 0.18);
+}
+
+.issues-app .viewer-bar {
+	background: rgba(238, 92, 126, 0.12);
+	border-bottom: 1px solid var(--issues-border);
+	color: var(--issues-danger);
+	margin: 0;
+	padding: 0.4rem 1rem;
+	font-size: 0.85rem;
+}
+
+.issues-layout {
+	display: grid;
+	grid-template-columns: 320px 1fr;
+	flex: 1;
+	min-height: 0;
+}
+
+
+.issues-app .sidebar {
+	border-right: 1px solid var(--issues-border);
+	background: var(--issues-panel);
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 0.8rem;
+	overflow: hidden;
+}
+
+.issues-app .create-form ,
+.issues-app .search-form {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.issues-app .create-form input ,
+.issues-app .search-form input {
+	background: var(--issues-panel-2);
+	border: 1px solid var(--issues-border);
+	border-radius: 0.5rem;
+	color: var(--issues-text);
+	padding: 0.5rem 0.7rem;
+	flex: 1;
+}
+
+.issues-app .create-form input:focus ,
+.issues-app .search-form input:focus {
+	border-color: rgba(95, 190, 235, 0.5);
+	outline: none;
+}
+
+.issues-app .primary {
+	background: var(--issues-accent);
+	border: none;
+	border-radius: 0.5rem;
+	color: #0e0f12;
+	cursor: pointer;
+	font-weight: 600;
+	padding: 0.5rem 0.9rem;
+}
+
+.issues-app .filter-row {
+	display: flex;
+	gap: 0.3rem;
+}
+
+.issues-app .filter {
+	background: transparent;
+	border: 1px solid var(--issues-border);
+	border-radius: 0.4rem;
+	color: var(--issues-muted);
+	cursor: pointer;
+	font-size: 0.78rem;
+	padding: 0.3rem 0.55rem;
+}
+
+.issues-app .filter.on {
+	background: var(--issues-panel-2);
+	border-color: rgba(95, 190, 235, 0.5);
+	color: var(--issues-text);
+}
+
+.issues-app .issue-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	overflow-y: auto;
+	flex: 1;
+}
+
+.issues-app .issue-row {
+	border-radius: 0.5rem;
+	cursor: pointer;
+	display: flex;
+	gap: 0.6rem;
+	padding: 0.5rem 0.6rem;
+	align-items: center;
+}
+
+.issues-app .issue-row:hover {
+	background: var(--issues-panel-2);
+}
+
+.issues-app .issue-row.selected {
+	background: rgba(95, 190, 235, 0.1);
+	box-shadow: inset 2px 0 0 var(--issues-accent);
+}
+
+.issues-app .issue-row .title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.issues-app .status {
+	border-radius: 0.4rem;
+	font-size: 0.7rem;
+	letter-spacing: 0.02em;
+	padding: 0.1rem 0.45rem;
+	text-transform: uppercase;
+	flex-shrink: 0;
+}
+
+.issues-app .pill-open {
+	background: rgba(246, 200, 122, 0.15);
+	color: var(--issues-open);
+}
+
+.issues-app .pill-in-progress {
+	background: rgba(154, 166, 255, 0.15);
+	color: var(--issues-ip);
+}
+
+.issues-app .pill-done {
+	background: rgba(108, 210, 139, 0.15);
+	color: var(--issues-done);
+}
+
+.issues-app .empty {
+	color: var(--issues-muted);
+	padding: 0.6rem;
+	font-style: italic;
+}
+
+.issues-app .detail {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.issues-app .issue-detail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+	padding: 1rem 1.4rem;
+	overflow-y: auto;
+	flex: 1;
+}
+
+.issues-app .issue-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1rem;
+}
+
+.issues-app .issue-header h3 {
+	margin: 0;
+	font-size: 1.2rem;
+	font-weight: 600;
+}
+
+.issues-app .issue-meta {
+	display: flex;
+	gap: 0.6rem;
+	align-items: center;
+}
+
+.issues-app .issue-meta label {
+	color: var(--issues-muted);
+	display: flex;
+	gap: 0.4rem;
+	align-items: center;
+	font-size: 0.85rem;
+}
+
+.issues-app .issue-meta select {
+	background: var(--issues-panel-2);
+	border: 1px solid var(--issues-border);
+	border-radius: 0.4rem;
+	color: var(--issues-text);
+	padding: 0.3rem 0.5rem;
+}
+
+.issues-app .danger {
+	background: transparent;
+	border: 1px solid var(--issues-border);
+	border-radius: 0.4rem;
+	color: var(--issues-danger);
+	cursor: pointer;
+	font-size: 0.82rem;
+	padding: 0.3rem 0.6rem;
+}
+
+.issues-app .hint {
+	color: var(--issues-muted);
+	font-size: 0.88rem;
+	margin: 0;
+}
+
+.issues-app .body-editor {
+	background: var(--issues-panel);
+	border: 1px solid var(--issues-border);
+	border-radius: 0.6rem;
+	color: var(--issues-text);
+	font-family: inherit;
+	font-size: 0.92rem;
+	padding: 0.7rem 0.9rem;
+	resize: vertical;
+	min-height: 200px;
+	flex: 1;
+}
+
+.issues-app .body-editor:focus {
+	border-color: rgba(95, 190, 235, 0.5);
+	outline: none;
+}
+
+.issues-app button.ai {
+	background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+	border: none;
+	border-radius: 0.4rem;
+	color: #fff;
+	cursor: pointer;
+	font-size: 0.82rem;
+	padding: 0.3rem 0.7rem;
+}
+.issues-app button.ai:disabled { opacity: 0.5; cursor: progress; }
+.issues-app .ai-summary {
+	background: rgba(99, 102, 241, 0.1);
+	border: 1px solid rgba(99, 102, 241, 0.25);
+	border-radius: 0.5rem;
+	color: #c7c9f4;
+	margin: 0;
+	padding: 0.55rem 0.8rem;
+	font-size: 0.9rem;
+}
+.issues-app .similar {
+	border-top: 1px solid var(--issues-border);
+	padding-top: 0.8rem;
+}
+.issues-app .similar h4 {
+	color: var(--issues-muted);
+	font-size: 0.78rem;
+	letter-spacing: 0.08em;
+	margin: 0 0 0.4rem;
+	text-transform: uppercase;
+}
+.issues-app .similar-list { display: flex; flex-direction: column; gap: 0.25rem; list-style: none; margin: 0; padding: 0; }
+.issues-app .similar-row {
+	background: var(--issues-panel);
+	border: 1px solid var(--issues-border);
+	border-radius: 0.4rem;
+	display: flex;
+	gap: 0.6rem;
+	justify-content: space-between;
+	padding: 0.4rem 0.6rem;
+	font-size: 0.88rem;
+}
+.issues-app .similar-row .score { color: var(--issues-muted); font-variant-numeric: tabular-nums; }
