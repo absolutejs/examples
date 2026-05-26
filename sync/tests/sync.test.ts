@@ -501,6 +501,39 @@ test("CRDT: the Yjs adapter merges concurrent edits and converges", async ({
   await context.close();
 });
 
+test("CRDT: a collaborator's cursor position shows up live", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ baseURL });
+  const a = await context.newPage();
+  const b = await context.newPage();
+  await a.goto("/");
+  await b.goto("/");
+  for (const page of [a, b]) {
+    await expect(page.locator(".sync-status")).toContainText("Live", {
+      timeout: 15000,
+    });
+    await expect(page.getByTestId("crdt-editor")).toBeVisible({
+      timeout: 15000,
+    });
+  }
+
+  // Move A's caret in the shared doc — it broadcasts a CRDT-anchored cursor.
+  await a.getByTestId("crdt-editor").click();
+  await a.getByTestId("crdt-editor").press("End");
+
+  // B renders A's caret as a live column position.
+  await expect(b.getByTestId("doc-cursors")).toContainText("col", {
+    timeout: 15000,
+  });
+  await expect(b.getByTestId("doc-cursors")).not.toContainText(
+    "No other cursors",
+  );
+
+  await context.close();
+});
+
 test("declarative permissions: a viewer can read but the server rejects its writes", async ({
   page,
 }) => {

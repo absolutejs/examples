@@ -34,6 +34,10 @@ type RagHit = {
 
 type Presence = { name: string; typing: boolean };
 
+// A collaborator's caret in the shared doc, anchored to a CRDT element id so it
+// survives concurrent edits (not a raw index that would drift).
+type DocCursor = { name: string; anchor: string | null };
+
 type TaskItemProps = {
   task: Task;
   onToggle: (task: Task) => void;
@@ -197,6 +201,43 @@ export const SyncReactContent = () => {
     id: "shared",
     url: wsUrl(),
   });
+
+  // Collaborative cursors: broadcast this tab's caret (as a CRDT anchor) over an
+  // ephemeral presence room, and render every other tab's caret position. The
+  // anchor is mapped back to a live column via doc.indexOfAnchor, so a remote
+  // caret tracks the right spot even as the text changes underneath it.
+  const cursorName = useRef(randomName());
+  const cursorClientRef = useRef<PresenceClient<DocCursor> | null>(null);
+  const [docCursors, setDocCursors] = useState<PresenceMember<DocCursor>[]>([]);
+  const [cursorSelfId, setCursorSelfId] = useState<string>();
+  useEffect(() => {
+    const client = createPresence<DocCursor>({
+      room: "doc",
+      state: { anchor: null, name: cursorName.current },
+      url: wsUrl(),
+    });
+    cursorClientRef.current = client;
+    setCursorSelfId(client.id);
+    const unsubscribe = client.subscribe(setDocCursors);
+
+    return () => {
+      unsubscribe();
+      client.close();
+      cursorClientRef.current = null;
+    };
+  }, []);
+  const broadcastCursor = (index: number) =>
+    cursorClientRef.current?.set({
+      anchor: doc.anchorAt(index),
+      name: cursorName.current,
+    });
+  const remoteCursors = docCursors
+    .filter((member) => member.id !== cursorSelfId)
+    .map((member) => ({
+      col: doc.indexOfAnchor(member.state.anchor),
+      id: member.id,
+      name: member.state.name,
+    }));
 
   // Read role after mount (avoids an SSR/hydration mismatch on the badge).
   const [viewer, setViewer] = useState(false);
@@ -417,9 +458,19 @@ export const SyncReactContent = () => {
           className="crdt-editor"
           data-testid="crdt-editor"
           onChange={(event) => doc.setText(event.target.value)}
+          onSelect={(event) =>
+            broadcastCursor(event.currentTarget.selectionStart ?? 0)
+          }
           rows={4}
           value={doc.text}
         />
+        <p className="presence-bar" data-testid="doc-cursors">
+          {remoteCursors.length > 0
+            ? remoteCursors
+                .map((cursor) => `${cursor.name} · col ${cursor.col}`)
+                .join(", ")
+            : "No other cursors"}
+        </p>
       </section>
 
       <section className="sync-card">
