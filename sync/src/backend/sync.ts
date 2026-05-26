@@ -434,19 +434,30 @@ engine.registerReader("issues", {
 engine.registerWriter<Issue>("issues", {
   delete: (row: { id: string }) => {
     issues.delete(row.id);
+    // Incremental RAG maintenance: drop the chunk for this row so future
+    // retrievals don't surface a deleted issue.
+    void unindexIssue(row.id);
   },
   insert: (data: Partial<Issue>) => {
     const now = Date.now();
+    const id = data.id ?? crypto.randomUUID();
+    // Client-supplied id collisions: refuse rather than silently overwrite the
+    // existing row. The optimistic insert on the client rolls back via the
+    // mutation's catch handler.
+    if (data.id !== undefined && issues.has(data.id)) {
+      throw new Error(`Issue ${data.id} already exists`);
+    }
     const issue: Issue = {
       assignee: data.assignee ?? null,
       body: data.body ?? elementsOf(""),
       createdAt: now,
-      id: data.id ?? crypto.randomUUID(),
+      id,
       status: data.status ?? "open",
       title: data.title ?? "Untitled",
       updatedAt: now,
     };
     issues.set(issue.id, issue);
+    void reindexIssue(issue);
 
     return issue;
   },
@@ -459,6 +470,7 @@ engine.registerWriter<Issue>("issues", {
       updatedAt: Date.now(),
     };
     issues.set(next.id, next);
+    void reindexIssue(next);
 
     return next;
   },
@@ -575,26 +587,36 @@ engine.registerMutation(
 
 // Live "similar issues" by routing each issue's title + body through the SAME
 // ragStore used by the KB demo above — so retrieval results blend KB chunks
-// AND issue rows, and re-rank live as bodies are edited.
+// AND issue rows, and re-rank live as bodies are edited. The writers above
+// call these helpers directly so we touch only the affected row instead of
+// rescanning the whole Map on every change.
 const reindexIssue = (issue: Issue) => {
   const body = textOf(issue.body);
   return ragStore.upsert({
     chunks: [
       {
         chunkId: `issue:${issue.id}`,
+        // Index title + body so freshly-created issues (empty body) still
+        // surface in retrieval by their title alone.
         text: body.length > 0 ? `${issue.title}\n${body}` : issue.title,
         title: issue.title,
       },
     ],
   });
 };
+const unindexIssue = (issueId: string) => {
+  // `delete` is optional on the RAGVectorStore contract; not every backend
+  // supports targeted deletion. Fall back to a no-op so the writer stays clean.
+  if (ragStore.delete === undefined) return;
+
+  return ragStore.delete({ chunkIds: [`issue:${issueId}`] });
+};
+// Bulk-seed the index once from the in-memory issues. After this, the writers
+// keep it in sync incrementally (insert/update → reindex one row; delete →
+// remove one chunk).
 for (const issue of issues.values()) {
   void reindexIssue(issue);
 }
-engine.onActivity((event) => {
-  if (event.type !== "change" || event.table !== "issues") return;
-  for (const issue of issues.values()) void reindexIssue(issue);
-});
 
 // A separate per-status "team activity" pulse — distinct from the `pulse`
 // row above (which is a tick counter for the tasks demo). Subscribers to this
@@ -606,12 +628,22 @@ type TeamPulse = {
   done: number;
   at: number;
 };
+const computeTeamCounts = () => {
+  const counts = { done: 0, inProgress: 0, open: 0 };
+  for (const issue of issues.values()) {
+    if (issue.status === "done") counts.done += 1;
+    else if (issue.status === "in-progress") counts.inProgress += 1;
+    else counts.open += 1;
+  }
+
+  return counts;
+};
+// Initialise with the real counts so the very first subscriber sees an
+// accurate snapshot (not zeros until the 10s cron fires for the first time).
 let teamPulse: TeamPulse = {
   at: Date.now(),
-  done: 0,
   id: "team",
-  inProgress: 0,
-  open: 0,
+  ...computeTeamCounts(),
 };
 const writeTeamPulse = (data: TeamPulse) => {
   teamPulse = { ...data, id: "team" };
@@ -639,15 +671,9 @@ engine.registerSchedule(
     name: "teamPulse",
     pattern: "*/10 * * * * *", // every 10s
     run: ({ actions }) => {
-      const counts = { done: 0, inProgress: 0, open: 0 };
-      for (const issue of issues.values()) {
-        if (issue.status === "done") counts.done += 1;
-        else if (issue.status === "in-progress") counts.inProgress += 1;
-        else counts.open += 1;
-      }
       void actions.update("teamPulse", {
         at: Date.now(),
-        ...counts,
+        ...computeTeamCounts(),
         id: "team",
       });
     },

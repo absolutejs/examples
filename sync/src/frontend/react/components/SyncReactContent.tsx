@@ -552,9 +552,19 @@ type IssueRowProps = {
 };
 const IssueRow = ({ issue, onSelect, selected }: IssueRowProps) => (
   <li
+    aria-selected={selected}
     className={selected ? "issue-row selected" : "issue-row"}
     data-testid="issue-row"
     onClick={() => onSelect(issue.id)}
+    onKeyDown={(event) => {
+      // Keyboard users hit Enter or Space to "click" the row.
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onSelect(issue.id);
+      }
+    }}
+    role="button"
+    tabIndex={0}
   >
     <span className={`status pill-${issue.status}`}>
       {STATUS_LABEL[issue.status]}
