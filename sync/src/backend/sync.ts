@@ -9,7 +9,7 @@ import {
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
-import { rgaText, type TextState } from "@absolutejs/sync/crdt";
+import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
 import { createSyncRAGStore } from "@absolutejs/rag";
@@ -348,6 +348,311 @@ engine.registerMutation(
   }),
 );
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FLAGSHIP: a collaborative issue tracker on top of the same engine.
+// Issues are a richer row model than tasks: each row has a title, a status,
+// AND a CRDT body (a per-row collaborative description). The same primitives
+// from above — permissions, schema, search, RAG, presence — compose on top.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type Issue = {
+  id: string;
+  title: string;
+  status: "open" | "in-progress" | "done";
+  assignee: string | null;
+  body: TextState;
+  createdAt: number;
+  updatedAt: number;
+};
+
+const issues = new Map<string, Issue>();
+
+const issueSeed: ReadonlyArray<readonly [string, Issue["status"], string]> = [
+  [
+    "Welcome — open this in another tab to see live sync",
+    "open",
+    "Edit me. Open this same issue in another tab and type at the same time — the body merges live (it's a CRDT field on the row).",
+  ],
+  ["Search me: ship 1.0", "in-progress", "Cut the 1.0 release. ✅"],
+  ["Search me: write the docs", "open", "Long-form docs section per topic."],
+  ["Closed example", "done", "Finished work goes here."],
+];
+const elementsOf = (text: string): TextState => {
+  // Build a CRDT state from a plain string by running the RGA insert client
+  // once — keeps seed bodies editable + mergeable from the start.
+  const crdt = rgaText.create("seed");
+  if (text.length > 0) crdt.setText(text);
+
+  return crdt.state();
+};
+issueSeed.forEach(([title, status, body], index) => {
+  const id = `issue-seed-${index}`;
+  issues.set(id, {
+    assignee: index === 0 ? "alex" : null,
+    body: elementsOf(body),
+    createdAt: index,
+    id,
+    status,
+    title,
+    updatedAt: index,
+  });
+});
+
+// The engine takes ONE `transaction` runner (used for tasks above), so the
+// issues writers can't safely thread their writes through that tasks-shaped
+// txn. Issues instead mutate their own Map directly — the engine doesn't
+// require a custom transaction, and per-domain isolation falls out naturally.
+engine.registerPermissions<Issue, Ctx>("issues", {
+  write: (ctx) => ctx.role !== "viewer",
+});
+
+engine.registerSchema<Issue>("issues", {
+  fields: {
+    assignee: field.optional(field.any),
+    body: field.optional(field.any),
+    createdAt: field.optional(field.number),
+    id: field.optional(field.string),
+    status: field.optional(field.enum("open", "in-progress", "done")),
+    title: field.string,
+    updatedAt: field.optional(field.number),
+  },
+});
+
+// Declare `body` a CRDT field. The engine auto-merges concurrent writes into
+// the stored state and auto-registers an "issues:merge" mutation the client
+// hook calls — so two tabs typing the description converge with no clobbering.
+engine.registerCrdt<Issue>("issues", { body: rgaText });
+
+engine.registerReader("issues", {
+  all: () => [...issues.values()],
+  get: (id) => issues.get(String(id)),
+  key: (row) =>
+    typeof row === "object" && row !== null && "id" in row
+      ? String(Reflect.get(row, "id"))
+      : "",
+});
+engine.registerWriter<Issue>("issues", {
+  delete: (row: { id: string }) => {
+    issues.delete(row.id);
+  },
+  insert: (data: Partial<Issue>) => {
+    const now = Date.now();
+    const issue: Issue = {
+      assignee: data.assignee ?? null,
+      body: data.body ?? elementsOf(""),
+      createdAt: now,
+      id: data.id ?? crypto.randomUUID(),
+      status: data.status ?? "open",
+      title: data.title ?? "Untitled",
+      updatedAt: now,
+    };
+    issues.set(issue.id, issue);
+
+    return issue;
+  },
+  update: (data: Partial<Issue> & { id: string }) => {
+    const current = issues.get(data.id);
+    if (!current) throw new Error(`Issue ${data.id} not found`);
+    const next: Issue = {
+      ...current,
+      ...data,
+      updatedAt: Date.now(),
+    };
+    issues.set(next.id, next);
+
+    return next;
+  },
+});
+
+engine.registerReactive(
+  defineReactiveQuery<Issue>({
+    key: (issue) => issue.id,
+    name: "issues",
+    run: ({ db }) => db.all<Issue>("issues"),
+  }),
+);
+
+engine.registerSearch(
+  defineSearchCollection<Issue>({
+    index: () =>
+      createTextIndex<Issue>({
+        fields: ["title"],
+        key: (issue) => issue.id,
+      }),
+    key: (issue) => issue.id,
+    name: "issueSearch",
+    source: () => [...issues.values()],
+    table: "issues",
+  }),
+);
+
+engine.registerMutation(
+  defineMutation({
+    handler: (args: { id?: string; title?: string }, _ctx, actions) => {
+      const title = (args.title ?? "").trim();
+      if (!title) return null;
+
+      // Pass the client's id through so the optimistic row and the server-
+      // confirmed row are the same node — no swap, no orphaned selection.
+      return actions.insert<Issue>("issues", { id: args.id, title });
+    },
+    name: "createIssue",
+  }),
+);
+engine.registerMutation(
+  defineMutation({
+    handler: (
+      args: { id: string; status: Issue["status"] },
+      _ctx,
+      actions,
+    ) => {
+      const current = issues.get(args.id);
+      if (!current) return null;
+
+      return actions.update<Issue>("issues", {
+        id: args.id,
+        status: args.status,
+      });
+    },
+    name: "setStatus",
+  }),
+);
+engine.registerMutation(
+  defineMutation({
+    handler: (args: { id: string }, _ctx, actions) =>
+      actions.delete("issues", { id: args.id }),
+    name: "deleteIssue",
+  }),
+);
+
+// AI: a "summarize" mutation. Mock provider — same shape as a real
+// @absolutejs/ai provider so swapping it for `anthropic({ apiKey })` (or any
+// other) is a one-line change. Keeps the demo + e2e keyless.
+type Provider = {
+  stream: (params: {
+    messages: { content: string; role: "user" | "assistant" | "system" }[];
+  }) => AsyncIterable<{ type: "text" | "done"; content?: string }>;
+};
+const mockProvider: Provider = {
+  stream: async function* (params) {
+    const last = [...params.messages].pop();
+    const said =
+      typeof last?.content === "string" ? last.content : "the issue body";
+    const words = said.split(/\s+/).slice(0, 14).join(" ");
+    const trailing = said.split(/\s+/).length > 14 ? "…" : "";
+    const reply = `Summary (mock): the gist is "${words}${trailing}".`;
+    yield { content: reply, type: "text" };
+    yield { type: "done" };
+  },
+};
+const summarize = async (issue: Issue): Promise<string> => {
+  const body = textOf(issue.body);
+  const messages: Parameters<Provider["stream"]>[0]["messages"] = [
+    { content: "You summarise issue descriptions tersely.", role: "system" },
+    {
+      content: body.length > 0 ? body : `Issue titled "${issue.title}".`,
+      role: "user",
+    },
+  ];
+  let out = "";
+  for await (const chunk of mockProvider.stream({ messages })) {
+    if (chunk.type === "text" && chunk.content) out += chunk.content;
+  }
+
+  return out;
+};
+engine.registerMutation(
+  defineMutation({
+    handler: async (args: { id: string }) => {
+      const issue = issues.get(args.id);
+      if (!issue) return null;
+
+      return { id: issue.id, summary: await summarize(issue) };
+    },
+    name: "summarizeIssue",
+  }),
+);
+
+// Live "similar issues" by routing each issue's title + body through the SAME
+// ragStore used by the KB demo above — so retrieval results blend KB chunks
+// AND issue rows, and re-rank live as bodies are edited.
+const reindexIssue = (issue: Issue) => {
+  const body = textOf(issue.body);
+  return ragStore.upsert({
+    chunks: [
+      {
+        chunkId: `issue:${issue.id}`,
+        text: body.length > 0 ? `${issue.title}\n${body}` : issue.title,
+        title: issue.title,
+      },
+    ],
+  });
+};
+for (const issue of issues.values()) {
+  void reindexIssue(issue);
+}
+engine.onActivity((event) => {
+  if (event.type !== "change" || event.table !== "issues") return;
+  for (const issue of issues.values()) void reindexIssue(issue);
+});
+
+// A separate per-status "team activity" pulse — distinct from the `pulse`
+// row above (which is a tick counter for the tasks demo). Subscribers to this
+// table see a 10-second tick of {open, in-progress, done} counts with no poll.
+type TeamPulse = {
+  id: string;
+  open: number;
+  inProgress: number;
+  done: number;
+  at: number;
+};
+let teamPulse: TeamPulse = {
+  at: Date.now(),
+  done: 0,
+  id: "team",
+  inProgress: 0,
+  open: 0,
+};
+const writeTeamPulse = (data: TeamPulse) => {
+  teamPulse = { ...data, id: "team" };
+
+  return teamPulse;
+};
+const ignoreTeamPulseDelete = () => {
+  // singleton row — never deleted
+};
+engine.registerReader("teamPulse", { all: () => [teamPulse] });
+engine.registerWriter<TeamPulse>("teamPulse", {
+  delete: ignoreTeamPulseDelete,
+  insert: writeTeamPulse,
+  update: writeTeamPulse,
+});
+engine.registerReactive(
+  defineReactiveQuery<TeamPulse>({
+    key: (row) => row.id,
+    name: "teamPulse",
+    run: ({ db }) => db.all<TeamPulse>("teamPulse"),
+  }),
+);
+engine.registerSchedule(
+  defineSchedule({
+    name: "teamPulse",
+    pattern: "*/10 * * * * *", // every 10s
+    run: ({ actions }) => {
+      const counts = { done: 0, inProgress: 0, open: 0 };
+      for (const issue of issues.values()) {
+        if (issue.status === "done") counts.done += 1;
+        else if (issue.status === "in-progress") counts.inProgress += 1;
+        else counts.open += 1;
+      }
+      void actions.update("teamPulse", {
+        at: Date.now(),
+        ...counts,
+        id: "team",
+      });
+    },
+  }),
+);
 // Ephemeral presence (who's online / typing) rides the same socket.
 const presence = createPresenceHub();
 

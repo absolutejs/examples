@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   useCollaborativeText,
   useSyncCollection,
@@ -497,6 +497,8 @@ export const SyncReactContent = () => {
         any of them — every open client stays in sync.
       </p>
 
+      <IssueTracker />
+
       <p className="footer">
         <img alt="" src="/assets/png/absolutejs-temp.png" />
         Powered by{" "}
@@ -509,5 +511,396 @@ export const SyncReactContent = () => {
         </a>
       </p>
     </main>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLAGSHIP: a collaborative issue tracker — the same engine, a richer row
+// model. Each issue has a CRDT-collaborative description, an AI "summarize"
+// mutation, and a live "similar issues" panel keyed off the row's title+body.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Issue = {
+  id: string;
+  title: string;
+  status: "open" | "in-progress" | "done";
+  assignee: string | null;
+  body: unknown;
+  createdAt: number;
+  updatedAt: number;
+};
+type IssueSearchHit = Issue & { _score?: number };
+type TeamPulse = {
+  id: string;
+  open: number;
+  inProgress: number;
+  done: number;
+  at: number;
+};
+
+const STATUS_LABEL: Record<Issue["status"], string> = {
+  done: "Done",
+  "in-progress": "In progress",
+  open: "Open",
+};
+const STATUS_ORDER: Issue["status"][] = ["open", "in-progress", "done"];
+
+type IssueRowProps = {
+  issue: Issue;
+  selected: boolean;
+  onSelect: (id: string) => void;
+};
+const IssueRow = ({ issue, onSelect, selected }: IssueRowProps) => (
+  <li
+    className={selected ? "issue-row selected" : "issue-row"}
+    data-testid="issue-row"
+    onClick={() => onSelect(issue.id)}
+  >
+    <span className={`status pill-${issue.status}`}>
+      {STATUS_LABEL[issue.status]}
+    </span>
+    <span className="title">{issue.title}</span>
+  </li>
+);
+
+const IssueTracker = () => {
+  const url = useMemo(() => wsUrl(), []);
+  const issuesCol = useSyncCollection<Issue>({ collection: "issues", url });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<Issue["status"] | "all">(
+    "all",
+  );
+  const [search, setSearch] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [denied, setDenied] = useState(false);
+
+  // Live full-text search over issues (params = query).
+  const searchHits = useSyncCollection<IssueSearchHit>({
+    collection: "issueSearch",
+    params: search,
+    url,
+  });
+
+  // 10-second cron tick of {open, in-progress, done} counts — server-driven.
+  const pulseCol = useSyncCollection<TeamPulse>({
+    collection: "teamPulse",
+    url,
+  });
+  const [pulse] = pulseCol.data;
+
+  const submit = (options: Parameters<typeof issuesCol.mutate>[0]) => {
+    setDenied(false);
+    void issuesCol.mutate(options).catch(() => setDenied(true));
+  };
+
+  const sortedIssues = [...issuesCol.data].sort(
+    (first, second) => second.updatedAt - first.updatedAt,
+  );
+  const visibleIssues =
+    search.trim().length > 0
+      ? [...searchHits.data].sort(
+          (first, second) => (second._score ?? 0) - (first._score ?? 0),
+        )
+      : sortedIssues.filter(
+          (issue) => filterStatus === "all" || issue.status === filterStatus,
+        );
+
+  const selected = selectedId
+    ? (issuesCol.data.find((issue) => issue.id === selectedId) ?? null)
+    : null;
+
+  const createIssue = (event: FormEvent) => {
+    event.preventDefault();
+    const title = newTitle.trim();
+    if (!title) return;
+    setNewTitle("");
+    const id = globalThis.crypto.randomUUID();
+    submit({
+      args: { id, title },
+      name: "createIssue",
+      optimistic: (draft) =>
+        draft.set({
+          assignee: null,
+          body: { elements: [] },
+          createdAt: Date.now(),
+          id,
+          status: "open",
+          title,
+          updatedAt: Date.now(),
+        }),
+    });
+    setSelectedId(id);
+  };
+
+  const setStatus = (issue: Issue, status: Issue["status"]) =>
+    submit({
+      args: { id: issue.id, status },
+      name: "setStatus",
+      optimistic: (draft) => draft.set({ ...issue, status }),
+    });
+
+  const removeIssue = (issue: Issue) => {
+    if (selectedId === issue.id) setSelectedId(null);
+    submit({
+      args: { id: issue.id },
+      name: "deleteIssue",
+      optimistic: (draft) => draft.delete(issue.id),
+    });
+  };
+
+  return (
+    <section className="issues-app" data-testid="issues-app">
+      <header className="issues-bar">
+        <h2>Flagship: issue tracker</h2>
+        <div className="issues-bar-right">
+          <span
+            className={
+              issuesCol.status === "ready"
+                ? "conn-dot conn-live"
+                : "conn-dot"
+            }
+            title={issuesCol.status}
+          />
+          {pulse ? (
+            <span className="counts" data-testid="counts">
+              {pulse.open} open · {pulse.inProgress} in progress ·{" "}
+              {pulse.done} done
+            </span>
+          ) : null}
+        </div>
+      </header>
+
+      {denied ? (
+        <p className="viewer-bar" data-testid="issues-write-denied">
+          Server rejected the write.
+        </p>
+      ) : null}
+
+      <div className="issues-layout">
+        <aside className="sidebar">
+          <form className="create-form" onSubmit={createIssue}>
+            <input
+              aria-label="New issue title"
+              data-testid="new-issue"
+              onChange={(event) => setNewTitle(event.target.value)}
+              placeholder="New issue title…"
+              value={newTitle}
+            />
+            <button className="primary" type="submit">
+              Create
+            </button>
+          </form>
+
+          <div className="filter-row">
+            <button
+              className={filterStatus === "all" ? "filter on" : "filter"}
+              onClick={() => setFilterStatus("all")}
+              type="button"
+            >
+              All
+            </button>
+            {STATUS_ORDER.map((status) => (
+              <button
+                className={filterStatus === status ? "filter on" : "filter"}
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                type="button"
+              >
+                {STATUS_LABEL[status]}
+              </button>
+            ))}
+          </div>
+
+          <form
+            className="search-form"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <input
+              aria-label="Search issues"
+              data-testid="issue-search"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search…"
+              value={search}
+            />
+          </form>
+
+          <ul className="issue-list" data-testid="issue-list">
+            {visibleIssues.map((issue) => (
+              <IssueRow
+                issue={issue}
+                key={issue.id}
+                onSelect={setSelectedId}
+                selected={selectedId === issue.id}
+              />
+            ))}
+            {visibleIssues.length === 0 ? (
+              <li className="empty">No matches.</li>
+            ) : null}
+          </ul>
+        </aside>
+
+        <section className="detail">
+          {selected ? (
+            <IssueDetail
+              issue={selected}
+              onRemove={removeIssue}
+              onSetStatus={setStatus}
+              url={url}
+            />
+          ) : (
+            <p className="empty hint" data-testid="hint">
+              Pick an issue on the left to see its collaborative description.
+            </p>
+          )}
+        </section>
+      </div>
+    </section>
+  );
+};
+
+type IssueDetailProps = {
+  issue: Issue;
+  onSetStatus: (issue: Issue, status: Issue["status"]) => void;
+  onRemove: (issue: Issue) => void;
+  url: string;
+};
+
+type IssueRagHit = {
+  chunkId: string;
+  chunkText?: string;
+  title?: string;
+  _score?: number;
+};
+
+const IssueDetail = ({
+  issue,
+  onRemove,
+  onSetStatus,
+  url,
+}: IssueDetailProps) => {
+  // The collaborative description: text-CRDT, anchored by the row id.
+  const doc = useCollaborativeText({
+    collection: "issues",
+    field: "body",
+    id: issue.id,
+    url,
+  });
+
+  // Live "similar issues" via the same RAG store used above. The query is the
+  // current issue's title + body; results re-rank as bodies change. We strip
+  // the current issue out of the results (it's always its own best match).
+  const similar = useSyncCollection<IssueRagHit>({
+    collection: "ragRetrieval",
+    key: (hit) => hit.chunkId,
+    params: `${issue.title} ${doc.text}`.slice(0, 200),
+    url,
+  });
+  const similarHits = [...similar.data]
+    .filter((hit) => hit.chunkId !== `issue:${issue.id}`)
+    .sort((first, second) => (second._score ?? 0) - (first._score ?? 0))
+    .slice(0, 5);
+
+  // AI summary (mock provider on the server, swap for `anthropic({ apiKey })`
+  // for a real model). The mutation returns the summary in the ack.
+  const issuesCol = useSyncCollection<Issue>({ collection: "issues", url });
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summarising, setSummarising] = useState(false);
+  useEffect(() => {
+    setSummary(null);
+  }, [issue.id]);
+
+  const onSummarize = async () => {
+    setSummarising(true);
+    try {
+      const result = await issuesCol.mutate<{ summary: string } | null>({
+        args: { id: issue.id },
+        name: "summarizeIssue",
+      });
+      setSummary(result?.summary ?? "(no summary)");
+    } finally {
+      setSummarising(false);
+    }
+  };
+
+  return (
+    <article className="issue-detail" data-testid="issue-detail">
+      <header className="issue-header">
+        <h3 data-testid="issue-title">{issue.title}</h3>
+        <div className="issue-meta">
+          <label>
+            Status
+            <select
+              data-testid="status-select"
+              onChange={(event) =>
+                onSetStatus(issue, event.target.value as Issue["status"])
+              }
+              value={issue.status}
+            >
+              {STATUS_ORDER.map((status) => (
+                <option key={status} value={status}>
+                  {STATUS_LABEL[status]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="ai"
+            data-testid="summarize"
+            disabled={summarising}
+            onClick={() => void onSummarize()}
+            type="button"
+          >
+            {summarising ? "…" : "Summarize"}
+          </button>
+          <button
+            className="danger"
+            onClick={() => onRemove(issue)}
+            type="button"
+          >
+            Delete
+          </button>
+        </div>
+      </header>
+
+      {summary ? (
+        <p className="ai-summary" data-testid="ai-summary">
+          {summary}
+        </p>
+      ) : null}
+
+      <p className="hint">
+        Open this same issue in another tab. Type here at the same time — both
+        edits merge live (it's a CRDT field on the row).
+      </p>
+
+      <textarea
+        aria-label="Description"
+        className="body-editor"
+        data-testid="body-editor"
+        onChange={(event) => doc.setText(event.target.value)}
+        rows={10}
+        value={doc.text}
+      />
+
+      <section className="similar" data-testid="similar">
+        <h4>Similar issues</h4>
+        {similarHits.length > 0 ? (
+          <ul className="similar-list">
+            {similarHits.map((hit) => (
+              <li className="similar-row" key={hit.chunkId}>
+                <span className="title">{hit.title ?? hit.chunkId}</span>
+                {hit._score !== undefined ? (
+                  <span className="score">{hit._score.toFixed(2)}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty hint">
+            No related issues yet — they'll appear as bodies are written.
+          </p>
+        )}
+      </section>
+    </article>
   );
 };

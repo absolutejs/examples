@@ -557,3 +557,186 @@ test("declarative permissions: a viewer can read but the server rejects its writ
   });
   await expect(taskRow(page, title)).toHaveCount(0, { timeout: 10000 });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLAGSHIP: the issues tracker section appended onto the React page. Same
+// engine, richer row model (CRDT body, AI summarize, live "similar issues"
+// retrieval). These tests are React-only — the other framework pages don't
+// embed the issues UX.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const newIssue = (page: Page) => page.getByTestId("new-issue");
+const issueList = (page: Page) => page.getByTestId("issue-list");
+const issueRow = (page: Page, title: string) =>
+  issueList(page).locator(".issue-row", { hasText: title });
+
+test.describe("Issues tracker (React)", () => {
+  test("loads with the seed issues and the team-counts pulse", async ({
+    page,
+  }) => {
+    const { errors } = watchConsole(page);
+    const response = await page.goto("/");
+    expect(response?.status()).toBe(200);
+    await expect(page.locator(".sync-status")).toContainText("Live", {
+      timeout: 15000,
+    });
+    await expect(page.getByTestId("issues-app")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(issueList(page)).toContainText("Welcome", { timeout: 15000 });
+    // The 10-second cron tick publishes team counts; it ticks on connect.
+    await expect(page.getByTestId("counts")).toContainText("open", {
+      timeout: 15000,
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  test("creates, changes status, and deletes an issue", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".sync-status")).toContainText("Live", {
+      timeout: 15000,
+    });
+
+    const title = uniqueTitle("issue-e2e");
+    await newIssue(page).fill(title);
+    await newIssue(page).press("Enter");
+    await expect(issueRow(page, title)).toBeVisible({ timeout: 10000 });
+    // Created issues auto-select; the detail panel opens.
+    await expect(page.getByTestId("issue-title")).toHaveText(title, {
+      timeout: 10000,
+    });
+
+    await page.getByTestId("status-select").selectOption("in-progress");
+    await expect(issueRow(page, title)).toContainText("In progress", {
+      timeout: 10000,
+    });
+
+    await page
+      .getByTestId("issue-detail")
+      .locator(".danger", { hasText: "Delete" })
+      .click();
+    await expect(issueRow(page, title)).toHaveCount(0, { timeout: 10000 });
+  });
+
+  test("live issue search by title", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".sync-status")).toContainText("Live", {
+      timeout: 15000,
+    });
+    const word = `widget${Date.now()}`;
+    await newIssue(page).fill(`${word} discussion`);
+    await newIssue(page).press("Enter");
+    await expect(issueRow(page, word)).toBeVisible({ timeout: 10000 });
+
+    await page.getByTestId("issue-search").fill(word);
+    await expect(issueRow(page, word)).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("issue-search").fill("qqzzxx-no-match");
+    await expect(issueList(page)).toContainText("No matches", {
+      timeout: 10000,
+    });
+    // Clear so subsequent tests aren't stuck on the empty filter.
+    await page.getByTestId("issue-search").fill("");
+  });
+
+  test("collaborative description merges concurrent edits across tabs", async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({ baseURL });
+    const a = await context.newPage();
+    const b = await context.newPage();
+    await a.goto("/");
+    await b.goto("/");
+    for (const page of [a, b]) {
+      await expect(page.locator(".sync-status")).toContainText("Live", {
+        timeout: 15000,
+      });
+    }
+
+    // Both clients open the same seeded issue.
+    const title = "Welcome";
+    await issueRow(a, title).click();
+    await issueRow(b, title).click();
+    for (const page of [a, b]) {
+      await expect(page.getByTestId("body-editor")).toBeVisible({
+        timeout: 10000,
+      });
+    }
+    await expect
+      .poll(
+        async () =>
+          (await a.getByTestId("body-editor").inputValue()) ===
+          (await b.getByTestId("body-editor").inputValue()),
+        { timeout: 15000 },
+      )
+      .toBe(true);
+
+    const base = await a.getByTestId("body-editor").inputValue();
+    const stamp = Date.now();
+    const markerA = `alpha${stamp}`;
+    const markerB = `bravo${stamp}`;
+    await Promise.all([
+      a.getByTestId("body-editor").fill(`${base} ${markerA}`),
+      b.getByTestId("body-editor").fill(`${base} ${markerB}`),
+    ]);
+
+    for (const page of [a, b]) {
+      await expect(page.getByTestId("body-editor")).toHaveValue(
+        new RegExp(markerA),
+        { timeout: 15000 },
+      );
+      await expect(page.getByTestId("body-editor")).toHaveValue(
+        new RegExp(markerB),
+        { timeout: 15000 },
+      );
+    }
+    await expect
+      .poll(
+        async () =>
+          (await a.getByTestId("body-editor").inputValue()) ===
+          (await b.getByTestId("body-editor").inputValue()),
+        { timeout: 15000 },
+      )
+      .toBe(true);
+
+    await context.close();
+  });
+
+  test("AI: Summarize returns a summary from the server", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".sync-status")).toContainText("Live", {
+      timeout: 15000,
+    });
+
+    await issueRow(page, "Welcome").click();
+    await expect(page.getByTestId("issue-detail")).toBeVisible({
+      timeout: 10000,
+    });
+    await page.getByTestId("summarize").click();
+    await expect(page.getByTestId("ai-summary")).toContainText("Summary", {
+      timeout: 10000,
+    });
+  });
+
+  test("RAG: similar issues panel surfaces related rows live", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator(".sync-status")).toContainText("Live", {
+      timeout: 15000,
+    });
+
+    const tag = `tagq${Date.now()}`;
+    await newIssue(page).fill(`${tag} alpha`);
+    await newIssue(page).press("Enter");
+    await expect(issueRow(page, `${tag} alpha`)).toBeVisible({ timeout: 10000 });
+    await newIssue(page).fill(`${tag} bravo`);
+    await newIssue(page).press("Enter");
+    await expect(issueRow(page, `${tag} bravo`)).toBeVisible({ timeout: 10000 });
+
+    await issueRow(page, `${tag} bravo`).click();
+    await expect(page.getByTestId("similar")).toContainText(`${tag} alpha`, {
+      timeout: 15000,
+    });
+  });
+});
