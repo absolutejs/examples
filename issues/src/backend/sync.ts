@@ -16,7 +16,8 @@ import {
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
 import { scheduled } from "@absolutejs/sync/scheduled";
-import { rgaText, type TextState } from "@absolutejs/sync/crdt";
+import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
+import { createSyncRAGStore } from "@absolutejs/rag";
 import { Elysia } from "elysia";
 
 // An issue. `body` is a CRDT text state (collaborative description). Everything
@@ -220,6 +221,93 @@ engine.registerMutation(
     name: "deleteIssue",
   }),
 );
+
+// ── AI: a "summarize" mutation ────────────────────────────────────────────────
+// Mock provider — same shape as a real @absolutejs/ai provider so swapping it
+// for `anthropic({ apiKey })` (or any other) is a one-line change. Keeps the
+// demo + e2e keyless. The mock just extracts the first words of the body and
+// frames them as a summary — enough to wire the UI end-to-end.
+type Provider = {
+  stream: (params: {
+    messages: { content: string; role: "user" | "assistant" | "system" }[];
+  }) => AsyncIterable<{ type: "text" | "done"; content?: string }>;
+};
+const mockProvider: Provider = {
+  stream: async function* (params) {
+    const last = [...params.messages].pop();
+    const said =
+      typeof last?.content === "string" ? last.content : "the issue body";
+    const words = said.split(/\s+/).slice(0, 14).join(" ");
+    const trailing = said.split(/\s+/).length > 14 ? "…" : "";
+    const reply = `Summary (mock): the gist is "${words}${trailing}".`;
+    yield { content: reply, type: "text" };
+    yield { type: "done" };
+  },
+};
+
+const summarize = async (issue: Issue): Promise<string> => {
+  const body = textOf(issue.body);
+  const messages: Parameters<Provider["stream"]>[0]["messages"] = [
+    { content: "You summarise issue descriptions tersely.", role: "system" },
+    {
+      content: body.length > 0 ? body : `Issue titled "${issue.title}".`,
+      role: "user",
+    },
+  ];
+  let out = "";
+  for await (const chunk of mockProvider.stream({ messages })) {
+    if (chunk.type === "text" && chunk.content) out += chunk.content;
+  }
+
+  return out;
+};
+
+engine.registerMutation(
+  defineMutation({
+    handler: async (args: { id: string }) => {
+      const issue = issues.get(args.id);
+      if (!issue) return null;
+
+      return { id: issue.id, summary: await summarize(issue) };
+    },
+    name: "summarizeIssue",
+  }),
+);
+
+// ── RAG: live "similar issues" retrieval over body content ────────────────────
+// createSyncRAGStore is a drop-in RAGVectorStore that rides this engine, so
+// retrieval is LIVE — subscribe with a query and results re-rank as bodies are
+// edited. Chunk per issue: { chunkId: issue.id, text: <body>, title }.
+const ragStore = createSyncRAGStore({ engine });
+export const ragCollectionName = ragStore.retrievalCollection;
+
+const reindexIssue = (issue: Issue) => {
+  const body = textOf(issue.body);
+  return ragStore.upsert({
+    chunks: [
+      {
+        chunkId: issue.id,
+        // Index title + body so freshly-created issues (empty body) still
+        // surface in retrieval by their title alone.
+        text: body.length > 0 ? `${issue.title}\n${body}` : issue.title,
+        title: issue.title,
+      },
+    ],
+  });
+};
+
+// Seed the index with the initial issues.
+for (const issue of issues.values()) {
+  void reindexIssue(issue);
+}
+
+// Reindex on every change to the issues table. The set is small here, so a
+// full re-walk is fine; a real app would scope this to the changed row via the
+// writer or a delete-aware hook.
+engine.onActivity((event) => {
+  if (event.type !== "change" || event.table !== "issues") return;
+  for (const issue of issues.values()) void reindexIssue(issue);
+});
 
 // Scheduled function: every 10 seconds, refresh a "team activity" pulse row
 // summarising counts. Subscribers tick without polling.

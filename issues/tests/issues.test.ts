@@ -141,6 +141,49 @@ test("collaborative description merges concurrent edits across tabs", async ({
   await context.close();
 });
 
+test("AI: Summarize button returns a summary from the server", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".conn-dot")).toHaveClass(/conn-live/, {
+    timeout: 15000,
+  });
+
+  // Pick a seed issue + click Summarize. Server runs the (mock) AI provider
+  // and returns the summary in the mutation ack.
+  await issueRow(page, "Welcome").click();
+  await expect(page.getByTestId("issue-detail")).toBeVisible({
+    timeout: 10000,
+  });
+  await page.getByTestId("summarize").click();
+  await expect(page.getByTestId("ai-summary")).toContainText("Summary", {
+    timeout: 10000,
+  });
+});
+
+test("RAG: similar issues panel surfaces related rows live", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".conn-dot")).toHaveClass(/conn-live/, {
+    timeout: 15000,
+  });
+
+  // Create two issues that share a distinctive word, then open one of them —
+  // the RAG retrieval card should surface the other.
+  const tag = `tagq${Date.now()}`;
+  await newIssue(page).fill(`${tag} alpha`);
+  await newIssue(page).press("Enter");
+  await expect(issueRow(page, `${tag} alpha`)).toBeVisible({ timeout: 10000 });
+  await newIssue(page).fill(`${tag} bravo`);
+  await newIssue(page).press("Enter");
+  await expect(issueRow(page, `${tag} bravo`)).toBeVisible({ timeout: 10000 });
+
+  // Opening bravo should show alpha (and vice versa) under "Similar issues".
+  await issueRow(page, `${tag} bravo`).click();
+  await expect(page.getByTestId("similar")).toContainText(`${tag} alpha`, {
+    timeout: 15000,
+  });
+});
+
 test("declarative permission: a viewer is rejected on writes", async ({
   page,
 }) => {

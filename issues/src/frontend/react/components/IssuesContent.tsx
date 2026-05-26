@@ -302,6 +302,13 @@ type IssueDetailProps = {
   url: string;
 };
 
+type RagHit = {
+  chunkId: string;
+  chunkText?: string;
+  title?: string;
+  _score?: number;
+};
+
 const IssueDetail = ({ issue, onRemove, onSetStatus, url }: IssueDetailProps) => {
   // The collaborative description: text-CRDT, anchored by the row id.
   const doc = useCollaborativeText({
@@ -310,6 +317,42 @@ const IssueDetail = ({ issue, onRemove, onSetStatus, url }: IssueDetailProps) =>
     id: issue.id,
     url,
   });
+
+  // Live "similar issues" via @absolutejs/rag's sync-backed store. The query
+  // is the current issue's title + body — results re-rank as bodies change.
+  const similar = useSyncCollection<RagHit>({
+    collection: "ragRetrieval",
+    key: (hit) => hit.chunkId,
+    params: `${issue.title} ${doc.text}`.slice(0, 200),
+    url,
+  });
+  const similarHits = [...similar.data]
+    .filter((hit) => hit.chunkId !== issue.id)
+    .sort((first, second) => (second._score ?? 0) - (first._score ?? 0))
+    .slice(0, 5);
+
+  // AI summary (mock provider on the server, swap for anthropic({apiKey}) for
+  // a real model). The mutation returns the summary in the ack.
+  const issuesCol = useSyncCollection<Issue>({ collection: "issues", url });
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summarising, setSummarising] = useState(false);
+  // Clear stale summary when switching issues.
+  useEffect(() => {
+    setSummary(null);
+  }, [issue.id]);
+
+  const onSummarize = async () => {
+    setSummarising(true);
+    try {
+      const result = await issuesCol.mutate<{ summary: string } | null>({
+        args: { id: issue.id },
+        name: "summarizeIssue",
+      });
+      setSummary(result?.summary ?? "(no summary)");
+    } finally {
+      setSummarising(false);
+    }
+  };
 
   return (
     <article className="issue-detail" data-testid="issue-detail">
@@ -333,6 +376,15 @@ const IssueDetail = ({ issue, onRemove, onSetStatus, url }: IssueDetailProps) =>
             </select>
           </label>
           <button
+            className="ai"
+            data-testid="summarize"
+            disabled={summarising}
+            onClick={() => void onSummarize()}
+            type="button"
+          >
+            {summarising ? "…" : "Summarize"}
+          </button>
+          <button
             className="danger"
             onClick={() => onRemove(issue)}
             type="button"
@@ -341,6 +393,12 @@ const IssueDetail = ({ issue, onRemove, onSetStatus, url }: IssueDetailProps) =>
           </button>
         </div>
       </header>
+
+      {summary ? (
+        <p className="ai-summary" data-testid="ai-summary">
+          {summary}
+        </p>
+      ) : null}
 
       <p className="hint">
         Open this same issue in another tab. Type here at the same time — both
@@ -355,6 +413,26 @@ const IssueDetail = ({ issue, onRemove, onSetStatus, url }: IssueDetailProps) =>
         rows={10}
         value={doc.text}
       />
+
+      <section className="similar" data-testid="similar">
+        <h3>Similar issues</h3>
+        {similarHits.length > 0 ? (
+          <ul className="similar-list">
+            {similarHits.map((hit) => (
+              <li className="similar-row" key={hit.chunkId}>
+                <span className="title">{hit.title ?? hit.chunkId}</span>
+                {hit._score !== undefined ? (
+                  <span className="score">{hit._score.toFixed(2)}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty hint">
+            No related issues yet — they'll appear as bodies are written.
+          </p>
+        )}
+      </section>
     </article>
   );
 };
