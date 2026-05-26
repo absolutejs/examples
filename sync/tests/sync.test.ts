@@ -404,6 +404,53 @@ test("CRDT: concurrent edits from two clients merge and converge", async ({
   await context.close();
 });
 
+// Each non-React binding is checked against a React reference page (two pages at
+// a time, context closed between) — it both sends (its edit reaches React) and
+// receives (React's edit reaches it). Pairwise keeps memory low (the container's
+// Chromium is crash-prone with many pages) and pinpoints any failing binding.
+for (const framework of [
+  { name: "vue", path: "/vue" },
+  { name: "svelte", path: "/svelte" },
+  { name: "angular", path: "/angular" },
+] as const) {
+  test(`CRDT: the ${framework.name} binding sends and receives collaborative edits`, async ({
+    browser,
+    baseURL,
+  }) => {
+    const editor = (page: Page) => page.getByTestId("crdt-editor");
+    const context = await browser.newContext({ baseURL });
+    const react = await context.newPage();
+    const other = await context.newPage();
+    await react.goto("/");
+    await other.goto(framework.path);
+    for (const page of [react, other]) {
+      await expect(page.locator(".sync-status")).toContainText("Live", {
+        timeout: 15000,
+      });
+      await expect(editor(page)).toBeVisible({ timeout: 15000 });
+    }
+
+    const stamp = Date.now();
+    // The framework SENDS: type on it, the edit reaches React.
+    const sendMarker = `${framework.name}send${stamp}`;
+    const otherBase = await editor(other).inputValue();
+    await editor(other).fill(`${otherBase} ${sendMarker}`);
+    await expect(editor(react)).toHaveValue(new RegExp(sendMarker), {
+      timeout: 15000,
+    });
+
+    // The framework RECEIVES: type on React, the edit reaches it.
+    const recvMarker = `${framework.name}recv${stamp}`;
+    const reactBase = await editor(react).inputValue();
+    await editor(react).fill(`${reactBase} ${recvMarker}`);
+    await expect(editor(other)).toHaveValue(new RegExp(recvMarker), {
+      timeout: 15000,
+    });
+
+    await context.close();
+  });
+}
+
 test("declarative permissions: a viewer can read but the server rejects its writes", async ({
   page,
 }) => {

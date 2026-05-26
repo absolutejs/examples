@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { createSyncCollectionStore } from "@absolutejs/sync/svelte";
+  import {
+    createCollaborativeTextStore,
+    createSyncCollectionStore,
+  } from "@absolutejs/sync/svelte";
   import {
     createPresence,
     indexedDbCollectionCache,
@@ -99,6 +102,16 @@
       name: "removeTask",
       optimistic: (draft) => draft.delete(task.id),
     });
+
+  // Conflict-free collaborative editing — the same shared "doc" field every
+  // framework page edits. `$docStore` is the live { text, status }.
+  const docStore = createCollaborativeTextStore({
+    collection: "doc",
+    field: "state",
+    id: "shared",
+    url: wsUrl,
+  });
+  onDestroy(() => docStore.destroy());
 </script>
 
 <div>
@@ -168,6 +181,22 @@
           <li class="task-empty">No tasks yet.</li>
         {/if}
       </ul>
+    </section>
+
+    <section class="sync-card">
+      <p class="section-desc" data-testid="crdt-label">
+        Conflict-free collaborative editing (CRDT) — the same shared field every
+        framework page edits. Type here and on <code>/</code> at the same time:
+        edits merge and converge, no clobbering.
+      </p>
+      <textarea
+        aria-label="Shared document"
+        class="crdt-editor"
+        data-testid="crdt-editor"
+        oninput={(event) => docStore.setText(event.currentTarget.value)}
+        rows="4"
+        value={$docStore.text}
+      ></textarea>
     </section>
 
     <p class="section-desc">

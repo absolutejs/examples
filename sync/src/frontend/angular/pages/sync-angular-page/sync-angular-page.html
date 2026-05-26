@@ -81,6 +81,22 @@
     </ul>
   </section>
 
+  <section class="sync-card">
+    <p class="section-desc" data-testid="crdt-label">
+      Conflict-free collaborative editing (CRDT) — the same shared field every
+      framework page edits. Type here and on <code>/</code> at the same time:
+      edits merge and converge, no clobbering.
+    </p>
+    <textarea
+      aria-label="Shared document"
+      class="crdt-editor"
+      data-testid="crdt-editor"
+      rows="4"
+      [value]="docText()"
+      (input)="setDoc($event)"
+    ></textarea>
+  </section>
+
   <p class="section-desc">
     Open <code>/</code>, <code>/svelte</code>, <code>/vue</code>,
     <code>/html</code>, or <code>/htmx</code> in another tab and edit from any

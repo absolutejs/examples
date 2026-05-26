@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { useSyncCollection } from "@absolutejs/sync/vue";
+import { useCollaborativeText, useSyncCollection } from "@absolutejs/sync/vue";
 import {
   createPresence,
   indexedDbCollectionCache,
@@ -97,6 +97,22 @@ const remove = (task: Task) =>
     name: "removeTask",
     optimistic: (draft) => draft.delete(task.id),
   });
+
+// Conflict-free collaborative editing in one call — the same shared "doc" field
+// every framework page edits. The composable merges everyone's edits and
+// broadcasts via the engine's auto "doc:merge" mutation.
+const { setText: setDocText, text: docText } = useCollaborativeText({
+  collection: "doc",
+  field: "state",
+  id: "shared",
+  url: wsUrl,
+});
+const onDocInput = (event: Event) => {
+  const target = event.target;
+  if (target instanceof HTMLTextAreaElement) {
+    setDocText(target.value);
+  }
+};
 </script>
 
 <template>
@@ -168,6 +184,22 @@ const remove = (task: Task) =>
           </li>
           <li v-if="tasks.length === 0" class="task-empty">No tasks yet.</li>
         </ul>
+      </section>
+
+      <section class="sync-card">
+        <p class="section-desc" data-testid="crdt-label">
+          Conflict-free collaborative editing (CRDT) — the same shared field
+          every framework page edits. Type here and on <code>/</code> at the
+          same time: edits merge and converge, no clobbering.
+        </p>
+        <textarea
+          :value="docText"
+          aria-label="Shared document"
+          class="crdt-editor"
+          data-testid="crdt-editor"
+          rows="4"
+          @input="onDocInput"
+        ></textarea>
       </section>
 
       <p class="section-desc">

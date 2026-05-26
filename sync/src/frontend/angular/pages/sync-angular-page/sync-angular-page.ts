@@ -74,6 +74,16 @@ export class SyncAngularPageComponent implements OnDestroy {
     }
   }
 
+  // Conflict-free collaborative editing — the same shared "doc" field every
+  // framework page edits. Returns text/status signals + setText.
+  private doc = this.sync.collaborativeText({
+    collection: "doc",
+    field: "state",
+    id: "shared",
+    url: wsUrl(),
+  });
+  docText = this.doc.text;
+
   status = this.handle.status;
   title = signal("");
   tasks = computed(() =>
@@ -134,6 +144,13 @@ export class SyncAngularPageComponent implements OnDestroy {
       name: "removeTask",
       optimistic: (draft) => draft.delete(task.id),
     });
+  }
+
+  setDoc(event: Event) {
+    const { target } = event;
+    if (target instanceof HTMLTextAreaElement) {
+      this.doc.setText(target.value);
+    }
   }
 }
 
