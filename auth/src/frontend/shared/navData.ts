@@ -27,6 +27,13 @@ export const FEATURED_LOGIN_PROVIDERS: Lowercase<ProviderOption>[] = [
 export const NAV_ITEMS: { label: string; path: string }[] = [
   { label: "Home", path: "" },
   { label: "Protected", path: "protected" },
+  { label: "Credentials", path: "credentials" },
+  { label: "Passkeys", path: "passkeys" },
+  { label: "MFA", path: "mfa" },
+  { label: "Passwordless", path: "passwordless" },
+  { label: "Sessions", path: "sessions" },
+  { label: "Audit", path: "audit" },
+  { label: "IdP", path: "idp" },
   { label: "Settings", path: "settings" },
   { label: "Connectors", path: "connectors" },
 ];
