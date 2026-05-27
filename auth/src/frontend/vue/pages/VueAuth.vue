@@ -1,8 +1,15 @@
 <script lang="ts">
 import { defineRoutes } from "@absolutejs/absolute/vue";
+import AuditShowcase from "../components/AuditShowcase.vue";
 import Connectors from "../components/Connectors.vue";
+import CredentialsShowcase from "../components/CredentialsShowcase.vue";
 import Home from "../components/Home.vue";
+import IdpShowcase from "../components/IdpShowcase.vue";
+import MfaShowcase from "../components/MfaShowcase.vue";
+import PasskeysShowcase from "../components/PasskeysShowcase.vue";
+import PasswordlessShowcase from "../components/PasswordlessShowcase.vue";
 import Protected from "../components/Protected.vue";
+import SessionsShowcase from "../components/SessionsShowcase.vue";
 import Settings from "../components/Settings.vue";
 
 export const routes = defineRoutes([
@@ -10,6 +17,13 @@ export const routes = defineRoutes([
   { component: Protected, path: "/vue/protected" },
   { component: Settings, path: "/vue/settings" },
   { component: Connectors, path: "/vue/connectors" },
+  { component: CredentialsShowcase, path: "/vue/credentials" },
+  { component: PasskeysShowcase, path: "/vue/passkeys" },
+  { component: MfaShowcase, path: "/vue/mfa" },
+  { component: PasswordlessShowcase, path: "/vue/passwordless" },
+  { component: SessionsShowcase, path: "/vue/sessions" },
+  { component: AuditShowcase, path: "/vue/audit" },
+  { component: IdpShowcase, path: "/vue/idp" },
 ]);
 </script>
 
