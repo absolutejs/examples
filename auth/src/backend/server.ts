@@ -40,7 +40,15 @@ const authPlugin = auth<User>({
 
 const server = new Elysia()
   .use(authPlugin)
-  .use(apiPlugin({ authSessionStore, bindingStore, db, grantStore }))
+  .use(
+    apiPlugin({
+      auditStore: showcase.audit.auditStore,
+      authSessionStore,
+      bindingStore,
+      db,
+      grantStore,
+    }),
+  )
   .post("/cleanup", async ({ cleanupSessions }) => {
     await cleanupSessions();
   })
