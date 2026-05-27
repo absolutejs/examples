@@ -1,4 +1,9 @@
-import { type AuthSessionStore, protectRoutePlugin } from "@absolutejs/auth";
+import {
+  type AuditSink,
+  type AuthSessionStore,
+  protectRoutePlugin,
+  verifyAuditChain,
+} from "@absolutejs/auth";
 import type {
   LinkedProviderBindingStore,
   LinkedProviderGrantStore,
@@ -23,13 +28,17 @@ const flattenIdentityGroups = <T>(identities: Record<string, T[]>) =>
   Object.values(identities).flat();
 
 type ApiPluginDeps = {
+  auditStore?: AuditSink;
   authSessionStore: AuthSessionStore<User>;
   bindingStore: LinkedProviderBindingStore;
   db: NeonHttpDatabase<SchemaType>;
   grantStore: LinkedProviderGrantStore;
 };
 
+const AUDIT_LIST_LIMIT = 100;
+
 export const apiPlugin = ({
+  auditStore,
   authSessionStore,
   bindingStore,
   db,
@@ -238,5 +247,24 @@ export const apiPlugin = ({
             ...(await buildLinkedProviderPayload(deps, user.sub)),
           };
         }),
+    )
+    // Showcase-only: surface the audit log + integrity verification so the React
+    // /audit page can render the tamper-evident chain. A real deployment would gate
+    // this on an admin role; here we let any authenticated user inspect.
+    .get("/audit/events", ({ protectRoute, status }) =>
+      protectRoute(async (user) => {
+        if (auditStore?.list === undefined) {
+          return status("Not Implemented", "Audit list is not configured");
+        }
+        const events = await auditStore.list({ limit: AUDIT_LIST_LIMIT });
+        const verification = await verifyAuditChain(events);
+
+        return {
+          events,
+          ok: true,
+          userSub: user.sub,
+          verification,
+        };
+      }),
     );
 };

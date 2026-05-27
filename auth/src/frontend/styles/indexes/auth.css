@@ -744,3 +744,27 @@
   box-shadow: var(--shadow);
   transform: translateY(-2px);
 }
+
+/* Showcase pages (Phase 1b: Sessions / Audit / IdP). */
+.showcase-code {
+  background: var(--surface, #f3f4f6);
+  border-radius: var(--radius, 6px);
+  font-size: 12px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 12px;
+}
+.showcase-card {
+  border: 1px solid var(--border, #ccc);
+  border-radius: 6px;
+  padding: 8px;
+}
+.showcase-card--lg {
+  border: 1px solid var(--border, #ccc);
+  border-radius: 8px;
+  padding: 12px;
+}
+.showcase-monospace {
+  font-family: monospace;
+  font-size: 12px;
+}
