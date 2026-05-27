@@ -1,6 +1,15 @@
 import { isValidProviderOption, providerOptions } from "citra";
 import { TOAST_DURATION } from "../../../constants";
 import {
+  mountAuditShowcase,
+  mountCredentialsShowcase,
+  mountIdpShowcase,
+  mountMfaShowcase,
+  mountPasskeysShowcase,
+  mountPasswordlessShowcase,
+  mountSessionsShowcase,
+} from "./showcases";
+import {
   deleteAccount,
   dismissMergeRequest,
   fetchAuthIdentities,
@@ -307,6 +316,48 @@ const renderView = () => {
 
   if (path === "/html/connectors") {
     renderConnectorsView(view);
+
+    return;
+  }
+
+  if (path === "/html/credentials") {
+    mountCredentialsShowcase(view);
+
+    return;
+  }
+
+  if (path === "/html/passkeys") {
+    void mountPasskeysShowcase(view);
+
+    return;
+  }
+
+  if (path === "/html/mfa") {
+    mountMfaShowcase(view);
+
+    return;
+  }
+
+  if (path === "/html/passwordless") {
+    mountPasswordlessShowcase(view);
+
+    return;
+  }
+
+  if (path === "/html/sessions") {
+    mountSessionsShowcase(view);
+
+    return;
+  }
+
+  if (path === "/html/audit") {
+    mountAuditShowcase(view);
+
+    return;
+  }
+
+  if (path === "/html/idp") {
+    void mountIdpShowcase(view);
 
     return;
   }
