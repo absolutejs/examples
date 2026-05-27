@@ -40,7 +40,7 @@ const PRESETS: Preset[] = [
   {
     label: "Runaway loop → TimeoutError",
     description:
-      "Tight infinite loop. The host kills the isolate after the configured timeout.",
+      "Tight infinite loop. The configured timeout interrupts or terminates the isolate, depending on the backend.",
     code: "while (true) {}",
     timeoutMs: 200,
   },
@@ -60,7 +60,7 @@ return big.length;`,
   {
     label: "No host filesystem access",
     description:
-      "Document what's reachable inside the worker today. v1's contract is heap isolation; v2 will narrow host-globals further.",
+      "Show the hardened default global shape: host capability globals are not exposed directly.",
     code: "return typeof fetch + ',' + typeof Bun + ',' + typeof process;",
   },
 ];
@@ -121,9 +121,9 @@ const SandboxContent = () => {
       <header className="page-header">
         <h1>@absolutejs/isolated-jsc</h1>
         <p className="lead">
-          Run arbitrary JavaScript inside a Bun-spawned, heap-isolated{" "}
-          JavaScriptCore VM. Wall-clock + memory caps enforced from the host.{" "}
-          Host functions exposed as Reference call-throughs.
+          Run arbitrary JavaScript inside a heap-isolated JavaScriptCore
+          sandbox. Wall-clock + memory caps are enforced from the host, and host
+          functions are exposed as Reference call-throughs.
         </p>
       </header>
 
@@ -153,7 +153,8 @@ const SandboxContent = () => {
       <section className="editor-pane">
         <div className="editor-col">
           <label htmlFor="code">
-            Source <span className="muted">(use `return X` to hand a value back)</span>
+            Source{" "}
+            <span className="muted">(use `return X` to hand a value back)</span>
           </label>
           <textarea
             id="code"
@@ -180,9 +181,7 @@ const SandboxContent = () => {
               <input
                 max={5_000}
                 min={50}
-                onChange={(event) =>
-                  setTimeoutMs(Number(event.target.value))
-                }
+                onChange={(event) => setTimeoutMs(Number(event.target.value))}
                 step={50}
                 type="number"
                 value={timeoutMs}
@@ -247,8 +246,8 @@ const SandboxContent = () => {
           >
             @absolutejs/isolated-jsc
           </a>{" "}
-          — a JavaScriptCore-native sandbox for Bun (since isolated-vm
-          requires V8 ABI symbols Bun's JSC doesn't have).
+          — a JavaScriptCore-native sandbox for Bun (since isolated-vm requires
+          V8 ABI symbols Bun's JSC doesn't have).
         </p>
       </footer>
     </main>
