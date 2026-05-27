@@ -1,11 +1,12 @@
 import { networking } from "@absolutejs/absolute";
-import { Elysia } from "elysia";
+import { isUserSessionId } from "@absolutejs/auth";
+import { type AnyElysia, Elysia } from "elysia";
 import {
   getDemoPagePath,
   isBackendMode,
   isFrameworkId,
 } from "../../frontend/demo-backends";
-import { buildRagAbsoluteAuth } from "../shared/auth/config";
+import { type AuthUser, buildRagAbsoluteAuth } from "../shared/auth/config";
 import { createWebRuntime } from "./handlers/runtime/createWebRuntime";
 import { renderAuthMenu } from "./handlers/renderAuthMenu";
 import { pagesPlugin } from "./plugins/pagesPlugin";
@@ -13,20 +14,24 @@ import { createRagProxyPlugin } from "./plugins/ragProxyPlugin";
 
 const runtime = await createWebRuntime();
 
+// Widen the auth plugin so TS doesn't accumulate its ~40 route types into the
+// chain (TS2590 / vue-tsc OOM since @absolutejs/auth 0.32). Same pattern intent
+// uses; mount order + runtime are unchanged.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- intentional type-erasure to keep the .use() chain under TS's union budget; see comment above
+const authPlugin = buildRagAbsoluteAuth({
+  authDatabaseUrl: runtime.authDatabaseUrl,
+  authSessionStore: runtime.authSessionStore,
+}) as Promise<AnyElysia>;
+
 export const server = new Elysia()
-  .use(
-    await buildRagAbsoluteAuth({
-      authDatabaseUrl: runtime.authDatabaseUrl,
-      authSessionStore: runtime.authSessionStore,
-    }),
-  )
+  .use(authPlugin)
   .use(pagesPlugin(runtime.manifest, { backends: runtime.backendDescriptors }))
   // Public auth-state fragment for the HTMX page. protectRoute's second arg lets
   // us answer 200 either way (no 401 in the console); when a session exists we
   // emit the `ragAuthReady` HX-Trigger so the gated panels load themselves.
   .get("/demo/auth/htmx", (context) =>
     context.protectRoute(
-      (user) => {
+      (user: AuthUser) => {
         context.set.headers["HX-Trigger"] = "ragAuthReady";
 
         return renderAuthMenu(user);
@@ -38,7 +43,9 @@ export const server = new Elysia()
   // page the user signed out from.
   .get("/demo/signout", async ({ cookie, request }) => {
     const sessionId = cookie.user_session_id?.value;
-    if (typeof sessionId === "string" && sessionId.length > 0) {
+    // UserSessionId is a UUID-shaped template-literal brand since 0.32 — the
+    // type guard verifies the shape before passing to the store.
+    if (isUserSessionId(sessionId)) {
       try {
         await runtime.authSessionStore.removeSession(sessionId);
         await runtime.authSessionStore.removeUnregisteredSession(sessionId);

@@ -1,13 +1,13 @@
 import { file } from "bun";
 import { networking } from "@absolutejs/absolute";
 import { syncSocket } from "@absolutejs/sync";
-import { Elysia, t } from "elysia";
+import { type AnyElysia, Elysia, t } from "elysia";
 import { join } from "node:path";
 import {
   buildDemoUploadIngestInput,
   getDemoUploadPreset,
 } from "../../frontend/demo-backends";
-import { buildRagAbsoluteAuth } from "../shared/auth/config";
+import { type AuthUser, buildRagAbsoluteAuth } from "../shared/auth/config";
 import { getRagServicePort } from "../shared/ragServiceConfig";
 import { renderHtmxOpsPanel } from "./handlers/htmxRagWorkflow";
 import { createRagRuntime } from "./handlers/ragRuntime";
@@ -51,13 +51,16 @@ let handleInternalRequest: DemoInternalRequestHandler = async () =>
 const dispatchInternalRequest: DemoInternalRequestHandler = (request) =>
   handleInternalRequest(request);
 
+// Widen the auth plugin so TS doesn't accumulate ~40 route types into the chain
+// (TS2590 since @absolutejs/auth 0.32). Same pattern as src/backend/web/server.ts.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- intentional type-erasure to keep the .use() chain under TS's union budget; see comment above
+const authPlugin = buildRagAbsoluteAuth({
+  authDatabaseUrl: runtime.authDatabaseUrl,
+  authSessionStore: runtime.authSessionStore,
+}) as Promise<AnyElysia>;
+
 const service = new Elysia()
-  .use(
-    await buildRagAbsoluteAuth({
-      authDatabaseUrl: runtime.authDatabaseUrl,
-      authSessionStore: runtime.authSessionStore,
-    }),
-  )
+  .use(authPlugin)
   .onRequest(() => {
     runtime.startup.schedule();
   })
@@ -171,7 +174,7 @@ const service = new Elysia()
     ].join("");
   })
   .get("/demo/sync-sources/:mode", (context) =>
-    context.protectRoute(async (user) => {
+    context.protectRoute(async (user: AuthUser) => {
       const resolved = resolveDemoBackend(
         runtime.ragBackends,
         context.params.mode,
@@ -197,7 +200,7 @@ const service = new Elysia()
   )
   .get("/demo/ops/:mode", (context) =>
     context.protectRoute(
-      async (user) => {
+      async (user: AuthUser) => {
         const resolved = resolveDemoBackend(
           runtime.ragBackends,
           context.params.mode,
@@ -239,7 +242,7 @@ const service = new Elysia()
     ),
   )
   .post("/demo/sync/:mode", (context) =>
-    context.protectRoute(async (user) => {
+    context.protectRoute(async (user: AuthUser) => {
       const resolved = resolveDemoBackend(
         runtime.ragBackends,
         context.params.mode,
@@ -317,7 +320,7 @@ const service = new Elysia()
     }),
   )
   .post("/demo/sync-selection/:mode/:id", (context) =>
-    context.protectRoute(async (user) => {
+    context.protectRoute(async (user: AuthUser) => {
       const resolved = resolveDemoBackend(
         runtime.ragBackends,
         context.params.mode,
@@ -398,7 +401,7 @@ const service = new Elysia()
     }),
   )
   .post("/demo/sync/:mode/:id", (context) =>
-    context.protectRoute(async (user) => {
+    context.protectRoute(async (user: AuthUser) => {
       const resolved = resolveDemoBackend(
         runtime.ragBackends,
         context.params.mode,

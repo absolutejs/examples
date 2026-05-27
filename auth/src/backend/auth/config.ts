@@ -240,9 +240,13 @@ export const authConfig = (
     console.log("Removed unregistered sessions:", removedUnregisteredSessions);
   },
   onSignOut: ({ authProvider, userSessionId, session }) => {
-    const providerName = isValidProviderOption(authProvider)
-      ? providerData[authProvider].name
-      : authProvider;
+    // `authProvider` is `string | undefined` since @absolutejs/auth 0.32 — only the
+    // OAuth2 /authorize flow sets it; credentials/MFA/passwordless/SSO sessions
+    // don't. Fall back to "non-OAuth" when missing.
+    const providerName =
+      authProvider !== undefined && isValidProviderOption(authProvider)
+        ? providerData[authProvider].name
+        : (authProvider ?? "non-OAuth");
 
     const userSession = session[userSessionId];
 

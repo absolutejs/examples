@@ -2,7 +2,7 @@ import type { LinkedProviderBinding } from "@absolutejs/linked-providers";
 import {
   createNeonLinkedProviderStores,
   createNeonOAuthLinkedProviderCredentialResolver,
-  createProvidersConfiguration,
+  defineProvidersConfiguration,
 } from "@absolutejs/auth";
 
 export const FACEBOOK_PAGE_READ_SCOPES = [
@@ -76,7 +76,7 @@ export const createLinkedMetaCredentialResolverFromEnv = async () => {
 
   return createNeonOAuthLinkedProviderCredentialResolver({
     databaseUrl,
-    providersConfiguration: createProvidersConfiguration({
+    providersConfiguration: defineProvidersConfiguration({
       facebook: {
         connector: {
           credentials: {

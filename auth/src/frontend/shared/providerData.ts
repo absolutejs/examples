@@ -6,7 +6,11 @@ type ProviderInfo = {
   primaryColor: string;
 };
 
-type ProviderData = Record<Lowercase<ProviderOption>, ProviderInfo>;
+// All citra ProviderOption values are already lowercase; wrapping with Lowercase<>
+// adds a mapped-type indirection TS can't simplify across the now-73-wide union,
+// which surfaces as TS7053 "can't be used to index" errors at every providerData
+// access site.
+type ProviderData = Record<ProviderOption, ProviderInfo>;
 
 export const providerData: ProviderData = {
   "42": {
@@ -33,6 +37,11 @@ export const providerData: ProviderData = {
     logoUrl: "/assets/svg/atlassian-logo.svg",
     name: "Atlassian",
     primaryColor: "#0052CC",
+  },
+  attio: {
+    logoUrl: "/assets/svg/attio-logo.svg",
+    name: "Attio",
+    primaryColor: "#1A2940",
   },
   auth0: {
     logoUrl: "/assets/svg/auth0-logo.svg",
@@ -68,6 +77,11 @@ export const providerData: ProviderData = {
     logoUrl: "/assets/svg/bungie-logo.svg",
     name: "Bungie",
     primaryColor: "#0075BB",
+  },
+  close: {
+    logoUrl: "/assets/svg/close-logo.svg",
+    name: "Close",
+    primaryColor: "#FB6B41",
   },
   coinbase: {
     logoUrl: "/assets/svg/coinbase-logo.svg",
@@ -129,10 +143,20 @@ export const providerData: ProviderData = {
     name: "GitLab",
     primaryColor: "#FC6D26",
   },
+  gohighlevel: {
+    logoUrl: "/assets/svg/gohighlevel-logo.svg",
+    name: "GoHighLevel",
+    primaryColor: "#02B5B0",
+  },
   google: {
     logoUrl: "/assets/svg/google-logo.svg",
     name: "Google",
     primaryColor: "#4285F4",
+  },
+  hubspot: {
+    logoUrl: "/assets/svg/hubspot-logo.svg",
+    name: "HubSpot",
+    primaryColor: "#FF7A59",
   },
   intuit: {
     logoUrl: "/assets/svg/intuit-logo.svg",
@@ -194,6 +218,11 @@ export const providerData: ProviderData = {
     name: "Microsoft Entra ID",
     primaryColor: "#000000",
   },
+  monday: {
+    logoUrl: "/assets/svg/monday-logo.svg",
+    name: "monday.com",
+    primaryColor: "#FF3D57",
+  },
   myanimelist: {
     logoUrl: "/assets/svg/myanimelist-logo.svg",
     name: "MyAnimeList",
@@ -223,6 +252,11 @@ export const providerData: ProviderData = {
     logoUrl: "/assets/svg/PATREON_SYMBOL_1_BLACK_RGB.svg",
     name: "Patreon",
     primaryColor: "#000000",
+  },
+  pipedrive: {
+    logoUrl: "/assets/svg/pipedrive-logo.svg",
+    name: "Pipedrive",
+    primaryColor: "#2BB36F",
   },
   polar: {
     logoUrl: "/assets/svg/polar-logo.svg",
@@ -333,6 +367,11 @@ export const providerData: ProviderData = {
     logoUrl: "/assets/svg/yandex-icon_grad_circ.svg",
     name: "Yandex",
     primaryColor: "#5282FF",
+  },
+  zoho: {
+    logoUrl: "/assets/svg/zoho-logo.svg",
+    name: "Zoho",
+    primaryColor: "#D6363D",
   },
   zoom: {
     logoUrl: "/assets/png/Zoom_Logo_Bloom_RGB.png",
