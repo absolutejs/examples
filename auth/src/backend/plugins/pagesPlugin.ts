@@ -164,5 +164,26 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
       .get("/htmx/connectors", () =>
         handleHTMXPageRequest(asset(manifest, "HtmxAuthConnectors")),
       )
+      .get("/htmx/credentials", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthCredentials")),
+      )
+      .get("/htmx/passkeys", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthPasskeys")),
+      )
+      .get("/htmx/mfa", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthMfa")),
+      )
+      .get("/htmx/passwordless", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthPasswordless")),
+      )
+      .get("/htmx/sessions", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthSessions")),
+      )
+      .get("/htmx/audit", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthAudit")),
+      )
+      .get("/htmx/idp", () =>
+        handleHTMXPageRequest(asset(manifest, "HtmxAuthIdp")),
+      )
   );
 };
