@@ -1,0 +1,258 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  background: #0e1116;
+  color: #e6edf3;
+  line-height: 1.5;
+}
+
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  display: grid;
+  gap: 24px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  margin: 0 0 8px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.page-header .lead {
+  margin: 0;
+  color: #9ba9b8;
+  max-width: 70ch;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ba9b8;
+}
+
+.muted {
+  color: #6e7d8e;
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.presets .preset-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preset button {
+  width: 100%;
+  text-align: left;
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font: inherit;
+  transition: border-color 120ms ease;
+}
+
+.preset button:hover {
+  border-color: #3d5af1;
+}
+
+.preset-active button {
+  border-color: #3d5af1;
+  background: #1c2233;
+}
+
+.preset strong {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.preset span {
+  font-size: 12.5px;
+  color: #9ba9b8;
+  line-height: 1.4;
+}
+
+.editor-pane {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .editor-pane {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editor-col,
+.result-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ba9b8;
+}
+
+textarea {
+  background: #0a0d12;
+  color: #e6edf3;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 12px;
+  font:
+    13px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  min-height: 320px;
+  resize: vertical;
+  width: 100%;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #3d5af1;
+}
+
+.limits {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.limits label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 1 auto;
+}
+
+.limits input {
+  background: #0a0d12;
+  color: #e6edf3;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: 13px ui-monospace, monospace;
+  width: 100px;
+}
+
+button.primary {
+  background: #3d5af1;
+  color: #fff;
+  border: 1px solid #3d5af1;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font: 14px inherit;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.result {
+  background: #0a0d12;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-status {
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+
+.result-status.ok {
+  background: rgba(46, 160, 67, 0.15);
+  color: #4ac26b;
+}
+
+.result-status.err {
+  background: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+}
+
+.result h3 {
+  font-size: 12px;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6e7d8e;
+}
+
+.result pre {
+  margin: 0;
+  padding: 10px 12px;
+  background: #06090d;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  font:
+    12.5px ui-monospace,
+    monospace;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 320px;
+}
+
+.footer {
+  border-top: 1px solid #21262d;
+  padding-top: 16px;
+  color: #6e7d8e;
+  font-size: 13px;
+}
+
+.footer a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
