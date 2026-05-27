@@ -1,0 +1,59 @@
+<section class="auth-section stack">
+  <div>
+    <h1 class="page-heading">Passkeys</h1>
+    <p class="muted">
+      WebAuthn passkeys. <code>&#64;absolutejs/auth</code> doesn&apos;t ship
+      Angular composables yet, so this showcase drives the conditional-UI
+      autofill (<code>runConditionalAuthentication</code>) and the
+      registration ceremony (<code>runPasskeyRegistration</code>) directly from
+      <code>&#64;absolutejs/auth/client</code>.
+    </p>
+  </div>
+
+  <div class="stack">
+    <h2>Conditional-UI sign-in</h2>
+    <label class="stack" style="gap: 4px">
+      <span>Email or passkey</span>
+      <input
+        autocomplete="username webauthn"
+        placeholder="Tap to see saved passkeys"
+        type="email"
+      />
+    </label>
+    <p *ngIf="autofillPending()" class="muted">Waiting for selection…</p>
+    <p *ngIf="autofillSignedIn()">
+      Signed in via passkey. Visit Protected to see your session.
+    </p>
+    <p *ngIf="autofillError() !== null" class="auth-error" role="alert">
+      {{ autofillError() }}
+    </p>
+  </div>
+
+  <div class="stack">
+    <h2>Upgrade prompt</h2>
+    <p *ngIf="upgradePending()" class="muted">Loading passkeys…</p>
+    <div *ngIf="!upgradePending() && upgradeShouldPrompt()" class="stack">
+      <p>
+        Save a passkey to this device for faster sign-in next time. One tap, no
+        password to remember.
+      </p>
+      <button class="button primary" type="button" (click)="register()">
+        Save a passkey
+      </button>
+    </div>
+    <p
+      *ngIf="
+        !upgradePending() && !upgradeShouldPrompt() && upgradePasskeys()
+      "
+      class="muted"
+    >
+      You have {{ upgradePasskeys()?.length }} passkey{{
+        upgradePasskeys()?.length === 1 ? "" : "s"
+      }}
+      registered.
+    </p>
+    <p *ngIf="upgradeError() !== null" class="auth-error" role="alert">
+      {{ upgradeError() }}
+    </p>
+  </div>
+</section>

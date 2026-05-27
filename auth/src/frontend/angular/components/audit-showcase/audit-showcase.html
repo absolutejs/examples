@@ -1,0 +1,60 @@
+<section class="auth-section stack">
+  <div>
+    <h1 class="page-heading">Audit log integrity</h1>
+    <p class="muted">
+      Every event emitted by <code>&#64;absolutejs/auth</code> is captured by
+      the tamper-evident sink (<code>createTamperEvidentSink</code> wraps the
+      Neon sink) and hash-chained per writer. <code>verifyAuditChain</code>
+      reports any break.
+    </p>
+  </div>
+
+  <div class="stack">
+    <button
+      class="button"
+      [disabled]="pending()"
+      type="button"
+      (click)="fetchEvents()"
+    >
+      {{ pending() ? "Loading…" : "Refresh" }}
+    </button>
+
+    <p *ngIf="error() !== null" class="auth-error" role="alert">
+      {{ error() }}
+    </p>
+
+    <ng-container *ngIf="data() as payload">
+      <h2>Integrity</h2>
+      <ul class="showcase-monospace">
+        <li
+          *ngFor="let check of payload.verification; trackBy: trackCheck"
+          [ngClass]="check.ok ? 'muted' : 'auth-error'"
+        >
+          writer={{ check.writerId ?? "—" }} ok={{ check.ok }}
+          <ng-container *ngIf="check.brokenAt !== undefined">
+            brokenAt={{ isoString(check.brokenAt) }}
+          </ng-container>
+        </li>
+      </ul>
+
+      <h2>Recent events ({{ payload.events.length }})</h2>
+      <ul class="stack">
+        <li
+          *ngFor="let event of payload.events; trackBy: trackEvent"
+          class="showcase-card"
+        >
+          <div>
+            <strong>{{ event.type }}</strong>
+            <span class="muted">{{ isoString(event.at) }}</span>
+          </div>
+          <div *ngIf="event.userId !== undefined" class="muted">
+            user: {{ event.userId }}
+          </div>
+          <div *ngIf="event.ip !== undefined" class="muted">
+            ip: {{ event.ip }}
+          </div>
+        </li>
+      </ul>
+    </ng-container>
+  </div>
+</section>
