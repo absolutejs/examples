@@ -1,12 +1,12 @@
 import { neon } from "@neondatabase/serverless";
 import {
-  absoluteAuth,
-  createProvidersConfiguration,
+  auth,
+  defineProvidersConfiguration,
   extractPropFromIdentity,
   instantiateUserSession,
   isValidProviderOption,
   providers,
-  type AbsoluteAuthSessionStore,
+  type AuthSessionStore,
 } from "@absolutejs/auth";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
@@ -35,7 +35,7 @@ const getRequiredEnv = (key: string) => {
 };
 
 const providersConfiguration: OAuth2ConfigurationOptions =
-  createProvidersConfiguration({
+  defineProvidersConfiguration({
     facebook: {
       connector: {
         credentials: {
@@ -250,14 +250,14 @@ export const buildRagAbsoluteAuth = ({
   authSessionStore,
 }: {
   authDatabaseUrl: string;
-  authSessionStore: AbsoluteAuthSessionStore<AuthUser>;
+  authSessionStore: AuthSessionStore<AuthUser>;
 }) => {
   const sql = neon(authDatabaseUrl);
   const db = drizzle(sql, {
     schema: authSchema,
   });
 
-  return absoluteAuth<AuthUser>({
+  return auth<AuthUser>({
     authSessionStore,
     providersConfiguration,
     onCallbackSuccess: async ({

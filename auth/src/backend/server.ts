@@ -2,7 +2,7 @@ import { getEnv, networking, prepare } from "@absolutejs/absolute";
 import { auth, createNeonAuthSessionStore } from "@absolutejs/auth";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { Elysia } from "elysia";
+import { type AnyElysia, Elysia } from "elysia";
 import { apiPlugin } from "./plugins/apiPlugin";
 import { pagesPlugin } from "./plugins/pagesPlugin";
 import { schema, User } from "../../db/schema";
@@ -17,14 +17,19 @@ const db = drizzle(sql, { schema });
 const authSessionStore = createNeonAuthSessionStore<User>(databaseUrl);
 const { bindingStore, grantStore } = createDrizzleLinkedProviderStores(db);
 
+// Widen the async auth plugin (carrying ~40+ routes since 0.32) so TS does NOT
+// accumulate the giant per-route type across the whole `.use()` chain — that
+// merged type is intractable for tsc and trips TS2590. Same pattern intent uses
+// (see ~/intent/src/backend/server.ts:244). Mount order + runtime are unchanged.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- intentional type-erasure to keep the .use() chain under TS's union budget; see comment above
+const authPlugin = auth<User>({
+  ...authConfig(db),
+  authSessionStore,
+  htmx: authHtmxConfig({ bindingStore, db, grantStore }),
+}) as Promise<AnyElysia>;
+
 const server = new Elysia()
-  .use(
-    await auth<User>({
-      ...authConfig(db),
-      authSessionStore,
-      htmx: authHtmxConfig({ bindingStore, db, grantStore }),
-    }),
-  )
+  .use(authPlugin)
   .use(apiPlugin({ authSessionStore, bindingStore, db, grantStore }))
   .post("/cleanup", async ({ cleanupSessions }) => {
     await cleanupSessions();

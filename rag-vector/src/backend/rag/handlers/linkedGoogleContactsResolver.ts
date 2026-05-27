@@ -2,7 +2,7 @@ import type { LinkedProviderBinding } from "@absolutejs/linked-providers";
 import {
   createNeonLinkedProviderStores,
   createNeonOAuthLinkedProviderCredentialResolver,
-  createProvidersConfiguration,
+  defineProvidersConfiguration,
 } from "@absolutejs/auth";
 
 const GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
@@ -68,7 +68,7 @@ export const createLinkedGoogleContactsCredentialResolverFromEnv = async () => {
 
   return createNeonOAuthLinkedProviderCredentialResolver({
     databaseUrl,
-    providersConfiguration: createProvidersConfiguration({
+    providersConfiguration: defineProvidersConfiguration({
       google: {
         connector: {
           credentials: {
