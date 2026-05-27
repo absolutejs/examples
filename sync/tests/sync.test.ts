@@ -740,3 +740,56 @@ test.describe("Issues tracker (React)", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EDEN-TYPED DOGFOOD — the second tasks card on the React page goes through
+// treaty<typeof server> + syncStore. Same `tasks` data, typed Eden HTTP
+// hydrate + mutate path. These tests check the typed path actually round-trips
+// AND stays in sync with the existing useSyncCollection card above it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe("Eden-typed tracker (React, /sync/tasks via treaty)", () => {
+  test("renders, hydrates, accepts a typed add, and stays live with the WS card", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator(".sync-status").first()).toContainText("Live", {
+      timeout: 15000,
+    });
+    // The Eden card mounts and shows the live banner with its own status.
+    await expect(page.getByTestId("eden-typed-tracker")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(page.getByTestId("eden-typed-tracker")).toContainText(
+      "Live — Eden + WS",
+      { timeout: 15000 },
+    );
+
+    // The typed list reflects the seed tasks from the same backend store.
+    await expect(page.getByTestId("eden-count")).toContainText("typed", {
+      timeout: 10000,
+    });
+
+    // Add via the typed input — Eden POST → engine mutation → WS diff to both
+    // cards (since both subscribe to "tasks").
+    const title = `eden-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    await page.getByTestId("eden-input").fill(title);
+    await page.getByTestId("eden-input").press("Enter");
+    // The new row appears in the typed card…
+    await expect(
+      page.getByTestId("eden-task-list").locator(".task-item", { hasText: title }),
+    ).toBeVisible({ timeout: 10000 });
+    // …AND in the original WS card, because both rest on the same engine.
+    await expect(taskRow(page, title).first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("the typed openapi route is mounted (/openapi or /sync/tasks responds)", async ({
+    request,
+  }) => {
+    // The typed GET should return an array (Eden-typed `Task[]` on the client).
+    const response = await request.get("/sync/tasks");
+    expect(response.ok()).toBe(true);
+    const data: unknown = await response.json();
+    expect(Array.isArray(data)).toBe(true);
+  });
+});

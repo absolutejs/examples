@@ -13,7 +13,7 @@ import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
 import { createSyncRAGStore } from "@absolutejs/rag";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 
 // The row our live data is made of. In a real app these are rows in your own
 // database (read via Drizzle/Prisma); here an in-memory Map stands in so the
@@ -694,6 +694,25 @@ const queryParam = (data: Record<string, unknown>, name: string) => {
   return typeof value === "string" ? value : undefined;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Eden-typed HTTP surface — `treaty<typeof server>` on the client reads these
+// signatures and gives end-to-end types with no codegen. The WebSocket
+// (`syncSocket`) still streams live diffs; these typed routes are the
+// hydrate + mutate path that `syncStore` consumes. Same engine, two surfaces.
+//
+// Plain `.get` / `.post` instead of the `hydrateRoute` / `mutateRoute`
+// helpers because the tasks collection here is set up with the lower-level
+// `registerReader/Writer/Reactive` path. The point of the dogfood is that
+// the typed end-to-end story works either way: Eden picks up the return
+// types from the route handlers regardless of how they get to the data.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const sortedTasks = (): Task[] =>
+  [...tasks.values()].sort((first, second) => first.createdAt - second.createdAt);
+
+const runMutation = (name: string, args: unknown) =>
+  engine.runMutation(name, args, {});
+
 // Compose the socket with the scheduled-functions plugin (cron triggers fire on
 // server start). One `.use(syncPlugin)` mounts both.
 export const syncPlugin = new Elysia()
@@ -708,4 +727,23 @@ export const syncPlugin = new Elysia()
   .use(scheduled({ engine }))
   // Live devtools dashboard at /sync/devtools — collections, subscription
   // counts, mutations, schedules, and a streaming change/mutation feed.
-  .use(syncDevtools({ engine }));
+  .use(syncDevtools({ engine }))
+  // Typed REST surface for `treaty<typeof server>` + `syncStore` on the client.
+  .get("/sync/tasks", () => sortedTasks())
+  .post(
+    "/sync/addTask",
+    ({ body }) =>
+      runMutation("addTask", body) as Promise<Task | null>,
+    { body: t.Object({ id: t.Optional(t.String()), title: t.String() }) },
+  )
+  .post(
+    "/sync/toggleTask",
+    ({ body }) =>
+      runMutation("toggleTask", body) as Promise<Task | null>,
+    { body: t.Object({ id: t.String() }) },
+  )
+  .post(
+    "/sync/removeTask",
+    ({ body }) => runMutation("removeTask", body),
+    { body: t.Object({ id: t.String() }) },
+  );
