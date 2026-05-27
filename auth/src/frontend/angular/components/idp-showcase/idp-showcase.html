@@ -1,0 +1,37 @@
+<section class="auth-section stack">
+  <div>
+    <h1 class="page-heading">OAuth2 / OIDC Provider</h1>
+    <p class="muted">
+      This example app issues OAuth2/OIDC tokens to client apps (RPs)
+      configured via Dynamic Client Registration (RFC 7591). The discovery doc
+      below is what any RP fetches first; the JWKS publishes the signing public
+      key so RPs can verify your tokens locally.
+    </p>
+  </div>
+
+  <p *ngIf="error() !== null" class="auth-error" role="alert">{{ error() }}</p>
+
+  <div class="stack">
+    <h2>Discovery</h2>
+    <p class="muted"><code>GET /.well-known/openid-configuration</code></p>
+    <pre *ngIf="discoveryJson() as text" class="showcase-code">{{ text }}</pre>
+  </div>
+
+  <div class="stack">
+    <h2>JWKS</h2>
+    <p class="muted">
+      <code>GET /oauth2/jwks</code> — {{ jwksKeyCount() }} key(s) published.
+    </p>
+    <pre *ngIf="jwksJson() as text" class="showcase-code">{{ text }}</pre>
+  </div>
+
+  <div class="stack">
+    <h2>Register a client (DCR)</h2>
+    <p class="muted">
+      RFC 7591 — POST your client metadata to <code>/oauth2/register</code> and
+      receive a <code>client_id</code> + <code>client_secret</code> +
+      <code>registration_access_token</code> for self-service management.
+    </p>
+    <pre class="showcase-code">{{ dcrExample }}</pre>
+  </div>
+</section>

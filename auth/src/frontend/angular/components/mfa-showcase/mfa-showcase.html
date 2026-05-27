@@ -1,0 +1,69 @@
+<section class="auth-section stack">
+  <div>
+    <h1 class="page-heading">MFA (TOTP)</h1>
+    <p class="muted">
+      Time-based one-time passwords (RFC 6238). Setup returns an
+      <code>otpauth://</code> URI you can render as a QR code or paste into any
+      authenticator app (1Password, Authy, Google Authenticator). The challenge
+      route promotes a parked session after a successful login.
+    </p>
+  </div>
+
+  <div class="stack" style="gap: 12px">
+    <h2>Enrollment</h2>
+    <button class="button primary" type="button" (click)="startSetup()">
+      Start TOTP setup
+    </button>
+
+    <div *ngIf="setup() !== null" class="stack" style="gap: 4px">
+      <p class="muted">
+        Add this secret to your authenticator app, then enter the 6-digit code
+        below to verify.
+      </p>
+      <code style="word-break: break-all">{{ setup()?.uri }}</code>
+      <p class="muted">
+        Or paste the raw secret manually: <code>{{ setup()?.secret }}</code>
+      </p>
+    </div>
+
+    <div
+      *ngIf="stage() === 'setup-pending' || stage() === 'challenge'"
+      class="stack"
+      style="gap: 8px"
+    >
+      <label class="stack" style="gap: 4px">
+        <span>6-digit code</span>
+        <input
+          [ngModel]="code()"
+          (ngModelChange)="code.set($event)"
+          autocomplete="one-time-code"
+          inputmode="numeric"
+          maxlength="6"
+          name="code"
+          pattern="[0-9]*"
+          type="text"
+        />
+      </label>
+      <button class="button" type="button" (click)="onSubmit()">
+        {{ stage() === "challenge" ? "Verify challenge" : "Verify setup" }}
+      </button>
+    </div>
+
+    <div *ngIf="backupCodes().length > 0" class="stack" style="gap: 4px">
+      <p>Backup codes (one-time use, store them now):</p>
+      <ul style="font-family: monospace">
+        <li *ngFor="let codeValue of backupCodes()">{{ codeValue }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="stack" style="gap: 8px">
+    <h2>Challenge (after a credentials login returned mfa_required)</h2>
+    <button class="button" type="button" (click)="switchToChallenge()">
+      Switch to challenge mode
+    </button>
+  </div>
+
+  <p *ngIf="error() !== null" class="auth-error" role="alert">{{ error() }}</p>
+  <p *ngIf="notice() !== null" class="muted">{{ notice() }}</p>
+</section>
