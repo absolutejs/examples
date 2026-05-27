@@ -6,10 +6,15 @@ import {
 import {
   createPresence,
   indexedDbCollectionCache,
+  syncStore,
+  unwrapEden,
   type PresenceClient,
   type PresenceMember,
+  type SyncStore,
 } from "@absolutejs/sync/client";
 import { createYjsText } from "@absolutejs/sync-yjs";
+import { treaty } from "@elysiajs/eden";
+import type { Server } from "../../../backend/server";
 
 type Task = {
   id: string;
@@ -497,6 +502,8 @@ export const SyncReactContent = () => {
         any of them — every open client stays in sync.
       </p>
 
+      <EdenTaskTracker />
+
       <IssueTracker />
 
       <p className="footer">
@@ -912,5 +919,165 @@ const IssueDetail = ({
         )}
       </section>
     </article>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EDEN-TYPED DOGFOOD — same `tasks` collection, but via `treaty<typeof server>`
+// + `syncStore` instead of `useSyncCollection`. Server side it goes through
+// typed `.get('/sync/tasks')` + `.post('/sync/addTask', { body })` routes
+// (defined in backend/sync.ts). Client side, types flow end-to-end from those
+// route signatures — no `<T>` annotations, no codegen step, no string-typed
+// collection name in the data path. `/openapi` auto-mounted by absolute in
+// dev shows the routes with their TypeBox schemas.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const edenBaseUrl = () => {
+  if (typeof window === "undefined") return "http://localhost:3100";
+  return `${window.location.protocol}//${window.location.host}`;
+};
+
+/** A tiny React adapter for syncStore — same shape as useSyncCollection. */
+const useSyncStoreState = <Row, M extends Record<string, (args: never) => Promise<unknown>>>(
+  store: SyncStore<Row, M>,
+) => {
+  const [state, setState] = useState(store.get());
+  useEffect(() => store.subscribe(setState), [store]);
+
+  return state;
+};
+
+const EdenTaskTracker = () => {
+  // One typed client for the whole tracker. Memoised because treaty creates
+  // a proxy chain; making a new one per render would defeat eden's caching.
+  const api = useMemo(() => treaty<Server>(edenBaseUrl()), []);
+
+  // `syncStore` rides the same WS as `useSyncCollection` for live diffs, but
+  // hydrate + mutate go through Eden — args + return values typed end-to-end.
+  const store = useMemo(
+    () =>
+      syncStore({
+        collection: "tasks",
+        hydrate: () => unwrapEden(api.sync.tasks.get()),
+        key: (row) => row.id,
+        mutations: {
+          addTask: (args: { id?: string; title: string }) =>
+            unwrapEden(api.sync.addTask.post(args)),
+          removeTask: (args: { id: string }) =>
+            unwrapEden(api.sync.removeTask.post(args)),
+          toggleTask: (args: { id: string }) =>
+            unwrapEden(api.sync.toggleTask.post(args)),
+        },
+        url: wsUrl(),
+      }),
+    [api],
+  );
+  useEffect(() => () => store.close(), [store]);
+
+  const state = useSyncStoreState(store);
+  const [title, setTitle] = useState("");
+  const [denied, setDenied] = useState(false);
+
+  const submit = (
+    name: "addTask" | "toggleTask" | "removeTask",
+    args: never,
+    optimistic?: Parameters<typeof store.mutate>[2],
+  ) => {
+    setDenied(false);
+    void store.mutate(name, args, optimistic).catch(() => setDenied(true));
+  };
+
+  const tasks = [...state.data].sort(
+    (first, second) => first.createdAt - second.createdAt,
+  );
+
+  const add = (event: FormEvent) => {
+    event.preventDefault();
+    const value = title.trim();
+    if (!value) return;
+    setTitle("");
+    const id = globalThis.crypto.randomUUID();
+    submit("addTask", { id, title: value } as never, {
+      optimistic: (draft) =>
+        draft.set({ createdAt: Date.now(), done: false, id, title: value }),
+    });
+  };
+
+  const toggle = (task: Task) =>
+    submit("toggleTask", { id: task.id } as never, {
+      optimistic: (draft) => draft.set({ ...task, done: !task.done }),
+    });
+
+  const remove = (task: Task) =>
+    submit("removeTask", { id: task.id } as never, {
+      optimistic: (draft) => draft.delete(task.id),
+    });
+
+  return (
+    <section className="sync-card" data-testid="eden-typed-tracker">
+      <p className="section-desc">
+        <strong>Eden-typed dogfood</strong> — the SAME <code>tasks</code>{" "}
+        collection above, but accessed via <code>treaty&lt;typeof server&gt;</code>{" "}
+        + <code>syncStore</code>. Hydrate + mutate go over Eden HTTP (types
+        inferred end-to-end from the route signatures); live diffs still come
+        from the WebSocket. No codegen step, no <code>&lt;T&gt;</code> — Eden +
+        TypeBox do the typing. The <code>/openapi</code> page (Scalar UI, auto-
+        mounted by <code>@absolutejs/absolute</code> in dev) shows the routes
+        with their TypeBox schemas. See the{" "}
+        <a
+          href="https://absolutejs.com/documentation/sync-eden"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          End-to-end Types
+        </a>{" "}
+        docs view for the full pattern.
+      </p>
+
+      <div className="sync-bar">
+        <div className="sync-status">
+          <span
+            className={state.status === "ready" ? "dot dot-live" : "dot"}
+          />
+          {state.status === "ready" ? "Live — Eden + WS" : "Connecting…"}
+        </div>
+        <span className="sync-stat" data-testid="eden-count">
+          {tasks.length} typed
+        </span>
+      </div>
+
+      {denied && (
+        <p className="presence-bar" data-testid="eden-write-denied">
+          Server rejected the write — you're read-only.
+        </p>
+      )}
+
+      <form className="task-form" onSubmit={add}>
+        <input
+          aria-label="New typed task"
+          data-testid="eden-input"
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Add a typed task…"
+          value={title}
+        />
+        <button className="primary" type="submit">
+          Add
+        </button>
+      </form>
+
+      <ul className="task-list" data-testid="eden-task-list">
+        {tasks.map((task) => (
+          <TaskItem
+            key={task.id}
+            onRemove={remove}
+            onToggle={toggle}
+            task={task}
+          />
+        ))}
+        {tasks.length === 0 && (
+          <li className="task-empty">No tasks yet.</li>
+        )}
+      </ul>
+    </section>
   );
 };
