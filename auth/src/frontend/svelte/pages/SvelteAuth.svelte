@@ -2,10 +2,17 @@
   import Route from "@absolutejs/absolute/svelte/router/Route.svelte";
   import Router from "@absolutejs/absolute/svelte/router/Router.svelte";
   import { onMount } from "svelte";
+  import AuditShowcase from "../components/AuditShowcase.svelte";
   import Connectors from "../components/Connectors.svelte";
+  import CredentialsShowcase from "../components/CredentialsShowcase.svelte";
   import Home from "../components/Home.svelte";
+  import IdpShowcase from "../components/IdpShowcase.svelte";
+  import MfaShowcase from "../components/MfaShowcase.svelte";
   import Navbar from "../components/Navbar.svelte";
+  import PasskeysShowcase from "../components/PasskeysShowcase.svelte";
+  import PasswordlessShowcase from "../components/PasswordlessShowcase.svelte";
   import Protected from "../components/Protected.svelte";
+  import SessionsShowcase from "../components/SessionsShowcase.svelte";
   import Settings from "../components/Settings.svelte";
   import { startAuth } from "../stores/auth.svelte";
   import { removeToast, toastState } from "../stores/toast.svelte";
@@ -38,6 +45,27 @@
       </Route>
       <Route path="/svelte/connectors">
         {#snippet content()}<Connectors />{/snippet}
+      </Route>
+      <Route path="/svelte/credentials">
+        {#snippet content()}<CredentialsShowcase />{/snippet}
+      </Route>
+      <Route path="/svelte/passkeys">
+        {#snippet content()}<PasskeysShowcase />{/snippet}
+      </Route>
+      <Route path="/svelte/mfa">
+        {#snippet content()}<MfaShowcase />{/snippet}
+      </Route>
+      <Route path="/svelte/passwordless">
+        {#snippet content()}<PasswordlessShowcase />{/snippet}
+      </Route>
+      <Route path="/svelte/sessions">
+        {#snippet content()}<SessionsShowcase />{/snippet}
+      </Route>
+      <Route path="/svelte/audit">
+        {#snippet content()}<AuditShowcase />{/snippet}
+      </Route>
+      <Route path="/svelte/idp">
+        {#snippet content()}<IdpShowcase />{/snippet}
       </Route>
     </Router>
   </main>
