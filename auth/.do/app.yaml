@@ -1,21 +1,24 @@
-# DigitalOcean App Platform spec for the OpenID Conformance reference
-# instance — deploys auth/ from this repo as a public HTTPS endpoint
-# the conformance suite can target.
+# DigitalOcean App Platform spec for auth.absolutejs.com — the public
+# AbsoluteJS auth reference deployment. Doubles as:
+#  - The OIDC issuer for any RP that wants to test against a real
+#    @absolutejs/auth provider
+#  - The target the OpenID Foundation conformance suite hits during
+#    certification (see ../auth/conformance/README.md)
+#  - The live demo for the showcase pages (React/Vue/Svelte/Angular/HTML/HTMX)
 #
 # Deploy:
 #   doctl apps create --spec .do/app.yaml
 #   # …or in the dashboard: Apps → Create → from GitHub → absolutejs/examples
 #
 # After first deploy:
-#   1. Set the env vars listed below (DATABASE_URL, SESSION_SECRET, etc.)
-#      via `doctl apps update` or the dashboard. They're declared as
-#      SECRET so they don't appear in this committed spec.
-#   2. Point oidc-conformance.absolutejs.com (CNAME) at the App URL.
+#   1. Set the SECRET env vars below via `doctl apps update` or the
+#      dashboard.
+#   2. CNAME auth.absolutejs.com → the App URL.
 #   3. Confirm GET /.well-known/openid-configuration responds 200 over HTTPS.
-#   4. Run ../auth/conformance/run.sh with
-#      TARGET_ISSUER=https://oidc-conformance.absolutejs.com
+#   4. From ~/abs/auth:
+#        TARGET_ISSUER=https://auth.absolutejs.com ./conformance/run.sh
 
-name: oidc-conformance
+name: auth-absolutejs
 region: nyc
 
 services:
@@ -36,7 +39,7 @@ services:
     envs:
       - key: ISSUER
         scope: RUN_AND_BUILD_TIME
-        value: https://oidc-conformance.absolutejs.com
+        value: https://auth.absolutejs.com
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
@@ -48,6 +51,6 @@ services:
         type: SECRET
 
 domains:
-  - domain: oidc-conformance.absolutejs.com
+  - domain: auth.absolutejs.com
     type: PRIMARY
     zone: absolutejs.com
