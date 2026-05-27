@@ -1,3 +1,15 @@
+import {
+  auditEventsTable,
+  credentialResetTokensTable,
+  credentialVerificationTokensTable,
+  credentialsTable,
+  mfaEnrollmentsTable,
+  oauthClientsTable,
+  oauthCodesTable,
+  oauthRefreshTokensTable,
+  passwordlessTokensTable,
+  webauthnCredentialsTable,
+} from "@absolutejs/auth";
 import type {
   LinkedProviderBinding,
   LinkedProviderGrant,
@@ -128,13 +140,27 @@ export const linkedProviderBindings = pgTable("linked_provider_bindings", {
 });
 
 export const schema = {
+  // Package-owned tables imported from @absolutejs/auth so drizzle-kit push provisions
+  // them alongside ours. Alternatively use `bunx absolute-auth migrate --blocks
+  // credentials,mfa,webauthn,passwordless,audit,oidc` for the same effect.
+  auditEventsTable,
+  // Example-owned tables (our user model + linked-providers integration).
   authIdentities,
   authIdentityMergeRequests,
   authSessions,
   authUnregisteredSessions,
+  credentialResetTokensTable,
+  credentialsTable,
+  credentialVerificationTokensTable,
   linkedProviderBindings,
   linkedProviderGrants,
+  mfaEnrollmentsTable,
+  oauthClientsTable,
+  oauthCodesTable,
+  oauthRefreshTokensTable,
+  passwordlessTokensTable,
   users,
+  webauthnCredentialsTable,
 } satisfies Record<string, AnyPgTable>;
 
 export type SchemaType = typeof schema;

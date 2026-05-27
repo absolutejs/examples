@@ -1,8 +1,25 @@
+// Two layers:
+//   1. `authClient` — the official `@absolutejs/auth/client` SDK over every endpoint the
+//      auth() backend mounts (credentials, MFA, passkeys, passwordless, sessions, etc.).
+//      Every method returns `{ data, error }` — no try/catch needed.
+//   2. The original example-specific helpers (account / linked-providers / merge requests)
+//      still hit the example's own `/api/*` plugin via direct fetch.
+//
+// Showcase pages should import `authClient` and use its named surfaces; the OAuth-only
+// pages continue to use the helpers below.
+
+import { createAuthClient } from "@absolutejs/auth/client";
 import type {
   AuthIdentityPayload,
   AuthUser,
   LinkedProviderPayload,
 } from "./types";
+
+export const authClient = createAuthClient({
+  // Default to relative paths so the client works against the local dev server + any
+  // production origin. `credentials: 'same-origin'` is the default and sends our session
+  // cookie; override here if your auth() and SPA live on different domains.
+});
 
 const request = async <T>(path: string, method = "GET") => {
   const response = await fetch(path, { method });
