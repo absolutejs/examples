@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Auth — HTMX</title>
+    <link rel="icon" href="/assets/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/auth.css"
+    />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body class="auth-body">
+    <header class="navbar">
+      <a class="navbar__brand" href="/htmx">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Absolute Auth
+      </a>
+      <nav class="navbar__links">
+        <a class="navbar__link" href="/htmx">Home</a>
+        <a class="navbar__link" href="/htmx/protected">Protected</a>
+        <a class="navbar__link" href="/htmx/credentials">Credentials</a>
+        <a class="navbar__link" href="/htmx/passkeys">Passkeys</a>
+        <a class="navbar__link" href="/htmx/mfa">MFA</a>
+        <a class="navbar__link" href="/htmx/passwordless">Passwordless</a>
+        <a class="navbar__link" href="/htmx/sessions">Sessions</a>
+        <a class="navbar__link" href="/htmx/audit">Audit</a>
+        <a class="navbar__link" href="/htmx/idp">IdP</a>
+        <a class="navbar__link" href="/htmx/settings">Settings</a>
+        <a class="navbar__link" href="/htmx/connectors">Connectors</a>
+      </nav>
+      <div
+        class="navbar__user"
+        id="auth-menu"
+        hx-get="/htmx/auth-menu"
+        hx-trigger="load"
+      ></div>
+    </header>
+    <main class="auth-main">
+      <section class="auth-section stack">
+        <div>
+          <h1 class="page-heading">OAuth2 / OIDC Provider</h1>
+        </div>
+        <p class="muted">
+          This example app issues OAuth2/OIDC tokens to client apps (RPs)
+          configured via Dynamic Client Registration (RFC 7591). The two
+          buttons below fetch the public discovery document + JWKS — the
+          standard "anyone can read this" endpoints any RP would call to
+          bootstrap.
+        </p>
+        <div class="stack">
+          <h2>Discovery</h2>
+          <p class="muted"><code>GET /.well-known/openid-configuration</code></p>
+          <button
+            class="button"
+            type="button"
+            hx-get="/.well-known/openid-configuration"
+            hx-target="#discovery"
+            hx-swap="innerHTML"
+            hx-trigger="click, load"
+          >
+            Refresh discovery
+          </button>
+          <pre id="discovery" class="showcase-code"></pre>
+        </div>
+        <div class="stack">
+          <h2>JWKS</h2>
+          <p class="muted"><code>GET /oauth2/jwks</code></p>
+          <button
+            class="button"
+            type="button"
+            hx-get="/oauth2/jwks"
+            hx-target="#jwks"
+            hx-swap="innerHTML"
+            hx-trigger="click, load"
+          >
+            Refresh JWKS
+          </button>
+          <pre id="jwks" class="showcase-code"></pre>
+        </div>
+        <div class="stack">
+          <h2>Register a client (DCR)</h2>
+          <p class="muted">
+            RFC 7591 — POST your client metadata to
+            <code>/oauth2/register</code>:
+          </p>
+          <pre class="showcase-code">curl -X POST /oauth2/register \
+  -H 'content-type: application/json' \
+  -d '{
+    "client_name": "Acme RP",
+    "redirect_uris": ["https://acme.example/cb"],
+    "grant_types": ["authorization_code", "refresh_token"]
+  }'</pre>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

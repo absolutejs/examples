@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbsoluteJS Auth — HTMX</title>
+    <link rel="icon" href="/assets/favicon.ico" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../styles/indexes/auth.css"
+    />
+    <script src="/htmx/htmx.min.js"></script>
+  </head>
+  <body class="auth-body">
+    <header class="navbar">
+      <a class="navbar__brand" href="/htmx">
+        <img alt="" src="/assets/png/absolutejs-temp.png" />
+        Absolute Auth
+      </a>
+      <nav class="navbar__links">
+        <a class="navbar__link" href="/htmx">Home</a>
+        <a class="navbar__link" href="/htmx/protected">Protected</a>
+        <a class="navbar__link" href="/htmx/credentials">Credentials</a>
+        <a class="navbar__link" href="/htmx/passkeys">Passkeys</a>
+        <a class="navbar__link" href="/htmx/mfa">MFA</a>
+        <a class="navbar__link" href="/htmx/passwordless">Passwordless</a>
+        <a class="navbar__link" href="/htmx/sessions">Sessions</a>
+        <a class="navbar__link" href="/htmx/audit">Audit</a>
+        <a class="navbar__link" href="/htmx/idp">IdP</a>
+        <a class="navbar__link" href="/htmx/settings">Settings</a>
+        <a class="navbar__link" href="/htmx/connectors">Connectors</a>
+      </nav>
+      <div
+        class="navbar__user"
+        id="auth-menu"
+        hx-get="/htmx/auth-menu"
+        hx-trigger="load"
+      ></div>
+    </header>
+    <main class="auth-main">
+      <section class="auth-section stack">
+        <div>
+          <h1 class="page-heading">MFA (TOTP)</h1>
+        </div>
+        <p class="muted">
+          Time-based one-time passwords (RFC 6238). Setup returns an
+          <code>otpauth://</code> URI you paste into any authenticator app.
+          The forms below POST directly to the package&apos;s MFA endpoints.
+        </p>
+        <form
+          class="stack"
+          style="gap: 12px"
+          hx-post="/auth/mfa/setup"
+          hx-target="#mfa-result"
+          hx-swap="innerHTML"
+          hx-headers='{"accept": "application/json"}'
+        >
+          <h2>1. Start TOTP setup</h2>
+          <button class="button primary" type="submit">Start TOTP setup</button>
+        </form>
+        <form
+          class="stack"
+          style="gap: 12px"
+          hx-post="/auth/mfa/verify-setup"
+          hx-target="#mfa-result"
+          hx-swap="innerHTML"
+          hx-headers='{"accept": "application/json"}'
+        >
+          <h2>2. Verify setup</h2>
+          <label class="stack" style="gap: 4px"><span>6-digit code</span>
+            <input name="code" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]*" autocomplete="one-time-code" required />
+          </label>
+          <button class="button" type="submit">Verify setup</button>
+        </form>
+        <form
+          class="stack"
+          style="gap: 12px"
+          hx-post="/auth/mfa/challenge"
+          hx-target="#mfa-result"
+          hx-swap="innerHTML"
+          hx-headers='{"accept": "application/json"}'
+        >
+          <h2>3. Challenge (after mfa_required at login)</h2>
+          <label class="stack" style="gap: 4px"><span>6-digit code</span>
+            <input name="code" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]*" autocomplete="one-time-code" required />
+          </label>
+          <button class="button" type="submit">Verify challenge</button>
+        </form>
+        <pre id="mfa-result" class="showcase-code"></pre>
+      </section>
+    </main>
+  </body>
+</html>
