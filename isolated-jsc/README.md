@@ -12,6 +12,8 @@ Paste code on the left, hit **Run**, see the result and any host-captured `log` 
 - **Result limit -> ResultSizeError** — returns a payload larger than `maxResultBytes`; the host rejects it before app code accepts it.
 - **Capability output limit -> CapabilityError** — asks a host capability to return more than its `maxOutputBytes`; the broker rejects it before sandbox code receives the value.
 - **Console limit -> receipt flag** — emits more console lines than the host forwards; the receipt records truncation.
+- **Audit buffer -> receipt flag** — calls a host capability repeatedly; the receipt records dropped audit events instead of retaining an unbounded array.
+- **Policy recipe helpers** — shows the helper-built audit, broker, console, run, and runner options that wrap the sandbox request.
 
 ## Run it
 
@@ -24,7 +26,7 @@ Open whatever port the dev server prints (defaults to `:3000`, override with `PO
 
 ## How it works
 
-- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request uses `runIsolated()` with the `tenant-script` policy, exposes `log` and `now` through a typed capability broker, applies timeout/memory/result/console/audit limits, and returns the result, manifest, redacted audit events, receipt, backend metrics, and captured logs. The demo pins `backend: "worker"` so console capture is visible on every machine; production hostile-code paths should prefer FFI where JavaScriptCore is installed.
+- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request uses `runIsolated()` with the `tenant-script` policy, exposes `log` and `now` through a typed capability broker, applies timeout/memory/result/console/audit limits through the policy recipe helper builders, and returns the result, helper-built recipe options, manifest, redacted audit events, receipt, backend metrics, and captured logs. The demo pins `backend: "worker"` so console capture is visible on every machine; production hostile-code paths should prefer FFI where JavaScriptCore is installed.
 - `src/backend/server.ts` — wires the sandbox plugin into Elysia.
 - `src/frontend/react/pages/SandboxPage.tsx` — single-page UI: source editor, memory/timeout inputs, result panel.
 

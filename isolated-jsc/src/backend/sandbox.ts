@@ -3,6 +3,11 @@ import {
   createCapabilityAuditBuffer,
   createCapabilityBroker,
   defineCapabilityTool,
+  policyAuditOptions,
+  policyBrokerOptions,
+  policyConsoleOptions,
+  policyRunOptions,
+  policyRunnerOptions,
   type CapabilityAuditEvent,
   type CapabilityManifestEntry,
   type ExecutionReceipt,
@@ -46,6 +51,13 @@ type RunOutput = {
     >
   >;
   manifest?: CapabilityManifestEntry[];
+  policyRecipe?: {
+    audit: ReturnType<typeof policyAuditOptions>;
+    broker: ReturnType<typeof policyBrokerOptions>;
+    console: ReturnType<typeof policyConsoleOptions>;
+    run: ReturnType<typeof policyRunOptions>;
+    runner: ReturnType<typeof policyRunnerOptions>;
+  };
   receipt?: ExecutionReceipt;
   durationMs: number;
   metrics?: {
@@ -62,8 +74,25 @@ const runOne = async (
 ): Promise<RunOutput> => {
   const startedAt = Date.now();
   const log: string[] = [];
+  const policy = resolveIsolatePolicy("tenant-script", {
+    allowWorkerFallback: true,
+    auditMaxEvents: 32,
+    brokerDefaultTimeoutMs: 100,
+    maxConsoleBytes: 512,
+    maxConsoleEntries: 4,
+    maxResultBytes: 16_384,
+    memoryLimit: memoryLimitMb,
+    timeout: timeoutMs,
+  });
+  const policyRecipe = {
+    audit: policyAuditOptions(policy),
+    broker: policyBrokerOptions(policy),
+    console: policyConsoleOptions(policy),
+    run: policyRunOptions(policy),
+    runner: policyRunnerOptions(policy),
+  };
   const audit = createCapabilityAuditBuffer<{ tenantId: string }>({
-    maxEvents: 32,
+    ...policyRecipe.audit,
   });
   const broker = createCapabilityBroker(
     {
@@ -117,16 +146,12 @@ const runOne = async (
     },
     {
       context: { tenantId: "demo-tenant" },
+      ...policyRecipe.broker,
       onAudit: audit.onAudit,
     },
   );
   const manifest = broker.manifest();
   try {
-    const policy = resolveIsolatePolicy("tenant-script", {
-      allowWorkerFallback: true,
-      memoryLimit: memoryLimitMb,
-      timeout: timeoutMs,
-    });
     await ensureBundledWorkerBackendAsset();
     const { receipt, result } = await runIsolated(
       `(async () => { ${code}\n})()`,
@@ -143,8 +168,7 @@ const runOne = async (
           ),
           tools: broker.reference,
         },
-        maxConsoleBytes: 512,
-        maxConsoleEntries: 4,
+        ...policyRecipe.console,
         onConsole: (level, args) => {
           log.push(
             `[console.${level}] ${args.map((arg) => stringify(arg)).join(" ")}`,
@@ -153,8 +177,8 @@ const runOne = async (
         policy,
         run: {
           ...audit.receiptOptions(),
+          ...policyRecipe.run,
           executionId: crypto.randomUUID(),
-          maxResultBytes: 16_384,
           purpose: "isolated-jsc-demo-run",
           tenant: "demo-tenant",
         },
@@ -168,6 +192,7 @@ const runOne = async (
       log,
       manifest,
       metrics: receipt.metrics,
+      policyRecipe,
       receipt,
       durationMs: Date.now() - startedAt,
     };
@@ -184,6 +209,7 @@ const runOne = async (
       audit: auditSummary(audit.events),
       log,
       manifest,
+      policyRecipe,
       receipt,
       durationMs: Date.now() - startedAt,
     };
@@ -234,6 +260,7 @@ export const sandboxPlugin = new Elysia().post(
       log: t.Array(t.String()),
       audit: t.Array(t.Any()),
       manifest: t.Optional(t.Array(t.Any())),
+      policyRecipe: t.Optional(t.Any()),
       receipt: t.Optional(t.Any()),
       durationMs: t.Number(),
       metrics: t.Optional(

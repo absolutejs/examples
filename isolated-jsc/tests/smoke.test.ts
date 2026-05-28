@@ -34,6 +34,11 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   await expect(resultPanel.getByText("execution receipt")).toBeVisible({
     timeout: 15000,
   });
+  await expect(
+    resultPanel.getByRole("heading", { name: "policy recipe helpers" }),
+  ).toBeVisible({
+    timeout: 15000,
+  });
   await expect(resultPanel.getByText("lookupOrder")).toHaveCount(0);
   await expect(resultPanel.getByText('"tool": "log"').first()).toBeVisible({
     timeout: 15000,
@@ -119,6 +124,28 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   await expect(
     resultPanel.getByText(/"capabilityCallsTruncated": true/).first(),
   ).toBeVisible({
+    timeout: 15000,
+  });
+
+  await page.getByRole("button", { name: /Policy recipe helpers/ }).click();
+  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await expect(resultPanel.getByText(/recipe helpers applied/)).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(
+    resultPanel.getByRole("heading", { name: "policy recipe helpers" }),
+  ).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(resultPanel.getByText(/defaultMaxOutputBytes/).first()).toBeVisible(
+    {
+      timeout: 15000,
+    },
+  );
+  await expect(resultPanel.getByText(/maxResultBytes/).first()).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(resultPanel.getByText(/recycleAfter/).first()).toBeVisible({
     timeout: 15000,
   });
 });

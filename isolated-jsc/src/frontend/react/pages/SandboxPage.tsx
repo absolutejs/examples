@@ -12,6 +12,13 @@ type RunResult = {
   log: string[];
   audit: Array<{ status: string; tool: string; durationMs?: number }>;
   manifest?: Array<Record<string, unknown>>;
+  policyRecipe?: {
+    audit: Record<string, unknown>;
+    broker: Record<string, unknown>;
+    console: Record<string, unknown>;
+    run: Record<string, unknown>;
+    runner: Record<string, unknown>;
+  };
   receipt?: {
     backend: "ffi" | "worker";
     capabilityCallsDropped?: number;
@@ -111,6 +118,12 @@ return big.length;`,
     description:
       "Call a host capability repeatedly. The receipt records dropped audit events instead of retaining an unbounded array.",
     code: "for (let i = 0; i < 40; i++) await now();\nreturn 'audit capped';",
+  },
+  {
+    label: "Policy recipe helpers",
+    description:
+      "Show the helper-built audit, broker, console, run, and runner defaults that wrap this sandbox request.",
+    code: "await log('policy recipe helpers are wiring this request');\nreturn 'recipe helpers applied';",
   },
 ];
 
@@ -279,6 +292,14 @@ const SandboxContent = () => {
                     <h3>capability manifest</h3>
                     <pre className="return">
                       {formatResult(result.manifest)}
+                    </pre>
+                  </>
+                )}
+                {result.policyRecipe !== undefined && (
+                  <>
+                    <h3>policy recipe helpers</h3>
+                    <pre className="return">
+                      {formatResult(result.policyRecipe)}
                     </pre>
                   </>
                 )}
