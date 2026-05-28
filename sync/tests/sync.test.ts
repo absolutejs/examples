@@ -70,9 +70,10 @@ for (const framework of FRAMEWORKS) {
       expect(response?.status()).toBe(200);
 
       // The socket is open once the status reads "Live".
-      await expect(page.locator(".sync-status")).toContainText("Live", {
-        timeout: 15000,
-      });
+      await expect(page.locator(".sync-status").first()).toContainText(
+        "Live",
+        { timeout: 15000 },
+      );
       // The seed snapshot rendered.
       await expect(page.locator(".task-item").first()).toBeVisible();
       // Presence joined (at least this client shows as online).
@@ -89,9 +90,10 @@ for (const framework of FRAMEWORKS) {
 
     test("adds, toggles, and removes a task", async ({ page }) => {
       await page.goto(framework.path);
-      await expect(page.locator(".sync-status")).toContainText("Live", {
-        timeout: 15000,
-      });
+      await expect(page.locator(".sync-status").first()).toContainText(
+        "Live",
+        { timeout: 15000 },
+      );
 
       const title = uniqueTitle(framework.name);
       await addTask(page, title);
@@ -424,9 +426,10 @@ for (const framework of [
     await react.goto("/");
     await other.goto(framework.path);
     for (const page of [react, other]) {
-      await expect(page.locator(".sync-status")).toContainText("Live", {
-        timeout: 15000,
-      });
+      await expect(page.locator(".sync-status").first()).toContainText(
+        "Live",
+        { timeout: 15000 },
+      );
       await expect(editor(page)).toBeVisible({ timeout: 15000 });
     }
 
@@ -648,9 +651,10 @@ test.describe("Issues tracker (React)", () => {
     await a.goto("/");
     await b.goto("/");
     for (const page of [a, b]) {
-      await expect(page.locator(".sync-status")).toContainText("Live", {
-        timeout: 15000,
-      });
+      await expect(page.locator(".sync-status").first()).toContainText(
+        "Live",
+        { timeout: 15000 },
+      );
     }
 
     // Both clients open the same seeded issue.
@@ -793,3 +797,148 @@ test.describe("Eden-typed tracker (React, /sync/tasks via treaty)", () => {
     expect(Array.isArray(data)).toBe(true);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sync packs — presence, comments, digest. Wired into the four reactive
+// framework pages (React / Svelte / Vue / Angular) via each framework's
+// idiomatic hook. HTML and HTMX show a "Sync packs note" pointer instead of
+// the panels because they're deliberately framework-free demos.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const REACTIVE_FRAMEWORKS = [
+  { name: "React", path: "/" },
+  { name: "Svelte", path: "/svelte" },
+  { name: "Vue", path: "/vue" },
+  { name: "Angular", path: "/angular" },
+] as const;
+
+const uniqueComment = (label: string) =>
+  `${label}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+const postComment = async (page: Page, body: string) => {
+  await page.getByTestId("comment-input").fill(body);
+  await page.getByTestId("comment-input").press("Enter");
+  // The pack is server-authoritative; wait for the row to land in the list.
+  await expect(
+    page.getByTestId("comments-list").locator(".task-item", { hasText: body }),
+  ).toBeVisible({ timeout: 10000 });
+};
+
+for (const framework of REACTIVE_FRAMEWORKS) {
+  test.describe(`${framework.name} sync-packs`, () => {
+    test("renders all three pack panels (presence + digest + comments)", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText(
+        "Live",
+        { timeout: 15000 },
+      );
+
+      // Presence-pack badge — at minimum this client is in the channel.
+      await expect(page.getByTestId("presence-pack-members")).toContainText(
+        /\d+ in channel/,
+        { timeout: 15000 },
+      );
+      // Digest-pack panel + cursor + fire button.
+      await expect(page.getByTestId("digest-pack-panel")).toBeVisible();
+      await expect(page.getByTestId("digest-cursor")).toContainText(
+        "Last digest:",
+      );
+      await expect(page.getByTestId("digest-fire")).toBeVisible();
+      // Comments-pack panel + input.
+      await expect(page.getByTestId("comments-pack-panel")).toBeVisible();
+      await expect(page.getByTestId("comment-input")).toBeVisible();
+    });
+
+    test("comments: posting renders the row with an own × delete button", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText(
+        "Live",
+        { timeout: 15000 },
+      );
+
+      const body = uniqueComment(framework.name.toLowerCase());
+      await postComment(page, body);
+
+      // The row exists AND has the framework-stable own × button (per-row
+      // permission: row.authorId === getActorId(ctx) is what gates render).
+      const row = page
+        .getByTestId("comments-list")
+        .locator(".task-item", { hasText: body });
+      await expect(row).toBeVisible();
+      await expect(row.locator("button", { hasText: "×" })).toBeVisible();
+    });
+
+    test("digest: clicking 'Fire digest now' updates the cursor", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText(
+        "Live",
+        { timeout: 15000 },
+      );
+
+      // Read the cursor before firing — it may already be set from the 15s
+      // cron, so we don't assert "never"; we just compare snapshots.
+      const before = await page.getByTestId("digest-cursor").textContent();
+      await page.getByTestId("digest-fire").click();
+      // Cursor changes within a couple of seconds (server runs the schedule,
+      // applyChange fans the diff back to this socket).
+      await expect
+        .poll(
+          async () =>
+            (await page.getByTestId("digest-cursor").textContent()) ?? "",
+          { timeout: 10000 },
+        )
+        .not.toBe(before);
+    });
+  });
+}
+
+test("comments: a comment posted in one framework appears in another", async ({
+  browser,
+}) => {
+  const reactCtx = await browser.newContext();
+  const vueCtx = await browser.newContext();
+  const reactPage = await reactCtx.newPage();
+  const vuePage = await vueCtx.newPage();
+  try {
+    await reactPage.goto("/");
+    await vuePage.goto("/vue");
+    await expect(reactPage.locator(".sync-status").first()).toContainText(
+      "Live",
+      { timeout: 15000 },
+    );
+    await expect(vuePage.locator(".sync-status").first()).toContainText(
+      "Live",
+      { timeout: 15000 },
+    );
+
+    const body = uniqueComment("cross-framework");
+    await postComment(reactPage, body);
+
+    // Vue sees the same row over the shared engine. The Vue tab does NOT see
+    // a × button — it's not the author (different userId in a separate
+    // browser context).
+    const vueRow = vuePage
+      .getByTestId("comments-list")
+      .locator(".task-item", { hasText: body });
+    await expect(vueRow).toBeVisible({ timeout: 10000 });
+    await expect(vueRow.locator("button", { hasText: "×" })).toHaveCount(0);
+  } finally {
+    await reactCtx.close();
+    await vueCtx.close();
+  }
+});
+
+for (const staticPath of ["/html", "/htmx"] as const) {
+  test(`${staticPath} shows the 'Sync packs note' pointer to the framework demos`, async ({
+    page,
+  }) => {
+    await page.goto(staticPath);
+    await expect(page.getByText(/Sync packs note/)).toBeVisible();
+  });
+}
