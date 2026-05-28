@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import {
+  createCapabilityAuditBuffer,
   createCapabilityBroker,
   defineCapabilityTool,
   type CapabilityAuditEvent,
@@ -21,7 +22,7 @@ import { fileURLToPath } from "node:url";
  *
  * - `log(...)` / `now()` — host-side capabilities exposed through a
  *   capability broker. User code gets ergonomic References, while the host
- *   keeps a manifest and audit events for receipts.
+ *   keeps a manifest and bounded audit events for receipts.
  * - `console.log(...)` — captured through the isolate `onConsole` hook with
  *   entry/byte limits so logs cannot grow without bound.
  *
@@ -61,7 +62,9 @@ const runOne = async (
 ): Promise<RunOutput> => {
   const startedAt = Date.now();
   const log: string[] = [];
-  const audit: CapabilityAuditEvent<{ tenantId: string }>[] = [];
+  const audit = createCapabilityAuditBuffer<{ tenantId: string }>({
+    maxEvents: 32,
+  });
   const broker = createCapabilityBroker(
     {
       log: defineCapabilityTool<unknown[], null, { tenantId: string }>({
@@ -96,7 +99,7 @@ const runOne = async (
     },
     {
       context: { tenantId: "demo-tenant" },
-      onAudit: (event) => audit.push(event),
+      onAudit: audit.onAudit,
     },
   );
   const manifest = broker.manifest();
@@ -131,7 +134,7 @@ const runOne = async (
         },
         policy,
         run: {
-          capabilityEvents: audit,
+          ...audit.receiptOptions(),
           executionId: crypto.randomUUID(),
           maxResultBytes: 16_384,
           purpose: "isolated-jsc-demo-run",
@@ -143,7 +146,7 @@ const runOne = async (
     return {
       ok: true,
       result,
-      audit: auditSummary(audit),
+      audit: auditSummary(audit.events),
       log,
       manifest,
       metrics: receipt.metrics,
@@ -160,7 +163,7 @@ const runOne = async (
     return {
       ok: false,
       error: { name, message },
-      audit: auditSummary(audit),
+      audit: auditSummary(audit.events),
       log,
       manifest,
       receipt,
@@ -170,7 +173,7 @@ const runOne = async (
 };
 
 const auditSummary = (
-  audit: CapabilityAuditEvent<{ tenantId: string }>[],
+  audit: readonly CapabilityAuditEvent<{ tenantId: string }>[],
 ): RunOutput["audit"] =>
   audit.map((event) => ({
     durationMs: event.durationMs,

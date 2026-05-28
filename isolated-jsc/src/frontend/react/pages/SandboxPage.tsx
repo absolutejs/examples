@@ -14,6 +14,8 @@ type RunResult = {
   manifest?: Array<Record<string, unknown>>;
   receipt?: {
     backend: "ffi" | "worker";
+    capabilityCallsDropped?: number;
+    capabilityCallsTruncated?: boolean;
     console: {
       bytes: number;
       entries: number;
@@ -97,6 +99,12 @@ return big.length;`,
     description:
       "Emit more console lines than the host forwards. The receipt records truncation.",
     code: "for (let i = 0; i < 8; i++) console.log('line', i);\nreturn 'console capped';",
+  },
+  {
+    label: "Audit buffer → receipt flag",
+    description:
+      "Call a host capability repeatedly. The receipt records dropped audit events instead of retaining an unbounded array.",
+    code: "for (let i = 0; i < 40; i++) await now();\nreturn 'audit capped';",
   },
 ];
 

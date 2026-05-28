@@ -93,4 +93,20 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   await expect(resultPanel.getByText(/"truncated": true/)).toBeVisible({
     timeout: 15000,
   });
+
+  await page.getByRole("button", { name: /Audit buffer/ }).click();
+  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await expect(resultPanel.getByText(/audit capped/)).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(
+    resultPanel.getByText(/capabilityCallsDropped/).first(),
+  ).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(
+    resultPanel.getByText(/"capabilityCallsTruncated": true/).first(),
+  ).toBeVisible({
+    timeout: 15000,
+  });
 });

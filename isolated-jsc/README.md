@@ -23,7 +23,7 @@ Open whatever port the dev server prints (defaults to `:3000`, override with `PO
 
 ## How it works
 
-- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request uses `runIsolated()` with the `tenant-script` policy, exposes `log` and `now` through a typed capability broker, applies timeout/memory/result/console limits, and returns the result, manifest, redacted audit events, receipt, backend metrics, and captured logs. The demo pins `backend: "worker"` so console capture is visible on every machine; production hostile-code paths should prefer FFI where JavaScriptCore is installed.
+- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request uses `runIsolated()` with the `tenant-script` policy, exposes `log` and `now` through a typed capability broker, applies timeout/memory/result/console/audit limits, and returns the result, manifest, redacted audit events, receipt, backend metrics, and captured logs. The demo pins `backend: "worker"` so console capture is visible on every machine; production hostile-code paths should prefer FFI where JavaScriptCore is installed.
 - `src/backend/server.ts` — wires the sandbox plugin into Elysia.
 - `src/frontend/react/pages/SandboxPage.tsx` — single-page UI: source editor, memory/timeout inputs, result panel.
 
@@ -34,7 +34,7 @@ The example deliberately uses one-shot execution to keep each demo self-containe
 - Use `backend: "auto"` for this demo, local development, and CI. It uses FFI when libJSC is reachable and falls back to Worker when it is not.
 - Use `backend: "ffi"` for production hostile-code paths on macOS/Linux where JavaScriptCore is installed. FFI has lower cold heap, interrupt-driven timeouts, survives timeouts, and closes eval / Function-constructor residuals.
 - If you must run arbitrary third-party code on the Worker fallback, add process/container isolation and keep host secrets, filesystem permissions, and network egress out of reach.
-- For user plugins or agent tools, expose only explicit host capabilities, validate inputs, redact audited values, set timeouts, and audit every call.
+- For user plugins or agent tools, expose only explicit host capabilities, validate inputs, redact audited values, bound audit buffers, set timeouts, and audit every call.
 
 ## Related examples
 
