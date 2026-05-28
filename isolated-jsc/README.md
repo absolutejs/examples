@@ -10,6 +10,7 @@ Paste code on the left, hit **Run**, see the result and any host-captured `log` 
 - **Memory bomb -> MemoryLimitError** — allocates heap-resident JS objects past the configured cap; the isolate terminates.
 - **No host filesystem access** — shows the hardened default global shape: host capability globals are not exposed directly.
 - **Result limit -> ResultSizeError** — returns a payload larger than `maxResultBytes`; the host rejects it before app code accepts it.
+- **Capability output limit -> CapabilityError** — asks a host capability to return more than its `maxOutputBytes`; the broker rejects it before sandbox code receives the value.
 - **Console limit -> receipt flag** — emits more console lines than the host forwards; the receipt records truncation.
 
 ## Run it

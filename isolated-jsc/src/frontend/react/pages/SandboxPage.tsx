@@ -95,6 +95,12 @@ return big.length;`,
     code: "return 'x'.repeat(20000);",
   },
   {
+    label: "Capability output limit → CapabilityError",
+    description:
+      "Ask a host capability to return too much data. The broker rejects it before sandbox code receives the value.",
+    code: "return await tools('echo', 'x'.repeat(2000));",
+  },
+  {
     label: "Console limit → receipt flag",
     description:
       "Emit more console lines than the host forwards. The receipt records truncation.",

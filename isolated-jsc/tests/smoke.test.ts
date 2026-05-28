@@ -80,6 +80,18 @@ test("runs sandbox presets through the UI", async ({ page }) => {
     timeout: 15000,
   });
 
+  await page.getByRole("button", { name: /Capability output limit/ }).click();
+  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await expect(resultPanel.locator(".result-status")).toContainText(
+    "CapabilityError",
+    { timeout: 15000 },
+  );
+  await expect(
+    resultPanel.getByText(/CAPABILITY_OUTPUT_SIZE_LIMIT/).first(),
+  ).toBeVisible({
+    timeout: 15000,
+  });
+
   await page.getByRole("button", { name: /Console limit/ }).click();
   await page.getByRole("button", { exact: true, name: "Run" }).click();
   await expect(resultPanel.getByText(/console capped/)).toBeVisible({

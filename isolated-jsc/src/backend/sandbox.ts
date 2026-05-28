@@ -13,7 +13,7 @@ import {
   runIsolated,
   TimeoutError,
 } from "@absolutejs/isolated-jsc";
-import { access, copyFile } from "node:fs/promises";
+import { copyFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -95,6 +95,24 @@ const runOne = async (
         timeoutMs: 100,
         validateInput: () => undefined,
         handler: () => Date.now(),
+      }),
+      echo: defineCapabilityTool<string, string, { tenantId: string }>({
+        description: "Echo a bounded string through the capability broker",
+        input: "string",
+        maxOutputBytes: 1_024,
+        output: "string",
+        redactAuditInput: (input) =>
+          typeof input === "string" && input.length <= 32
+            ? input
+            : "[echo input redacted]",
+        redactAuditOutput: (output) =>
+          typeof output === "string" && output.length <= 32
+            ? output
+            : "[echo output redacted]",
+        risk: "read-only",
+        timeoutMs: 100,
+        validateInput: (input) => String(input),
+        handler: (input) => input,
       }),
     },
     {
@@ -184,14 +202,9 @@ const auditSummary = (
 const ensureBundledWorkerBackendAsset = async (): Promise<void> => {
   if (!import.meta.url.endsWith("/dist/server.js")) return;
   const targetUrl = new URL("./worker.js", import.meta.url);
-  try {
-    await access(targetUrl);
-    return;
-  } catch {
-    const packageIndexUrl = import.meta.resolve("@absolutejs/isolated-jsc");
-    const packageWorkerUrl = new URL("./worker.js", packageIndexUrl);
-    await copyFile(fileURLToPath(packageWorkerUrl), fileURLToPath(targetUrl));
-  }
+  const packageIndexUrl = import.meta.resolve("@absolutejs/isolated-jsc");
+  const packageWorkerUrl = new URL("./worker.js", packageIndexUrl);
+  await copyFile(fileURLToPath(packageWorkerUrl), fileURLToPath(targetUrl));
 };
 
 /** Render a value the way `console.log` would — JSON for plain objects,
