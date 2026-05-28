@@ -21,11 +21,11 @@ Open whatever port the dev server prints (defaults to `:3000`, override with `PO
 
 ## How it works
 
-- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request spawns a fresh `Isolate`, exposes `log` and `now` host functions via `Reference`, compiles the user code, runs it with the configured timeout, and returns the result plus captured logs.
+- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request uses `runIsolated()` with the `tenant-script` policy, exposes `log` and `now` host functions via `Reference`, runs with the configured timeout/memory cap, and returns the result, backend metrics, and captured logs.
 - `src/backend/server.ts` — wires the sandbox plugin into Elysia.
 - `src/frontend/react/pages/SandboxPage.tsx` — single-page UI: source editor, memory/timeout inputs, result panel.
 
-The example deliberately spawns a fresh isolate per request to make each demo self-contained. A real PaaS should pool isolates per tenant and expose host powers through typed capability tools or narrow `Reference`s.
+The example deliberately uses one-shot execution to keep each demo self-contained. A real PaaS should use `createIsolatedRunner()` to pool by tenant/session, precompile hot callables, and expose host powers through typed capability tools or narrow `Reference`s.
 
 ## Backend decision guide
 

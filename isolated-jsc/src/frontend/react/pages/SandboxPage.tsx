@@ -11,6 +11,11 @@ type RunResult = {
   error?: { name: string; message: string };
   log: string[];
   durationMs: number;
+  metrics?: {
+    backend: "ffi" | "worker";
+    cpuMs: number;
+    heapBytes: number;
+  };
 };
 
 // Quick canned snippets — each demonstrates one isolation guarantee.
@@ -226,6 +231,14 @@ const SandboxContent = () => {
                 )}
                 {result.ok && (
                   <>
+                    {result.metrics !== undefined && (
+                      <>
+                        <h3>metrics</h3>
+                        <pre className="return">
+                          {formatResult(result.metrics)}
+                        </pre>
+                      </>
+                    )}
                     <h3>return value</h3>
                     <pre className="return">{formatResult(result.result)}</pre>
                   </>

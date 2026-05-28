@@ -1,8 +1,9 @@
 import { Elysia, t } from "elysia";
 import {
-  createIsolate,
   MemoryLimitError,
   Reference,
+  resolveIsolatePolicy,
+  runIsolated,
   TimeoutError,
 } from "@absolutejs/isolated-jsc";
 
@@ -20,10 +21,9 @@ import {
  * The isolate has NO host filesystem / network access through us. CPU and
  * memory are capped per-request via the body's `timeout` and `memoryLimit`.
  *
- * Each request spawns and disposes its own isolate. That's wasteful at
- * scale (~30 ms per spawn) but is the clearest demo — a real PaaS would
- * pool isolates per tenant. See `@absolutejs/sync`'s `sandboxedHandler`
- * for an example of pooling.
+ * Each request uses `runIsolated()` to spawn, run, return metrics, and
+ * dispose. That's clearest for a demo; hot paths should use
+ * `createIsolatedRunner()` to pool by tenant/session and precompile callables.
  */
 
 type RunOutput = {
@@ -32,6 +32,11 @@ type RunOutput = {
   error?: { name: string; message: string };
   log: string[];
   durationMs: number;
+  metrics?: {
+    backend: "ffi" | "worker";
+    cpuMs: number;
+    heapBytes: number;
+  };
 };
 
 const runOne = async (
@@ -41,30 +46,32 @@ const runOne = async (
 ): Promise<RunOutput> => {
   const startedAt = Date.now();
   const log: string[] = [];
-  const isolate = await createIsolate({ memoryLimit: memoryLimitMb });
   try {
-    const context = await isolate.createContext();
-    await context.setGlobal(
-      "log",
-      new Reference(((...args: unknown[]) => {
-        log.push(args.map((arg) => stringify(arg)).join(" "));
-      }) as (...args: unknown[]) => unknown),
-    );
-    await context.setGlobal(
-      "now",
-      new Reference((() => Date.now()) as (...args: unknown[]) => unknown),
-    );
-    // Wrap user source in an async IIFE so it can use top-level `await`
-    // (a script's grammar otherwise forbids it). The last expression is the
-    // function body's return value — we send it back as the result.
-    const script = await isolate.compileScript(
+    const policy = resolveIsolatePolicy("tenant-script", {
+      allowWorkerFallback: true,
+      memoryLimit: memoryLimitMb,
+      timeout: timeoutMs,
+    });
+    const { metrics, result } = await runIsolated(
       `(async () => { ${code}\n})()`,
+      {
+        globals: {
+          log: new Reference(((...args: unknown[]) => {
+            log.push(args.map((arg) => stringify(arg)).join(" "));
+          }) as (...args: unknown[]) => unknown),
+          now: new Reference((() => Date.now()) as (
+            ...args: unknown[]
+          ) => unknown),
+        },
+        policy,
+        withMetrics: true,
+      },
     );
-    const result = await script.run(context, { timeout: timeoutMs });
     return {
       ok: true,
       result,
       log,
+      metrics,
       durationMs: Date.now() - startedAt,
     };
   } catch (error) {
@@ -76,8 +83,6 @@ const runOne = async (
       log,
       durationMs: Date.now() - startedAt,
     };
-  } finally {
-    await isolate.dispose();
   }
 };
 
@@ -104,11 +109,16 @@ export const sandboxPlugin = new Elysia().post(
     response: t.Object({
       ok: t.Boolean(),
       result: t.Optional(t.Any()),
-      error: t.Optional(
-        t.Object({ name: t.String(), message: t.String() }),
-      ),
+      error: t.Optional(t.Object({ name: t.String(), message: t.String() })),
       log: t.Array(t.String()),
       durationMs: t.Number(),
+      metrics: t.Optional(
+        t.Object({
+          backend: t.Union([t.Literal("ffi"), t.Literal("worker")]),
+          cpuMs: t.Number(),
+          heapBytes: t.Number(),
+        }),
+      ),
     }),
   },
 );
