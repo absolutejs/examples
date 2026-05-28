@@ -20,12 +20,56 @@
 
   type Presence = { name: string; typing: boolean };
 
+  // Pack-related row shapes (must match the server registration).
+  type PresenceRow = {
+    id: string;
+    channel: string;
+    actorId: string;
+    state: { name: string };
+    expiresAt: number;
+    heartbeatAt: number;
+  };
+  type DigestCursor = {
+    id: string;
+    actorId: string;
+    lastSentAt: number;
+    lastSubject: string;
+  };
+  type DigestLogEntry = {
+    id: string;
+    actorId: string;
+    subject: string;
+    body: string;
+    sentAt: number;
+  };
+  type CommentRow = {
+    id: string;
+    resourceId: string;
+    parentCommentId: string | null;
+    authorId: string;
+    body: string;
+    depth: number;
+    createdAt: number;
+    editedAt: number | null;
+  };
+
   let { cssPath = undefined }: { cssPath?: string } = $props();
+
+  const tabUserId = () => {
+    if (typeof window === "undefined") return "ssr";
+    const key = "sync-demo:userId";
+    const existing = window.sessionStorage.getItem(key);
+    if (existing !== null) return existing;
+    const fresh = globalThis.crypto.randomUUID();
+    window.sessionStorage.setItem(key, fresh);
+
+    return fresh;
+  };
 
   const wsUrl =
     typeof window === "undefined"
       ? "ws://localhost/sync/ws"
-      : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
+      : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws?userId=${encodeURIComponent(tabUserId())}`;
 
   // Local-first: persist confirmed rows in IndexedDB for instant reads on reload
   // and offline; the socket resumes from the cached version.
@@ -103,6 +147,99 @@
       optimistic: (draft) => draft.delete(task.id),
     });
 
+  // @absolutejs/sync-pack-presence — durable membership collection.
+  const packPresence = createSyncCollectionStore<PresenceRow>({
+    collection: "presence",
+    params: { channel: "tasks" },
+    url: wsUrl,
+  });
+  onDestroy(() => packPresence.destroy());
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  if (typeof window !== "undefined") {
+    const userId = tabUserId();
+    const heartbeat = () => {
+      void fetch("/sync/presence/heartbeat", {
+        body: JSON.stringify({
+          channel: "tasks",
+          name: "svelte-tab",
+          userId,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+    };
+    heartbeat();
+    heartbeatTimer = setInterval(heartbeat, 5_000);
+  }
+  onDestroy(() => {
+    if (heartbeatTimer !== null) clearInterval(heartbeatTimer);
+    if (typeof window === "undefined") return;
+    void fetch("/sync/presence/leave", {
+      body: JSON.stringify({ channel: "tasks", userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  });
+
+  // @absolutejs/sync-pack-digest — cursor + outbox + manual-fire button.
+  const digestCursors = createSyncCollectionStore<DigestCursor>({
+    collection: "digest_cursors",
+    url: wsUrl,
+  });
+  onDestroy(() => digestCursors.destroy());
+  const digestLog = createSyncCollectionStore<DigestLogEntry>({
+    collection: "digest_log",
+    url: wsUrl,
+  });
+  onDestroy(() => digestLog.destroy());
+  const digestCursor = $derived($digestCursors.data[0]);
+  const digestEntries = $derived(
+    [...$digestLog.data]
+      .sort((first, second) => second.sentAt - first.sentAt)
+      .slice(0, 5),
+  );
+  const fireDigest = () =>
+    void fetch("/sync/digest/fire", {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+  // @absolutejs/sync-pack-comments — threaded comments on the shared discussion.
+  const commentsStore = createSyncCollectionStore<CommentRow>({
+    collection: "comments",
+    params: { resourceId: "shared-discussion" },
+    url: wsUrl,
+  });
+  onDestroy(() => commentsStore.destroy());
+  let commentDraft = $state("");
+  const orderedComments = $derived(
+    [...$commentsStore.data].sort(
+      (first, second) => first.createdAt - second.createdAt,
+    ),
+  );
+  const myUserId = $derived(tabUserId());
+  const postComment = (event: Event) => {
+    event.preventDefault();
+    const body = commentDraft.trim();
+    if (body.length === 0) return;
+    commentDraft = "";
+    void fetch("/sync/comments/create", {
+      body: JSON.stringify({
+        body,
+        resourceId: "shared-discussion",
+        userId: tabUserId(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  };
+  const deleteComment = (commentId: string) =>
+    void fetch("/sync/comments/delete", {
+      body: JSON.stringify({ commentId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
   // Conflict-free collaborative editing — the same shared "doc" field every
   // framework page edits. `$docStore` is the live { text, status }.
   const docStore = createCollaborativeTextStore({
@@ -144,6 +281,13 @@
         <span class="presence-online" data-testid="presence-online"
           >{online} online</span
         >
+        <span
+          class="presence-online"
+          data-testid="presence-pack-members"
+          title="From @absolutejs/sync-pack-presence — collection-based, TTL-cleaned, queryable."
+        >
+          👥 {$packPresence.data.length} in channel (pack)
+        </span>
         <span class="presence-typing"
           >{typing.length > 0 ? `${typing.join(", ")} typing…` : ""}</span
         >
@@ -197,6 +341,89 @@
         rows="4"
         value={$docStore.text}
       ></textarea>
+    </section>
+
+    <section class="sync-card" data-testid="digest-pack-panel">
+      <p class="section-desc">
+        Scheduled per-actor digests via <code>@absolutejs/sync-pack-digest</code>.
+        Cron fires every 15s; the button below triggers it immediately. The
+        cursor is the per-actor row from the pack's owned
+        <code>digest_cursors</code> table.
+      </p>
+      <div class="presence-bar">
+        <span class="presence-online" data-testid="digest-cursor">
+          📬 Last digest: {digestCursor === undefined
+            ? "never"
+            : new Date(digestCursor.lastSentAt).toLocaleTimeString()}
+        </span>
+        <button
+          class="primary"
+          data-testid="digest-fire"
+          onclick={fireDigest}
+          type="button"
+        >
+          Fire digest now
+        </button>
+      </div>
+      <ul class="task-list" data-testid="digest-log">
+        {#if digestEntries.length === 0}
+          <li class="task-item">
+            <span class="muted">
+              No digests sent yet — click "Fire digest now" or wait for the 15s
+              cron.
+            </span>
+          </li>
+        {/if}
+        {#each digestEntries as entry (entry.id)}
+          <li class="task-item">
+            <strong>{entry.subject}</strong>
+            <span class="muted">
+              · to {entry.actorId}@example.invalid ·
+              {new Date(entry.sentAt).toLocaleTimeString()}
+            </span>
+          </li>
+        {/each}
+      </ul>
+    </section>
+
+    <section class="sync-card" data-testid="comments-pack-panel">
+      <p class="section-desc">
+        Threaded comments via <code>@absolutejs/sync-pack-comments</code> on a
+        single shared discussion resource. Open another tab and post — every
+        framework page sees every message.
+      </p>
+      <form class="task-form" onsubmit={postComment}>
+        <input
+          bind:value={commentDraft}
+          data-testid="comment-input"
+          placeholder="Say something to the shared discussion…"
+        />
+        <button class="primary" type="submit">Post</button>
+      </form>
+      <ul class="task-list" data-testid="comments-list">
+        {#if orderedComments.length === 0}
+          <li class="task-item">
+            <span class="muted">No comments yet.</span>
+          </li>
+        {/if}
+        {#each orderedComments as comment (comment.id)}
+          <li class="task-item">
+            <span>
+              <strong>{comment.authorId.slice(0, 6)}</strong>: {comment.body}
+              {#if comment.editedAt !== null}
+                <span class="muted"> (edited)</span>
+              {/if}
+            </span>
+            {#if comment.authorId === myUserId}
+              <button
+                data-testid={`comment-delete-${comment.id}`}
+                onclick={() => deleteComment(comment.id)}
+                type="button">×</button
+              >
+            {/if}
+          </li>
+        {/each}
+      </ul>
     </section>
 
     <p class="section-desc">

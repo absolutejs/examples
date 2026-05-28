@@ -5,6 +5,7 @@ import {
   type OnDestroy,
   signal,
 } from "@angular/core";
+import { DatePipe } from "@angular/common";
 import { SyncCollectionService } from "@absolutejs/sync/angular";
 import {
   createPresence,
@@ -22,14 +23,58 @@ type Task = {
 
 type Presence = { name: string; typing: boolean };
 
+// Pack-related row shapes (must match the server registration).
+type PresenceRow = {
+  id: string;
+  channel: string;
+  actorId: string;
+  state: { name: string };
+  expiresAt: number;
+  heartbeatAt: number;
+};
+type DigestCursor = {
+  id: string;
+  actorId: string;
+  lastSentAt: number;
+  lastSubject: string;
+};
+type DigestLogEntry = {
+  id: string;
+  actorId: string;
+  subject: string;
+  body: string;
+  sentAt: number;
+};
+type CommentRow = {
+  id: string;
+  resourceId: string;
+  parentCommentId: string | null;
+  authorId: string;
+  body: string;
+  depth: number;
+  createdAt: number;
+  editedAt: number | null;
+};
+
 // This page has no per-request DI context, so the SSR handler's
 // `requestContext` is an empty object.
 export type Context = Record<string, never>;
 
+const tabUserId = () => {
+  if (typeof window === "undefined") return "ssr";
+  const key = "sync-demo:userId";
+  const existing = window.sessionStorage.getItem(key);
+  if (existing !== null) return existing;
+  const fresh = globalThis.crypto.randomUUID();
+  window.sessionStorage.setItem(key, fresh);
+
+  return fresh;
+};
+
 const wsUrl = () =>
   typeof window === "undefined"
     ? "ws://localhost/sync/ws"
-    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
+    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws?userId=${encodeURIComponent(tabUserId())}`;
 
 // A throwaway display name, generated on the client only (never during SSR, so
 // there's no hydration mismatch).
@@ -40,7 +85,7 @@ const randomName = () => `User-${globalThis.crypto.randomUUID().split("-")[0]}`;
 const taskCache = indexedDbCollectionCache<Task>({ key: "tasks" });
 
 @Component({
-  imports: [],
+  imports: [DatePipe],
   selector: "sync-angular-page",
   standalone: true,
   templateUrl: "./sync-angular-page.html",
@@ -71,7 +116,97 @@ export class SyncAngularPageComponent implements OnDestroy {
       });
       this.selfId.set(this.presence.id);
       this.presence.subscribe((next) => this.members.set(next));
+
+      // sync-pack-presence heartbeat. Keeps the actor's row alive in the
+      // pack's owned `presence` collection.
+      const userId = tabUserId();
+      const heartbeat = () => {
+        void fetch("/sync/presence/heartbeat", {
+          body: JSON.stringify({
+            channel: "tasks",
+            name: "angular-tab",
+            userId,
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+      };
+      heartbeat();
+      this.heartbeatTimer = setInterval(heartbeat, 5_000);
     }
+  }
+
+  // @absolutejs/sync-pack-presence — durable membership collection.
+  private packPresenceHandle = this.sync.connect<PresenceRow>({
+    collection: "presence",
+    params: { channel: "tasks" },
+    url: wsUrl(),
+  });
+  packPresenceCount = computed(() => this.packPresenceHandle.data().length);
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
+  // @absolutejs/sync-pack-digest — cursor + outbox + manual fire button.
+  private digestCursorsHandle = this.sync.connect<DigestCursor>({
+    collection: "digest_cursors",
+    url: wsUrl(),
+  });
+  digestCursor = computed(() => this.digestCursorsHandle.data()[0]);
+  private digestLogHandle = this.sync.connect<DigestLogEntry>({
+    collection: "digest_log",
+    url: wsUrl(),
+  });
+  digestEntries = computed(() =>
+    [...this.digestLogHandle.data()]
+      .sort((first, second) => second.sentAt - first.sentAt)
+      .slice(0, 5),
+  );
+  fireDigest() {
+    void fetch("/sync/digest/fire", {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+
+  // @absolutejs/sync-pack-comments — threaded comments on a shared resource.
+  private commentsHandle = this.sync.connect<CommentRow>({
+    collection: "comments",
+    params: { resourceId: "shared-discussion" },
+    url: wsUrl(),
+  });
+  orderedComments = computed(() =>
+    [...this.commentsHandle.data()].sort(
+      (first, second) => first.createdAt - second.createdAt,
+    ),
+  );
+  commentDraft = signal("");
+  myUserId = signal(tabUserId());
+  setCommentDraft(event: Event) {
+    const { target } = event;
+    if (target instanceof HTMLInputElement) {
+      this.commentDraft.set(target.value);
+    }
+  }
+  postComment(event: Event) {
+    event.preventDefault();
+    const body = this.commentDraft().trim();
+    if (body.length === 0) return;
+    this.commentDraft.set("");
+    void fetch("/sync/comments/create", {
+      body: JSON.stringify({
+        body,
+        resourceId: "shared-discussion",
+        userId: tabUserId(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+  deleteComment(commentId: string) {
+    void fetch("/sync/comments/delete", {
+      body: JSON.stringify({ commentId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
   }
 
   // Conflict-free collaborative editing — the same shared "doc" field every
@@ -101,6 +236,14 @@ export class SyncAngularPageComponent implements OnDestroy {
 
   ngOnDestroy() {
     this.presence?.close();
+    if (this.heartbeatTimer !== null) clearInterval(this.heartbeatTimer);
+    if (typeof window !== "undefined") {
+      void fetch("/sync/presence/leave", {
+        body: JSON.stringify({ channel: "tasks", userId: tabUserId() }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+    }
   }
 
   setTitle(event: Event) {

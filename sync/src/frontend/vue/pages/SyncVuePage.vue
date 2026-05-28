@@ -17,10 +17,57 @@ type Task = {
 
 type Presence = { name: string; typing: boolean };
 
+// Pack-related row shapes (must match the server registration in
+// src/backend/sync.ts).
+type PresenceRow = {
+  id: string;
+  channel: string;
+  actorId: string;
+  state: { name: string };
+  expiresAt: number;
+  heartbeatAt: number;
+};
+type DigestCursor = {
+  id: string;
+  actorId: string;
+  lastSentAt: number;
+  lastSubject: string;
+};
+type DigestLogEntry = {
+  id: string;
+  actorId: string;
+  subject: string;
+  body: string;
+  sentAt: number;
+};
+type CommentRow = {
+  id: string;
+  resourceId: string;
+  parentCommentId: string | null;
+  authorId: string;
+  body: string;
+  depth: number;
+  createdAt: number;
+  editedAt: number | null;
+};
+
+// Stable per-tab user id (matches the React demo's pattern). Persisted in
+// sessionStorage so a reload doesn't orphan presence rows.
+const tabUserId = () => {
+  if (typeof window === "undefined") return "ssr";
+  const key = "sync-demo:userId";
+  const existing = window.sessionStorage.getItem(key);
+  if (existing !== null) return existing;
+  const fresh = globalThis.crypto.randomUUID();
+  window.sessionStorage.setItem(key, fresh);
+
+  return fresh;
+};
+
 const wsUrl =
   typeof window === "undefined"
     ? "ws://localhost/sync/ws"
-    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws`;
+    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/sync/ws?userId=${encodeURIComponent(tabUserId())}`;
 
 // Local-first: persist confirmed rows in IndexedDB for instant reads on reload
 // and offline; the socket resumes from the cached version.
@@ -98,6 +145,96 @@ const remove = (task: Task) =>
     optimistic: (draft) => draft.delete(task.id),
   });
 
+// @absolutejs/sync-pack-presence — durable "who's in this channel" surface,
+// alongside the ephemeral presence hub above.
+const packPresence = useSyncCollection<PresenceRow>({
+  collection: "presence",
+  params: { channel: "tasks" },
+  url: wsUrl,
+});
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+onMounted(() => {
+  if (typeof window === "undefined") return;
+  const userId = tabUserId();
+  const heartbeat = () => {
+    void fetch("/sync/presence/heartbeat", {
+      body: JSON.stringify({
+        channel: "tasks",
+        name: "vue-tab",
+        userId,
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  };
+  heartbeat();
+  heartbeatInterval = setInterval(heartbeat, 5_000);
+});
+onUnmounted(() => {
+  if (heartbeatInterval !== null) clearInterval(heartbeatInterval);
+  void fetch("/sync/presence/leave", {
+    body: JSON.stringify({ channel: "tasks", userId: tabUserId() }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+});
+
+// @absolutejs/sync-pack-digest — the per-actor cursor + the simulated outbox.
+const digestCursors = useSyncCollection<DigestCursor>({
+  collection: "digest_cursors",
+  url: wsUrl,
+});
+const digestLog = useSyncCollection<DigestLogEntry>({
+  collection: "digest_log",
+  url: wsUrl,
+});
+const digestCursor = computed(() => digestCursors.data.value[0]);
+const digestEntries = computed(() =>
+  [...digestLog.data.value]
+    .sort((first, second) => second.sentAt - first.sentAt)
+    .slice(0, 5),
+);
+const fireDigest = () =>
+  void fetch("/sync/digest/fire", {
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+
+// @absolutejs/sync-pack-comments — threaded comments on the shared discussion.
+const commentsCol = useSyncCollection<CommentRow>({
+  collection: "comments",
+  params: { resourceId: "shared-discussion" },
+  url: wsUrl,
+});
+const commentDraft = ref("");
+const orderedComments = computed(() =>
+  [...commentsCol.data.value].sort(
+    (first, second) => first.createdAt - second.createdAt,
+  ),
+);
+const myUserId = computed(() => tabUserId());
+const postComment = (event: Event) => {
+  event.preventDefault();
+  const body = commentDraft.value.trim();
+  if (body.length === 0) return;
+  commentDraft.value = "";
+  void fetch("/sync/comments/create", {
+    body: JSON.stringify({
+      body,
+      resourceId: "shared-discussion",
+      userId: tabUserId(),
+    }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+};
+const deleteComment = (commentId: string) =>
+  void fetch("/sync/comments/delete", {
+    body: JSON.stringify({ commentId, userId: tabUserId() }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+
 // Conflict-free collaborative editing in one call — the same shared "doc" field
 // every framework page edits. The composable merges everyone's edits and
 // broadcasts via the engine's auto "doc:merge" mutation.
@@ -145,6 +282,13 @@ const onDocInput = (event: Event) => {
           <span class="presence-online" data-testid="presence-online"
             >{{ online }} online</span
           >
+          <span
+            class="presence-online"
+            data-testid="presence-pack-members"
+            title="From @absolutejs/sync-pack-presence — collection-based, TTL-cleaned, queryable."
+          >
+            👥 {{ packPresence.data.value.length }} in channel (pack)
+          </span>
           <span class="presence-typing">{{
             typing.length > 0 ? `${typing.join(", ")} typing…` : ""
           }}</span>
@@ -200,6 +344,96 @@ const onDocInput = (event: Event) => {
           rows="4"
           @input="onDocInput"
         ></textarea>
+      </section>
+
+      <section class="sync-card" data-testid="digest-pack-panel">
+        <p class="section-desc">
+          Scheduled per-actor digests via
+          <code>@absolutejs/sync-pack-digest</code>. Cron fires every 15s; the
+          button below triggers it immediately. The cursor is the per-actor
+          row from the pack's owned <code>digest_cursors</code> table; the
+          outbox below is the host's <code>send</code> adapter writing to an
+          in-memory log.
+        </p>
+        <div class="presence-bar">
+          <span class="presence-online" data-testid="digest-cursor">
+            📬 Last digest:
+            {{
+              digestCursor === undefined
+                ? "never"
+                : new Date(digestCursor.lastSentAt).toLocaleTimeString()
+            }}
+          </span>
+          <button
+            class="primary"
+            data-testid="digest-fire"
+            type="button"
+            @click="fireDigest"
+          >
+            Fire digest now
+          </button>
+        </div>
+        <ul class="task-list" data-testid="digest-log">
+          <li v-if="digestEntries.length === 0" class="task-item">
+            <span class="muted"
+              >No digests sent yet — click "Fire digest now" or wait for the
+              15s cron.</span
+            >
+          </li>
+          <li
+            v-for="entry in digestEntries"
+            :key="entry.id"
+            class="task-item"
+          >
+            <strong>{{ entry.subject }}</strong>
+            <span class="muted">
+              · to {{ entry.actorId }}@example.invalid ·
+              {{ new Date(entry.sentAt).toLocaleTimeString() }}
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="sync-card" data-testid="comments-pack-panel">
+        <p class="section-desc">
+          Threaded comments via <code>@absolutejs/sync-pack-comments</code> on
+          a single shared discussion resource. Open another tab and post —
+          every framework page sees every message.
+        </p>
+        <form class="task-form" @submit="postComment">
+          <input
+            v-model="commentDraft"
+            data-testid="comment-input"
+            placeholder="Say something to the shared discussion…"
+          />
+          <button class="primary" type="submit">Post</button>
+        </form>
+        <ul class="task-list" data-testid="comments-list">
+          <li v-if="orderedComments.length === 0" class="task-item">
+            <span class="muted">No comments yet.</span>
+          </li>
+          <li
+            v-for="comment in orderedComments"
+            :key="comment.id"
+            class="task-item"
+          >
+            <span>
+              <strong>{{ comment.authorId.slice(0, 6) }}</strong
+              >: {{ comment.body }}
+              <span v-if="comment.editedAt !== null" class="muted">
+                (edited)</span
+              >
+            </span>
+            <button
+              v-if="comment.authorId === myUserId"
+              :data-testid="`comment-delete-${comment.id}`"
+              type="button"
+              @click="deleteComment(comment.id)"
+            >
+              ×
+            </button>
+          </li>
+        </ul>
       </section>
 
       <p class="section-desc">

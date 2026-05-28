@@ -40,6 +40,13 @@
       <span class="presence-online" data-testid="presence-online"
         >{{ online() }} online</span
       >
+      <span
+        class="presence-online"
+        data-testid="presence-pack-members"
+        title="From @absolutejs/sync-pack-presence — collection-based, TTL-cleaned, queryable."
+      >
+        👥 {{ packPresenceCount() }} in channel (pack)
+      </span>
       <span class="presence-typing"
         >{{ typing().length > 0 ? typing().join(", ") + " typing…" : "" }}</span
       >
@@ -95,6 +102,93 @@
       [value]="docText()"
       (input)="setDoc($event)"
     ></textarea>
+  </section>
+
+  <section class="sync-card" data-testid="digest-pack-panel">
+    <p class="section-desc">
+      Scheduled per-actor digests via
+      <code>&#64;absolutejs/sync-pack-digest</code>. Cron fires every 15s; the
+      button below triggers it immediately. The cursor is the per-actor row
+      from the pack's owned <code>digest_cursors</code> table.
+    </p>
+    <div class="presence-bar">
+      <span class="presence-online" data-testid="digest-cursor">
+        📬 Last digest:
+        {{
+          digestCursor() === undefined
+            ? "never"
+            : (digestCursor()!.lastSentAt | date: "h:mm:ss a")
+        }}
+      </span>
+      <button
+        class="primary"
+        data-testid="digest-fire"
+        type="button"
+        (click)="fireDigest()"
+      >
+        Fire digest now
+      </button>
+    </div>
+    <ul class="task-list" data-testid="digest-log">
+      @if (digestEntries().length === 0) {
+      <li class="task-item">
+        <span class="muted"
+          >No digests sent yet — click "Fire digest now" or wait for the 15s
+          cron.</span
+        >
+      </li>
+      } @for (entry of digestEntries(); track entry.id) {
+      <li class="task-item">
+        <strong>{{ entry.subject }}</strong>
+        <span class="muted">
+          · to {{ entry.actorId }}&#64;example.invalid ·
+          {{ entry.sentAt | date: "h:mm:ss a" }}
+        </span>
+      </li>
+      }
+    </ul>
+  </section>
+
+  <section class="sync-card" data-testid="comments-pack-panel">
+    <p class="section-desc">
+      Threaded comments via <code>&#64;absolutejs/sync-pack-comments</code> on a
+      single shared discussion resource. Open another tab and post — every
+      framework page sees every message.
+    </p>
+    <form class="task-form" (submit)="postComment($event)">
+      <input
+        data-testid="comment-input"
+        placeholder="Say something to the shared discussion…"
+        [value]="commentDraft()"
+        (input)="setCommentDraft($event)"
+      />
+      <button class="primary" type="submit">Post</button>
+    </form>
+    <ul class="task-list" data-testid="comments-list">
+      @if (orderedComments().length === 0) {
+      <li class="task-item">
+        <span class="muted">No comments yet.</span>
+      </li>
+      } @for (comment of orderedComments(); track comment.id) {
+      <li class="task-item">
+        <span>
+          <strong>{{ comment.authorId.slice(0, 6) }}</strong
+          >: {{ comment.body }} @if (comment.editedAt !== null) {
+          <span class="muted"> (edited)</span>
+          }
+        </span>
+        @if (comment.authorId === myUserId()) {
+        <button
+          [attr.data-testid]="'comment-delete-' + comment.id"
+          type="button"
+          (click)="deleteComment(comment.id)"
+        >
+          ×
+        </button>
+        }
+      </li>
+      }
+    </ul>
   </section>
 
   <p class="section-desc">

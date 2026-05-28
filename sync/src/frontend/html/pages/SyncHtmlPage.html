@@ -43,6 +43,18 @@
         the <code>snapshot</code>, then applies each <code>diff</code> the
         server pushes. The same live collection every other page uses.
       </p>
+      <p class="section-desc muted">
+        <strong>Sync packs note:</strong> the
+        <code>@absolutejs/sync-pack-{presence,comments,digest}</code> demos
+        are on the
+        <a href="/">React</a>, <a href="/vue">Vue</a>,
+        <a href="/svelte">Svelte</a>, and <a href="/angular">Angular</a>
+        pages. They use the framework hooks
+        (<code>useSyncCollection</code>, <code>createSyncCollectionStore</code>,
+        <code>SyncCollectionService</code>) which translate the same wire
+        protocol you'd write by hand here. Open one of those pages alongside
+        this one to see cross-tab membership and comment threads.
+      </p>
 
       <section class="sync-card">
         <div class="sync-bar">
