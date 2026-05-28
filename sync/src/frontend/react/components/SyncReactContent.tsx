@@ -281,6 +281,53 @@ const useComments = (resourceId: string) => {
   return { comments: data, create, edit, remove };
 };
 
+// @absolutejs/sync-pack-notifications — per-actor inbox.
+type NotificationRow = {
+  id: string;
+  actorId: string;
+  kind: string;
+  title: string;
+  body: string;
+  href: string | null;
+  createdAt: number;
+  readAt: number | null;
+  expiresAt: number | null;
+};
+
+const useNotifications = () => {
+  const url = wsUrl();
+  const { data } = useSyncCollection<NotificationRow>({
+    collection: "notifications",
+    url,
+  });
+  const send = () => {
+    void fetch("/sync/notifications/notify", {
+      body: JSON.stringify({
+        actorId: tabUserId(),
+        body: "Click any inbox item to mark it read.",
+        kind: "demo",
+        title: `Test notification at ${new Date().toLocaleTimeString()}`,
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  };
+  const markRead = (notificationId: string) =>
+    fetch("/sync/notifications/markRead", {
+      body: JSON.stringify({ notificationId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  const markAllRead = () =>
+    fetch("/sync/notifications/markAllRead", {
+      body: JSON.stringify({ userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+  return { notifications: data, send, markRead, markAllRead };
+};
+
 const useDigestSurface = () => {
   const url = wsUrl();
   const cursors = useSyncCollection<DigestCursor>({
@@ -323,6 +370,11 @@ export const SyncReactContent = () => {
   // resource. Every tab sees the same thread because canReadResource is
   // "everyone" in the demo.
   const comments = useComments("shared-discussion");
+  // @absolutejs/sync-pack-notifications: per-actor inbox.
+  const notifications = useNotifications();
+  const unreadCount = notifications.notifications.filter(
+    (notification) => notification.readAt === null,
+  ).length;
   const [commentDraft, setCommentDraft] = useState("");
   const [title, setTitle] = useState("");
   // Live full-text search: a separate collection whose params are the query
@@ -806,6 +858,82 @@ export const SyncReactContent = () => {
                 </li>
               );
             })}
+        </ul>
+      </section>
+
+      <section
+        className="sync-card"
+        data-testid="notifications-pack-panel"
+      >
+        <p className="section-desc">
+          Per-actor inbox via{" "}
+          <code>@absolutejs/sync-pack-notifications</code>. The "Send" button
+          POSTs to <code>/sync/notifications/notify</code> (server-side
+          stamps <code>systemTrusted: true</code> so the pack's
+          host-trusted insert path accepts it). Each tab sees only its own
+          rows.
+        </p>
+        <div className="presence-bar">
+          <span
+            className="presence-online"
+            data-testid="notifications-unread-count"
+          >
+            🔔 {unreadCount} unread
+          </span>
+          <button
+            className="primary"
+            data-testid="notifications-send"
+            onClick={notifications.send}
+            type="button"
+          >
+            Send test notification
+          </button>
+          <button
+            data-testid="notifications-mark-all-read"
+            onClick={() => void notifications.markAllRead()}
+            type="button"
+          >
+            Mark all read
+          </button>
+        </div>
+        <ul className="task-list" data-testid="notifications-list">
+          {notifications.notifications.length === 0 && (
+            <li className="task-item">
+              <span className="muted">Inbox empty.</span>
+            </li>
+          )}
+          {[...notifications.notifications]
+            .sort((first, second) => second.createdAt - first.createdAt)
+            .slice(0, 5)
+            .map((notification) => (
+              <li
+                className={
+                  notification.readAt === null
+                    ? "task-item"
+                    : "task-item done"
+                }
+                key={notification.id}
+              >
+                <span>
+                  <strong>{notification.title}</strong>
+                  <span className="muted">
+                    {" · "}
+                    {new Date(notification.createdAt).toLocaleTimeString()}
+                  </span>
+                </span>
+                {notification.readAt === null && (
+                  <button
+                    data-testid={`notification-mark-read-${notification.id}`}
+                    onClick={() =>
+                      void notifications.markRead(notification.id)
+                    }
+                    type="button"
+                  >
+                    ✓
+                  </button>
+                )}
+              </li>
+            ))}
         </ul>
       </section>
 

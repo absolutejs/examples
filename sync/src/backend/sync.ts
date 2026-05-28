@@ -12,6 +12,7 @@ import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
 import { createPresencePack } from "@absolutejs/sync-pack-presence";
 import { createDigestPack } from "@absolutejs/sync-pack-digest";
 import { createCommentsPack } from "@absolutejs/sync-pack-comments";
+import { createNotificationsPack } from "@absolutejs/sync-pack-notifications";
 import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
@@ -68,7 +69,9 @@ const transaction: TransactionRunner = async (run) => {
 // random per-tab id the client mints; the presence pack uses it to keep one
 // row per (channel, actor) so two tabs from the same browser still show as
 // two viewers.
-type Ctx = { role?: string; userId?: string };
+// `systemTrusted: true` flags a server-internal ctx (used by the
+// notifications:notify HTTP route, which is host-trusted insert path).
+type Ctx = { role?: string; userId?: string; systemTrusted?: boolean };
 
 const engine = createSyncEngine({ transaction });
 
@@ -747,6 +750,18 @@ engine.registerPack(
   }),
 );
 
+// Per-actor inbox via the notifications pack. `notify` is host-trusted —
+// the demo route stamps `systemTrusted: true` on the ctx so the pack's
+// insert permission (which routes through canModerate) accepts the call.
+// A real app uses systemTrusted as a server-internal flag never set from
+// the client side.
+engine.registerPack(
+  createNotificationsPack<Ctx>({
+    canModerate: (ctx) => ctx.systemTrusted === true,
+    getActorId: (ctx) => ctx.userId,
+  }),
+);
+
 engine.registerPack(
   createPresencePack<Ctx>({
     getActorId: (ctx) => ctx.userId,
@@ -994,6 +1009,62 @@ export const syncPlugin = new Elysia()
     {
       body: t.Object({
         commentId: t.String(),
+        userId: t.String(),
+      }),
+    },
+  )
+  // notifications:notify — host-trusted insert. The demo button hits this
+  // route; production apps would call notify from webhooks or other
+  // server-side paths, never from the client directly.
+  .post(
+    "/sync/notifications/notify",
+    ({ body }) =>
+      engine.runMutation(
+        "notifications:notify",
+        {
+          actorId: body.actorId,
+          body: body.body,
+          href: body.href ?? null,
+          kind: body.kind,
+          title: body.title,
+        },
+        { systemTrusted: true, userId: "system" },
+      ),
+    {
+      body: t.Object({
+        actorId: t.String(),
+        body: t.String(),
+        href: t.Optional(t.String()),
+        kind: t.String(),
+        title: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/sync/notifications/markRead",
+    ({ body }) =>
+      engine.runMutation(
+        "notifications:markRead",
+        { notificationId: body.notificationId },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        notificationId: t.String(),
+        userId: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/sync/notifications/markAllRead",
+    ({ body }) =>
+      engine.runMutation(
+        "notifications:markAllRead",
+        undefined,
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
         userId: t.String(),
       }),
     },
