@@ -9,6 +9,7 @@ import {
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
+import { createPresencePack } from "@absolutejs/sync-pack-presence";
 import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
@@ -61,8 +62,11 @@ const transaction: TransactionRunner = async (run) => {
 };
 
 // The per-connection auth context. A client may connect read-only by passing
-// `?role=viewer` on the socket URL; everyone else is an editor.
-type Ctx = { role?: string };
+// `?role=viewer` on the socket URL; everyone else is an editor. `userId` is a
+// random per-tab id the client mints; the presence pack uses it to keep one
+// row per (channel, actor) so two tabs from the same browser still show as
+// two viewers.
+type Ctx = { role?: string; userId?: string };
 
 const engine = createSyncEngine({ transaction });
 
@@ -679,6 +683,25 @@ engine.registerSchedule(
     },
   }),
 );
+// Durable, queryable presence as a sync pack: each connected actor heartbeats
+// `presence:heartbeat({ channel, state })`; the pack upserts a row in the owned
+// `presence` table and refreshes its TTL. A subscribe to the `presence`
+// collection with `{ channel: "shared" }` returns the live member list. The
+// `presence:cleanup` schedule (registered by the pack) fires every 5 seconds
+// via the `scheduled` plugin and reaps rows past TTL.
+//
+// This complements — does NOT replace — the ws-broadcast `createPresenceHub`
+// below: that one is for ephemeral, low-latency signals (typing, cursor
+// position); the pack is for queryable membership ("who's currently in this
+// channel"). Two different presence patterns, both ride this engine.
+engine.registerPack(
+  createPresencePack<Ctx>({
+    getActorId: (ctx) => ctx.userId,
+    heartbeatTtlSec: 15,
+    cleanupCron: "*/5 * * * * *",
+  }),
+);
+
 // Ephemeral presence (who's online / typing) rides the same socket.
 const presence = createPresenceHub();
 
@@ -720,8 +743,12 @@ export const syncPlugin = new Elysia()
     syncSocket({
       engine,
       presence,
-      // Read the role off the socket's query string into the per-connection ctx.
-      resolveContext: (data) => ({ role: queryParam(data, "role") }),
+      // Read the role + per-tab user id off the socket's query string into the
+      // per-connection ctx. `userId` is what the presence pack uses to key rows.
+      resolveContext: (data) => ({
+        role: queryParam(data, "role"),
+        userId: queryParam(data, "userId"),
+      }),
     }),
   )
   .use(scheduled({ engine }))
@@ -746,4 +773,34 @@ export const syncPlugin = new Elysia()
     "/sync/removeTask",
     ({ body }) => runMutation("removeTask", body),
     { body: t.Object({ id: t.String() }) },
+  )
+  // Presence-pack heartbeat/leave HTTP shims. A production app would call
+  // these mutations through the syncStore (which rides the socket); they're
+  // wired as plain Eden routes here so the demo can drive presence with one
+  // `fetch` from the React component, without an extra abstraction.
+  .post(
+    "/sync/presence/heartbeat",
+    ({ body }) =>
+      engine.runMutation(
+        "presence:heartbeat",
+        { channel: body.channel, state: { name: body.name } },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        channel: t.String(),
+        userId: t.String(),
+        name: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/sync/presence/leave",
+    ({ body }) =>
+      engine.runMutation(
+        "presence:leave",
+        { channel: body.channel },
+        { userId: body.userId },
+      ),
+    { body: t.Object({ channel: t.String(), userId: t.String() }) },
   );

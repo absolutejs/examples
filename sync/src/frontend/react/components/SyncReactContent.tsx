@@ -92,13 +92,32 @@ const RagHitItem = ({ hit }: { hit: RagHit }) => (
   </li>
 );
 
+// Stable per-tab user id, persisted in sessionStorage so a page reload keeps
+// the same presence row instead of orphaning the old one. Each tab gets its
+// own — two tabs in the same browser show as two viewers in the presence
+// collection, which matches what users actually want to see.
+const tabUserId = () => {
+  if (typeof window === "undefined") return "ssr";
+  const key = "sync-demo:userId";
+  const existing = window.sessionStorage.getItem(key);
+  if (existing !== null) return existing;
+  const fresh = globalThis.crypto.randomUUID();
+  window.sessionStorage.setItem(key, fresh);
+
+  return fresh;
+};
+
 const wsUrl = () => {
   if (typeof window === "undefined") {
     return "ws://localhost/sync/ws";
   }
   const role = roleParam();
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const query = role ? `?role=${encodeURIComponent(role)}` : "";
+  const userId = tabUserId();
+  const params = new URLSearchParams();
+  if (role !== undefined && role !== null) params.set("role", role);
+  params.set("userId", userId);
+  const query = params.toString() ? `?${params.toString()}` : "";
 
   return `${protocol}://${window.location.host}/sync/ws${query}`;
 };
@@ -108,6 +127,58 @@ const randomName = () => `User-${globalThis.crypto.randomUUID().split("-")[0]}`;
 // Local-first: persist confirmed rows in IndexedDB so the list is instant on
 // reload and available offline. The socket resumes from the cached version.
 const taskCache = indexedDbCollectionCache<Task>({ key: "tasks" });
+
+// Durable, queryable presence as a SyncPack: the server-side pack maintains
+// a `presence` collection scoped per channel, with rows TTL-cleaned by a
+// schedule. We heartbeat from the client every 5s; on unmount we call
+// `presence:leave`. The collection subscription auto-updates the badge as
+// other tabs come and go.
+//
+// (Distinct from the ws-broadcast `createPresence` below: that one is for
+// instant, lossy typing-indicator pings; this one is for the "who's currently
+// in this channel" membership read.)
+type PresenceRow = {
+  id: string;
+  channel: string;
+  actorId: string;
+  state: { name: string };
+  expiresAt: number;
+  heartbeatAt: number;
+};
+
+const useChannelMembers = (channel: string, displayName: string) => {
+  const url = wsUrl();
+  const { data } = useSyncCollection<PresenceRow>({
+    collection: "presence",
+    params: { channel },
+    url,
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const userId = tabUserId();
+    const heartbeat = () => {
+      void fetch("/sync/presence/heartbeat", {
+        body: JSON.stringify({ channel, name: displayName, userId }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+    };
+    heartbeat();
+    const interval = window.setInterval(heartbeat, 5_000);
+
+    return () => {
+      window.clearInterval(interval);
+      void fetch("/sync/presence/leave", {
+        body: JSON.stringify({ channel, userId }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+    };
+  }, [channel, displayName]);
+
+  return data;
+};
 
 // Ephemeral presence for the shared "tasks" room: who's online + who's typing.
 const usePresence = (room: string) => {
@@ -146,6 +217,12 @@ export const SyncReactContent = () => {
     url: wsUrl(),
   });
   const { members, selfId, setTyping } = usePresence("tasks");
+  // SyncPack-backed durable presence: see how the same React page now exposes
+  // both a ws-broadcast presence (above, ephemeral typing pings) AND a
+  // collection-based presence (below, queryable members list). The pack lives
+  // in `@absolutejs/sync-pack-presence` — one `engine.registerPack(...)` on
+  // the server, one `useSyncCollection` here.
+  const channelMembers = useChannelMembers("tasks", "react-tab");
   const [title, setTitle] = useState("");
   // Live full-text search: a separate collection whose params are the query
   // string; the engine streams back the ranked top-K (each row tagged _score).
@@ -341,6 +418,13 @@ export const SyncReactContent = () => {
         <div className="presence-bar">
           <span className="presence-online" data-testid="presence-online">
             {members.length} online
+          </span>
+          <span
+            className="presence-online"
+            data-testid="presence-pack-members"
+            title="From @absolutejs/sync-pack-presence — collection-based, TTL-cleaned, queryable. Open a second tab to see it tick up."
+          >
+            👥 {channelMembers.length} in channel (pack)
           </span>
           <span className="presence-typing">
             {typing.length > 0 ? `${typing.join(", ")} typing…` : ""}
