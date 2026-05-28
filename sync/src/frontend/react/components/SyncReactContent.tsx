@@ -45,11 +45,19 @@ type DocCursor = { name: string; anchor: string | null };
 
 type TaskItemProps = {
   task: Task;
+  favorited: boolean;
   onToggle: (task: Task) => void;
   onRemove: (task: Task) => void;
+  onFavoriteToggle: (task: Task) => void;
 };
 
-const TaskItem = ({ task, onToggle, onRemove }: TaskItemProps) => (
+const TaskItem = ({
+  task,
+  favorited,
+  onToggle,
+  onRemove,
+  onFavoriteToggle,
+}: TaskItemProps) => (
   <li className={task.done ? "task-item done" : "task-item"}>
     <label>
       <input
@@ -59,6 +67,21 @@ const TaskItem = ({ task, onToggle, onRemove }: TaskItemProps) => (
       />
       <span>{task.title}</span>
     </label>
+    <button
+      aria-label={favorited ? "Unfavorite" : "Favorite"}
+      data-testid={`task-fav-${task.id}`}
+      onClick={() => onFavoriteToggle(task)}
+      style={{
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        fontSize: "1.1em",
+        padding: "0 6px",
+      }}
+      type="button"
+    >
+      {favorited ? "★" : "☆"}
+    </button>
     <button
       aria-label="Remove"
       className="task-remove"
@@ -281,6 +304,39 @@ const useComments = (resourceId: string) => {
   return { comments: data, create, edit, remove };
 };
 
+// @absolutejs/sync-pack-favorites — per-actor saved tasks. Uses the
+// `favorites-with-resource` join collection so we get task title + done
+// state pre-joined.
+type FavoriteWithTask = {
+  id: string;
+  actorId: string;
+  resourceKind: string;
+  resourceId: string;
+  createdAt: number;
+  resource: Task;
+};
+
+const useFavorites = () => {
+  const url = wsUrl();
+  const { data } = useSyncCollection<FavoriteWithTask>({
+    collection: "favorites-with-resource",
+    params: { resourceKind: "task" },
+    url,
+  });
+  const toggle = (taskId: string) =>
+    fetch("/sync/favorites/toggle", {
+      body: JSON.stringify({
+        resourceId: taskId,
+        resourceKind: "task",
+        userId: tabUserId(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+  return { favorites: data, toggle };
+};
+
 // @absolutejs/sync-pack-notifications — per-actor inbox.
 type NotificationRow = {
   id: string;
@@ -370,6 +426,12 @@ export const SyncReactContent = () => {
   // resource. Every tab sees the same thread because canReadResource is
   // "everyone" in the demo.
   const comments = useComments("shared-discussion");
+  // @absolutejs/sync-pack-favorites: per-actor saved tasks via the join
+  // collection (so we get the joined Task row alongside the favorite).
+  const favorites = useFavorites();
+  const favoritedTaskIds = new Set(
+    favorites.favorites.map((favorite) => favorite.resourceId),
+  );
   // @absolutejs/sync-pack-notifications: per-actor inbox.
   const notifications = useNotifications();
   const unreadCount = notifications.notifications.filter(
@@ -611,7 +673,9 @@ export const SyncReactContent = () => {
         <ul className="task-list">
           {tasks.map((task) => (
             <TaskItem
+              favorited={favoritedTaskIds.has(task.id)}
               key={task.id}
+              onFavoriteToggle={(t) => void favorites.toggle(t.id)}
               onRemove={remove}
               onToggle={toggle}
               task={task}
@@ -932,6 +996,46 @@ export const SyncReactContent = () => {
                     ✓
                   </button>
                 )}
+              </li>
+            ))}
+        </ul>
+      </section>
+
+      <section className="sync-card" data-testid="favorites-pack-panel">
+        <p className="section-desc">
+          Per-actor favorites via{" "}
+          <code>@absolutejs/sync-pack-favorites</code>. Click ☆/★ on any task
+          above to toggle. The panel subscribes to the join collection{" "}
+          <code>favorites-with-resource</code>, so each favorited row arrives
+          pre-joined with the host's task row — no second lookup needed.
+        </p>
+        <ul className="task-list" data-testid="favorites-list">
+          {favorites.favorites.length === 0 && (
+            <li className="task-item">
+              <span className="muted">
+                No favorites yet — click a ☆ above to add one.
+              </span>
+            </li>
+          )}
+          {[...favorites.favorites]
+            .sort((first, second) => second.createdAt - first.createdAt)
+            .map((favorite) => (
+              <li
+                className={
+                  favorite.resource.done ? "task-item done" : "task-item"
+                }
+                key={favorite.id}
+              >
+                <span>
+                  <strong>★</strong> {favorite.resource.title}
+                </span>
+                <button
+                  data-testid={`favorite-remove-${favorite.resourceId}`}
+                  onClick={() => void favorites.toggle(favorite.resourceId)}
+                  type="button"
+                >
+                  ×
+                </button>
               </li>
             ))}
         </ul>
@@ -1503,7 +1607,9 @@ const EdenTaskTracker = () => {
       <ul className="task-list" data-testid="eden-task-list">
         {tasks.map((task) => (
           <TaskItem
+            favorited={false}
             key={task.id}
+            onFavoriteToggle={() => undefined}
             onRemove={remove}
             onToggle={toggle}
             task={task}

@@ -13,6 +13,7 @@ import { createPresencePack } from "@absolutejs/sync-pack-presence";
 import { createDigestPack } from "@absolutejs/sync-pack-digest";
 import { createCommentsPack } from "@absolutejs/sync-pack-comments";
 import { createNotificationsPack } from "@absolutejs/sync-pack-notifications";
+import { createFavoritesPack } from "@absolutejs/sync-pack-favorites";
 import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
@@ -762,6 +763,19 @@ engine.registerPack(
   }),
 );
 
+// Per-actor favorites against the existing `tasks` table. The join is
+// configured so the React panel can subscribe to "my favorited tasks"
+// in one call and get { ...favorite, resource: Task } per row.
+engine.registerPack(
+  createFavoritesPack<Ctx, Task>({
+    getActorId: (ctx) => ctx.userId,
+    joinResources: {
+      hydrate: () => [...tasks.values()],
+      table: "tasks",
+    },
+  }),
+);
+
 engine.registerPack(
   createPresencePack<Ctx>({
     getActorId: (ctx) => ctx.userId,
@@ -1065,6 +1079,23 @@ export const syncPlugin = new Elysia()
       ),
     {
       body: t.Object({
+        userId: t.String(),
+      }),
+    },
+  )
+  // favorites:toggle — single round-trip per click. Returns the new state.
+  .post(
+    "/sync/favorites/toggle",
+    ({ body }) =>
+      engine.runMutation(
+        "favorites:toggle",
+        { resourceId: body.resourceId, resourceKind: body.resourceKind },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        resourceId: t.String(),
+        resourceKind: t.String(),
         userId: t.String(),
       }),
     },
