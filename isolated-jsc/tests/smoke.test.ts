@@ -26,6 +26,11 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   await expect(resultPanel.getByText("capability manifest")).toBeVisible({
     timeout: 15000,
   });
+  await expect(
+    resultPanel.getByText(/"redactsInput": true/).first(),
+  ).toBeVisible({
+    timeout: 15000,
+  });
   await expect(resultPanel.getByText("execution receipt")).toBeVisible({
     timeout: 15000,
   });

@@ -68,6 +68,15 @@ const runOne = async (
         description: "Append one bounded line to the demo output log",
         input: "unknown[]",
         output: "null",
+        redactAuditInput: (input) => {
+          const args = Array.isArray(input) ? input : [input];
+          return args.map((arg) =>
+            typeof arg === "string" && arg.length <= 32
+              ? arg
+              : "[log arg redacted]",
+          );
+        },
+        redactAuditOutput: () => null,
         risk: "read-only",
         timeoutMs: 100,
         validateInput: (input) => (Array.isArray(input) ? input : [input]),
