@@ -52,6 +52,10 @@
     createdAt: number;
     editedAt: number | null;
   };
+  // 0.2+: comments-with-author join shape.
+  type CommentWithAuthor = CommentRow & {
+    author: { id: string; displayName: string };
+  };
 
   let { cssPath = undefined }: { cssPath?: string } = $props();
 
@@ -205,8 +209,8 @@
     });
 
   // @absolutejs/sync-pack-comments — threaded comments on the shared discussion.
-  const commentsStore = createSyncCollectionStore<CommentRow>({
-    collection: "comments",
+  const commentsStore = createSyncCollectionStore<CommentWithAuthor>({
+    collection: "comments-with-author",
     params: { resourceId: "shared-discussion" },
     url: wsUrl,
   });
@@ -409,7 +413,7 @@
         {#each orderedComments as comment (comment.id)}
           <li class="task-item">
             <span>
-              <strong>{comment.authorId.slice(0, 6)}</strong>: {comment.body}
+              <strong>{comment.author.displayName}</strong>: {comment.body}
               {#if comment.editedAt !== null}
                 <span class="muted"> (edited)</span>
               {/if}

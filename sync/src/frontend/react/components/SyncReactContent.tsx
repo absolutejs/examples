@@ -246,10 +246,15 @@ type CommentRow = {
   editedAt: number | null;
 };
 
+// 0.2+ shape from the comments-with-author join. The host's user row is
+// embedded under `author` so the UI doesn't need to look it up separately.
+type DemoUser = { id: string; displayName: string };
+type CommentWithAuthor = CommentRow & { author: DemoUser };
+
 const useComments = (resourceId: string) => {
   const url = wsUrl();
-  const { data } = useSyncCollection<CommentRow>({
-    collection: "comments",
+  const { data } = useSyncCollection<CommentWithAuthor>({
+    collection: "comments-with-author",
     params: { resourceId },
     url,
   });
@@ -780,7 +785,7 @@ export const SyncReactContent = () => {
               return (
                 <li className="task-item" key={comment.id}>
                   <span>
-                    <strong>{comment.authorId.slice(0, 6)}</strong>
+                    <strong>{comment.author.displayName}</strong>
                     {": "}
                     {comment.body}
                     {comment.editedAt !== null && (

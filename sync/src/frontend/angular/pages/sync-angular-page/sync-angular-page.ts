@@ -55,6 +55,10 @@ type CommentRow = {
   createdAt: number;
   editedAt: number | null;
 };
+// 0.2+: comments-with-author join shape.
+type CommentWithAuthor = CommentRow & {
+  author: { id: string; displayName: string };
+};
 
 // This page has no per-request DI context, so the SSR handler's
 // `requestContext` is an empty object.
@@ -168,8 +172,8 @@ export class SyncAngularPageComponent implements OnDestroy {
   }
 
   // @absolutejs/sync-pack-comments — threaded comments on a shared resource.
-  private commentsHandle = this.sync.connect<CommentRow>({
-    collection: "comments",
+  private commentsHandle = this.sync.connect<CommentWithAuthor>({
+    collection: "comments-with-author",
     params: { resourceId: "shared-discussion" },
     url: wsUrl(),
   });

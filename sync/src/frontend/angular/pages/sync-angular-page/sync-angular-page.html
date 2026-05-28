@@ -172,7 +172,7 @@
       } @for (comment of orderedComments(); track comment.id) {
       <li class="task-item">
         <span>
-          <strong>{{ comment.authorId.slice(0, 6) }}</strong
+          <strong>{{ comment.author.displayName }}</strong
           >: {{ comment.body }} @if (comment.editedAt !== null) {
           <span class="muted"> (edited)</span>
           }

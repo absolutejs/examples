@@ -8,9 +8,9 @@
         "@absolutejs/absolute": "0.19.0-beta.1047",
         "@absolutejs/rag": "0.0.22",
         "@absolutejs/sync": "^1.9.2",
-        "@absolutejs/sync-pack-comments": "^0.1.0",
-        "@absolutejs/sync-pack-digest": "^0.1.0",
-        "@absolutejs/sync-pack-presence": "^0.1.0",
+        "@absolutejs/sync-pack-comments": "^0.3.0",
+        "@absolutejs/sync-pack-digest": "^0.2.0",
+        "@absolutejs/sync-pack-presence": "^0.2.0",
         "@absolutejs/sync-yjs": "^0.0.2",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
@@ -76,11 +76,11 @@
 
     "@absolutejs/sync": ["@absolutejs/sync@1.9.2", "", { "peerDependencies": { "@absolutejs/isolated-jsc": ">= 0.8.0", "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "@modelcontextprotocol/sdk": ">= 1.29.0", "@tanstack/db": ">= 0.6.7 <0.7", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@absolutejs/isolated-jsc", "@angular/core", "@elysiajs/cron", "@modelcontextprotocol/sdk", "@tanstack/db", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-/rkOpBafXTUutylvUfEQTlAxYHJ7Ogt3OXuWYjBJICYDhYVkPGLPwmgHzOc72O5pOdZ/gTCkt5Wlvb1gES7JAw=="],
 
-    "@absolutejs/sync-pack-comments": ["@absolutejs/sync-pack-comments@0.1.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-fD/eRA53EYCf2ZZsG+ingdOQbKQ//fOIoOAWAl1R11IEWWkDR0i6cjevRD98REtOhc5tgXdmAjoSMdNGahjTMg=="],
+    "@absolutejs/sync-pack-comments": ["@absolutejs/sync-pack-comments@0.3.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-3PLJVt5/U9oSddTOycwOgx490zPOYFeBEKokjhR+i3upLMUpiB454e6+pkNnmJHihVlDicgY+e8Pccp1+wi8nw=="],
 
-    "@absolutejs/sync-pack-digest": ["@absolutejs/sync-pack-digest@0.1.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-BxeRoRG8TKONCJRXqdffJAc/ykM2EjNePl5fZydL3iXC3M2jS6eUYWJ/27wjP+uOsogEV2ISZLZX0PBkPld2/Q=="],
+    "@absolutejs/sync-pack-digest": ["@absolutejs/sync-pack-digest@0.2.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-F6/1QvgMsrN7OBR4n5/RyktxKs3B1gsS48bHoKy3lT3+ULilsLLX7DW7ybyIACJxcF3TZaBdTKJPUXTc8DsQ4Q=="],
 
-    "@absolutejs/sync-pack-presence": ["@absolutejs/sync-pack-presence@0.1.1", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-ad8FxhpF20gfiQZ8z8Se2nGrBre8srFQvvkexZAogIuyAhA5XlKX8bDnBgjGC62Hk6RCzIVucKXWANZiPIBanA=="],
+    "@absolutejs/sync-pack-presence": ["@absolutejs/sync-pack-presence@0.2.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-L/ZClBnhDRLwBR2fU2s7h6opCWoD7AnYN3JO6oGOwmEpM5i09g7teyfY6WL3MTlBU2if1NVOnCu4PGbPHuBnzw=="],
 
     "@absolutejs/sync-yjs": ["@absolutejs/sync-yjs@0.0.2", "", { "dependencies": { "yjs": "^13.6.30" }, "peerDependencies": { "@absolutejs/sync": ">= 0.10.0" } }, "sha512-XiugCz83S32GGgzyEcH4aYKh4V+PYSLOe6Xc0pbjpT0vDJxnP3Vs0jm5JCTcImXZ31Rz4ZuMr91iJKuFgIc4FQ=="],
 

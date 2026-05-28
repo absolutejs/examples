@@ -50,6 +50,10 @@ type CommentRow = {
   createdAt: number;
   editedAt: number | null;
 };
+// 0.2+ shape from the comments-with-author join collection.
+type CommentWithAuthor = CommentRow & {
+  author: { id: string; displayName: string };
+};
 
 // Stable per-tab user id (matches the React demo's pattern). Persisted in
 // sessionStorage so a reload doesn't orphan presence rows.
@@ -201,8 +205,8 @@ const fireDigest = () =>
   });
 
 // @absolutejs/sync-pack-comments — threaded comments on the shared discussion.
-const commentsCol = useSyncCollection<CommentRow>({
-  collection: "comments",
+const commentsCol = useSyncCollection<CommentWithAuthor>({
+  collection: "comments-with-author",
   params: { resourceId: "shared-discussion" },
   url: wsUrl,
 });
@@ -418,7 +422,7 @@ const onDocInput = (event: Event) => {
             class="task-item"
           >
             <span>
-              <strong>{{ comment.authorId.slice(0, 6) }}</strong
+              <strong>{{ comment.author.displayName }}</strong
               >: {{ comment.body }}
               <span v-if="comment.editedAt !== null" class="muted">
                 (edited)</span

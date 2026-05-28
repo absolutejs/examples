@@ -696,14 +696,54 @@ engine.registerSchedule(
 // below: that one is for ephemeral, low-latency signals (typing, cursor
 // position); the pack is for queryable membership ("who's currently in this
 // channel"). Two different presence patterns, both ride this engine.
+// Host-side "users" table for the comments-with-author join. The example
+// mints a deterministic display name from the userId so two browser tabs
+// (each with a stable per-tab userId) consistently show as the same author
+// across page reloads. A real app would back this with its real users
+// table (Drizzle, Prisma, etc.).
+type DemoUser = { id: string; displayName: string };
+const demoUsers = new Map<string, DemoUser>();
+const demoDisplayName = (userId: string) =>
+  // First 6 chars + a "Guest" prefix — readable, distinct per tab.
+  `Guest ${userId.slice(0, 6)}`;
+const ensureDemoUser = (userId: string): DemoUser => {
+  let user = demoUsers.get(userId);
+  if (user === undefined) {
+    user = { displayName: demoDisplayName(userId), id: userId };
+    demoUsers.set(userId, user);
+    // Emit so any join collection sees the row materialize.
+    void engine.applyChange("users", { op: "insert", row: user });
+  }
+  return user;
+};
+engine.registerReader("users", { all: () => [...demoUsers.values()] });
+engine.registerWriter<DemoUser>("users", {
+  delete: (row) => {
+    demoUsers.delete(row.id);
+  },
+  insert: (row) => {
+    demoUsers.set(row.id, row);
+    return row;
+  },
+  update: (row) => {
+    demoUsers.set(row.id, row);
+    return row;
+  },
+});
+
 // Threaded comments on a single shared discussion resource. canReadResource
 // is "anyone can read" for the demo (tasks/issues are world-readable here);
 // a real app would gate this on the resource's ACL. Each tab's userId is
 // the comment author — the per-row write permission stamps that on insert.
+// 0.2+: `joinUsers` registers an additional `comments-with-author`
+// collection so the UI can show display names instead of raw uuids.
 engine.registerPack(
-  createCommentsPack<Ctx>({
+  createCommentsPack<Ctx, DemoUser>({
     canReadResource: () => true,
     getActorId: (ctx) => ctx.userId,
+    joinUsers: {
+      hydrate: () => [...demoUsers.values()],
+    },
   }),
 );
 
@@ -908,12 +948,17 @@ export const syncPlugin = new Elysia()
   // drives them with one fetch().
   .post(
     "/sync/comments/create",
-    ({ body }) =>
-      engine.runMutation(
+    ({ body }) => {
+      // Make sure the author exists in the host "users" table so the
+      // comments-with-author join can pair them.
+      ensureDemoUser(body.userId);
+
+      return engine.runMutation(
         "comments:create",
         { body: body.body, resourceId: body.resourceId },
         { userId: body.userId },
-      ),
+      );
+    },
     {
       body: t.Object({
         body: t.String(),
