@@ -7,7 +7,7 @@
       "dependencies": {
         "@absolutejs/absolute": "0.19.0-beta.1047",
         "@absolutejs/rag": "0.0.21",
-        "@absolutejs/sync": "^0.15.0",
+        "@absolutejs/sync": "^1.8.0",
         "@absolutejs/sync-yjs": "^0.0.2",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
@@ -47,6 +47,9 @@
       },
     },
   },
+  "overrides": {
+    "@absolutejs/sync": "^1.8.0",
+  },
   "packages": {
     "@absolutejs/absolute": ["@absolutejs/absolute@0.19.0-beta.1047", "", { "dependencies": { "@elysiajs/openapi": "^1.4.15", "@elysiajs/server-timing": "^1.4.0", "@elysiajs/static": "^1.4.0", "zustand": "^5.0.12" }, "optionalDependencies": { "@absolutejs/native-darwin-arm64": "0.19.0-beta.1008", "@absolutejs/native-darwin-x64": "0.19.0-beta.1008", "@absolutejs/native-linux-arm64": "0.19.0-beta.1008", "@absolutejs/native-linux-x64": "0.19.0-beta.1008", "@absolutejs/native-windows-arm64": "0.19.0-beta.1008", "@absolutejs/native-windows-x64": "0.19.0-beta.1008" }, "peerDependencies": { "@angular/animations": "^21.0.0", "@angular/common": "^21.0.0", "@angular/compiler": "^21.0.0", "@angular/compiler-cli": "^21.0.0", "@angular/core": "^21.0.0", "@angular/platform-browser": "^21.0.0", "@angular/platform-server": "^21.0.0", "@angular/router": "^21.0.0", "@angular/ssr": "^21.0.0", "@vue/compiler-sfc": "^3.5.27", "elysia": "^1.4.0", "less": "^4.6.0", "postcss": "^8.5.0", "react": "^19.2.0", "react-dom": "^19.2.0", "react-router": "^7.0.0", "rxjs": "^7.8.0", "sass": "^1.99.0", "sharp": ">=0.33.0", "stylus": "^0.64.0", "svelte": "^5.35.2", "tailwindcss": "^4.1.0", "typescript": "^5.9.3", "vue": "^3.5.27" }, "optionalPeers": ["@angular/animations", "@angular/common", "@angular/compiler", "@angular/compiler-cli", "@angular/core", "@angular/platform-browser", "@angular/platform-server", "@angular/router", "@angular/ssr", "@vue/compiler-sfc", "less", "postcss", "react", "react-dom", "react-router", "rxjs", "sass", "sharp", "stylus", "svelte", "tailwindcss", "typescript", "vue"], "bin": { "absolute": "dist/cli/index.js" } }, "sha512-gaoCJGgG4CLGWg81gXnhLC98NNxaaNyVCgozASNXYh6B3bamX3bstMPokKkSXYVfri0K8uGOAAmbi+eFAKVocQ=="],
 
@@ -68,7 +71,7 @@
 
     "@absolutejs/rag": ["@absolutejs/rag@0.0.21", "", { "dependencies": { "@absolutejs/ai": "^0.0.9", "@absolutejs/linked-providers": "0.0.2", "@absolutejs/sync": "^0.6.0" }, "peerDependencies": { "@angular/core": "^21.0.0", "elysia": "^1.4.18", "react": "^19.2.0", "svelte": "^5.35.2", "vue": "^3.5.27" }, "optionalPeers": ["@angular/core", "react", "svelte", "vue"] }, "sha512-l2KSupbCVGwNsef4wBSBs1LCHzao9RD14/ab4Fp+Lk+tINM8Q0V5dBzFj3A0KrHqoZHVo9UDMTktfLmA6z/BGQ=="],
 
-    "@absolutejs/sync": ["@absolutejs/sync@0.15.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "@elysiajs/cron", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-P7guFky85BfRwYtqUSpygNWtyOrEDlQwFBaxUSKY3xTZGg/Xnr8Rv/ZdJ/qU2h1HmvshvInWwGXc3w9UaVHGJQ=="],
+    "@absolutejs/sync": ["@absolutejs/sync@1.8.0", "", { "peerDependencies": { "@absolutejs/isolated-jsc": ">= 0.6.0", "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "@modelcontextprotocol/sdk": ">= 1.29.0", "@tanstack/db": ">= 0.6.7 <0.7", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@absolutejs/isolated-jsc", "@angular/core", "@elysiajs/cron", "@modelcontextprotocol/sdk", "@tanstack/db", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-5UIamdh1i9hl+7Cr4QpJGr68+OGdSj+Yrmj2fYyvOrFxK3oFiUA0XISoVFmHX5Aa46Z3iJEdRzy/FQzjsMrMFw=="],
 
     "@absolutejs/sync-yjs": ["@absolutejs/sync-yjs@0.0.2", "", { "dependencies": { "yjs": "^13.6.30" }, "peerDependencies": { "@absolutejs/sync": ">= 0.10.0" } }, "sha512-XiugCz83S32GGgzyEcH4aYKh4V+PYSLOe6Xc0pbjpT0vDJxnP3Vs0jm5JCTcImXZ31Rz4ZuMr91iJKuFgIc4FQ=="],
 
@@ -545,8 +548,6 @@
     "zone.js": ["zone.js@0.15.1", "", {}, "sha512-XE96n56IQpJM7NAoXswY3XRLcWFW83xe0BiAOeMD7K5k5xecOeul3Qcpx6GqEeeHNkW5DWL5zOyTbEfB4eti8w=="],
 
     "zustand": ["zustand@5.0.13", "", { "peerDependencies": { "@types/react": ">=18.0.0", "immer": ">=9.0.6", "react": ">=18.0.0", "use-sync-external-store": ">=1.2.0" }, "optionalPeers": ["@types/react", "immer", "react", "use-sync-external-store"] }, "sha512-efI2tVaVQPqtOh114loML/Z80Y4NP3yc+Ff0fYiZJPauNeWZeIp/bRFD7I9bfmCOYBh/PHxlglQ9+wvlwnPikQ=="],
-
-    "@absolutejs/rag/@absolutejs/sync": ["@absolutejs/sync@0.6.0", "", { "peerDependencies": { "@angular/core": ">= 21.0.0", "@elysiajs/cron": ">= 1.4.0", "drizzle-orm": ">= 0.44.0", "elysia": ">= 1.4.26", "react": ">= 19.0.0", "svelte": ">= 5.0.0", "vue": ">= 3.5.0" }, "optionalPeers": ["@angular/core", "@elysiajs/cron", "drizzle-orm", "elysia", "react", "svelte", "vue"] }, "sha512-gkQ+7noAyrKHjzt/3rwSZr6C65rTpjHdgtLi/mVWhZBYZfWfOgW/JLrzLaIP27VNUiw4NVv/fFJYMXQ7P3/yMA=="],
 
     "@angular/compiler-cli/chokidar": ["chokidar@5.0.0", "", { "dependencies": { "readdirp": "^5.0.0" } }, "sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw=="],
 

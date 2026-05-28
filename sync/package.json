@@ -2,7 +2,7 @@
   "dependencies": {
     "@absolutejs/absolute": "0.19.0-beta.1047",
     "@absolutejs/rag": "0.0.21",
-    "@absolutejs/sync": "^0.15.0",
+    "@absolutejs/sync": "^1.8.0",
     "@absolutejs/sync-yjs": "^0.0.2",
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
@@ -41,6 +41,9 @@
     "vue-tsc": "^3.2.6"
   },
   "name": "absolutejs-sync-example",
+  "overrides": {
+    "@absolutejs/sync": "^1.8.0"
+  },
   "scripts": {
     "config": "absolute config",
     "dev": "absolute dev",

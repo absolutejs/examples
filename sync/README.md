@@ -27,12 +27,12 @@ on the client only (SSR-safe).
 
 ## Sandboxed handlers
 
-This example keeps mutation handlers in-process so the sync surfaces are easy to inspect. For customer-authored mutations, AI-generated transforms, or plugin code, run handlers through `@absolutejs/isolated-jsc` instead of calling them directly in the app process.
+This example keeps mutation handlers in-process so the sync surfaces are easy to inspect. For customer-authored mutations, AI-generated transforms, or plugin code, install `@absolutejs/isolated-jsc@0.8.0` and use sync's `sandboxedHandler`; the engine now routes those handlers through isolated-jsc's `createIsolatedRunner()` + `tenant-script` policy instead of calling them directly in the app process.
 
 - Use `backend: "ffi"` for hostile-code production paths on macOS/Linux where JavaScriptCore is available.
 - Use `backend: "auto"` for local development, CI, and demos so the Worker fallback keeps the example portable.
 - If you must rely on the Worker fallback for arbitrary third-party code, add process/container isolation and avoid sharing host secrets or broad network/file permissions.
-- Expose host powers as typed capability tools or narrow `Reference`s: validate inputs, set timeouts, and audit calls.
+- Expose host powers through narrow `actions.*` bridges: validate inputs, set timeouts, and audit calls.
 
 The hosted AbsoluteJS sync path uses this shape for sandboxed per-tenant mutation handlers; this example stays unsandboxed to keep the framework bindings and reactive collections front and center.
 
