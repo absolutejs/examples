@@ -74,6 +74,17 @@
           <span>{{ task.title }}</span>
         </label>
         <button
+          [attr.aria-label]="
+            favoritedTaskIds().has(task.id) ? 'Unfavorite' : 'Favorite'
+          "
+          [attr.data-testid]="'task-fav-' + task.id"
+          type="button"
+          style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 0 6px;"
+          (click)="toggleFavorite(task.id)"
+        >
+          {{ favoritedTaskIds().has(task.id) ? "★" : "☆" }}
+        </button>
+        <button
           aria-label="Remove"
           class="task-remove"
           type="button"
@@ -186,6 +197,94 @@
           ×
         </button>
         }
+      </li>
+      }
+    </ul>
+  </section>
+
+  <section class="sync-card" data-testid="notifications-pack-panel">
+    <p class="section-desc">
+      Per-actor inbox via
+      <code>&#64;absolutejs/sync-pack-notifications</code>.
+    </p>
+    <div class="presence-bar">
+      <span class="presence-online" data-testid="notifications-unread-count">
+        🔔 {{ unreadCount() }} unread
+      </span>
+      <button
+        class="primary"
+        data-testid="notifications-send"
+        type="button"
+        (click)="sendNotification()"
+      >
+        Send test notification
+      </button>
+      <button
+        data-testid="notifications-mark-all-read"
+        type="button"
+        (click)="markAllNotificationsRead()"
+      >
+        Mark all read
+      </button>
+    </div>
+    <ul class="task-list" data-testid="notifications-list">
+      @if (recentNotifications().length === 0) {
+      <li class="task-item">
+        <span class="muted">Inbox empty.</span>
+      </li>
+      } @for (notification of recentNotifications(); track notification.id) {
+      <li
+        [class]="
+          notification.readAt === null ? 'task-item' : 'task-item done'
+        "
+      >
+        <span>
+          <strong>{{ notification.title }}</strong>
+          <span class="muted">
+            · {{ notification.createdAt | date: "h:mm:ss a" }}
+          </span>
+        </span>
+        @if (notification.readAt === null) {
+        <button
+          [attr.data-testid]="'notification-mark-read-' + notification.id"
+          type="button"
+          (click)="markNotificationRead(notification.id)"
+        >
+          ✓
+        </button>
+        }
+      </li>
+      }
+    </ul>
+  </section>
+
+  <section class="sync-card" data-testid="favorites-pack-panel">
+    <p class="section-desc">
+      Per-actor favorites via
+      <code>&#64;absolutejs/sync-pack-favorites</code>. Click ☆/★ on any task
+      above to toggle. The panel subscribes to
+      <code>favorites-with-resource</code>.
+    </p>
+    <ul class="task-list" data-testid="favorites-list">
+      @if (orderedFavorites().length === 0) {
+      <li class="task-item">
+        <span class="muted">No favorites yet — click a ☆ above.</span>
+      </li>
+      } @for (favorite of orderedFavorites(); track favorite.id) {
+      <li
+        [class]="favorite.resource.done ? 'task-item done' : 'task-item'"
+      >
+        <span>
+          <strong>★</strong>
+          {{ favorite.resource.title }}
+        </span>
+        <button
+          [attr.data-testid]="'favorite-remove-' + favorite.resourceId"
+          type="button"
+          (click)="toggleFavorite(favorite.resourceId)"
+        >
+          ×
+        </button>
       </li>
       }
     </ul>

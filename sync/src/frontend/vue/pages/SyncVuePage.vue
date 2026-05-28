@@ -54,6 +54,25 @@ type CommentRow = {
 type CommentWithAuthor = CommentRow & {
   author: { id: string; displayName: string };
 };
+type NotificationRow = {
+  id: string;
+  actorId: string;
+  kind: string;
+  title: string;
+  body: string;
+  href: string | null;
+  createdAt: number;
+  readAt: number | null;
+  expiresAt: number | null;
+};
+type FavoriteWithTask = {
+  id: string;
+  actorId: string;
+  resourceKind: string;
+  resourceId: string;
+  createdAt: number;
+  resource: Task;
+};
 
 // Stable per-tab user id (matches the React demo's pattern). Persisted in
 // sessionStorage so a reload doesn't orphan presence rows.
@@ -239,6 +258,69 @@ const deleteComment = (commentId: string) =>
     method: "POST",
   });
 
+// @absolutejs/sync-pack-notifications — per-actor inbox.
+const notificationsCol = useSyncCollection<NotificationRow>({
+  collection: "notifications",
+  url: wsUrl,
+});
+const unreadCount = computed(
+  () =>
+    notificationsCol.data.value.filter((row) => row.readAt === null).length,
+);
+const recentNotifications = computed(() =>
+  [...notificationsCol.data.value]
+    .sort((first, second) => second.createdAt - first.createdAt)
+    .slice(0, 5),
+);
+const sendNotification = () =>
+  void fetch("/sync/notifications/notify", {
+    body: JSON.stringify({
+      actorId: tabUserId(),
+      body: "Click any inbox item to mark it read.",
+      kind: "demo",
+      title: `Test notification at ${new Date().toLocaleTimeString()}`,
+    }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+const markNotificationRead = (notificationId: string) =>
+  fetch("/sync/notifications/markRead", {
+    body: JSON.stringify({ notificationId, userId: tabUserId() }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+const markAllNotificationsRead = () =>
+  fetch("/sync/notifications/markAllRead", {
+    body: JSON.stringify({ userId: tabUserId() }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+
+// @absolutejs/sync-pack-favorites — per-actor saved tasks via the join.
+const favoritesCol = useSyncCollection<FavoriteWithTask>({
+  collection: "favorites-with-resource",
+  params: { resourceKind: "task" },
+  url: wsUrl,
+});
+const favoritedTaskIds = computed(
+  () => new Set(favoritesCol.data.value.map((fav) => fav.resourceId)),
+);
+const orderedFavorites = computed(() =>
+  [...favoritesCol.data.value].sort(
+    (first, second) => second.createdAt - first.createdAt,
+  ),
+);
+const toggleFavorite = (taskId: string) =>
+  fetch("/sync/favorites/toggle", {
+    body: JSON.stringify({
+      resourceId: taskId,
+      resourceKind: "task",
+      userId: tabUserId(),
+    }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+
 // Conflict-free collaborative editing in one call — the same shared "doc" field
 // every framework page edits. The composable merges everyone's edits and
 // broadcasts via the engine's auto "doc:merge" mutation.
@@ -321,6 +403,23 @@ const onDocInput = (event: Event) => {
               />
               <span>{{ task.title }}</span>
             </label>
+            <button
+              :aria-label="
+                favoritedTaskIds.has(task.id) ? 'Unfavorite' : 'Favorite'
+              "
+              :data-testid="`task-fav-${task.id}`"
+              type="button"
+              :style="{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1.1em',
+                padding: '0 6px',
+              }"
+              @click="toggleFavorite(task.id)"
+            >
+              {{ favoritedTaskIds.has(task.id) ? "★" : "☆" }}
+            </button>
             <button
               aria-label="Remove"
               class="task-remove"
@@ -433,6 +532,101 @@ const onDocInput = (event: Event) => {
               :data-testid="`comment-delete-${comment.id}`"
               type="button"
               @click="deleteComment(comment.id)"
+            >
+              ×
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <section class="sync-card" data-testid="notifications-pack-panel">
+        <p class="section-desc">
+          Per-actor inbox via
+          <code>@absolutejs/sync-pack-notifications</code>. The "Send" button
+          POSTs to <code>/sync/notifications/notify</code>; the server-side
+          handler stamps <code>systemTrusted: true</code> on the ctx so the
+          pack's host-trusted insert accepts it.
+        </p>
+        <div class="presence-bar">
+          <span
+            class="presence-online"
+            data-testid="notifications-unread-count"
+          >
+            🔔 {{ unreadCount }} unread
+          </span>
+          <button
+            class="primary"
+            data-testid="notifications-send"
+            type="button"
+            @click="sendNotification"
+          >
+            Send test notification
+          </button>
+          <button
+            data-testid="notifications-mark-all-read"
+            type="button"
+            @click="markAllNotificationsRead"
+          >
+            Mark all read
+          </button>
+        </div>
+        <ul class="task-list" data-testid="notifications-list">
+          <li v-if="recentNotifications.length === 0" class="task-item">
+            <span class="muted">Inbox empty.</span>
+          </li>
+          <li
+            v-for="notification in recentNotifications"
+            :key="notification.id"
+            :class="
+              notification.readAt === null ? 'task-item' : 'task-item done'
+            "
+          >
+            <span>
+              <strong>{{ notification.title }}</strong>
+              <span class="muted">
+                ·
+                {{ new Date(notification.createdAt).toLocaleTimeString() }}
+              </span>
+            </span>
+            <button
+              v-if="notification.readAt === null"
+              :data-testid="`notification-mark-read-${notification.id}`"
+              type="button"
+              @click="markNotificationRead(notification.id)"
+            >
+              ✓
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <section class="sync-card" data-testid="favorites-pack-panel">
+        <p class="section-desc">
+          Per-actor favorites via
+          <code>@absolutejs/sync-pack-favorites</code>. Click ☆/★ on any task
+          above to toggle. The panel subscribes to
+          <code>favorites-with-resource</code>, so each row arrives
+          pre-joined with the host's task row.
+        </p>
+        <ul class="task-list" data-testid="favorites-list">
+          <li v-if="orderedFavorites.length === 0" class="task-item">
+            <span class="muted">
+              No favorites yet — click a ☆ above to add one.
+            </span>
+          </li>
+          <li
+            v-for="favorite in orderedFavorites"
+            :key="favorite.id"
+            :class="favorite.resource.done ? 'task-item done' : 'task-item'"
+          >
+            <span>
+              <strong>★</strong>
+              {{ favorite.resource.title }}
+            </span>
+            <button
+              :data-testid="`favorite-remove-${favorite.resourceId}`"
+              type="button"
+              @click="toggleFavorite(favorite.resourceId)"
             >
               ×
             </button>

@@ -59,6 +59,25 @@ type CommentRow = {
 type CommentWithAuthor = CommentRow & {
   author: { id: string; displayName: string };
 };
+type NotificationRow = {
+  id: string;
+  actorId: string;
+  kind: string;
+  title: string;
+  body: string;
+  href: string | null;
+  createdAt: number;
+  readAt: number | null;
+  expiresAt: number | null;
+};
+type FavoriteWithTask = {
+  id: string;
+  actorId: string;
+  resourceKind: string;
+  resourceId: string;
+  createdAt: number;
+  resource: Task;
+};
 
 // This page has no per-request DI context, so the SSR handler's
 // `requestContext` is an empty object.
@@ -208,6 +227,74 @@ export class SyncAngularPageComponent implements OnDestroy {
   deleteComment(commentId: string) {
     void fetch("/sync/comments/delete", {
       body: JSON.stringify({ commentId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+
+  // @absolutejs/sync-pack-notifications — per-actor inbox.
+  private notificationsHandle = this.sync.connect<NotificationRow>({
+    collection: "notifications",
+    url: wsUrl(),
+  });
+  unreadCount = computed(
+    () =>
+      this.notificationsHandle.data().filter((row) => row.readAt === null)
+        .length,
+  );
+  recentNotifications = computed(() =>
+    [...this.notificationsHandle.data()]
+      .sort((first, second) => second.createdAt - first.createdAt)
+      .slice(0, 5),
+  );
+  sendNotification() {
+    void fetch("/sync/notifications/notify", {
+      body: JSON.stringify({
+        actorId: tabUserId(),
+        body: "Click any inbox item to mark it read.",
+        kind: "demo",
+        title: `Test notification at ${new Date().toLocaleTimeString()}`,
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+  markNotificationRead(notificationId: string) {
+    void fetch("/sync/notifications/markRead", {
+      body: JSON.stringify({ notificationId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+  markAllNotificationsRead() {
+    void fetch("/sync/notifications/markAllRead", {
+      body: JSON.stringify({ userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+
+  // @absolutejs/sync-pack-favorites — per-actor saved tasks.
+  private favoritesHandle = this.sync.connect<FavoriteWithTask>({
+    collection: "favorites-with-resource",
+    params: { resourceKind: "task" },
+    url: wsUrl(),
+  });
+  favoritedTaskIds = computed(
+    () => new Set(this.favoritesHandle.data().map((fav) => fav.resourceId)),
+  );
+  orderedFavorites = computed(() =>
+    [...this.favoritesHandle.data()].sort(
+      (first, second) => second.createdAt - first.createdAt,
+    ),
+  );
+  toggleFavorite(taskId: string) {
+    void fetch("/sync/favorites/toggle", {
+      body: JSON.stringify({
+        resourceId: taskId,
+        resourceKind: "task",
+        userId: tabUserId(),
+      }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
     });

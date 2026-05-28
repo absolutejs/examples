@@ -944,113 +944,109 @@ for (const staticPath of ["/html", "/htmx"] as const) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// React-only pack panels — notifications + favorites. The other framework
-// pages don't expose these in the UI yet (they're React-only mirrors of the
-// notifications/favorites wirings).
+// Notifications + favorites packs — wired across all four reactive frameworks
+// (React/Vue/Svelte/Angular). Each uses its idiomatic surface but renders
+// the same testids so the test loop covers them uniformly.
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe("React sync-pack-notifications", () => {
-  test("renders panel; send increments unread; mark decrements", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await expect(page.locator(".sync-status").first()).toContainText("Live", {
-      timeout: 15000,
+for (const framework of REACTIVE_FRAMEWORKS) {
+  test.describe(`${framework.name} sync-pack-notifications`, () => {
+    test("renders panel; send increments unread; mark decrements", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+      await expect(page.getByTestId("notifications-pack-panel")).toBeVisible();
+
+      const readUnread = async (): Promise<number> => {
+        const text = await page
+          .getByTestId("notifications-unread-count")
+          .textContent();
+        const match = text?.match(/(\d+)/);
+        return match ? Number(match[1]) : 0;
+      };
+      const before = await readUnread();
+      await page.getByTestId("notifications-send").click();
+      await expect.poll(readUnread, { timeout: 10000 }).toBe(before + 1);
+
+      await page
+        .locator('[data-testid^="notification-mark-read-"]')
+        .first()
+        .click();
+      await expect.poll(readUnread, { timeout: 10000 }).toBe(before);
     });
-    await expect(page.getByTestId("notifications-pack-panel")).toBeVisible();
 
-    // Read the current unread count (other tests may have left state), then
-    // click Send and assert the count goes up by exactly 1.
-    const readUnread = async (): Promise<number> => {
-      const text = await page.getByTestId("notifications-unread-count").textContent();
-      const match = text?.match(/(\d+)/);
-      return match ? Number(match[1]) : 0;
-    };
-    const before = await readUnread();
-    await page.getByTestId("notifications-send").click();
-    await expect
-      .poll(readUnread, { timeout: 10000 })
-      .toBe(before + 1);
+    test("Mark all read clears the badge", async ({ page }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+      await page.getByTestId("notifications-send").click();
+      await page.getByTestId("notifications-send").click();
+      await page.getByTestId("notifications-send").click();
+      await expect
+        .poll(
+          async () => {
+            const text = await page
+              .getByTestId("notifications-unread-count")
+              .textContent();
+            return Number(text?.match(/(\d+)/)?.[1] ?? 0);
+          },
+          { timeout: 10000 },
+        )
+        .toBeGreaterThan(0);
 
-    // Click the first ✓ button (most recent notification) — count drops.
-    await page
-      .locator('[data-testid^="notification-mark-read-"]')
-      .first()
-      .click();
-    await expect
-      .poll(readUnread, { timeout: 10000 })
-      .toBe(before);
+      await page.getByTestId("notifications-mark-all-read").click();
+      await expect(
+        page.getByTestId("notifications-unread-count"),
+      ).toContainText("0 unread", { timeout: 10000 });
+    });
   });
 
-  test("Mark all read clears the badge", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.locator(".sync-status").first()).toContainText("Live", {
-      timeout: 15000,
-    });
-    // Send three to make sure at least one is unread.
-    await page.getByTestId("notifications-send").click();
-    await page.getByTestId("notifications-send").click();
-    await page.getByTestId("notifications-send").click();
-    await expect
-      .poll(
-        async () => {
-          const text = await page.getByTestId("notifications-unread-count").textContent();
-          return Number(text?.match(/(\d+)/)?.[1] ?? 0);
-        },
-        { timeout: 10000 },
-      )
-      .toBeGreaterThan(0);
+  test.describe(`${framework.name} sync-pack-favorites`, () => {
+    test("clicking ☆ favorites a task and it appears in the favorites panel", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+      await expect(page.getByTestId("favorites-pack-panel")).toBeVisible();
 
-    await page.getByTestId("notifications-mark-all-read").click();
-    await expect(page.getByTestId("notifications-unread-count")).toContainText(
-      "0 unread",
-      { timeout: 10000 },
-    );
+      const title = uniqueTitle(`fav-${framework.name.toLowerCase()}`);
+      await taskInput(page).first().fill(title);
+      await taskInput(page).first().press("Enter");
+      await expect(taskRow(page, title).first()).toBeVisible({
+        timeout: 10000,
+      });
+      await page.waitForTimeout(400);
+
+      const star = taskRow(page, title)
+        .first()
+        .locator('[data-testid^="task-fav-"]')
+        .first();
+      await expect(star).toHaveText("☆");
+      await star.click();
+      await expect(star).toHaveText("★", { timeout: 10000 });
+
+      await expect(
+        page
+          .getByTestId("favorites-list")
+          .locator(".task-item", { hasText: title }),
+      ).toBeVisible({ timeout: 10000 });
+
+      await star.click();
+      await expect(star).toHaveText("☆", { timeout: 10000 });
+      await expect(
+        page
+          .getByTestId("favorites-list")
+          .locator(".task-item", { hasText: title }),
+      ).toHaveCount(0);
+    });
   });
-});
-
-test.describe("React sync-pack-favorites", () => {
-  test("clicking ☆ favorites a task and it appears in the favorites panel", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await expect(page.locator(".sync-status").first()).toContainText("Live", {
-      timeout: 15000,
-    });
-    await expect(page.getByTestId("favorites-pack-panel")).toBeVisible();
-
-    // Add a unique task so the favorites entry is identifiable.
-    const title = uniqueTitle("fav");
-    await taskInput(page).first().fill(title);
-    await taskInput(page).first().press("Enter");
-    await expect(taskRow(page, title).first()).toBeVisible({
-      timeout: 10000,
-    });
-    await page.waitForTimeout(400);
-
-    // Click the ☆ button on the row.
-    const star = taskRow(page, title)
-      .first()
-      .locator('[data-testid^="task-fav-"]')
-      .first();
-    await expect(star).toHaveText("☆");
-    await star.click();
-    await expect(star).toHaveText("★", { timeout: 10000 });
-
-    // The favorites panel now contains the joined task title (proves the
-    // favorites-with-resource join is delivering Task rows).
-    await expect(
-      page.getByTestId("favorites-list").locator(".task-item", { hasText: title }),
-    ).toBeVisible({ timeout: 10000 });
-
-    // Click again to unfavorite — the panel row disappears.
-    await star.click();
-    await expect(star).toHaveText("☆", { timeout: 10000 });
-    await expect(
-      page.getByTestId("favorites-list").locator(".task-item", { hasText: title }),
-    ).toHaveCount(0);
-  });
-});
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // All four reactive frameworks now subscribe to `comments-with-author`
