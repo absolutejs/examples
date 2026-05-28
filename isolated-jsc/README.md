@@ -1,6 +1,6 @@
 # `@absolutejs/isolated-jsc` example
 
-Live demo of [`@absolutejs/isolated-jsc`](https://github.com/absolutejs/isolated-jsc), a Bun-native sandbox for executing untrusted JavaScript with heap isolation, CPU timeouts, memory caps, host-callable `Reference`s, and an FFI backend when JavaScriptCore is available.
+Live demo of [`@absolutejs/isolated-jsc`](https://github.com/absolutejs/isolated-jsc), a Bun-native sandbox for executing untrusted JavaScript with heap isolation, CPU timeouts, memory caps, brokered host capabilities, execution receipts, output limits, and an FFI backend when JavaScriptCore is available.
 
 Paste code on the left, hit **Run**, see the result and any host-captured `log` calls on the right. The canned presets each demonstrate one isolation guarantee:
 
@@ -9,6 +9,8 @@ Paste code on the left, hit **Run**, see the result and any host-captured `log` 
 - **Runaway loop -> TimeoutError** — tight `while (true) {}`; the host enforces the configured timeout.
 - **Memory bomb -> MemoryLimitError** — allocates heap-resident JS objects past the configured cap; the isolate terminates.
 - **No host filesystem access** — shows the hardened default global shape: host capability globals are not exposed directly.
+- **Result limit -> ResultSizeError** — returns a payload larger than `maxResultBytes`; the host rejects it before app code accepts it.
+- **Console limit -> receipt flag** — emits more console lines than the host forwards; the receipt records truncation.
 
 ## Run it
 
@@ -21,11 +23,11 @@ Open whatever port the dev server prints (defaults to `:3000`, override with `PO
 
 ## How it works
 
-- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request uses `runIsolated()` with the `tenant-script` policy, exposes `log` and `now` host functions via `Reference`, runs with the configured timeout/memory cap, and returns the result, backend metrics, and captured logs.
+- `src/backend/sandbox.ts` — the `POST /api/run` endpoint. Each request uses `runIsolated()` with the `tenant-script` policy, exposes `log` and `now` through a typed capability broker, applies timeout/memory/result/console limits, and returns the result, manifest, audit events, receipt, backend metrics, and captured logs. The demo pins `backend: "worker"` so console capture is visible on every machine; production hostile-code paths should prefer FFI where JavaScriptCore is installed.
 - `src/backend/server.ts` — wires the sandbox plugin into Elysia.
 - `src/frontend/react/pages/SandboxPage.tsx` — single-page UI: source editor, memory/timeout inputs, result panel.
 
-The example deliberately uses one-shot execution to keep each demo self-contained. A real PaaS should use `createIsolatedRunner()` to pool by tenant/session, precompile hot callables, and expose host powers through typed capability tools or narrow `Reference`s.
+The example deliberately uses one-shot execution to keep each demo self-contained. A real PaaS should use `createIsolatedRunner()` to pool by tenant/session, precompile hot callables, and expose host powers through typed capability tools with manifests and receipts.
 
 ## Backend decision guide
 

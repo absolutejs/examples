@@ -1,22 +1,29 @@
 import { Elysia, t } from "elysia";
 import {
+  createCapabilityBroker,
+  defineCapabilityTool,
+  type CapabilityAuditEvent,
+  type CapabilityManifestEntry,
+  type ExecutionReceipt,
   MemoryLimitError,
   Reference,
+  ResultSizeError,
   resolveIsolatePolicy,
   runIsolated,
   TimeoutError,
 } from "@absolutejs/isolated-jsc";
+import { access, copyFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 /**
  * `/api/run` — compile + run a user-supplied JS expression inside a fresh
  * `@absolutejs/isolated-jsc` Isolate. The isolate gets:
  *
- * - `log(...)` — a host-side `Reference` we use to capture `console.log`
- *   output for display (the isolate's own `console.log` goes nowhere by
- *   default; we ask user code to call our `log` instead).
- * - `now()` — host-side `Date.now`, since JSC inside the worker still has
- *   real time but Convex-style apps may want a controlled clock. Demo of
- *   the Reference pattern.
+ * - `log(...)` / `now()` — host-side capabilities exposed through a
+ *   capability broker. User code gets ergonomic References, while the host
+ *   keeps a manifest and audit events for receipts.
+ * - `console.log(...)` — captured through the isolate `onConsole` hook with
+ *   entry/byte limits so logs cannot grow without bound.
  *
  * The isolate has NO host filesystem / network access through us. CPU and
  * memory are capped per-request via the body's `timeout` and `memoryLimit`.
@@ -31,6 +38,14 @@ type RunOutput = {
   result?: unknown;
   error?: { name: string; message: string };
   log: string[];
+  audit: Array<
+    Pick<
+      CapabilityAuditEvent<{ tenantId: string }>,
+      "status" | "tool" | "durationMs"
+    >
+  >;
+  manifest?: CapabilityManifestEntry[];
+  receipt?: ExecutionReceipt;
   durationMs: number;
   metrics?: {
     backend: "ffi" | "worker";
@@ -46,43 +61,124 @@ const runOne = async (
 ): Promise<RunOutput> => {
   const startedAt = Date.now();
   const log: string[] = [];
+  const audit: CapabilityAuditEvent<{ tenantId: string }>[] = [];
+  const broker = createCapabilityBroker(
+    {
+      log: defineCapabilityTool<unknown[], null, { tenantId: string }>({
+        description: "Append one bounded line to the demo output log",
+        input: "unknown[]",
+        output: "null",
+        risk: "read-only",
+        timeoutMs: 100,
+        validateInput: (input) => (Array.isArray(input) ? input : [input]),
+        handler: (args) => {
+          log.push(args.map((arg) => stringify(arg)).join(" "));
+          return null;
+        },
+      }),
+      now: defineCapabilityTool<undefined, number, { tenantId: string }>({
+        description: "Read the host clock for this sandbox request",
+        output: "number",
+        risk: "read-only",
+        timeoutMs: 100,
+        validateInput: () => undefined,
+        handler: () => Date.now(),
+      }),
+    },
+    {
+      context: { tenantId: "demo-tenant" },
+      onAudit: (event) => audit.push(event),
+    },
+  );
+  const manifest = broker.manifest();
   try {
     const policy = resolveIsolatePolicy("tenant-script", {
       allowWorkerFallback: true,
       memoryLimit: memoryLimitMb,
       timeout: timeoutMs,
     });
-    const { metrics, result } = await runIsolated(
+    await ensureBundledWorkerBackendAsset();
+    const { receipt, result } = await runIsolated(
       `(async () => { ${code}\n})()`,
       {
+        backend: "worker",
         globals: {
-          log: new Reference(((...args: unknown[]) => {
-            log.push(args.map((arg) => stringify(arg)).join(" "));
+          log: new Reference((async (...args: unknown[]) => {
+            await broker.call("log", args);
           }) as (...args: unknown[]) => unknown),
-          now: new Reference((() => Date.now()) as (
-            ...args: unknown[]
-          ) => unknown),
+          now: new Reference(
+            (async () => await broker.call("now")) as (
+              ...args: unknown[]
+            ) => unknown,
+          ),
+          tools: broker.reference,
+        },
+        maxConsoleBytes: 512,
+        maxConsoleEntries: 4,
+        onConsole: (level, args) => {
+          log.push(
+            `[console.${level}] ${args.map((arg) => stringify(arg)).join(" ")}`,
+          );
         },
         policy,
-        withMetrics: true,
+        run: {
+          capabilityEvents: audit,
+          executionId: crypto.randomUUID(),
+          maxResultBytes: 16_384,
+          purpose: "isolated-jsc-demo-run",
+          tenant: "demo-tenant",
+        },
+        withReceipt: true,
       },
     );
     return {
       ok: true,
       result,
+      audit: auditSummary(audit),
       log,
-      metrics,
+      manifest,
+      metrics: receipt.metrics,
+      receipt,
       durationMs: Date.now() - startedAt,
     };
   } catch (error) {
     const name = error instanceof Error ? error.name : "Error";
     const message = error instanceof Error ? error.message : String(error);
+    const receipt =
+      error !== null && typeof error === "object" && "receipt" in error
+        ? (error as { receipt?: ExecutionReceipt }).receipt
+        : undefined;
     return {
       ok: false,
       error: { name, message },
+      audit: auditSummary(audit),
       log,
+      manifest,
+      receipt,
       durationMs: Date.now() - startedAt,
     };
+  }
+};
+
+const auditSummary = (
+  audit: CapabilityAuditEvent<{ tenantId: string }>[],
+): RunOutput["audit"] =>
+  audit.map((event) => ({
+    durationMs: event.durationMs,
+    status: event.status,
+    tool: event.tool,
+  }));
+
+const ensureBundledWorkerBackendAsset = async (): Promise<void> => {
+  if (!import.meta.url.endsWith("/dist/server.js")) return;
+  const targetUrl = new URL("./worker.js", import.meta.url);
+  try {
+    await access(targetUrl);
+    return;
+  } catch {
+    const packageIndexUrl = import.meta.resolve("@absolutejs/isolated-jsc");
+    const packageWorkerUrl = new URL("./worker.js", packageIndexUrl);
+    await copyFile(fileURLToPath(packageWorkerUrl), fileURLToPath(targetUrl));
   }
 };
 
@@ -111,6 +207,9 @@ export const sandboxPlugin = new Elysia().post(
       result: t.Optional(t.Any()),
       error: t.Optional(t.Object({ name: t.String(), message: t.String() })),
       log: t.Array(t.String()),
+      audit: t.Array(t.Any()),
+      manifest: t.Optional(t.Array(t.Any())),
+      receipt: t.Optional(t.Any()),
       durationMs: t.Number(),
       metrics: t.Optional(
         t.Object({
@@ -124,4 +223,4 @@ export const sandboxPlugin = new Elysia().post(
 );
 
 // Re-exported for tests / future expansion.
-export { runOne, MemoryLimitError, TimeoutError };
+export { runOne, MemoryLimitError, ResultSizeError, TimeoutError };

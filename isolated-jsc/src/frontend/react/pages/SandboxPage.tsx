@@ -10,6 +10,24 @@ type RunResult = {
   result?: unknown;
   error?: { name: string; message: string };
   log: string[];
+  audit: Array<{ status: string; tool: string; durationMs?: number }>;
+  manifest?: Array<Record<string, unknown>>;
+  receipt?: {
+    backend: "ffi" | "worker";
+    console: {
+      bytes: number;
+      entries: number;
+      truncated: boolean;
+      byteLimitExceeded: boolean;
+      entryLimitExceeded: boolean;
+    };
+    durationMs: number;
+    error?: { code?: string; message: string; name: string };
+    executionId: string;
+    outputBytes?: number;
+    status: "success" | "error";
+    timeoutMs: number;
+  };
   durationMs: number;
   metrics?: {
     backend: "ffi" | "worker";
@@ -33,8 +51,8 @@ const PRESETS: Preset[] = [
   {
     label: "Hello world",
     description:
-      "Call the host-injected `log` Reference. Output appears in the right panel.",
-    code: "await log('hello from inside the sandbox');\nreturn 1 + 1;",
+      "Call a brokered host capability and emit bounded console output.",
+    code: "await log('hello from inside the sandbox');\nconsole.log('captured console line');\nreturn 1 + 1;",
   },
   {
     label: "Host clock via Reference",
@@ -67,6 +85,18 @@ return big.length;`,
     description:
       "Show the hardened default global shape: host capability globals are not exposed directly.",
     code: "return typeof fetch + ',' + typeof Bun + ',' + typeof process;",
+  },
+  {
+    label: "Result limit → ResultSizeError",
+    description:
+      "Return a large value. The host rejects it before application code accepts the output.",
+    code: "return 'x'.repeat(20000);",
+  },
+  {
+    label: "Console limit → receipt flag",
+    description:
+      "Emit more console lines than the host forwards. The receipt records truncation.",
+    code: "for (let i = 0; i < 8; i++) console.log('line', i);\nreturn 'console capped';",
   },
 ];
 
@@ -111,6 +141,7 @@ const SandboxContent = () => {
       setResult(data);
     } catch (error) {
       setResult({
+        audit: [],
         durationMs: 0,
         error: { message: String(error), name: "FetchError" },
         log: [],
@@ -225,8 +256,28 @@ const SandboxContent = () => {
                 </div>
                 {result.log.length > 0 && (
                   <>
-                    <h3>console (via host Reference)</h3>
+                    <h3>captured output</h3>
                     <pre className="log">{result.log.join("\n")}</pre>
+                  </>
+                )}
+                {result.manifest !== undefined && (
+                  <>
+                    <h3>capability manifest</h3>
+                    <pre className="return">
+                      {formatResult(result.manifest)}
+                    </pre>
+                  </>
+                )}
+                {result.audit.length > 0 && (
+                  <>
+                    <h3>capability audit</h3>
+                    <pre className="return">{formatResult(result.audit)}</pre>
+                  </>
+                )}
+                {result.receipt !== undefined && (
+                  <>
+                    <h3>execution receipt</h3>
+                    <pre className="return">{formatResult(result.receipt)}</pre>
                   </>
                 )}
                 {result.ok && (

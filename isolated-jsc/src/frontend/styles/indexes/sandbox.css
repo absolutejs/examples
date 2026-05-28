@@ -169,7 +169,9 @@ textarea:focus {
   border: 1px solid #21262d;
   border-radius: 6px;
   padding: 6px 8px;
-  font: 13px ui-monospace, monospace;
+  font:
+    13px ui-monospace,
+    monospace;
   width: 100px;
 }
 
