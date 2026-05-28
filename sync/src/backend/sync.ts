@@ -11,6 +11,7 @@ import {
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
 import { createPresencePack } from "@absolutejs/sync-pack-presence";
 import { createDigestPack } from "@absolutejs/sync-pack-digest";
+import { createCommentsPack } from "@absolutejs/sync-pack-comments";
 import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
@@ -695,6 +696,17 @@ engine.registerSchedule(
 // below: that one is for ephemeral, low-latency signals (typing, cursor
 // position); the pack is for queryable membership ("who's currently in this
 // channel"). Two different presence patterns, both ride this engine.
+// Threaded comments on a single shared discussion resource. canReadResource
+// is "anyone can read" for the demo (tasks/issues are world-readable here);
+// a real app would gate this on the resource's ACL. Each tab's userId is
+// the comment author — the per-row write permission stamps that on insert.
+engine.registerPack(
+  createCommentsPack<Ctx>({
+    canReadResource: () => true,
+    getActorId: (ctx) => ctx.userId,
+  }),
+);
+
 engine.registerPack(
   createPresencePack<Ctx>({
     getActorId: (ctx) => ctx.userId,
@@ -888,5 +900,56 @@ export const syncPlugin = new Elysia()
       await engine.runSchedule("digest:fire");
 
       return { ok: true };
+    },
+  )
+  // Comments-pack HTTP shims. Same pattern as the presence routes:
+  // production apps would call these mutations through syncStore (which
+  // rides the socket); here they're Eden routes so the React component
+  // drives them with one fetch().
+  .post(
+    "/sync/comments/create",
+    ({ body }) =>
+      engine.runMutation(
+        "comments:create",
+        { body: body.body, resourceId: body.resourceId },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        body: t.String(),
+        resourceId: t.String(),
+        userId: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/sync/comments/edit",
+    ({ body }) =>
+      engine.runMutation(
+        "comments:edit",
+        { body: body.body, commentId: body.commentId },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        body: t.String(),
+        commentId: t.String(),
+        userId: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/sync/comments/delete",
+    ({ body }) =>
+      engine.runMutation(
+        "comments:delete",
+        { commentId: body.commentId },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        commentId: t.String(),
+        userId: t.String(),
+      }),
     },
   );

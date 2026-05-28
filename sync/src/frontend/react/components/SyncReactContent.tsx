@@ -230,6 +230,52 @@ type DigestLogEntry = {
   sentAt: number;
 };
 
+// Threaded comments pack surface. The pack-owned `comments` collection is
+// scoped per resource via params; the host's canReadResource gate decides
+// who can see them. For the demo we use a single "shared-discussion"
+// resource everyone can read; in a real app each task/issue/document would
+// be its own resourceId.
+type CommentRow = {
+  id: string;
+  resourceId: string;
+  parentCommentId: string | null;
+  authorId: string;
+  body: string;
+  depth: number;
+  createdAt: number;
+  editedAt: number | null;
+};
+
+const useComments = (resourceId: string) => {
+  const url = wsUrl();
+  const { data } = useSyncCollection<CommentRow>({
+    collection: "comments",
+    params: { resourceId },
+    url,
+  });
+
+  const create = (body: string) =>
+    fetch("/sync/comments/create", {
+      body: JSON.stringify({ body, resourceId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  const edit = (commentId: string, body: string) =>
+    fetch("/sync/comments/edit", {
+      body: JSON.stringify({ body, commentId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  const remove = (commentId: string) =>
+    fetch("/sync/comments/delete", {
+      body: JSON.stringify({ commentId, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+  return { comments: data, create, edit, remove };
+};
+
 const useDigestSurface = () => {
   const url = wsUrl();
   const cursors = useSyncCollection<DigestCursor>({
@@ -268,6 +314,11 @@ export const SyncReactContent = () => {
   // the demo's send adapter writes into. The button fires the schedule on
   // demand so the demo doesn't need to wait on the cron.
   const digest = useDigestSurface();
+  // @absolutejs/sync-pack-comments: threaded comments on a single shared
+  // resource. Every tab sees the same thread because canReadResource is
+  // "everyone" in the demo.
+  const comments = useComments("shared-discussion");
+  const [commentDraft, setCommentDraft] = useState("");
   const [title, setTitle] = useState("");
   // Live full-text search: a separate collection whose params are the query
   // string; the engine streams back the ranked top-K (each row tagged _score).
@@ -684,6 +735,72 @@ export const SyncReactContent = () => {
                 </span>
               </li>
             ))}
+        </ul>
+      </section>
+
+      <section className="sync-card" data-testid="comments-pack-panel">
+        <p className="section-desc">
+          Threaded comments via <code>@absolutejs/sync-pack-comments</code>{" "}
+          on a single shared discussion resource. Per-resource ACL injection,
+          author-only edits, author-or-moderator deletes. Open another tab
+          and post — every tab sees every message.
+        </p>
+        <form
+          className="task-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const body = commentDraft.trim();
+            if (body.length === 0) return;
+            void comments.create(body);
+            setCommentDraft("");
+          }}
+        >
+          <input
+            data-testid="comment-input"
+            onChange={(event) => setCommentDraft(event.target.value)}
+            placeholder="Say something to the shared discussion…"
+            type="text"
+            value={commentDraft}
+          />
+          <button className="primary" type="submit">
+            Post
+          </button>
+        </form>
+        <ul className="task-list" data-testid="comments-list">
+          {comments.comments.length === 0 && (
+            <li className="task-item">
+              <span className="muted">No comments yet.</span>
+            </li>
+          )}
+          {[...comments.comments]
+            .sort((first, second) => first.createdAt - second.createdAt)
+            .map((comment) => {
+              const isOwn = comment.authorId === tabUserId();
+
+              return (
+                <li className="task-item" key={comment.id}>
+                  <span>
+                    <strong>{comment.authorId.slice(0, 6)}</strong>
+                    {": "}
+                    {comment.body}
+                    {comment.editedAt !== null && (
+                      <span className="muted"> (edited)</span>
+                    )}
+                  </span>
+                  {isOwn && (
+                    <span>
+                      <button
+                        data-testid={`comment-delete-${comment.id}`}
+                        onClick={() => void comments.remove(comment.id)}
+                        type="button"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                </li>
+              );
+            })}
         </ul>
       </section>
 
