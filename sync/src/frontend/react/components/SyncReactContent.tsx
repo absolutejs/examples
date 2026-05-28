@@ -210,6 +210,47 @@ const usePresence = (room: string) => {
   return { members, selfId, setTyping };
 };
 
+// Scheduled-digest pack surface: the React page subscribes to two pack-related
+// streams — its own per-actor `digest_cursors` row ("when was my last digest")
+// and the host-side `digest_log` table (the simulated outbox the pack's send
+// adapter writes into). The "Fire digest now" button POSTs to the demo route
+// that runs `engine.runSchedule("digest:fire")` on the server. In a real app,
+// the schedule fires on its own cron and there's no button.
+type DigestCursor = {
+  id: string;
+  actorId: string;
+  lastSentAt: number;
+  lastSubject: string;
+};
+type DigestLogEntry = {
+  id: string;
+  actorId: string;
+  subject: string;
+  body: string;
+  sentAt: number;
+};
+
+const useDigestSurface = () => {
+  const url = wsUrl();
+  const cursors = useSyncCollection<DigestCursor>({
+    collection: "digest_cursors",
+    url,
+  });
+  const log = useSyncCollection<DigestLogEntry>({
+    collection: "digest_log",
+    url,
+  });
+
+  const fire = () => {
+    void fetch("/sync/digest/fire", {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  };
+
+  return { cursor: cursors.data[0], fire, log: log.data };
+};
+
 export const SyncReactContent = () => {
   const { data, status, mutate } = useSyncCollection<Task>({
     cache: taskCache,
@@ -223,6 +264,10 @@ export const SyncReactContent = () => {
   // in `@absolutejs/sync-pack-presence` — one `engine.registerPack(...)` on
   // the server, one `useSyncCollection` here.
   const channelMembers = useChannelMembers("tasks", "react-tab");
+  // @absolutejs/sync-pack-digest: the per-actor cursor + the simulated outbox
+  // the demo's send adapter writes into. The button fires the schedule on
+  // demand so the demo doesn't need to wait on the cron.
+  const digest = useDigestSurface();
   const [title, setTitle] = useState("");
   // Live full-text search: a separate collection whose params are the query
   // string; the engine streams back the ranked top-K (each row tagged _score).
@@ -585,6 +630,62 @@ export const SyncReactContent = () => {
         <code>/html</code>, or <code>/htmx</code> in another tab and edit from
         any of them — every open client stays in sync.
       </p>
+
+      <section className="sync-card" data-testid="digest-pack-panel">
+        <p className="section-desc">
+          Scheduled per-actor digests via{" "}
+          <code>@absolutejs/sync-pack-digest</code>. The server cron fires
+          every 15s; you can also fire it now from the button. The cursor
+          (your "last digest at") is the per-actor row from the pack's
+          owned <code>digest_cursors</code> table. The outbox below is the
+          host's <code>send</code> adapter writing to an in-memory log —
+          stand in for SMTP.
+        </p>
+        <div className="presence-bar">
+          <span
+            className="presence-online"
+            data-testid="digest-cursor"
+            title="From @absolutejs/sync-pack-digest's digest_cursors collection — the row is scoped per actor."
+          >
+            📬 Last digest:{" "}
+            {digest.cursor === undefined
+              ? "never"
+              : new Date(digest.cursor.lastSentAt).toLocaleTimeString()}
+          </span>
+          <button
+            className="primary"
+            data-testid="digest-fire"
+            onClick={digest.fire}
+            type="button"
+          >
+            Fire digest now
+          </button>
+        </div>
+        <ul className="task-list" data-testid="digest-log">
+          {digest.log.length === 0 && (
+            <li className="task-item">
+              <span className="muted">
+                No digests sent yet — click "Fire digest now" or wait for the
+                15s cron.
+              </span>
+            </li>
+          )}
+          {[...digest.log]
+            .sort((first, second) => second.sentAt - first.sentAt)
+            .slice(0, 5)
+            .map((entry) => (
+              <li className="task-item" key={entry.id}>
+                <strong>{entry.subject}</strong>
+                <span className="muted">
+                  {" · to "}
+                  {entry.actorId}
+                  {"@example.invalid · "}
+                  {new Date(entry.sentAt).toLocaleTimeString()}
+                </span>
+              </li>
+            ))}
+        </ul>
+      </section>
 
       <EdenTaskTracker />
 

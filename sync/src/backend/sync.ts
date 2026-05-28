@@ -10,6 +10,7 @@ import {
 } from "@absolutejs/sync/engine";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
 import { createPresencePack } from "@absolutejs/sync-pack-presence";
+import { createDigestPack } from "@absolutejs/sync-pack-digest";
 import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
@@ -702,6 +703,74 @@ engine.registerPack(
   }),
 );
 
+// Scheduled per-actor digests — the third sync-packs example. The schedule
+// iterates the actor list every 15s, asks `buildDigest` for content, and
+// dispatches via a host-provided `send` adapter. For the demo:
+//   • `listActors` is a Set of userIds seen on socket connect (so the
+//     digest fires for whoever is currently using the app).
+//   • `send` writes into an in-memory `digest_log` table the React page
+//     subscribes to, so "sending an email" is visible in the UI without
+//     wiring SMTP.
+//   • `minHoursBetweenDigests: 0` so manual "Fire digest now" button
+//     clicks aren't blocked by the weekly cool-down.
+// A real production app would set `cron: '0 8 * * 1'` and pass a real
+// `send` (Resend/SES/Postmark).
+const digestActors = new Set<string>();
+
+type DigestLogEntry = {
+  id: string;
+  actorId: string;
+  subject: string;
+  body: string;
+  sentAt: number;
+};
+const digestLog: DigestLogEntry[] = [];
+engine.registerReader("digest_log", { all: () => [...digestLog] });
+engine.registerReactive(
+  defineReactiveQuery<DigestLogEntry>({
+    key: (row) => row.id,
+    name: "digest_log",
+    run: ({ db }) => db.all<DigestLogEntry>("digest_log"),
+  }),
+);
+
+engine.registerPack(
+  createDigestPack<Ctx>({
+    buildDigest: async (actorId, since) => {
+      const sinceLabel = since === null
+        ? "your first digest"
+        : `since ${new Date(since.getTime()).toISOString()}`;
+      return {
+        body:
+          `Hi ${actorId}, here's what happened ${sinceLabel}. (This is a demo "
+          + "digest from the example app — a real one would summarize feed activity.)`,
+        subject: `Weekly digest for ${actorId}`,
+        to: `${actorId}@example.invalid`,
+      };
+    },
+    cron: "*/15 * * * * *",
+    getActorId: (ctx) => ctx.userId,
+    listActors: () => digestActors,
+    minHoursBetweenDigests: 0,
+    send: async (msg) => {
+      const id = globalThis.crypto.randomUUID();
+      const actorId = msg.to.split("@")[0] ?? "unknown";
+      const entry: DigestLogEntry = {
+        actorId,
+        body: msg.body,
+        id,
+        sentAt: Date.now(),
+        subject: msg.subject,
+      };
+      digestLog.push(entry);
+      // Trim to a small tail so the in-memory list doesn't grow forever.
+      while (digestLog.length > 20) digestLog.shift();
+      // Emit a live change so subscribers see the new entry immediately.
+      await engine.applyChange("digest_log", { op: "insert", row: entry });
+    },
+  }),
+);
+
 // Ephemeral presence (who's online / typing) rides the same socket.
 const presence = createPresenceHub();
 
@@ -744,11 +813,18 @@ export const syncPlugin = new Elysia()
       engine,
       presence,
       // Read the role + per-tab user id off the socket's query string into the
-      // per-connection ctx. `userId` is what the presence pack uses to key rows.
-      resolveContext: (data) => ({
-        role: queryParam(data, "role"),
-        userId: queryParam(data, "userId"),
-      }),
+      // per-connection ctx. `userId` is what the presence and digest packs use
+      // to key rows; we also push the userId into `digestActors` so the
+      // digest schedule iterates everyone who's currently connected.
+      resolveContext: (data) => {
+        const userId = queryParam(data, "userId");
+        if (userId !== undefined) digestActors.add(userId);
+
+        return {
+          role: queryParam(data, "role"),
+          userId,
+        };
+      },
     }),
   )
   .use(scheduled({ engine }))
@@ -803,4 +879,14 @@ export const syncPlugin = new Elysia()
         { userId: body.userId },
       ),
     { body: t.Object({ channel: t.String(), userId: t.String() }) },
+  )
+  // Fire the digest schedule now. Useful for the demo — production apps
+  // let the cron fire on its own.
+  .post(
+    "/sync/digest/fire",
+    async () => {
+      await engine.runSchedule("digest:fire");
+
+      return { ok: true };
+    },
   );

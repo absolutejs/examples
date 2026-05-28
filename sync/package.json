@@ -2,7 +2,8 @@
   "dependencies": {
     "@absolutejs/absolute": "0.19.0-beta.1047",
     "@absolutejs/rag": "0.0.22",
-    "@absolutejs/sync": "^1.9.0",
+    "@absolutejs/sync": "^1.9.2",
+    "@absolutejs/sync-pack-digest": "^0.1.0",
     "@absolutejs/sync-pack-presence": "^0.1.0",
     "@absolutejs/sync-yjs": "^0.0.2",
     "@angular/common": "^21.0.0",
@@ -43,7 +44,7 @@
   },
   "name": "absolutejs-sync-example",
   "overrides": {
-    "@absolutejs/sync": "1.9.0"
+    "@absolutejs/sync": "1.9.2"
   },
   "scripts": {
     "config": "absolute config",
