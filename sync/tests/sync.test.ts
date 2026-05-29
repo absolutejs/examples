@@ -1322,3 +1322,75 @@ for (const framework of REACTIVE_FRAMEWORKS) {
     await expect(row).toContainText(/Guest [0-9a-f]{6}/);
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// sync-pack-mentions ↔ sync-pack-notifications — pack composition.
+//
+// The mentions pack parses `@username` from a comment body and writes per-
+// actor mention rows; the host's `onMention` hook fires the notifications
+// pack's `notify` mutation. The mentions pack never reaches into the
+// notifications pack itself — the composition lives in the host's hook.
+//
+// This test proves the wiring end-to-end across two framework tabs:
+//   1. B posts a comment so the page renders B's `@slug`.
+//   2. A reads that slug, then posts a comment that mentions it.
+//   3. B's notifications panel ticks up by one and contains "mentioned you".
+// ─────────────────────────────────────────────────────────────────────────────
+test("pack composition: @mention in comment fires a notification across frameworks", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ baseURL });
+  const a = await context.newPage();
+  const b = await context.newPage();
+  await a.goto("/"); // React
+  await b.goto("/vue"); // Vue — proves the composition is server-side, not framework-specific
+  await expect(a.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(b.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+
+  // B posts a comment so that B's @slug becomes visible on the page.
+  const bMarker = uniqueComment("b-self");
+  await postComment(b, bMarker);
+  const bRow = b
+    .getByTestId("comments-list")
+    .locator(".task-item", { hasText: bMarker });
+  await expect(bRow).toBeVisible({ timeout: 15000 });
+  const bSlugText = (
+    await bRow.locator('[data-testid^="comment-slug-"]').first().textContent()
+  )?.trim();
+  expect(bSlugText).toMatch(/^@[0-9a-f]{6}$/);
+  const bSlug = bSlugText!.slice(1); // strip the @
+
+  // The same row should have appeared in A's view too (cross-tab sync).
+  await expect(
+    a.getByTestId("comments-list").locator(".task-item", { hasText: bMarker }),
+  ).toBeVisible({ timeout: 15000 });
+
+  // Read B's current unread count, then have A post a comment mentioning
+  // B's slug. B's notifications panel should tick up by 1.
+  const readUnread = async (page: Page): Promise<number> => {
+    const text = await page.getByTestId("notifications-unread-count").textContent();
+    return Number(text?.match(/(\d+)/)?.[1] ?? 0);
+  };
+  // Make sure B is on the "all" tab so the new mention is included.
+  await b.getByTestId("notifications-tab-all").click();
+  const bBefore = await readUnread(b);
+
+  const aBody = uniqueComment(`mention-${bSlug}`) + ` hey @${bSlug} look at this`;
+  await postComment(a, aBody);
+
+  // B sees its unread count tick up.
+  await expect.poll(() => readUnread(b), { timeout: 15000 }).toBe(bBefore + 1);
+  // And the newest notification mentions a slug-shaped title.
+  await expect(b.getByTestId("notifications-list")).toContainText(
+    /mentioned you/,
+    { timeout: 15000 },
+  );
+
+  await context.close();
+});
+

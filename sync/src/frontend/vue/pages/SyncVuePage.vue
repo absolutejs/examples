@@ -655,7 +655,13 @@ const onDocInput = (event: Event) => {
             class="task-item"
           >
             <span>
-              <strong>{{ comment.author.displayName }}</strong
+              <strong>{{ comment.author.displayName }}</strong>
+              <span
+                class="muted"
+                :data-testid="`comment-slug-${comment.id}`"
+                style="font-size: 0.85em; margin-left: 4px"
+                title="Mention this author by typing @slug in a comment — @absolutejs/sync-pack-mentions fires a notification to them."
+                >@{{ comment.authorId.slice(0, 6) }}</span
               >: {{ comment.body }}
               <span v-if="comment.editedAt !== null" class="muted">
                 (edited)</span

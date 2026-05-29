@@ -12,6 +12,7 @@ import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
 import { createPresencePack } from "@absolutejs/sync-pack-presence";
 import { createDigestPack } from "@absolutejs/sync-pack-digest";
 import { createCommentsPack } from "@absolutejs/sync-pack-comments";
+import { createMentionsPack } from "@absolutejs/sync-pack-mentions";
 import { createNotificationsPack } from "@absolutejs/sync-pack-notifications";
 import { createFavoritesPack } from "@absolutejs/sync-pack-favorites";
 import { createCountersPack } from "@absolutejs/sync-pack-counters";
@@ -769,6 +770,41 @@ engine.registerPack(
   }),
 );
 
+// @absolutejs/sync-pack-mentions composes with the notifications pack.
+// Convention for this demo: a "@username" is the first 6 chars of any
+// connected actor's userId — matches the "Guest abc123" display name so
+// users can copy the slug from another tab's comment byline.
+const usernameSlug = (userId: string) => userId.slice(0, 6);
+const findActorIdByUsername = (username: string): string | undefined => {
+  const normalized = username.toLowerCase();
+  for (const user of demoUsers.values()) {
+    if (usernameSlug(user.id).toLowerCase() === normalized) return user.id;
+  }
+  return undefined;
+};
+engine.registerPack(
+  createMentionsPack<Ctx>({
+    getActorId: (ctx) => ctx.userId,
+    resolveActorId: (username) => findActorIdByUsername(username),
+    // The composition seam — the mentions pack stays unaware of the
+    // notifications pack. The host (us) calls notifications:notify from
+    // here. A real app would also email/Slack/etc.
+    onMention: async ({ mention }) => {
+      await engine.runMutation(
+        "notifications:notify",
+        {
+          actorId: mention.mentionedActorId,
+          body: mention.snippet,
+          href: `#comment-${mention.sourceId}`,
+          kind: "mention",
+          title: `@${usernameSlug(mention.authorId ?? "")} mentioned you`,
+        },
+        { systemTrusted: true, userId: mention.authorId ?? undefined },
+      );
+    },
+  }),
+);
+
 // Per-actor favorites against the existing `tasks` table. The join is
 // configured so the React panel can subscribe to "my favorited tasks"
 // in one call and get { ...favorite, resource: Task } per row.
@@ -1041,16 +1077,33 @@ export const syncPlugin = new Elysia()
   // drives them with one fetch().
   .post(
     "/sync/comments/create",
-    ({ body }) => {
+    async ({ body }) => {
       // Make sure the author exists in the host "users" table so the
       // comments-with-author join can pair them.
       ensureDemoUser(body.userId);
 
-      return engine.runMutation(
+      const comment = (await engine.runMutation(
         "comments:create",
         { body: body.body, resourceId: body.resourceId },
         { userId: body.userId },
-      );
+      )) as { id: string } | null;
+      // Pack composition: ALSO record mentions. The mentions pack's
+      // onMention hook fires notifications:notify per match. This is the
+      // host wiring two packs together — neither pack reaches into the
+      // other directly.
+      if (comment !== null) {
+        await engine.runMutation(
+          "mentions:record",
+          {
+            authorId: body.userId,
+            body: body.body,
+            sourceId: comment.id,
+            sourceKind: "comment",
+          },
+          { userId: body.userId },
+        );
+      }
+      return comment;
     },
     {
       body: t.Object({
