@@ -14,8 +14,8 @@
 		"typecheck": "absolute typecheck"
 	},
 	"dependencies": {
-		"@absolutejs/absolute": "^0.19.0-beta.1047",
-		"citra": "^0.27.0",
+		"@absolutejs/absolute": "^0.19.0-beta.1061",
+		"citra": "^0.28.2",
 		"elysia": "1.4.28",
 		"react": "19.2.6",
 		"react-dom": "19.2.6"
@@ -28,7 +28,7 @@
 		"@types/react-dom": "19.2.3",
 		"@typescript-eslint/parser": "^8.59.4",
 		"eslint": "^10.4.0",
-		"eslint-plugin-absolute": "^0.11.2",
+		"eslint-plugin-absolute": "^0.11.5",
 		"eslint-plugin-promise": "^7.3.0",
 		"eslint-plugin-security": "^4.0.0",
 		"globals": "^17.6.0",

@@ -13,8 +13,8 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@absolutejs/absolute": "0.19.0-beta.1047",
-    "@absolutejs/isolated-jsc": "^0.9.0",
+    "@absolutejs/absolute": "0.19.0-beta.1061",
+    "@absolutejs/isolated-jsc": "^0.9.2",
     "elysia": "1.4.26",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -28,7 +28,7 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/parser": "^8.57.2",
     "eslint": "^10.1.0",
-    "eslint-plugin-absolute": "^0.11.2",
+    "eslint-plugin-absolute": "^0.11.5",
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-security": "^4.0.0",
     "globals": "^17.4.0",

@@ -1,0 +1,45 @@
+{
+	"name": "absolutejs-demo-example",
+	"private": true,
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"demo": "bun run src/run.ts",
+		"format": "absolute prettier --write",
+		"lint": "absolute eslint",
+		"typecheck": "absolute typecheck"
+	},
+	"dependencies": {
+		"@absolutejs/absolute": "0.19.0-beta.1061",
+		"@absolutejs/auth": "0.45.4",
+		"@absolutejs/demo": "file:../../demo",
+		"@absolutejs/meeting": "^0.0.1-beta.3",
+		"@absolutejs/meeting-discord": "^0.0.1-beta.11",
+		"@absolutejs/meeting-recall": "^0.0.1-beta.1",
+		"@absolutejs/voice": "0.0.22-beta.569",
+		"@absolutejs/voice-tester": "^0.0.4-beta.4",
+		"@discordjs/voice": "^0.19.2",
+		"discord.js": "^14.26.4",
+		"elysia": "1.4.18",
+		"libsodium-wrappers": "^0.8.4",
+		"opusscript": "^0.1.1",
+		"playwright": "^1.57.0",
+		"prism-media": "^1.3.5"
+	},
+	"patchedDependencies": {
+		"@snazzah/davey@0.1.11": "patches/@snazzah%2Fdavey@0.1.11.patch"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/bun": "1.3.9",
+		"@typescript-eslint/parser": "^8.57.2",
+		"eslint": "^10.1.0",
+		"eslint-plugin-absolute": "^0.11.5",
+		"eslint-plugin-promise": "^7.2.1",
+		"eslint-plugin-security": "^4.0.0",
+		"globals": "^17.4.0",
+		"prettier": "^3.8.3",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.57.2"
+	}
+}

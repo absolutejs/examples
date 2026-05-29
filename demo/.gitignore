@@ -1,0 +1,17 @@
+.env
+.env.local
+.env.*
+!.env.example
+.discord-bots.env
+
+node_modules/
+build/
+.absolutejs/
+.demo-artifacts/
+
+*.log
+.DS_Store
+Thumbs.db
+.gcp-meet-key.json
+.gcp-meet.env
+.gcp-oauth-client.json
