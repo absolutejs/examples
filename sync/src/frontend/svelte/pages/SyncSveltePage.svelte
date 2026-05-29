@@ -290,31 +290,45 @@
   const doneTasksCount = $derived($doneTasksStore.data[0]?.value);
   const totalCommentsCount = $derived($totalCommentsStore.data[0]?.value);
 
-  // @absolutejs/sync-pack-notifications — per-actor inbox.
+  // @absolutejs/sync-pack-notifications — per-actor inbox with kind tabs.
+  // Client-side filter (server-side params: { kind } covered by
+  // pack-internal tests).
+  const NOTIFICATION_KINDS = ["mention", "reply", "system"] as const;
+  type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
+  let notificationsKindFilter = $state<NotificationKind | null>(null);
   const notificationsStore = createSyncCollectionStore<NotificationRow>({
     collection: "notifications",
     url: wsUrl,
   });
+  const filteredNotifications = $derived(
+    notificationsKindFilter === null
+      ? $notificationsStore.data
+      : $notificationsStore.data.filter(
+          (notification) => notification.kind === notificationsKindFilter,
+        ),
+  );
   onDestroy(() => notificationsStore.destroy());
   const unreadCount = $derived(
-    $notificationsStore.data.filter((row) => row.readAt === null).length,
+    filteredNotifications.filter((row) => row.readAt === null).length,
   );
   const recentNotifications = $derived(
-    [...$notificationsStore.data]
+    [...filteredNotifications]
       .sort((first, second) => second.createdAt - first.createdAt)
       .slice(0, 5),
   );
-  const sendNotification = () =>
+  const sendNotification = () => {
+    const kind: NotificationKind = notificationsKindFilter ?? "mention";
     void fetch("/sync/notifications/notify", {
       body: JSON.stringify({
         actorId: tabUserId(),
         body: "Click any inbox item to mark it read.",
-        kind: "demo",
-        title: `Test notification at ${new Date().toLocaleTimeString()}`,
+        kind,
+        title: `Test ${kind} at ${new Date().toLocaleTimeString()}`,
       }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
     });
+  };
   const markNotificationRead = (notificationId: string) =>
     fetch("/sync/notifications/markRead", {
       body: JSON.stringify({ notificationId, userId: tabUserId() }),
@@ -573,16 +587,41 @@
     <section class="sync-card" data-testid="notifications-pack-panel">
       <p class="section-desc">
         Per-actor inbox via <code>@absolutejs/sync-pack-notifications</code>.
+        Tabs filter the live collection by <code>kind</code> client-side; the
+        pack's own <code>kindFilter</code> param is covered by its tests.
       </p>
+      <div class="presence-bar" data-testid="notifications-kind-tabs">
+        {#each ["All", ...NOTIFICATION_KINDS] as label (label)}
+          {@const isAll = label === "All"}
+          {@const active =
+            (isAll && notificationsKindFilter === null) ||
+            label === notificationsKindFilter}
+          <button
+            data-testid={`notifications-tab-${isAll ? "all" : label}`}
+            onclick={() =>
+              (notificationsKindFilter = isAll
+                ? null
+                : (label as NotificationKind))}
+            style="background: {active
+              ? 'rgba(99,102,241,0.2)'
+              : 'transparent'}; border: 1px solid {active
+              ? '#6366f1'
+              : 'rgba(255,255,255,0.15)'}; border-radius: 12px; cursor: pointer; margin-right: 4px; padding: 2px 10px; text-transform: capitalize;"
+            type="button">{label}</button
+          >
+        {/each}
+      </div>
       <div class="presence-bar">
         <span class="presence-online" data-testid="notifications-unread-count"
-          >🔔 {unreadCount} unread</span
+          >🔔 {unreadCount} unread{notificationsKindFilter !== null
+            ? ` (${notificationsKindFilter})`
+            : ""}</span
         >
         <button
           class="primary"
           data-testid="notifications-send"
           onclick={sendNotification}
-          type="button">Send test notification</button
+          type="button">Send {notificationsKindFilter ?? "mention"}</button
         >
         <button
           data-testid="notifications-mark-all-read"

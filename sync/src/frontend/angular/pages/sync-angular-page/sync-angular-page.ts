@@ -262,28 +262,41 @@ export class SyncAngularPageComponent implements OnDestroy {
     () => this.totalCommentsHandle.data()[0]?.value,
   );
 
-  // @absolutejs/sync-pack-notifications — per-actor inbox.
+  // @absolutejs/sync-pack-notifications — per-actor inbox with kind tabs.
+  NOTIFICATION_KINDS = ["mention", "reply", "system"] as const;
+  notificationsKindFilter = signal<
+    "mention" | "reply" | "system" | null
+  >(null);
+  setNotificationsKindFilter(kind: "mention" | "reply" | "system" | null) {
+    this.notificationsKindFilter.set(kind);
+  }
   private notificationsHandle = this.sync.connect<NotificationRow>({
     collection: "notifications",
     url: wsUrl(),
   });
+  filteredNotifications = computed(() => {
+    const filter = this.notificationsKindFilter();
+    const all = this.notificationsHandle.data();
+    return filter === null
+      ? all
+      : all.filter((notification) => notification.kind === filter);
+  });
   unreadCount = computed(
-    () =>
-      this.notificationsHandle.data().filter((row) => row.readAt === null)
-        .length,
+    () => this.filteredNotifications().filter((row) => row.readAt === null).length,
   );
   recentNotifications = computed(() =>
-    [...this.notificationsHandle.data()]
+    [...this.filteredNotifications()]
       .sort((first, second) => second.createdAt - first.createdAt)
       .slice(0, 5),
   );
   sendNotification() {
+    const kind = this.notificationsKindFilter() ?? "mention";
     void fetch("/sync/notifications/notify", {
       body: JSON.stringify({
         actorId: tabUserId(),
         body: "Click any inbox item to mark it read.",
-        kind: "demo",
-        title: `Test notification at ${new Date().toLocaleTimeString()}`,
+        kind,
+        title: `Test ${kind} at ${new Date().toLocaleTimeString()}`,
       }),
       headers: { "Content-Type": "application/json" },
       method: "POST",

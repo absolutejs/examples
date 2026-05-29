@@ -301,31 +301,45 @@ const totalCommentsCount = computed(() =>
     : "…",
 );
 
-// @absolutejs/sync-pack-notifications — per-actor inbox.
+// @absolutejs/sync-pack-notifications — per-actor inbox with kind tabs.
+// Client-side filter (the server-side params: { kind } filter from
+// sync-pack-notifications 0.2 is covered by pack-internal tests).
+const NOTIFICATION_KINDS = ["mention", "reply", "system"] as const;
+type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
+const notificationsKindFilter = ref<NotificationKind | null>(null);
 const notificationsCol = useSyncCollection<NotificationRow>({
   collection: "notifications",
   url: wsUrl,
 });
+const filteredNotifications = computed(() =>
+  notificationsKindFilter.value === null
+    ? notificationsCol.data.value
+    : notificationsCol.data.value.filter(
+        (notification) => notification.kind === notificationsKindFilter.value,
+      ),
+);
 const unreadCount = computed(
   () =>
-    notificationsCol.data.value.filter((row) => row.readAt === null).length,
+    filteredNotifications.value.filter((row) => row.readAt === null).length,
 );
 const recentNotifications = computed(() =>
-  [...notificationsCol.data.value]
+  [...filteredNotifications.value]
     .sort((first, second) => second.createdAt - first.createdAt)
     .slice(0, 5),
 );
-const sendNotification = () =>
+const sendNotification = () => {
+  const kind: NotificationKind = notificationsKindFilter.value ?? "mention";
   void fetch("/sync/notifications/notify", {
     body: JSON.stringify({
       actorId: tabUserId(),
       body: "Click any inbox item to mark it read.",
-      kind: "demo",
-      title: `Test notification at ${new Date().toLocaleTimeString()}`,
+      kind,
+      title: `Test ${kind} at ${new Date().toLocaleTimeString()}`,
     }),
     headers: { "Content-Type": "application/json" },
     method: "POST",
   });
+};
 const markNotificationRead = (notificationId: string) =>
   fetch("/sync/notifications/markRead", {
     body: JSON.stringify({ notificationId, userId: tabUserId() }),
@@ -603,17 +617,54 @@ const onDocInput = (event: Event) => {
       <section class="sync-card" data-testid="notifications-pack-panel">
         <p class="section-desc">
           Per-actor inbox via
-          <code>@absolutejs/sync-pack-notifications</code>. The "Send" button
-          POSTs to <code>/sync/notifications/notify</code>; the server-side
-          handler stamps <code>systemTrusted: true</code> on the ctx so the
-          pack's host-trusted insert accepts it.
+          <code>@absolutejs/sync-pack-notifications</code>. Tabs filter the
+          live collection by <code>kind</code> client-side; the pack's own
+          <code>kindFilter</code> param is covered by its tests.
         </p>
+        <div class="presence-bar" data-testid="notifications-kind-tabs">
+          <button
+            v-for="label in (['All', ...NOTIFICATION_KINDS] as const)"
+            :key="label"
+            :data-testid="
+              `notifications-tab-${label === 'All' ? 'all' : label}`
+            "
+            type="button"
+            :style="{
+              background:
+                (label === 'All' && notificationsKindFilter === null) ||
+                label === notificationsKindFilter
+                  ? 'rgba(99,102,241,0.2)'
+                  : 'transparent',
+              border: '1px solid',
+              borderColor:
+                (label === 'All' && notificationsKindFilter === null) ||
+                label === notificationsKindFilter
+                  ? '#6366f1'
+                  : 'rgba(255,255,255,0.15)',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              marginRight: '4px',
+              padding: '2px 10px',
+              textTransform: 'capitalize',
+            }"
+            @click="
+              notificationsKindFilter =
+                label === 'All' ? null : (label as NotificationKind)
+            "
+          >
+            {{ label }}
+          </button>
+        </div>
         <div class="presence-bar">
           <span
             class="presence-online"
             data-testid="notifications-unread-count"
           >
-            🔔 {{ unreadCount }} unread
+            🔔 {{ unreadCount }} unread{{
+              notificationsKindFilter !== null
+                ? ` (${notificationsKindFilter})`
+                : ""
+            }}
           </span>
           <button
             class="primary"
@@ -621,7 +672,7 @@ const onDocInput = (event: Event) => {
             type="button"
             @click="sendNotification"
           >
-            Send test notification
+            Send {{ notificationsKindFilter ?? "mention" }}
           </button>
           <button
             data-testid="notifications-mark-all-read"

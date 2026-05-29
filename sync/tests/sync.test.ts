@@ -1038,6 +1038,41 @@ for (const framework of REACTIVE_FRAMEWORKS) {
         page.getByTestId("notifications-unread-count"),
       ).toContainText("0 unread", { timeout: 10000 });
     });
+
+    test("kindFilter tabs filter the unread badge client-side", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+      await expect(
+        page.getByTestId("notifications-kind-tabs"),
+      ).toBeVisible();
+
+      const badge = page.getByTestId("notifications-unread-count");
+      const readBadge = async (): Promise<number> => {
+        const text = await badge.textContent();
+        return Number(text?.match(/(\d+)/)?.[1] ?? 0);
+      };
+
+      await page.getByTestId("notifications-tab-mention").click();
+      const beforeMention = await readBadge();
+      await page.getByTestId("notifications-send").click();
+      await expect.poll(readBadge, { timeout: 10000 }).toBe(beforeMention + 1);
+      await expect(badge).toContainText("(mention)");
+
+      await page.getByTestId("notifications-tab-reply").click();
+      await expect(badge).toContainText("(reply)", { timeout: 5000 });
+      await expect.poll(readBadge, { timeout: 10000 }).toBe(0);
+
+      await page.getByTestId("notifications-tab-system").click();
+      await expect(badge).toContainText("(system)", { timeout: 5000 });
+      await expect.poll(readBadge, { timeout: 10000 }).toBe(0);
+
+      await page.getByTestId("notifications-tab-all").click();
+      await expect.poll(readBadge, { timeout: 10000 }).toBeGreaterThan(0);
+    });
   });
 
   test.describe(`${framework.name} sync-pack-favorites`, () => {

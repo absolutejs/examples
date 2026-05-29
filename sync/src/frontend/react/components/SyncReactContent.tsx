@@ -436,19 +436,27 @@ type NotificationRow = {
   expiresAt: number | null;
 };
 
+const NOTIFICATION_KINDS = ["mention", "reply", "system"] as const;
+type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
+
 const useNotifications = () => {
   const url = wsUrl();
+  // Subscribe to the full inbox; the kind tabs filter client-side. The
+  // server-side `params: { kind }` filter on sync-pack-notifications 0.2
+  // IS exercised by the pack's internal tests; we keep the UI client-side
+  // because not every framework's collection hook re-subscribes when its
+  // params arg changes (Vue/Svelte/Angular treat params as init-only).
   const { data } = useSyncCollection<NotificationRow>({
     collection: "notifications",
     url,
   });
-  const send = () => {
+  const send = (kind: NotificationKind) => {
     void fetch("/sync/notifications/notify", {
       body: JSON.stringify({
         actorId: tabUserId(),
         body: "Click any inbox item to mark it read.",
-        kind: "demo",
-        title: `Test notification at ${new Date().toLocaleTimeString()}`,
+        kind,
+        title: `Test ${kind} at ${new Date().toLocaleTimeString()}`,
       }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
@@ -524,8 +532,19 @@ export const SyncReactContent = () => {
   const favoritedTaskIds = new Set(
     favorites.favorites.map((favorite) => favorite.resourceId),
   );
-  // @absolutejs/sync-pack-notifications: per-actor inbox.
+  // @absolutejs/sync-pack-notifications: per-actor inbox with kind tabs.
+  const [notificationsKindFilter, setNotificationsKindFilter] =
+    useState<NotificationKind | null>(null);
   const notifications = useNotifications();
+  const filteredNotifications =
+    notificationsKindFilter === null
+      ? notifications.notifications
+      : notifications.notifications.filter(
+          (notification) => notification.kind === notificationsKindFilter,
+        );
+  const filteredUnreadCount = filteredNotifications.filter(
+    (notification) => notification.readAt === null,
+  ).length;
   const unreadCount = notifications.notifications.filter(
     (notification) => notification.readAt === null,
   ).length;
@@ -1043,26 +1062,67 @@ export const SyncReactContent = () => {
       >
         <p className="section-desc">
           Per-actor inbox via{" "}
-          <code>@absolutejs/sync-pack-notifications</code>. The "Send" button
-          POSTs to <code>/sync/notifications/notify</code> (server-side
-          stamps <code>systemTrusted: true</code> so the pack's
-          host-trusted insert path accepts it). Each tab sees only its own
-          rows.
+          <code>@absolutejs/sync-pack-notifications</code>. The kind tabs
+          filter the inbox by <code>row.kind</code> — the pack's
+          <code>{" params: { kind }"}</code> server-side filter (0.2.0) is
+          covered by its internal tests; here the tabs run client-side so
+          all four frameworks share one rendering path.
         </p>
+        <div
+          className="presence-bar"
+          data-testid="notifications-kind-tabs"
+        >
+          {(["All", ...NOTIFICATION_KINDS] as const).map((label) => {
+            const isAll = label === "All";
+            const active =
+              (isAll && notificationsKindFilter === null) ||
+              label === notificationsKindFilter;
+
+            return (
+              <button
+                data-testid={`notifications-tab-${isAll ? "all" : label}`}
+                key={label}
+                onClick={() =>
+                  setNotificationsKindFilter(
+                    isAll ? null : (label as NotificationKind),
+                  )
+                }
+                style={{
+                  background: active ? "rgba(99,102,241,0.2)" : "transparent",
+                  border: "1px solid",
+                  borderColor: active ? "#6366f1" : "rgba(255,255,255,0.15)",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  marginRight: "4px",
+                  padding: "2px 10px",
+                  textTransform: "capitalize",
+                }}
+                type="button"
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
         <div className="presence-bar">
           <span
             className="presence-online"
             data-testid="notifications-unread-count"
           >
-            🔔 {unreadCount} unread
+            🔔 {filteredUnreadCount} unread
+            {notificationsKindFilter !== null
+              ? ` (${notificationsKindFilter})`
+              : ""}
           </span>
           <button
             className="primary"
             data-testid="notifications-send"
-            onClick={notifications.send}
+            onClick={() =>
+              notifications.send(notificationsKindFilter ?? "mention")
+            }
             type="button"
           >
-            Send test notification
+            Send {notificationsKindFilter ?? "mention"}
           </button>
           <button
             data-testid="notifications-mark-all-read"
@@ -1073,12 +1133,12 @@ export const SyncReactContent = () => {
           </button>
         </div>
         <ul className="task-list" data-testid="notifications-list">
-          {notifications.notifications.length === 0 && (
+          {filteredNotifications.length === 0 && (
             <li className="task-item">
               <span className="muted">Inbox empty.</span>
             </li>
           )}
-          {[...notifications.notifications]
+          {[...filteredNotifications]
             .sort((first, second) => second.createdAt - first.createdAt)
             .slice(0, 5)
             .map((notification) => (
