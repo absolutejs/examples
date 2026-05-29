@@ -10,7 +10,10 @@ import {
 } from "@absolutejs/sync/engine";
 import { codeModeTool } from "@absolutejs/ai/tools";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
-import { engineMutationsAsHostTools } from "@absolutejs/sync/code-mode";
+import {
+  engineMutationsAsHostTools,
+  transactionalBatchAsHostTool,
+} from "@absolutejs/sync/code-mode";
 import { createPresencePack } from "@absolutejs/sync-pack-presence";
 import { createDigestPack } from "@absolutejs/sync-pack-digest";
 import { createCommentsPack } from "@absolutejs/sync-pack-comments";
@@ -1273,33 +1276,51 @@ export const syncPlugin = new Elysia()
       // build it inside the route handler for the demo (cheap; the pool is
       // cached inside codeModeTool). Production apps would build this once
       // at module load.
-      const hostTools = engineMutationsAsHostTools<{ userId: string }>({
-        ctx: () => ({ userId: body.userId }),
-        engine,
-        mutations: [
-          {
-            description: "Post a comment on the shared discussion.",
-            name: "comments:create",
-            tsSignature:
-              "(args: { resourceId: string; body: string }) => " +
-              "Promise<{ id: string; body: string; authorId: string }>",
-          },
-          {
-            description: "Toggle an emoji reaction on a comment.",
-            name: "comments:toggleReaction",
-            tsSignature:
-              "(args: { commentId: string; emoji: string }) => " +
-              "Promise<{ added: boolean }>",
-          },
-          {
-            description: "Toggle a per-actor favorite on a task.",
-            name: "favorites:toggle",
-            tsSignature:
-              "(args: { resourceKind: string; resourceId: string }) => " +
-              "Promise<{ favorited: boolean }>",
-          },
-        ],
-      });
+      const ctxFactory = () => ({ userId: body.userId });
+      const hostTools = {
+        ...engineMutationsAsHostTools<{ userId: string }>({
+          ctx: ctxFactory,
+          engine,
+          mutations: [
+            {
+              description: "Post a comment on the shared discussion.",
+              name: "comments:create",
+              tsSignature:
+                "(args: { resourceId: string; body: string }) => " +
+                "Promise<{ id: string; body: string; authorId: string }>",
+            },
+            {
+              description: "Toggle an emoji reaction on a comment.",
+              name: "comments:toggleReaction",
+              tsSignature:
+                "(args: { commentId: string; emoji: string }) => " +
+                "Promise<{ added: boolean }>",
+            },
+            {
+              description: "Toggle a per-actor favorite on a task.",
+              name: "favorites:toggle",
+              tsSignature:
+                "(args: { resourceKind: string; resourceId: string }) => " +
+                "Promise<{ favorited: boolean }>",
+            },
+          ],
+        }),
+        // 1.11+: atomic batch host fn. The model can branch on
+        // intermediate results via the per-mutation fns above, OR
+        // commit several pre-shaped writes together via run_transaction
+        // and accept that there are no intermediate results inside the
+        // batch.
+        run_transaction: transactionalBatchAsHostTool<{ userId: string }>({
+          allowedMutations: [
+            "comments:create",
+            "comments:toggleReaction",
+            "favorites:toggle",
+            "notifications:notify",
+          ],
+          ctx: ctxFactory,
+          engine,
+        }),
+      };
       const tool = codeModeTool({
         timeout: 5_000,
         tools: hostTools,

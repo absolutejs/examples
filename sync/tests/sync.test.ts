@@ -1442,3 +1442,54 @@ return { commentId: c.id, body: c.body };`;
   ).toBeVisible({ timeout: 15000 });
 });
 
+// sync 1.11.0 — transactional batch path. The Atomic batch preset uses
+// run_transaction([...]) which goes through engineMutationsAsHostTools'
+// transactional sibling and ultimately engine.runMutations. We assert
+// BOTH atomic comments land in the live list — proving the batch
+// committed end-to-end and the per-mutation results flowed back to the
+// model script.
+test("code-mode panel: atomic batch commits N mutations as one tx", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(page.getByTestId("code-mode-panel")).toBeVisible();
+
+  await page.getByTestId("code-mode-preset-transactional").click();
+  // Inject unique markers into both spec args so we can find the rows.
+  const markerA = `atomic-a-${Date.now()}`;
+  const markerB = `atomic-b-${Date.now()}`;
+  const code = `const results = await run_transaction([
+  { name: 'comments:create',
+    args: { resourceId: 'shared-discussion', body: ${JSON.stringify(markerA)} } },
+  { name: 'comments:create',
+    args: { resourceId: 'shared-discussion', body: ${JSON.stringify(markerB)} } },
+]);
+return { ids: results.map((row) => row.id) };`;
+  await page.getByTestId("code-mode-input").fill(code);
+  await page.getByTestId("code-mode-run").click();
+
+  await expect(page.getByTestId("code-mode-status")).toContainText("ok", {
+    timeout: 15000,
+  });
+  // The host-fn name surfaced to the model is `run_transaction`.
+  await expect(page.getByTestId("code-mode-tool-calls")).toContainText(
+    "run_transaction",
+  );
+
+  // Both rows materialize in the live comments list — proving the
+  // batched commit fanned out through the engine.
+  await expect(
+    page
+      .getByTestId("comments-list")
+      .locator(".task-item", { hasText: markerA }),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(
+    page
+      .getByTestId("comments-list")
+      .locator(".task-item", { hasText: markerB }),
+  ).toBeVisible({ timeout: 15000 });
+});
+

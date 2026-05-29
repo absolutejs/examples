@@ -1396,6 +1396,22 @@ await comments_toggleReaction({ commentId: c.id, emoji: '🎉' });
 log('reaction toggled on', c.id);
 return { commentId: c.id, body: c.body };`;
 
+// 1.11+: run_transaction([...]) commits N mutations atomically. No
+// intermediate results inside the batch — the trade-off the docs page
+// calls out — but if any handler throws the whole batch rolls back.
+const TRANSACTIONAL_CODE_MODE_BODY = `// Atomic batch via run_transaction (sync 1.11+).
+// All mutations commit, or none of them do.
+const results = await run_transaction([
+  { name: 'comments:create',
+    args: { resourceId: 'shared-discussion',
+            body: 'First atomic-batch comment' } },
+  { name: 'comments:create',
+    args: { resourceId: 'shared-discussion',
+            body: 'Second atomic-batch comment' } },
+]);
+log('batch committed:', results.length, 'rows');
+return { ids: results.map((row) => row.id) };`;
+
 type CodeModeRunResult = {
   ok: boolean;
   result?: unknown;
@@ -1412,9 +1428,21 @@ type CodeModeRunResult = {
 };
 
 const CodeModePanel = () => {
+  const [preset, setPreset] = useState<"perMutation" | "transactional">(
+    "perMutation",
+  );
   const [code, setCode] = useState(DEFAULT_CODE_MODE_BODY);
   const [running, setRunning] = useState(false);
   const [outcome, setOutcome] = useState<CodeModeRunResult | null>(null);
+  const selectPreset = (next: "perMutation" | "transactional") => {
+    setPreset(next);
+    setCode(
+      next === "transactional"
+        ? TRANSACTIONAL_CODE_MODE_BODY
+        : DEFAULT_CODE_MODE_BODY,
+    );
+    setOutcome(null);
+  };
   const run = async () => {
     setRunning(true);
     try {
@@ -1442,14 +1470,65 @@ const CodeModePanel = () => {
     <section className="sync-card" data-testid="code-mode-panel">
       <p className="section-desc">
         Code Mode for sync mutations via{" "}
-        <code>@absolutejs/sync/code-mode</code> (1.10.0) +{" "}
+        <code>@absolutejs/sync/code-mode</code> (1.11.0) +{" "}
         <code>@absolutejs/ai/tools</code>. Edit the JS body and press Run —
         the server feeds it to an isolated-jsc sandbox seeded with the
-        engine's mutation surface. One model turn collapses N round-trips
-        into one. Available host fns in scope:{" "}
-        <code>comments_create</code>, <code>comments_toggleReaction</code>,{" "}
-        <code>favorites_toggle</code>; plus a built-in <code>log(...)</code>.
+        engine's mutation surface. Two presets:{" "}
+        <strong>Per-mutation</strong> uses{" "}
+        <code>engineMutationsAsHostTools</code> (each host call is its own
+        tx; intermediate results available);{" "}
+        <strong>Atomic batch</strong> uses{" "}
+        <code>transactionalBatchAsHostTool</code> →{" "}
+        <code>engine.runMutations</code> (single tx across the batch; no
+        intermediate results, all-or-nothing on commit). Available host
+        fns: <code>comments_create</code>,{" "}
+        <code>comments_toggleReaction</code>, <code>favorites_toggle</code>,{" "}
+        <code>run_transaction([...])</code>; plus a built-in{" "}
+        <code>log(...)</code>.
       </p>
+      <div className="presence-bar" style={{ marginBottom: "8px" }}>
+        <button
+          data-testid="code-mode-preset-perMutation"
+          onClick={() => selectPreset("perMutation")}
+          style={{
+            background:
+              preset === "perMutation"
+                ? "rgba(99,102,241,0.2)"
+                : "transparent",
+            border: `1px solid ${
+              preset === "perMutation" ? "#6366f1" : "rgba(255,255,255,0.15)"
+            }`,
+            borderRadius: "12px",
+            cursor: "pointer",
+            marginRight: "4px",
+            padding: "2px 10px",
+          }}
+          type="button"
+        >
+          Per-mutation
+        </button>
+        <button
+          data-testid="code-mode-preset-transactional"
+          onClick={() => selectPreset("transactional")}
+          style={{
+            background:
+              preset === "transactional"
+                ? "rgba(99,102,241,0.2)"
+                : "transparent",
+            border: `1px solid ${
+              preset === "transactional"
+                ? "#6366f1"
+                : "rgba(255,255,255,0.15)"
+            }`,
+            borderRadius: "12px",
+            cursor: "pointer",
+            padding: "2px 10px",
+          }}
+          type="button"
+        >
+          Atomic batch
+        </button>
+      </div>
       <textarea
         aria-label="Code Mode body"
         data-testid="code-mode-input"
