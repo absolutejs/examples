@@ -70,6 +70,12 @@ type NotificationRow = {
   readAt: number | null;
   expiresAt: number | null;
 };
+type CounterRow = {
+  id: string;
+  key: string;
+  value: number;
+  computedAt: number;
+};
 type FavoriteWithTask = {
   id: string;
   actorId: string;
@@ -231,6 +237,25 @@ export class SyncAngularPageComponent implements OnDestroy {
       method: "POST",
     });
   }
+
+  // @absolutejs/sync-pack-counters — three live badges.
+  private openTasksHandle = this.sync.connect<CounterRow>({
+    collection: "counter:openTasks",
+    url: wsUrl(),
+  });
+  private doneTasksHandle = this.sync.connect<CounterRow>({
+    collection: "counter:doneTasks",
+    url: wsUrl(),
+  });
+  private totalCommentsHandle = this.sync.connect<CounterRow>({
+    collection: "counter:totalComments",
+    url: wsUrl(),
+  });
+  openTasksCount = computed(() => this.openTasksHandle.data()[0]?.value);
+  doneTasksCount = computed(() => this.doneTasksHandle.data()[0]?.value);
+  totalCommentsCount = computed(
+    () => this.totalCommentsHandle.data()[0]?.value,
+  );
 
   // @absolutejs/sync-pack-notifications — per-actor inbox.
   private notificationsHandle = this.sync.connect<NotificationRow>({

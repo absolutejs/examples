@@ -65,6 +65,12 @@ type NotificationRow = {
   readAt: number | null;
   expiresAt: number | null;
 };
+type CounterRow = {
+  id: string;
+  key: string;
+  value: number;
+  computedAt: number;
+};
 type FavoriteWithTask = {
   id: string;
   actorId: string;
@@ -258,6 +264,35 @@ const deleteComment = (commentId: string) =>
     method: "POST",
   });
 
+// @absolutejs/sync-pack-counters — three live badges.
+const openTasksCol = useSyncCollection<CounterRow>({
+  collection: "counter:openTasks",
+  url: wsUrl,
+});
+const doneTasksCol = useSyncCollection<CounterRow>({
+  collection: "counter:doneTasks",
+  url: wsUrl,
+});
+const totalCommentsCol = useSyncCollection<CounterRow>({
+  collection: "counter:totalComments",
+  url: wsUrl,
+});
+const openTasksCount = computed(() =>
+  openTasksCol.data.value[0]?.value !== undefined
+    ? String(openTasksCol.data.value[0].value)
+    : "…",
+);
+const doneTasksCount = computed(() =>
+  doneTasksCol.data.value[0]?.value !== undefined
+    ? String(doneTasksCol.data.value[0].value)
+    : "…",
+);
+const totalCommentsCount = computed(() =>
+  totalCommentsCol.data.value[0]?.value !== undefined
+    ? String(totalCommentsCol.data.value[0].value)
+    : "…",
+);
+
 // @absolutejs/sync-pack-notifications — per-actor inbox.
 const notificationsCol = useSyncCollection<NotificationRow>({
   collection: "notifications",
@@ -432,6 +467,19 @@ const onDocInput = (event: Event) => {
           <li v-if="tasks.length === 0" class="task-empty">No tasks yet.</li>
         </ul>
       </section>
+
+      <div class="presence-bar" data-testid="counters-pack-row">
+        <span class="presence-online" data-testid="counter-openTasks"
+          >📝 {{ openTasksCount }} open</span
+        >
+        <span class="presence-online" data-testid="counter-doneTasks"
+          >✓ {{ doneTasksCount }} done</span
+        >
+        <span class="presence-online" data-testid="counter-totalComments"
+          >💬 {{ totalCommentsCount }} comments</span
+        >
+        <span class="muted">live via @absolutejs/sync-pack-counters</span>
+      </div>
 
       <section class="sync-card">
         <p class="section-desc" data-testid="crdt-label">

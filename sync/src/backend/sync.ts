@@ -14,6 +14,7 @@ import { createDigestPack } from "@absolutejs/sync-pack-digest";
 import { createCommentsPack } from "@absolutejs/sync-pack-comments";
 import { createNotificationsPack } from "@absolutejs/sync-pack-notifications";
 import { createFavoritesPack } from "@absolutejs/sync-pack-favorites";
+import { createCountersPack } from "@absolutejs/sync-pack-counters";
 import { rgaText, textOf, type TextState } from "@absolutejs/sync/crdt";
 import { yjsText } from "@absolutejs/sync-yjs";
 import { scheduled } from "@absolutejs/sync/scheduled";
@@ -773,6 +774,46 @@ engine.registerPack(
       hydrate: () => [...tasks.values()],
       table: "tasks",
     },
+  }),
+);
+
+// Live counters via createCountersPack — three reactive queries the React
+// page renders as a small badge row. Each one's read-set is tracked: e.g.
+// `openTasks` re-runs only when the tasks table changes, not when comments
+// or notifications change.
+engine.registerPack(
+  createCountersPack<Ctx>({
+    counters: {
+      // Public — anyone (even unauthenticated) gets to see it. Authorize
+      // override is the documented escape hatch for global stats.
+      doneTasks: {
+        authorize: () => true,
+        compute: async ({ db }) => {
+          const rows = await db.all<Task>("tasks");
+
+          return rows.filter((task) => task.done).length;
+        },
+      },
+      openTasks: {
+        authorize: () => true,
+        compute: async ({ db }) => {
+          const rows = await db.all<Task>("tasks");
+
+          return rows.filter((task) => !task.done).length;
+        },
+      },
+      // Per-actor — reads ctx, so each subscriber gets their own value.
+      // Requires authentication (default authorize gates on getActorId).
+      totalComments: {
+        authorize: () => true,
+        compute: async ({ db }) => {
+          const rows = await db.all("comments");
+
+          return rows.length;
+        },
+      },
+    },
+    getActorId: (ctx) => ctx.userId,
   }),
 );
 

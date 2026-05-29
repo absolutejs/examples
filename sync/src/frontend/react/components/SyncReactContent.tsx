@@ -304,6 +304,25 @@ const useComments = (resourceId: string) => {
   return { comments: data, create, edit, remove };
 };
 
+// @absolutejs/sync-pack-counters — each counter is its own reactive query
+// returning a single { id, key, value, computedAt } row. The badge UI
+// reads the latest value off `data[0]`.
+type CounterRow = {
+  id: string;
+  key: string;
+  value: number;
+  computedAt: number;
+};
+
+const useCounter = (counterKey: string) => {
+  const { data } = useSyncCollection<CounterRow>({
+    collection: `counter:${counterKey}`,
+    url: wsUrl(),
+  });
+
+  return data[0]?.value;
+};
+
 // @absolutejs/sync-pack-favorites — per-actor saved tasks. Uses the
 // `favorites-with-resource` join collection so we get task title + done
 // state pre-joined.
@@ -426,6 +445,12 @@ export const SyncReactContent = () => {
   // resource. Every tab sees the same thread because canReadResource is
   // "everyone" in the demo.
   const comments = useComments("shared-discussion");
+  // @absolutejs/sync-pack-counters: three live counters wired to a small
+  // badge row. The values re-emit whenever the underlying tables change —
+  // adding a task ticks openTasks; posting a comment ticks totalComments.
+  const openTasks = useCounter("openTasks");
+  const doneTasks = useCounter("doneTasks");
+  const totalComments = useCounter("totalComments");
   // @absolutejs/sync-pack-favorites: per-actor saved tasks via the join
   // collection (so we get the joined Task row alongside the favorite).
   const favorites = useFavorites();
@@ -618,6 +643,25 @@ export const SyncReactContent = () => {
           : ""}{" "}
         — a scheduled cron function on the server, pushed live (no polling).
       </p>
+
+      <div className="presence-bar" data-testid="counters-pack-row">
+        <span className="presence-online" data-testid="counter-openTasks">
+          📝 {openTasks ?? "…"} open
+        </span>
+        <span className="presence-online" data-testid="counter-doneTasks">
+          ✓ {doneTasks ?? "…"} done
+        </span>
+        <span
+          className="presence-online"
+          data-testid="counter-totalComments"
+        >
+          💬 {totalComments ?? "…"} comments
+        </span>
+        <span className="muted" style={{ fontSize: "0.85em" }}>
+          live via <code>@absolutejs/sync-pack-counters</code> — each
+          counter is its own <code>defineReactiveQuery</code>
+        </span>
+      </div>
 
       <section className="sync-card">
         <div className="sync-bar">

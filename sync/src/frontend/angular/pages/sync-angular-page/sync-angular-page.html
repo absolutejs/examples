@@ -27,6 +27,21 @@
     confirms.
   </p>
 
+  <div class="presence-bar" data-testid="counters-pack-row">
+    <span class="presence-online" data-testid="counter-openTasks">
+      📝 {{ openTasksCount() ?? "…" }} open
+    </span>
+    <span class="presence-online" data-testid="counter-doneTasks">
+      ✓ {{ doneTasksCount() ?? "…" }} done
+    </span>
+    <span class="presence-online" data-testid="counter-totalComments">
+      💬 {{ totalCommentsCount() ?? "…" }} comments
+    </span>
+    <span class="muted" style="font-size: 0.85em">
+      live via <code>&#64;absolutejs/sync-pack-counters</code>
+    </span>
+  </div>
+
   <section class="sync-card">
     <div class="sync-bar">
       <div class="sync-status">

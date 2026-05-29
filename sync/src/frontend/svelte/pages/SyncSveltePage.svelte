@@ -67,6 +67,12 @@
     readAt: number | null;
     expiresAt: number | null;
   };
+  type CounterRow = {
+    id: string;
+    key: string;
+    value: number;
+    computedAt: number;
+  };
   type FavoriteWithTask = {
     id: string;
     actorId: string;
@@ -263,6 +269,26 @@
       method: "POST",
     });
 
+  // @absolutejs/sync-pack-counters — three live badges.
+  const openTasksStore = createSyncCollectionStore<CounterRow>({
+    collection: "counter:openTasks",
+    url: wsUrl,
+  });
+  onDestroy(() => openTasksStore.destroy());
+  const doneTasksStore = createSyncCollectionStore<CounterRow>({
+    collection: "counter:doneTasks",
+    url: wsUrl,
+  });
+  onDestroy(() => doneTasksStore.destroy());
+  const totalCommentsStore = createSyncCollectionStore<CounterRow>({
+    collection: "counter:totalComments",
+    url: wsUrl,
+  });
+  onDestroy(() => totalCommentsStore.destroy());
+  const openTasksCount = $derived($openTasksStore.data[0]?.value);
+  const doneTasksCount = $derived($doneTasksStore.data[0]?.value);
+  const totalCommentsCount = $derived($totalCommentsStore.data[0]?.value);
+
   // @absolutejs/sync-pack-notifications — per-actor inbox.
   const notificationsStore = createSyncCollectionStore<NotificationRow>({
     collection: "notifications",
@@ -353,6 +379,21 @@
       WebSocket, then the server pushes <code>added/removed/changed</code> diffs —
       no polling. Edits apply optimistically and reconcile when the server confirms.
     </p>
+
+    <div class="presence-bar" data-testid="counters-pack-row">
+      <span class="presence-online" data-testid="counter-openTasks"
+        >📝 {openTasksCount ?? "…"} open</span
+      >
+      <span class="presence-online" data-testid="counter-doneTasks"
+        >✓ {doneTasksCount ?? "…"} done</span
+      >
+      <span class="presence-online" data-testid="counter-totalComments"
+        >💬 {totalCommentsCount ?? "…"} comments</span
+      >
+      <span class="muted" style="font-size: 0.85em;">
+        live via <code>@absolutejs/sync-pack-counters</code>
+      </span>
+    </div>
 
     <section class="sync-card">
       <div class="sync-bar">

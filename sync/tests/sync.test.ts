@@ -1048,6 +1048,60 @@ for (const framework of REACTIVE_FRAMEWORKS) {
   });
 }
 
+for (const framework of REACTIVE_FRAMEWORKS) {
+  test.describe(`${framework.name} sync-pack-counters`, () => {
+    test("badge row renders three live counters", async ({ page }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+      await expect(page.getByTestId("counters-pack-row")).toBeVisible();
+      // Each counter resolves to a number (no "…" placeholder after hydrate).
+      await expect(page.getByTestId("counter-openTasks")).toContainText(
+        /\d+ open/,
+        { timeout: 10000 },
+      );
+      await expect(page.getByTestId("counter-doneTasks")).toContainText(
+        /\d+ done/,
+        { timeout: 10000 },
+      );
+      await expect(page.getByTestId("counter-totalComments")).toContainText(
+        /\d+ comments/,
+        { timeout: 10000 },
+      );
+    });
+
+    test("adding a task ticks the openTasks counter live (read-set tracking)", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+      await expect(page.getByTestId("counter-openTasks")).toContainText(
+        /\d+ open/,
+        { timeout: 10000 },
+      );
+
+      const readOpen = async (): Promise<number> => {
+        const text = await page.getByTestId("counter-openTasks").textContent();
+        return Number(text?.match(/(\d+)/)?.[1] ?? 0);
+      };
+      const before = await readOpen();
+
+      const title = uniqueTitle(`counter-${framework.name.toLowerCase()}`);
+      await taskInput(page).first().fill(title);
+      await taskInput(page).first().press("Enter");
+      await expect(taskRow(page, title).first()).toBeVisible({
+        timeout: 10000,
+      });
+
+      // The reactive query re-runs because the tasks table changed.
+      await expect.poll(readOpen, { timeout: 10000 }).toBe(before + 1);
+    });
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // All four reactive frameworks now subscribe to `comments-with-author`
 // (sync-pack-comments 0.2+ join), so the byline should render a display
