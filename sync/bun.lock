@@ -11,7 +11,7 @@
         "@absolutejs/sync-pack-comments": "^0.4.0",
         "@absolutejs/sync-pack-counters": "^0.1.0",
         "@absolutejs/sync-pack-digest": "^0.2.0",
-        "@absolutejs/sync-pack-favorites": "^0.1.0",
+        "@absolutejs/sync-pack-favorites": "^0.2.0",
         "@absolutejs/sync-pack-notifications": "^0.2.0",
         "@absolutejs/sync-pack-presence": "^0.2.0",
         "@absolutejs/sync-yjs": "^0.0.2",
@@ -85,7 +85,7 @@
 
     "@absolutejs/sync-pack-digest": ["@absolutejs/sync-pack-digest@0.2.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-F6/1QvgMsrN7OBR4n5/RyktxKs3B1gsS48bHoKy3lT3+ULilsLLX7DW7ybyIACJxcF3TZaBdTKJPUXTc8DsQ4Q=="],
 
-    "@absolutejs/sync-pack-favorites": ["@absolutejs/sync-pack-favorites@0.1.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.2" } }, "sha512-lKdHzgMLQngm2MivtcffVcsSfrjT6WTlLZ9ujGuC5Dy3Us4Xv8a/X8oDIdxXPw6RwR876DbJxiFV04e/K5hZpQ=="],
+    "@absolutejs/sync-pack-favorites": ["@absolutejs/sync-pack-favorites@0.2.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.2" } }, "sha512-DFO2IFFjp88CfwmQ/2XcZiwrpS6nKDOLQvk7XZubG3MvHU0zv799XWoT3RAiz3W7DJPlJq2A/geqVtLI+1K/Lw=="],
 
     "@absolutejs/sync-pack-notifications": ["@absolutejs/sync-pack-notifications@0.2.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.2" } }, "sha512-NrSiXnU5yqdCflfv4XOX2yc3bFpa0ARLC3xoUFQgpR/dgHkMi8XxQptmM20uKzie36vEUX3cifI7MnnBWA3XRQ=="],
 

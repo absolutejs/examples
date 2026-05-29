@@ -80,6 +80,7 @@
     resourceKind: string;
     resourceId: string;
     createdAt: number;
+    pinnedAt: number | null;
     resource: Task;
   };
 
@@ -353,12 +354,27 @@
     new Set($favoritesStore.data.map((fav) => fav.resourceId)),
   );
   const orderedFavorites = $derived(
-    [...$favoritesStore.data].sort(
-      (first, second) => second.createdAt - first.createdAt,
-    ),
+    [...$favoritesStore.data].sort((first, second) => {
+      if (first.pinnedAt !== null && second.pinnedAt === null) return -1;
+      if (first.pinnedAt === null && second.pinnedAt !== null) return 1;
+      if (first.pinnedAt !== null && second.pinnedAt !== null) {
+        return second.pinnedAt - first.pinnedAt;
+      }
+      return second.createdAt - first.createdAt;
+    }),
   );
   const toggleFavorite = (taskId: string) =>
     fetch("/sync/favorites/toggle", {
+      body: JSON.stringify({
+        resourceId: taskId,
+        resourceKind: "task",
+        userId: tabUserId(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  const toggleFavoritePin = (taskId: string) =>
+    fetch("/sync/favorites/togglePin", {
       body: JSON.stringify({
         resourceId: taskId,
         resourceKind: "task",
@@ -660,8 +676,8 @@
     <section class="sync-card" data-testid="favorites-pack-panel">
       <p class="section-desc">
         Per-actor favorites via <code>@absolutejs/sync-pack-favorites</code>
-        — click ☆/★ on any task above. The panel subscribes to
-        <code>favorites-with-resource</code>.
+        — click ☆/★ on any task above. Click 📌 to pin; pinned favorites
+        sort to the top across every framework page.
       </p>
       <ul class="task-list" data-testid="favorites-list">
         {#if orderedFavorites.length === 0}
@@ -672,8 +688,20 @@
         {#each orderedFavorites as favorite (favorite.id)}
           <li
             class={favorite.resource.done ? "task-item done" : "task-item"}
+            data-pinned={favorite.pinnedAt !== null ? "true" : "false"}
           >
-            <span><strong>★</strong> {favorite.resource.title}</span>
+            <span>
+              <strong>{favorite.pinnedAt !== null ? "📌" : "★"}</strong>
+              {favorite.resource.title}
+            </span>
+            <button
+              aria-label={favorite.pinnedAt !== null ? "Unpin" : "Pin"}
+              data-testid={`favorite-pin-${favorite.resourceId}`}
+              onclick={() => toggleFavoritePin(favorite.resourceId)}
+              style="background: transparent; border: none; cursor: pointer; padding: 0 6px;"
+              type="button"
+              >{favorite.pinnedAt !== null ? "📌" : "📍"}</button
+            >
             <button
               data-testid={`favorite-remove-${favorite.resourceId}`}
               onclick={() => toggleFavorite(favorite.resourceId)}

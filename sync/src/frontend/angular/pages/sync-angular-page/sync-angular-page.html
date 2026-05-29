@@ -336,8 +336,8 @@
     <p class="section-desc">
       Per-actor favorites via
       <code>&#64;absolutejs/sync-pack-favorites</code>. Click ☆/★ on any task
-      above to toggle. The panel subscribes to
-      <code>favorites-with-resource</code>.
+      above to toggle. Click 📌 to pin — pinned favorites sort to the top
+      across every framework page.
     </p>
     <ul class="task-list" data-testid="favorites-list">
       @if (orderedFavorites().length === 0) {
@@ -347,11 +347,21 @@
       } @for (favorite of orderedFavorites(); track favorite.id) {
       <li
         [class]="favorite.resource.done ? 'task-item done' : 'task-item'"
+        [attr.data-pinned]="favorite.pinnedAt !== null ? 'true' : 'false'"
       >
         <span>
-          <strong>★</strong>
+          <strong>{{ favorite.pinnedAt !== null ? "📌" : "★" }}</strong>
           {{ favorite.resource.title }}
         </span>
+        <button
+          [attr.aria-label]="favorite.pinnedAt !== null ? 'Unpin' : 'Pin'"
+          [attr.data-testid]="'favorite-pin-' + favorite.resourceId"
+          type="button"
+          style="background: transparent; border: none; cursor: pointer; padding: 0 6px;"
+          (click)="toggleFavoritePin(favorite.resourceId)"
+        >
+          {{ favorite.pinnedAt !== null ? "📌" : "📍" }}
+        </button>
         <button
           [attr.data-testid]="'favorite-remove-' + favorite.resourceId"
           type="button"

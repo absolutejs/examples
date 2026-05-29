@@ -1115,6 +1115,74 @@ for (const framework of REACTIVE_FRAMEWORKS) {
           .locator(".task-item", { hasText: title }),
       ).toHaveCount(0);
     });
+
+    test("pinning bubbles a favorite above newer unpinned ones", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+
+      // Create two tasks (A first, then B) so B is newer than A.
+      const titleA = uniqueTitle(`pinA-${framework.name.toLowerCase()}`);
+      const titleB = uniqueTitle(`pinB-${framework.name.toLowerCase()}`);
+      for (const title of [titleA, titleB]) {
+        await taskInput(page).first().fill(title);
+        await taskInput(page).first().press("Enter");
+        await expect(taskRow(page, title).first()).toBeVisible({
+          timeout: 10000,
+        });
+      }
+      // Favorite both
+      for (const title of [titleA, titleB]) {
+        await taskRow(page, title)
+          .first()
+          .locator('[data-testid^="task-fav-"]')
+          .first()
+          .click();
+      }
+      const favoritesList = page.getByTestId("favorites-list");
+      const favA = favoritesList.locator(".task-item", { hasText: titleA });
+      const favB = favoritesList.locator(".task-item", { hasText: titleB });
+      await expect(favA).toBeVisible({ timeout: 10000 });
+      await expect(favB).toBeVisible({ timeout: 10000 });
+
+      // Before pinning: B is newest, so it sorts first.
+      await expect.poll(async () => {
+        const items = await favoritesList.locator(".task-item").all();
+        const texts = await Promise.all(items.map((item) => item.textContent()));
+        const idxA = texts.findIndex((t) => t?.includes(titleA));
+        const idxB = texts.findIndex((t) => t?.includes(titleB));
+        return idxB < idxA;
+      }, { timeout: 10000 }).toBe(true);
+
+      // Pin A → A bubbles above B.
+      await favA.locator('[data-testid^="favorite-pin-"]').click();
+      await expect(favA).toHaveAttribute("data-pinned", "true", {
+        timeout: 10000,
+      });
+      await expect.poll(async () => {
+        const items = await favoritesList.locator(".task-item").all();
+        const texts = await Promise.all(items.map((item) => item.textContent()));
+        const idxA = texts.findIndex((t) => t?.includes(titleA));
+        const idxB = texts.findIndex((t) => t?.includes(titleB));
+        return idxA < idxB;
+      }, { timeout: 10000 }).toBe(true);
+
+      // Unpin A → B (newer) is first again.
+      await favA.locator('[data-testid^="favorite-pin-"]').click();
+      await expect(favA).toHaveAttribute("data-pinned", "false", {
+        timeout: 10000,
+      });
+      await expect.poll(async () => {
+        const items = await favoritesList.locator(".task-item").all();
+        const texts = await Promise.all(items.map((item) => item.textContent()));
+        const idxA = texts.findIndex((t) => t?.includes(titleA));
+        const idxB = texts.findIndex((t) => t?.includes(titleB));
+        return idxB < idxA;
+      }, { timeout: 10000 }).toBe(true);
+    });
   });
 }
 

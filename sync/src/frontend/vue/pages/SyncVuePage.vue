@@ -85,6 +85,7 @@ type FavoriteWithTask = {
   resourceKind: string;
   resourceId: string;
   createdAt: number;
+  pinnedAt: number | null;
   resource: Task;
 };
 
@@ -363,12 +364,27 @@ const favoritedTaskIds = computed(
   () => new Set(favoritesCol.data.value.map((fav) => fav.resourceId)),
 );
 const orderedFavorites = computed(() =>
-  [...favoritesCol.data.value].sort(
-    (first, second) => second.createdAt - first.createdAt,
-  ),
+  [...favoritesCol.data.value].sort((first, second) => {
+    if (first.pinnedAt !== null && second.pinnedAt === null) return -1;
+    if (first.pinnedAt === null && second.pinnedAt !== null) return 1;
+    if (first.pinnedAt !== null && second.pinnedAt !== null) {
+      return second.pinnedAt - first.pinnedAt;
+    }
+    return second.createdAt - first.createdAt;
+  }),
 );
 const toggleFavorite = (taskId: string) =>
   fetch("/sync/favorites/toggle", {
+    body: JSON.stringify({
+      resourceId: taskId,
+      resourceKind: "task",
+      userId: tabUserId(),
+    }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+const toggleFavoritePin = (taskId: string) =>
+  fetch("/sync/favorites/togglePin", {
     body: JSON.stringify({
       resourceId: taskId,
       resourceKind: "task",
@@ -716,9 +732,8 @@ const onDocInput = (event: Event) => {
         <p class="section-desc">
           Per-actor favorites via
           <code>@absolutejs/sync-pack-favorites</code>. Click ☆/★ on any task
-          above to toggle. The panel subscribes to
-          <code>favorites-with-resource</code>, so each row arrives
-          pre-joined with the host's task row.
+          above to toggle. Click 📌 to pin — pinned favorites sort to the top
+          across every framework page.
         </p>
         <ul class="task-list" data-testid="favorites-list">
           <li v-if="orderedFavorites.length === 0" class="task-item">
@@ -730,11 +745,21 @@ const onDocInput = (event: Event) => {
             v-for="favorite in orderedFavorites"
             :key="favorite.id"
             :class="favorite.resource.done ? 'task-item done' : 'task-item'"
+            :data-pinned="favorite.pinnedAt !== null ? 'true' : 'false'"
           >
             <span>
-              <strong>★</strong>
+              <strong>{{ favorite.pinnedAt !== null ? "📌" : "★" }}</strong>
               {{ favorite.resource.title }}
             </span>
+            <button
+              :aria-label="favorite.pinnedAt !== null ? 'Unpin' : 'Pin'"
+              :data-testid="`favorite-pin-${favorite.resourceId}`"
+              type="button"
+              style="background: transparent; border: none; cursor: pointer; padding: 0 6px;"
+              @click="toggleFavoritePin(favorite.resourceId)"
+            >
+              {{ favorite.pinnedAt !== null ? "📌" : "📍" }}
+            </button>
             <button
               :data-testid="`favorite-remove-${favorite.resourceId}`"
               type="button"

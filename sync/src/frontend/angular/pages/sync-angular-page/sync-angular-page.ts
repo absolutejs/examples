@@ -83,6 +83,7 @@ type FavoriteWithTask = {
   resourceKind: string;
   resourceId: string;
   createdAt: number;
+  pinnedAt: number | null;
   resource: Task;
 };
 
@@ -327,12 +328,28 @@ export class SyncAngularPageComponent implements OnDestroy {
     () => new Set(this.favoritesHandle.data().map((fav) => fav.resourceId)),
   );
   orderedFavorites = computed(() =>
-    [...this.favoritesHandle.data()].sort(
-      (first, second) => second.createdAt - first.createdAt,
-    ),
+    [...this.favoritesHandle.data()].sort((first, second) => {
+      if (first.pinnedAt !== null && second.pinnedAt === null) return -1;
+      if (first.pinnedAt === null && second.pinnedAt !== null) return 1;
+      if (first.pinnedAt !== null && second.pinnedAt !== null) {
+        return second.pinnedAt - first.pinnedAt;
+      }
+      return second.createdAt - first.createdAt;
+    }),
   );
   toggleFavorite(taskId: string) {
     void fetch("/sync/favorites/toggle", {
+      body: JSON.stringify({
+        resourceId: taskId,
+        resourceKind: "task",
+        userId: tabUserId(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+  toggleFavoritePin(taskId: string) {
+    void fetch("/sync/favorites/togglePin", {
       body: JSON.stringify({
         resourceId: taskId,
         resourceKind: "task",

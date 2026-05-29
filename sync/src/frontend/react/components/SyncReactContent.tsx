@@ -399,6 +399,7 @@ type FavoriteWithTask = {
   resourceKind: string;
   resourceId: string;
   createdAt: number;
+  pinnedAt: number | null;
   resource: Task;
 };
 
@@ -419,8 +420,18 @@ const useFavorites = () => {
       headers: { "Content-Type": "application/json" },
       method: "POST",
     });
+  const togglePin = (taskId: string) =>
+    fetch("/sync/favorites/togglePin", {
+      body: JSON.stringify({
+        resourceId: taskId,
+        resourceKind: "task",
+        userId: tabUserId(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
 
-  return { favorites: data, toggle };
+  return { favorites: data, toggle, togglePin };
 };
 
 // @absolutejs/sync-pack-notifications — per-actor inbox.
@@ -1177,9 +1188,9 @@ export const SyncReactContent = () => {
         <p className="section-desc">
           Per-actor favorites via{" "}
           <code>@absolutejs/sync-pack-favorites</code>. Click ☆/★ on any task
-          above to toggle. The panel subscribes to the join collection{" "}
-          <code>favorites-with-resource</code>, so each favorited row arrives
-          pre-joined with the host's task row — no second lookup needed.
+          above to toggle. Click 📌 to pin — pinned favorites sort to the top
+          across every framework page. The panel subscribes to the join
+          collection <code>favorites-with-resource</code>.
         </p>
         <ul className="task-list" data-testid="favorites-list">
           {favorites.favorites.length === 0 && (
@@ -1190,17 +1201,42 @@ export const SyncReactContent = () => {
             </li>
           )}
           {[...favorites.favorites]
-            .sort((first, second) => second.createdAt - first.createdAt)
+            .sort((first, second) => {
+              if (first.pinnedAt !== null && second.pinnedAt === null) return -1;
+              if (first.pinnedAt === null && second.pinnedAt !== null) return 1;
+              if (first.pinnedAt !== null && second.pinnedAt !== null) {
+                return second.pinnedAt - first.pinnedAt;
+              }
+              return second.createdAt - first.createdAt;
+            })
             .map((favorite) => (
               <li
                 className={
                   favorite.resource.done ? "task-item done" : "task-item"
                 }
+                data-pinned={favorite.pinnedAt !== null ? "true" : "false"}
                 key={favorite.id}
               >
                 <span>
-                  <strong>★</strong> {favorite.resource.title}
+                  <strong>{favorite.pinnedAt !== null ? "📌" : "★"}</strong>{" "}
+                  {favorite.resource.title}
                 </span>
+                <button
+                  aria-label={
+                    favorite.pinnedAt !== null ? "Unpin" : "Pin"
+                  }
+                  data-testid={`favorite-pin-${favorite.resourceId}`}
+                  onClick={() => void favorites.togglePin(favorite.resourceId)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "0 6px",
+                  }}
+                  type="button"
+                >
+                  {favorite.pinnedAt !== null ? "📌" : "📍"}
+                </button>
                 <button
                   data-testid={`favorite-remove-${favorite.resourceId}`}
                   onClick={() => void favorites.toggle(favorite.resourceId)}

@@ -1161,4 +1161,22 @@ export const syncPlugin = new Elysia()
         userId: t.String(),
       }),
     },
+  )
+  // favorites:togglePin (0.2) — flips the per-actor pinnedAt timestamp so
+  // clients can sort pinned-first.
+  .post(
+    "/sync/favorites/togglePin",
+    ({ body }) =>
+      engine.runMutation(
+        "favorites:togglePin",
+        { resourceId: body.resourceId, resourceKind: body.resourceKind },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        resourceId: t.String(),
+        resourceKind: t.String(),
+        userId: t.String(),
+      }),
+    },
   );
