@@ -1300,6 +1300,8 @@ export const SyncReactContent = () => {
         </ul>
       </section>
 
+      <CodeModePanel />
+
       <EdenTaskTracker />
 
       <IssueTracker />
@@ -1377,6 +1379,198 @@ const IssueRow = ({ issue, onSelect, selected }: IssueRowProps) => (
     <span className="title">{issue.title}</span>
   </li>
 );
+
+// @absolutejs/sync@1.10's /code-mode subpath exposes the engine's
+// mutation surface as a host-tool map; @absolutejs/ai's codeModeTool
+// runs a single JS body inside isolated-jsc that can chain N of those
+// mutations. The model — or, in the demo, the operator — emits one
+// function body instead of N tool calls. The panel below POSTs the
+// code to /sync/code-mode/run; the server runs it and returns the
+// final value + the per-tool-call log.
+const DEFAULT_CODE_MODE_BODY = `// One sandbox run, three host calls, one returned value.
+const c = await comments_create({
+  resourceId: 'shared-discussion',
+  body: 'Auto-comment from Code Mode',
+});
+await comments_toggleReaction({ commentId: c.id, emoji: '🎉' });
+log('reaction toggled on', c.id);
+return { commentId: c.id, body: c.body };`;
+
+type CodeModeRunResult = {
+  ok: boolean;
+  result?: unknown;
+  log?: string[];
+  toolCalls?: Array<{
+    name: string;
+    durationMs: number;
+    ok: boolean;
+    error?: string;
+  }>;
+  error?: { name: string; message: string };
+  cpuMs?: number;
+  heapBytes?: number;
+};
+
+const CodeModePanel = () => {
+  const [code, setCode] = useState(DEFAULT_CODE_MODE_BODY);
+  const [running, setRunning] = useState(false);
+  const [outcome, setOutcome] = useState<CodeModeRunResult | null>(null);
+  const run = async () => {
+    setRunning(true);
+    try {
+      const response = await fetch("/sync/code-mode/run", {
+        body: JSON.stringify({ code, userId: tabUserId() }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const json = (await response.json()) as CodeModeRunResult;
+      setOutcome(json);
+    } catch (error) {
+      setOutcome({
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          name: "FetchError",
+        },
+        ok: false,
+      });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <section className="sync-card" data-testid="code-mode-panel">
+      <p className="section-desc">
+        Code Mode for sync mutations via{" "}
+        <code>@absolutejs/sync/code-mode</code> (1.10.0) +{" "}
+        <code>@absolutejs/ai/tools</code>. Edit the JS body and press Run —
+        the server feeds it to an isolated-jsc sandbox seeded with the
+        engine's mutation surface. One model turn collapses N round-trips
+        into one. Available host fns in scope:{" "}
+        <code>comments_create</code>, <code>comments_toggleReaction</code>,{" "}
+        <code>favorites_toggle</code>; plus a built-in <code>log(...)</code>.
+      </p>
+      <textarea
+        aria-label="Code Mode body"
+        data-testid="code-mode-input"
+        onChange={(event) => setCode(event.target.value)}
+        rows={8}
+        style={{
+          background: "rgba(0,0,0,0.2)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: "6px",
+          color: "inherit",
+          fontFamily:
+            "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+          fontSize: "0.85em",
+          padding: "8px",
+          width: "100%",
+        }}
+        value={code}
+      />
+      <div className="presence-bar" style={{ marginTop: "8px" }}>
+        <button
+          className="primary"
+          data-testid="code-mode-run"
+          disabled={running}
+          onClick={() => void run()}
+          type="button"
+        >
+          {running ? "Running…" : "Run"}
+        </button>
+        {outcome !== null && (
+          <span
+            className="presence-online"
+            data-testid="code-mode-status"
+            style={{
+              color:
+                outcome.ok === true
+                  ? "var(--accent, #6366f1)"
+                  : "var(--danger, #f87171)",
+            }}
+          >
+            {outcome.ok === true ? "✓ ok" : "✗ failed"}
+            {typeof outcome.cpuMs === "number" &&
+              ` · ${outcome.cpuMs.toFixed(1)}ms cpu`}
+          </span>
+        )}
+      </div>
+      {outcome !== null && (
+        <div
+          data-testid="code-mode-output"
+          style={{ marginTop: "12px", fontSize: "0.85em" }}
+        >
+          {outcome.error !== undefined && (
+            <pre
+              data-testid="code-mode-error"
+              style={{
+                background: "rgba(248,113,113,0.12)",
+                border: "1px solid rgba(248,113,113,0.35)",
+                borderRadius: "4px",
+                color: "#fca5a5",
+                margin: 0,
+                marginBottom: "8px",
+                padding: "8px",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {outcome.error.name}: {outcome.error.message}
+            </pre>
+          )}
+          {outcome.toolCalls !== undefined && outcome.toolCalls.length > 0 && (
+            <div
+              data-testid="code-mode-tool-calls"
+              style={{ marginBottom: "8px" }}
+            >
+              <strong>Tool calls:</strong>
+              <ul style={{ marginTop: "4px" }}>
+                {outcome.toolCalls.map((call, index) => (
+                  <li key={index}>
+                    <code>{call.name}</code> ·{" "}
+                    {call.ok ? "✓" : `✗ ${call.error ?? ""}`} ·{" "}
+                    {call.durationMs.toFixed(1)}ms
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {outcome.log !== undefined && outcome.log.length > 0 && (
+            <div data-testid="code-mode-log" style={{ marginBottom: "8px" }}>
+              <strong>Log:</strong>
+              <pre
+                style={{
+                  background: "rgba(0,0,0,0.2)",
+                  borderRadius: "4px",
+                  margin: 0,
+                  padding: "6px",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {outcome.log.join("\n")}
+              </pre>
+            </div>
+          )}
+          {outcome.result !== undefined && (
+            <div data-testid="code-mode-result">
+              <strong>Result:</strong>
+              <pre
+                style={{
+                  background: "rgba(0,0,0,0.2)",
+                  borderRadius: "4px",
+                  margin: 0,
+                  padding: "6px",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {JSON.stringify(outcome.result, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+};
 
 const IssueTracker = () => {
   const url = useMemo(() => wsUrl(), []);

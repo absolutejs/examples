@@ -1394,3 +1394,51 @@ test("pack composition: @mention in comment fires a notification across framewor
   await context.close();
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Code Mode for sync mutations (SB-1 worked example).
+//
+// The React page's CodeModePanel runs a JS body inside an isolated-jsc
+// sandbox that's been seeded with engine mutations as host functions.
+// Press Run with the default body — it creates a comment, toggles a
+// reaction, and returns the new id. Test asserts the tool calls log,
+// the result, and a comment row materializing in the live list.
+// ─────────────────────────────────────────────────────────────────────────────
+test("code-mode panel runs JS, fires host mutations, returns the value", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(page.getByTestId("code-mode-panel")).toBeVisible();
+
+  const marker = `code-mode-marker-${Date.now()}`;
+  const code = `const c = await comments_create({
+  resourceId: 'shared-discussion',
+  body: ${JSON.stringify(marker)},
+});
+await comments_toggleReaction({ commentId: c.id, emoji: '👍' });
+log('done with', c.id);
+return { commentId: c.id, body: c.body };`;
+  await page.getByTestId("code-mode-input").fill(code);
+  await page.getByTestId("code-mode-run").click();
+
+  await expect(page.getByTestId("code-mode-status")).toContainText("ok", {
+    timeout: 15000,
+  });
+
+  const toolCalls = page.getByTestId("code-mode-tool-calls");
+  await expect(toolCalls).toContainText("comments_create");
+  await expect(toolCalls).toContainText("comments_toggleReaction");
+  await expect(page.getByTestId("code-mode-result")).toContainText(marker);
+
+  // The created comment shows up in the live comments list — proves the
+  // mutation actually committed through the engine, not just round-
+  // tripped through the sandbox.
+  await expect(
+    page
+      .getByTestId("comments-list")
+      .locator(".task-item", { hasText: marker }),
+  ).toBeVisible({ timeout: 15000 });
+});
+

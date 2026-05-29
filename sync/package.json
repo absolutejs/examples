@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "@absolutejs/absolute": "0.19.0-beta.1047",
+    "@absolutejs/ai": "^0.0.13",
+    "@absolutejs/isolated-jsc": "^0.8.21",
     "@absolutejs/rag": "0.0.22",
-    "@absolutejs/sync": "^1.9.2",
+    "@absolutejs/sync": "^1.10.0",
     "@absolutejs/sync-pack-comments": "^0.4.0",
     "@absolutejs/sync-pack-counters": "^0.1.0",
     "@absolutejs/sync-pack-digest": "^0.2.0",
@@ -49,7 +51,7 @@
   },
   "name": "absolutejs-sync-example",
   "overrides": {
-    "@absolutejs/sync": "1.9.2"
+    "@absolutejs/sync": "1.10.0"
   },
   "scripts": {
     "config": "absolute config",

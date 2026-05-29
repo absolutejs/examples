@@ -8,7 +8,9 @@ import {
   field,
   type TransactionRunner,
 } from "@absolutejs/sync/engine";
+import { codeModeTool } from "@absolutejs/ai/tools";
 import { createPresenceHub, syncDevtools, syncSocket } from "@absolutejs/sync";
+import { engineMutationsAsHostTools } from "@absolutejs/sync/code-mode";
 import { createPresencePack } from "@absolutejs/sync-pack-presence";
 import { createDigestPack } from "@absolutejs/sync-pack-digest";
 import { createCommentsPack } from "@absolutejs/sync-pack-comments";
@@ -1247,6 +1249,69 @@ export const syncPlugin = new Elysia()
       body: t.Object({
         resourceId: t.String(),
         resourceKind: t.String(),
+        userId: t.String(),
+      }),
+    },
+  )
+  // ─── Code Mode for sync mutations (SB-1) ───────────────────────────────
+  // @absolutejs/sync@1.10.0's new /code-mode subpath exposes the engine's
+  // mutation surface as a host-tool map. We pair it with @absolutejs/ai's
+  // codeModeTool so the model — or, in this demo, the operator typing in
+  // the panel — emits ONE JS function body that chains N mutations. The
+  // sandbox is isolated-jsc; the host's mutations are the only side-effect
+  // surface the code can touch. No LLM key needed; the demo runs the JS
+  // you type directly, which is the same path the model would take.
+  .post(
+    "/sync/code-mode/run",
+    async ({ body }) => {
+      // Make sure the actor has a row in the host "users" table so the
+      // comments-with-author join can pair any comment the sandboxed code
+      // creates. The regular comments/create route does this too; we
+      // mirror it here since code-mode skips that HTTP path.
+      ensureDemoUser(body.userId);
+      // The host-tool factory throws at boot time if a name is wrong, so
+      // build it inside the route handler for the demo (cheap; the pool is
+      // cached inside codeModeTool). Production apps would build this once
+      // at module load.
+      const hostTools = engineMutationsAsHostTools<{ userId: string }>({
+        ctx: () => ({ userId: body.userId }),
+        engine,
+        mutations: [
+          {
+            description: "Post a comment on the shared discussion.",
+            name: "comments:create",
+            tsSignature:
+              "(args: { resourceId: string; body: string }) => " +
+              "Promise<{ id: string; body: string; authorId: string }>",
+          },
+          {
+            description: "Toggle an emoji reaction on a comment.",
+            name: "comments:toggleReaction",
+            tsSignature:
+              "(args: { commentId: string; emoji: string }) => " +
+              "Promise<{ added: boolean }>",
+          },
+          {
+            description: "Toggle a per-actor favorite on a task.",
+            name: "favorites:toggle",
+            tsSignature:
+              "(args: { resourceKind: string; resourceId: string }) => " +
+              "Promise<{ favorited: boolean }>",
+          },
+        ],
+      });
+      const tool = codeModeTool({
+        timeout: 5_000,
+        tools: hostTools,
+      });
+      const raw = await tool.handler({ code: body.code });
+      // codeModeTool returns the result as a JSON string; parse so the
+      // client gets a structured object (result + toolCalls + log + ok).
+      return typeof raw === "string" ? JSON.parse(raw) : raw;
+    },
+    {
+      body: t.Object({
+        code: t.String(),
         userId: t.String(),
       }),
     },
