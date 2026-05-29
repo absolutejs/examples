@@ -26,7 +26,11 @@
     id: string;
     channel: string;
     actorId: string;
-    state: { name: string };
+    state: {
+      name: string;
+      typing?: boolean;
+      typingExpiresAt?: number | null;
+    };
     expiresAt: number;
     heartbeatAt: number;
   };
@@ -186,6 +190,10 @@
   });
   onDestroy(() => packPresence.destroy());
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  // Tick every second so packTypingNames re-evaluates as state.typingExpiresAt
+  // naturally ages out (sync-pack-presence 0.3).
+  let packTypingTick = $state(0);
+  let packTypingInterval: ReturnType<typeof setInterval> | null = null;
   if (typeof window !== "undefined") {
     const userId = tabUserId();
     const heartbeat = () => {
@@ -201,9 +209,39 @@
     };
     heartbeat();
     heartbeatTimer = setInterval(heartbeat, 5_000);
+    packTypingInterval = setInterval(() => {
+      packTypingTick += 1;
+    }, 1_000);
   }
+  const setPackTyping = (typing: boolean) =>
+    fetch("/sync/presence/typing", {
+      body: JSON.stringify({ channel: "tasks", typing, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  $effect(() => void setPackTyping(title.trim().length > 0));
+  const packTypingNames = $derived(
+    (() => {
+      void packTypingTick;
+      const now = Date.now();
+      const myUserId = tabUserId();
+      return $packPresence.data
+        .filter((row) => {
+          if (row.actorId === myUserId) return false;
+          if (row.state.typing !== true) return false;
+          const expiresAt = row.state.typingExpiresAt;
+          return (
+            expiresAt !== null &&
+            expiresAt !== undefined &&
+            expiresAt > now
+          );
+        })
+        .map((row) => row.state.name);
+    })(),
+  );
   onDestroy(() => {
     if (heartbeatTimer !== null) clearInterval(heartbeatTimer);
+    if (packTypingInterval !== null) clearInterval(packTypingInterval);
     if (typeof window === "undefined") return;
     void fetch("/sync/presence/leave", {
       body: JSON.stringify({ channel: "tasks", userId: tabUserId() }),
@@ -449,6 +487,14 @@
         </span>
         <span class="presence-typing"
           >{typing.length > 0 ? `${typing.join(", ")} typing…` : ""}</span
+        >
+        <span
+          class="presence-typing"
+          data-testid="presence-pack-typing"
+          title="From @absolutejs/sync-pack-presence 0.3 — typing state patched onto the per-actor presence row, with a TTL inside state.typingExpiresAt."
+          >{packTypingNames.length > 0
+            ? `✍️ ${packTypingNames.join(", ")} typing (pack)…`
+            : ""}</span
         >
       </div>
 

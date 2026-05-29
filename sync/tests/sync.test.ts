@@ -259,6 +259,59 @@ test("presence: online count and typing propagate across clients", async ({
   await context.close();
 });
 
+// sync-pack-presence 0.3: the typing state patched onto the per-actor
+// presence row by `presence:typing` shows up on every other client via
+// the same collection diff feed. Different from the ws-broadcast
+// presence above — this one rides through the pack's owned table and
+// auto-clears via `state.typingExpiresAt`.
+test("pack presence: typing state propagates across framework tabs", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ baseURL });
+  const a = await context.newPage();
+  const b = await context.newPage();
+  // Cross-framework: A is React, B is Vue. Both wire pack typing the
+  // same way, so a write from A's input appears in B's pack-typing line.
+  await a.goto("/");
+  await b.goto("/vue");
+  await expect(a.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(b.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+  // Wait for the heartbeat to land so presence:typing won't reject for
+  // "no heartbeat for ${rowId}".
+  await expect(a.getByTestId("presence-pack-members")).toContainText(
+    /\d+ in channel/,
+    { timeout: 15000 },
+  );
+  await expect(b.getByTestId("presence-pack-members")).toContainText(
+    /\d+ in channel/,
+    { timeout: 15000 },
+  );
+  await a.waitForTimeout(500);
+
+  // Fill A's input → pack typing fires on A; B's pack-typing badge shows
+  // "react-tab typing (pack)…".
+  await a.locator('input[aria-label="New task"]').fill("from-react");
+  await expect(b.getByTestId("presence-pack-typing")).toContainText(
+    /typing \(pack\)/,
+    { timeout: 15000 },
+  );
+
+  // Clear A's input → pack typing clears (server-side); B's badge empties.
+  await a.locator('input[aria-label="New task"]').fill("");
+  await expect.poll(
+    async () =>
+      (await b.getByTestId("presence-pack-typing").textContent())?.trim() ?? "",
+    { timeout: 15000 },
+  ).toBe("");
+
+  await context.close();
+});
+
 const pulseCount = async (page: Page) => {
   const text = await page.getByTestId("server-pulse").textContent();
   const match = text?.match(/#(\d+)/);

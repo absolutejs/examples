@@ -1007,6 +1007,24 @@ export const syncPlugin = new Elysia()
       ),
     { body: t.Object({ channel: t.String(), userId: t.String() }) },
   )
+  // presence:typing (0.3) — patches state.typing + state.typingExpiresAt
+  // so clients can render "X is typing…" lines that fade on their own.
+  .post(
+    "/sync/presence/typing",
+    ({ body }) =>
+      engine.runMutation(
+        "presence:typing",
+        { channel: body.channel, typing: body.typing },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        channel: t.String(),
+        userId: t.String(),
+        typing: t.Boolean(),
+      }),
+    },
+  )
   // Fire the digest schedule now. Useful for the demo — production apps
   // let the cron fire on its own.
   .post(

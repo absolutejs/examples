@@ -164,7 +164,11 @@ type PresenceRow = {
   id: string;
   channel: string;
   actorId: string;
-  state: { name: string };
+  state: {
+    name: string;
+    typing?: boolean;
+    typingExpiresAt?: number | null;
+  };
   expiresAt: number;
   heartbeatAt: number;
 };
@@ -176,6 +180,15 @@ const useChannelMembers = (channel: string, displayName: string) => {
     params: { channel },
     url,
   });
+  // Tick every second so `state.typingExpiresAt` filters re-evaluate even
+  // when no new presence diff has arrived (typing flag clears via its
+  // own deadline, without a server cleanup pass).
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const interval = window.setInterval(() => setTick((value) => value + 1), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -200,7 +213,26 @@ const useChannelMembers = (channel: string, displayName: string) => {
     };
   }, [channel, displayName]);
 
-  return data;
+  const setPackTyping = (typing: boolean) =>
+    fetch("/sync/presence/typing", {
+      body: JSON.stringify({ channel, typing, userId: tabUserId() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  // Filter against state.typing + state.typingExpiresAt (mirrors the
+  // sync-pack-presence `isCurrentlyTyping` helper).
+  const myUserId = tabUserId();
+  const now = Date.now();
+  const packTypingNames = data
+    .filter((row) => {
+      if (row.actorId === myUserId) return false;
+      if (row.state.typing !== true) return false;
+      const expiresAt = row.state.typingExpiresAt;
+      return expiresAt !== null && expiresAt !== undefined && expiresAt > now;
+    })
+    .map((row) => row.state.name);
+
+  return { members: data, packTypingNames, setPackTyping };
 };
 
 // Ephemeral presence for the shared "tasks" room: who's online + who's typing.
@@ -667,7 +699,9 @@ export const SyncReactContent = () => {
   }, []);
 
   useEffect(() => {
-    setTyping(title.trim().length > 0);
+    const isTyping = title.trim().length > 0;
+    setTyping(isTyping);
+    void channelMembers.setPackTyping(isTyping);
   }, [title]);
 
   // Run a mutation, surfacing a server permission rejection instead of letting
@@ -780,10 +814,19 @@ export const SyncReactContent = () => {
             data-testid="presence-pack-members"
             title="From @absolutejs/sync-pack-presence — collection-based, TTL-cleaned, queryable. Open a second tab to see it tick up."
           >
-            👥 {channelMembers.length} in channel (pack)
+            👥 {channelMembers.members.length} in channel (pack)
           </span>
           <span className="presence-typing">
             {typing.length > 0 ? `${typing.join(", ")} typing…` : ""}
+          </span>
+          <span
+            className="presence-typing"
+            data-testid="presence-pack-typing"
+            title="From @absolutejs/sync-pack-presence 0.3 — typing state patched onto the per-actor presence row, with a TTL inside state.typingExpiresAt."
+          >
+            {channelMembers.packTypingNames.length > 0
+              ? `✍️ ${channelMembers.packTypingNames.join(", ")} typing (pack)…`
+              : ""}
           </span>
         </div>
 

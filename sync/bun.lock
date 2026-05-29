@@ -13,7 +13,7 @@
         "@absolutejs/sync-pack-digest": "^0.2.0",
         "@absolutejs/sync-pack-favorites": "^0.2.0",
         "@absolutejs/sync-pack-notifications": "^0.2.0",
-        "@absolutejs/sync-pack-presence": "^0.2.0",
+        "@absolutejs/sync-pack-presence": "^0.3.0",
         "@absolutejs/sync-yjs": "^0.0.2",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
@@ -89,7 +89,7 @@
 
     "@absolutejs/sync-pack-notifications": ["@absolutejs/sync-pack-notifications@0.2.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.2" } }, "sha512-NrSiXnU5yqdCflfv4XOX2yc3bFpa0ARLC3xoUFQgpR/dgHkMi8XxQptmM20uKzie36vEUX3cifI7MnnBWA3XRQ=="],
 
-    "@absolutejs/sync-pack-presence": ["@absolutejs/sync-pack-presence@0.2.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-L/ZClBnhDRLwBR2fU2s7h6opCWoD7AnYN3JO6oGOwmEpM5i09g7teyfY6WL3MTlBU2if1NVOnCu4PGbPHuBnzw=="],
+    "@absolutejs/sync-pack-presence": ["@absolutejs/sync-pack-presence@0.3.0", "", { "peerDependencies": { "@absolutejs/sync": ">= 1.9.1" } }, "sha512-1Yrm0Uzhd60JTsaHpiyZUKAhwhDmUydYH+ESZ6G5c/45zjNdUfSfLdMRiBPfOzBh3YalsJ58mY7bwWIxp8sX6A=="],
 
     "@absolutejs/sync-yjs": ["@absolutejs/sync-yjs@0.0.2", "", { "dependencies": { "yjs": "^13.6.30" }, "peerDependencies": { "@absolutejs/sync": ">= 0.10.0" } }, "sha512-XiugCz83S32GGgzyEcH4aYKh4V+PYSLOe6Xc0pbjpT0vDJxnP3Vs0jm5JCTcImXZ31Rz4ZuMr91iJKuFgIc4FQ=="],
 

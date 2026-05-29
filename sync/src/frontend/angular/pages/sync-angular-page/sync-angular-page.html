@@ -65,6 +65,16 @@
       <span class="presence-typing"
         >{{ typing().length > 0 ? typing().join(", ") + " typing…" : "" }}</span
       >
+      <span
+        class="presence-typing"
+        data-testid="presence-pack-typing"
+        title="From @absolutejs/sync-pack-presence 0.3 — typing state patched onto the per-actor presence row, with a TTL inside state.typingExpiresAt."
+        >{{
+          packTypingNames().length > 0
+            ? "✍️ " + packTypingNames().join(", ") + " typing (pack)…"
+            : ""
+        }}</span
+      >
     </div>
 
     <form class="task-form" (submit)="add($event)">

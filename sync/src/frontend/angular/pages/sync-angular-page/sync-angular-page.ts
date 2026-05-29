@@ -29,7 +29,11 @@ type PresenceRow = {
   id: string;
   channel: string;
   actorId: string;
-  state: { name: string };
+  state: {
+    name: string;
+    typing?: boolean;
+    typingExpiresAt?: number | null;
+  };
   expiresAt: number;
   heartbeatAt: number;
 };
@@ -164,6 +168,10 @@ export class SyncAngularPageComponent implements OnDestroy {
       };
       heartbeat();
       this.heartbeatTimer = setInterval(heartbeat, 5_000);
+      this.packTypingTimer = setInterval(
+        () => this.packTypingTick.update((value) => value + 1),
+        1_000,
+      );
     }
   }
 
@@ -175,6 +183,39 @@ export class SyncAngularPageComponent implements OnDestroy {
   });
   packPresenceCount = computed(() => this.packPresenceHandle.data().length);
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  // Tick every second so packTypingNames re-evaluates as state.typingExpiresAt
+  // ages out (sync-pack-presence 0.3).
+  private packTypingTick = signal(0);
+  private packTypingTimer: ReturnType<typeof setInterval> | null = null;
+  packTypingNames = computed(() => {
+    this.packTypingTick();
+    const now = Date.now();
+    const myUserId = tabUserId();
+    return this.packPresenceHandle
+      .data()
+      .filter((row) => {
+        if (row.actorId === myUserId) return false;
+        if (row.state.typing !== true) return false;
+        const expiresAt = row.state.typingExpiresAt;
+        return (
+          expiresAt !== null &&
+          expiresAt !== undefined &&
+          expiresAt > now
+        );
+      })
+      .map((row) => row.state.name);
+  });
+  private setPackTyping(typing: boolean) {
+    void fetch("/sync/presence/typing", {
+      body: JSON.stringify({
+        channel: "tasks",
+        typing,
+        userId: tabUserId(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
 
   // @absolutejs/sync-pack-digest — cursor + outbox + manual fire button.
   private digestCursorsHandle = this.sync.connect<DigestCursor>({
@@ -388,6 +429,7 @@ export class SyncAngularPageComponent implements OnDestroy {
   ngOnDestroy() {
     this.presence?.close();
     if (this.heartbeatTimer !== null) clearInterval(this.heartbeatTimer);
+    if (this.packTypingTimer !== null) clearInterval(this.packTypingTimer);
     if (typeof window !== "undefined") {
       void fetch("/sync/presence/leave", {
         body: JSON.stringify({ channel: "tasks", userId: tabUserId() }),
@@ -401,10 +443,12 @@ export class SyncAngularPageComponent implements OnDestroy {
     const { target } = event;
     if (target instanceof HTMLInputElement) {
       this.title.set(target.value);
+      const isTyping = target.value.trim().length > 0;
       this.presence?.set({
         name: this.presenceName,
-        typing: target.value.trim().length > 0,
+        typing: isTyping,
       });
+      this.setPackTyping(isTyping);
     }
   }
 

@@ -24,7 +24,11 @@ type PresenceRow = {
   id: string;
   channel: string;
   actorId: string;
-  state: { name: string };
+  state: {
+    name: string;
+    typing?: boolean;
+    typingExpiresAt?: number | null;
+  };
   expiresAt: number;
   heartbeatAt: number;
 };
@@ -191,6 +195,11 @@ const packPresence = useSyncCollection<PresenceRow>({
   url: wsUrl,
 });
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+// Tick every second so `state.typingExpiresAt` filters re-evaluate even
+// without a fresh diff (sync-pack-presence 0.3 stores the typing deadline
+// inside state; it ages out on its own).
+const packTypingTick = ref(0);
+let packTypingTickInterval: ReturnType<typeof setInterval> | null = null;
 onMounted(() => {
   if (typeof window === "undefined") return;
   const userId = tabUserId();
@@ -207,15 +216,44 @@ onMounted(() => {
   };
   heartbeat();
   heartbeatInterval = setInterval(heartbeat, 5_000);
+  packTypingTickInterval = setInterval(() => {
+    packTypingTick.value += 1;
+  }, 1_000);
 });
 onUnmounted(() => {
   if (heartbeatInterval !== null) clearInterval(heartbeatInterval);
+  if (packTypingTickInterval !== null) clearInterval(packTypingTickInterval);
   void fetch("/sync/presence/leave", {
     body: JSON.stringify({ channel: "tasks", userId: tabUserId() }),
     headers: { "Content-Type": "application/json" },
     method: "POST",
   });
 });
+const packTypingNames = computed(() => {
+  // packTypingTick read so this recomputes once a second.
+  void packTypingTick.value;
+  const now = Date.now();
+  const myUserId = tabUserId();
+  return packPresence.data.value
+    .filter((row) => {
+      if (row.actorId === myUserId) return false;
+      if (row.state.typing !== true) return false;
+      const expiresAt = row.state.typingExpiresAt;
+      return (
+        expiresAt !== null &&
+        expiresAt !== undefined &&
+        expiresAt > now
+      );
+    })
+    .map((row) => row.state.name);
+});
+const setPackTyping = (typing: boolean) =>
+  fetch("/sync/presence/typing", {
+    body: JSON.stringify({ channel: "tasks", typing, userId: tabUserId() }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+watch(title, (value) => void setPackTyping(value.trim().length > 0));
 
 // @absolutejs/sync-pack-digest — the per-actor cursor + the simulated outbox.
 const digestCursors = useSyncCollection<DigestCursor>({
@@ -451,6 +489,16 @@ const onDocInput = (event: Event) => {
           <span class="presence-typing">{{
             typing.length > 0 ? `${typing.join(", ")} typing…` : ""
           }}</span>
+          <span
+            class="presence-typing"
+            data-testid="presence-pack-typing"
+            title="From @absolutejs/sync-pack-presence 0.3 — typing state patched onto the per-actor presence row, with a TTL inside state.typingExpiresAt."
+            >{{
+              packTypingNames.length > 0
+                ? `✍️ ${packTypingNames.join(", ")} typing (pack)…`
+                : ""
+            }}</span
+          >
         </div>
 
         <form class="task-form" @submit="add">
