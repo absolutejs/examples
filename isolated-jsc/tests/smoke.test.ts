@@ -149,3 +149,59 @@ test("runs sandbox presets through the UI", async ({ page }) => {
     timeout: 15000,
   });
 });
+
+// SB-7 worked example: createHibernatingIsolatePool. The panel drives
+// /api/hibernate/{run,hibernate,stats}. Default source uses
+// `globalThis.count = ...` so the increment survives hibernate + wake.
+test("hibernation panel: run, force-hibernate, wake — state survives", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("hibernation-panel")).toBeVisible({
+    timeout: 15000,
+  });
+
+  const result = () => page.getByTestId("hibernation-result");
+  const active = page.getByTestId("hibernation-stats-active");
+  const hibernated = page.getByTestId("hibernation-stats-hibernated");
+
+  // Pick a unique key so the test is independent across runs.
+  const key = `t-${Date.now()}`;
+  await page.getByTestId("hibernation-key").selectOption("tenant-a");
+  // Manual swap to a fresh key via JS — the select only has a/b/c, but
+  // the route accepts any string; the panel sends whatever value is in
+  // the <select> control. We use 'tenant-a' here and tolerate cross-run
+  // residue (the test inspects DELTA, not absolute counts).
+  void key;
+
+  // First Run.
+  await page.getByTestId("hibernation-run").click();
+  await expect(result()).toContainText(/"count":/, { timeout: 15000 });
+  const firstSnapshot = (await result().textContent()) ?? "";
+  const firstCount = Number(/"count":\s*(\d+)/.exec(firstSnapshot)?.[1] ?? 0);
+  expect(firstCount).toBeGreaterThanOrEqual(1);
+  await expect(active).toContainText(/active: 1/);
+
+  // Second Run reuses the context — count increments without a tx.
+  await page.getByTestId("hibernation-run").click();
+  await expect(result()).toContainText(`"count": ${firstCount + 1}`, {
+    timeout: 15000,
+  });
+
+  // Force hibernate.
+  await page.getByTestId("hibernation-hibernate").click();
+  await expect(hibernated).toContainText(/hibernated: \d+/, { timeout: 15000 });
+  await expect(active).toContainText(/active: 0/, { timeout: 15000 });
+
+  // The "hibernate" transition is the latest event.
+  await expect(
+    page.getByTestId("hibernation-transitions").first(),
+  ).toContainText("hibernate", { timeout: 15000 });
+
+  // Run again — state must survive the wake from checkpoint.
+  await page.getByTestId("hibernation-run").click();
+  await expect(result()).toContainText(`"count": ${firstCount + 2}`, {
+    timeout: 15000,
+  });
+  await expect(active).toContainText(/active: 1/);
+});

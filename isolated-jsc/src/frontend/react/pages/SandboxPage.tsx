@@ -335,6 +335,8 @@ const SandboxContent = () => {
         </div>
       </section>
 
+      <HibernationPanel />
+
       <footer className="footer">
         <p>
           Built on{" "}
@@ -350,6 +352,212 @@ const SandboxContent = () => {
         </p>
       </footer>
     </main>
+  );
+};
+
+// @absolutejs/isolated-jsc@0.9.0 — pool hibernation worked demo.
+// Drives /api/hibernate/run, /api/hibernate/hibernate, /api/hibernate/stats.
+// The key point of the demo is: type `this.count = (this.count ?? 0) + 1`,
+// hit Run a few times → count climbs. Click "Hibernate" → the pool
+// checkpoints the context and disposes the isolate. Hit Run again → count
+// resumes from the checkpoint. The callable RECOMPILES on wake (cheap;
+// the data survives, the code doesn't).
+const DEFAULT_HIBERNATION_SOURCE = `// Anything you assign to globalThis is structured-cloneable, so it
+// survives hibernation + wake. (Arrow function 'this' is unreliable
+// under strict-mode bundling — use globalThis for the demo.)
+({ args }) => {
+  globalThis.count = (globalThis.count ?? 0) + 1;
+  globalThis.lastRunAt = Date.now();
+  return { count: globalThis.count, lastRunAt: globalThis.lastRunAt };
+}`;
+
+type HibernationRunResponse =
+  | { ok: true; value: unknown; durationMs: number }
+  | {
+      ok: false;
+      error: { name: string; message: string };
+      durationMs: number;
+    };
+
+type HibernationStats = {
+  stats: { active: number; hibernated: number; total: number };
+  transitions: Array<{
+    type: "wake" | "hibernate" | "evict";
+    key: string;
+    at: number;
+    byteLength?: number;
+    from?: "active" | "hibernated";
+  }>;
+};
+
+const HibernationPanel = () => {
+  const [key, setKey] = useState("tenant-a");
+  const [source, setSource] = useState(DEFAULT_HIBERNATION_SOURCE);
+  const [busy, setBusy] = useState(false);
+  const [outcome, setOutcome] = useState<HibernationRunResponse | null>(null);
+  const [stats, setStats] = useState<HibernationStats | null>(null);
+
+  const refreshStats = async () => {
+    const response = await fetch("/api/hibernate/stats");
+    if (response.ok) {
+      setStats((await response.json()) as HibernationStats);
+    }
+  };
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/hibernate/run", {
+        body: JSON.stringify({ key, source }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const json = (await response.json()) as HibernationRunResponse;
+      setOutcome(json);
+      await refreshStats();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const hibernateNow = async () => {
+    setBusy(true);
+    try {
+      await fetch("/api/hibernate/hibernate", {
+        body: JSON.stringify({ key }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      await refreshStats();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="editor-pane" data-testid="hibernation-panel">
+      <h2>Pool hibernation (0.9.0)</h2>
+      <p>
+        <code>createHibernatingIsolatePool</code> with{" "}
+        <code>hibernateAfterMs: 30_000</code>. Pick a key, Run a few times
+        — <code>this.count</code> climbs. Hibernate Now — the context's data
+        is checkpointed, the isolate is disposed, the pool's stats show one
+        less <code>active</code> and one more <code>hibernated</code>. Run
+        again — count resumes from the checkpoint. The callable recompiles
+        on wake; the data survived because it's structured-cloneable.
+      </p>
+      <div className="presence-bar" style={{ marginBottom: "8px" }}>
+        <label style={{ marginRight: "8px" }}>
+          Key:{" "}
+          <select
+            data-testid="hibernation-key"
+            onChange={(event) => setKey(event.target.value)}
+            value={key}
+          >
+            <option value="tenant-a">tenant-a</option>
+            <option value="tenant-b">tenant-b</option>
+            <option value="tenant-c">tenant-c</option>
+          </select>
+        </label>
+        <button
+          data-testid="hibernation-run"
+          disabled={busy}
+          onClick={() => void run()}
+          type="button"
+        >
+          {busy ? "Working…" : "Run"}
+        </button>
+        <button
+          data-testid="hibernation-hibernate"
+          disabled={busy}
+          onClick={() => void hibernateNow()}
+          style={{ marginLeft: "8px" }}
+          type="button"
+        >
+          Hibernate Now
+        </button>
+        <button
+          data-testid="hibernation-refresh"
+          disabled={busy}
+          onClick={() => void refreshStats()}
+          style={{ marginLeft: "8px" }}
+          type="button"
+        >
+          Refresh stats
+        </button>
+      </div>
+      <textarea
+        aria-label="Hibernation source"
+        data-testid="hibernation-source"
+        onChange={(event) => setSource(event.target.value)}
+        rows={6}
+        style={{
+          fontFamily:
+            "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+          fontSize: "0.85em",
+          marginBottom: "8px",
+          width: "100%",
+        }}
+        value={source}
+      />
+      {outcome !== null && (
+        <div data-testid="hibernation-output">
+          {outcome.ok ? (
+            <>
+              <strong>Result</strong>{" "}
+              <span className="muted">· {outcome.durationMs} ms</span>
+              <pre
+                data-testid="hibernation-result"
+                style={{
+                  background: "rgba(0,0,0,0.2)",
+                  borderRadius: "4px",
+                  margin: 0,
+                  padding: "6px",
+                }}
+              >
+                {JSON.stringify(outcome.value, null, 2)}
+              </pre>
+            </>
+          ) : (
+            <pre data-testid="hibernation-error" style={{ color: "#f87171" }}>
+              {outcome.error.name}: {outcome.error.message}
+            </pre>
+          )}
+        </div>
+      )}
+      {stats !== null && (
+        <div data-testid="hibernation-stats" style={{ marginTop: "12px" }}>
+          <strong>Pool</strong>{" "}
+          <span data-testid="hibernation-stats-active">
+            active: {stats.stats.active}
+          </span>{" "}
+          ·{" "}
+          <span data-testid="hibernation-stats-hibernated">
+            hibernated: {stats.stats.hibernated}
+          </span>{" "}
+          · total: {stats.stats.total}
+          {stats.transitions.length > 0 && (
+            <ul
+              data-testid="hibernation-transitions"
+              style={{ fontSize: "0.85em", marginTop: "6px" }}
+            >
+              {stats.transitions
+                .slice(-5)
+                .reverse()
+                .map((event, index) => (
+                  <li key={index}>
+                    <code>{event.type}</code> · {event.key}
+                    {event.from !== undefined ? ` · from ${event.from}` : ""}
+                    {event.byteLength !== undefined
+                      ? ` · ${event.byteLength} B`
+                      : ""}
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
   );
 };
 
