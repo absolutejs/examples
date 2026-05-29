@@ -1493,3 +1493,56 @@ return { ids: results.map((row) => row.id) };`;
   ).toBeVisible({ timeout: 15000 });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// sync 1.12 unsafeHost escape hatch (SB-5 worked example).
+//
+// The UnsafeHostPanel POSTs to /sync/audit/emit. Server-side audit:emit
+// runs inside isolated-jsc; the handler reaches through
+// unsafeHost.shipToWebhook (the host fn that pretends to talk to an
+// external API) and writes the resulting row via actions.insert. The
+// test asserts BOTH effects landed:
+//   - The host-side webhook counter ticked up by 1.
+//   - The audit_log live collection gained a row with the action we
+//     emitted.
+// That's the SB-5 contract: a sandboxed mutation that interleaves a
+// non-deterministic host call with a transactional engine write.
+// ─────────────────────────────────────────────────────────────────────────────
+test("unsafeHost panel: sandboxed mutation hits host fn AND writes audit row", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(page.getByTestId("unsafe-host-panel")).toBeVisible();
+
+  // Snapshot the initial host-side webhook count.
+  const readCount = async (): Promise<number> => {
+    const text = await page
+      .getByTestId("unsafe-host-webhook-count")
+      .textContent();
+    const match = text?.match(/(\d+)/);
+    return match ? Number(match[1]) : 0;
+  };
+  const before = await readCount();
+
+  // Fill the form with a unique action so we can find the row.
+  const marker = `audit-marker-${Date.now()}`;
+  await page.getByTestId("unsafe-host-action").fill(marker);
+  await page.getByTestId("unsafe-host-payload").fill('{"test":true}');
+  await page.getByTestId("unsafe-host-emit").click();
+
+  // Audit row materializes live in the panel.
+  await expect(
+    page
+      .getByTestId("unsafe-host-list")
+      .locator(".task-item", { hasText: marker }),
+  ).toBeVisible({ timeout: 15000 });
+
+  // Host-side webhook counter ticked up by exactly 1 — proves the
+  // unsafeHost call fired on the host, not just in the sandbox.
+  await expect
+    .poll(() => readCount(), { timeout: 10000 })
+    .toBe(before + 1);
+});
+

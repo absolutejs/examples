@@ -320,6 +320,98 @@ engine.registerReactive(
 );
 engine.registerCrdt<NoteRow>("notes", { state: yjsText });
 
+// ─── sync 1.12 unsafeHost worked example ──────────────────────────────────
+// A sandboxed mutation that needs to "ship to an external webhook" — the
+// classic case for the escape hatch. The sandbox writes a row through
+// actions.insert (transactional + live), and the same handler reaches
+// through unsafeHost to a host fn that pretends to talk to a 3rd party.
+// We expose a counter on the host so tests can assert the host fn fired,
+// matching what a real webhook integration would do.
+type AuditLogRow = {
+  id: string;
+  action: string;
+  payload: string;
+  webhookId: string;
+  sentAt: number;
+};
+const auditLog = new Map<string, AuditLogRow>();
+// Counter is exported via a separate route so tests / observability can
+// see how many times the host fn was invoked (vs how many audit rows
+// landed — the two diverge if the sandbox fails AFTER the host call).
+let auditWebhookCallCount = 0;
+engine.registerReader("audit_log", {
+  all: () => [...auditLog.values()],
+  get: (id) => auditLog.get(String(id)),
+  key: (row) =>
+    typeof row === "object" && row !== null && "id" in row
+      ? String(Reflect.get(row, "id"))
+      : "",
+});
+engine.registerWriter<AuditLogRow>("audit_log", {
+  delete: (row) => {
+    auditLog.delete(row.id);
+  },
+  insert: (row) => {
+    auditLog.set(row.id, row);
+    return row;
+  },
+  update: (row) => {
+    auditLog.set(row.id, row);
+    return row;
+  },
+});
+engine.registerReactive(
+  defineReactiveQuery<AuditLogRow>({
+    name: "audit_log",
+    key: (row) => row.id,
+    run: ({ db }) => db.all<AuditLogRow>("audit_log"),
+  }),
+);
+engine.registerMutation(
+  defineMutation<
+    { id: string; action: string; payload: string },
+    Ctx,
+    AuditLogRow
+  >({
+    name: "audit:emit",
+    sandbox: {
+      // The hole-in-the-sandbox is named — anyone reading the handler
+      // source sees `unsafeHost.shipToWebhook(...)` and knows that call
+      // reaches outside the sandbox. The fn here is a stand-in for a
+      // real webhook SDK call; in production this is where Stripe /
+      // Resend / Sentry / Slack would go.
+      unsafeHost: {
+        shipToWebhook: (input: { action: string; payload: string }) => {
+          auditWebhookCallCount += 1;
+          return {
+            sentAt: Date.now(),
+            webhookId: `wh_${Math.random().toString(36).slice(2, 10)}`,
+            // The fake webhook echoes back the action so we can prove
+            // the args crossed the isolate boundary intact.
+            echoedAction: input.action,
+          };
+        },
+      },
+    },
+    sandboxedHandler: `async (args, ctx, actions, unsafeHost) => {
+      // 1. Reach through the escape hatch to the "webhook".
+      const sent = await unsafeHost.shipToWebhook({
+        action: args.action,
+        payload: args.payload,
+      });
+      // 2. Record the result inside the mutation's transaction so the
+      //    live audit_log collection shows it on every connected client.
+      return await actions.insert('audit_log', {
+        id: args.id,
+        action: args.action,
+        payload: args.payload,
+        webhookId: sent.webhookId,
+        sentAt: sent.sentAt,
+      });
+    }`,
+  }),
+);
+
 // Live RAG retrieval, composed from @absolutejs/rag: createSyncRAGStore is a
 // drop-in RAGVectorStore, but because it rides this same engine, retrieval is
 // LIVE — subscribe to its collection with a query and results re-rank as
@@ -1336,4 +1428,29 @@ export const syncPlugin = new Elysia()
         userId: t.String(),
       }),
     },
-  );
+  )
+  // sync 1.12 — fire the unsafeHost-bearing sandboxed mutation. The
+  // panel POSTs an action + payload + a client-generated id; the
+  // server runs audit:emit which reaches through unsafeHost.shipToWebhook
+  // then commits the resulting row to the audit_log collection.
+  .post(
+    "/sync/audit/emit",
+    ({ body }) =>
+      engine.runMutation(
+        "audit:emit",
+        { action: body.action, id: body.id, payload: body.payload },
+        {},
+      ),
+    {
+      body: t.Object({
+        action: t.String(),
+        id: t.String(),
+        payload: t.String(),
+      }),
+    },
+  )
+  // Expose the host-side webhook call counter so tests / observability
+  // can prove the host fn fired the expected number of times.
+  .get("/sync/audit/webhook-calls", () => ({
+    count: auditWebhookCallCount,
+  }));

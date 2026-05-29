@@ -1302,6 +1302,8 @@ export const SyncReactContent = () => {
 
       <CodeModePanel />
 
+      <UnsafeHostPanel />
+
       <EdenTaskTracker />
 
       <IssueTracker />
@@ -1647,6 +1649,183 @@ const CodeModePanel = () => {
           )}
         </div>
       )}
+    </section>
+  );
+};
+
+// @absolutejs/sync@1.12 — unsafeHost escape hatch for sandboxed mutations.
+// The server's audit:emit mutation runs inside isolated-jsc; it reaches
+// through to a host fn (`shipToWebhook`) to "ship" the event, then
+// commits an audit_log row via actions.insert. Both halves run in the
+// same mutation call — one round trip from this panel, two effects on
+// the host (one outside-the-tx side effect, one inside-the-tx write).
+type AuditLogRow = {
+  id: string;
+  action: string;
+  payload: string;
+  webhookId: string;
+  sentAt: number;
+};
+
+const UnsafeHostPanel = () => {
+  const url = useMemo(() => wsUrl(), []);
+  const auditCol = useSyncCollection<AuditLogRow>({
+    collection: "audit_log",
+    url,
+  });
+  const [action, setAction] = useState("user.login");
+  const [payload, setPayload] = useState(
+    '{"user":"alice","ip":"203.0.113.42"}',
+  );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [webhookCalls, setWebhookCalls] = useState<number | null>(null);
+
+  const fetchWebhookCount = async () => {
+    try {
+      const response = await fetch("/sync/audit/webhook-calls");
+      const json = (await response.json()) as { count: number };
+      setWebhookCalls(json.count);
+    } catch {
+      // ignore — the panel still works without the counter readout
+    }
+  };
+  useEffect(() => {
+    void fetchWebhookCount();
+  }, []);
+
+  const emit = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/sync/audit/emit", {
+        body: JSON.stringify({
+          action,
+          id: globalThis.crypto.randomUUID(),
+          payload,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        setError(text || `HTTP ${response.status}`);
+      }
+      await fetchWebhookCount();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const rows = [...auditCol.data].sort(
+    (left, right) => right.sentAt - left.sentAt,
+  );
+
+  return (
+    <section className="sync-card" data-testid="unsafe-host-panel">
+      <p className="section-desc">
+        unsafeHost escape hatch via{" "}
+        <code>@absolutejs/sync@1.12.0</code>. The server's{" "}
+        <code>audit:emit</code> runs inside an isolated-jsc sandbox; the
+        handler reaches through to{" "}
+        <code>unsafeHost.shipToWebhook(...)</code> (the "external API"
+        side effect) and then writes the resulting record via{" "}
+        <code>actions.insert('audit_log', …)</code>. The Proxy is named
+        loud on purpose — every appearance in source tells you the
+        deterministic-mutation guarantees stop here.
+      </p>
+      <div className="presence-bar" style={{ marginBottom: "8px" }}>
+        <label
+          style={{
+            alignItems: "center",
+            display: "flex",
+            gap: "6px",
+            marginRight: "8px",
+          }}
+        >
+          <span style={{ fontSize: "0.85em" }}>Action</span>
+          <input
+            aria-label="Audit action"
+            data-testid="unsafe-host-action"
+            onChange={(event) => setAction(event.target.value)}
+            style={{ minWidth: "160px" }}
+            value={action}
+          />
+        </label>
+        <label
+          style={{
+            alignItems: "center",
+            display: "flex",
+            flex: 1,
+            gap: "6px",
+            marginRight: "8px",
+          }}
+        >
+          <span style={{ fontSize: "0.85em" }}>Payload</span>
+          <input
+            aria-label="Audit payload"
+            data-testid="unsafe-host-payload"
+            onChange={(event) => setPayload(event.target.value)}
+            style={{ flex: 1 }}
+            value={payload}
+          />
+        </label>
+        <button
+          className="primary"
+          data-testid="unsafe-host-emit"
+          disabled={busy}
+          onClick={() => void emit()}
+          type="button"
+        >
+          {busy ? "Emitting…" : "Emit audit event"}
+        </button>
+      </div>
+      <div
+        className="presence-bar"
+        style={{ fontSize: "0.85em", marginBottom: "8px" }}
+      >
+        <span data-testid="unsafe-host-webhook-count">
+          Host-side webhook calls:{" "}
+          {webhookCalls === null ? "…" : webhookCalls}
+        </span>
+        <span style={{ marginLeft: "10px" }} data-testid="unsafe-host-row-count">
+          Audit rows live: {auditCol.data.length}
+        </span>
+        {error !== null && (
+          <span
+            data-testid="unsafe-host-error"
+            style={{ color: "var(--danger, #f87171)", marginLeft: "10px" }}
+          >
+            ✗ {error}
+          </span>
+        )}
+      </div>
+      <ul className="task-list" data-testid="unsafe-host-list">
+        {rows.length === 0 && (
+          <li className="task-item">
+            <span className="muted">
+              No audit events yet — emit one to see the round trip.
+            </span>
+          </li>
+        )}
+        {rows.map((row) => (
+          <li className="task-item" key={row.id}>
+            <span>
+              <strong>{row.action}</strong>
+              <span className="muted" style={{ marginLeft: "6px" }}>
+                · <code>{row.webhookId}</code> ·{" "}
+                {new Date(row.sentAt).toLocaleTimeString()}
+              </span>
+              <br />
+              <span className="muted" style={{ fontSize: "0.85em" }}>
+                {row.payload}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 };
