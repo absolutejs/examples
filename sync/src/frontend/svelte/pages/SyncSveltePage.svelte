@@ -10,6 +10,7 @@
   } from "@absolutejs/sync/client";
   import type { PresenceClient, PresenceMember } from "@absolutejs/sync/client";
   import Nav from "../components/Nav.svelte";
+  import CommentReactions from "../components/CommentReactions.svelte";
 
   type Task = {
     id: string;
@@ -551,6 +552,11 @@
               {#if comment.editedAt !== null}
                 <span class="muted"> (edited)</span>
               {/if}
+              <CommentReactions
+                commentId={comment.id}
+                wsUrl={wsUrl}
+                myUserId={myUserId}
+              />
             </span>
             {#if comment.authorId === myUserId}
               <button

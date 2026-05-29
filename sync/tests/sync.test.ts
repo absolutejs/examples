@@ -934,6 +934,41 @@ test("comments: a comment posted in one framework appears in another", async ({
   }
 });
 
+// Comments 0.4 reactions — each comment row carries three emoji buttons
+// (👍 ❤️ 🎉). Clicking toggles the per-actor reaction; the count updates
+// live across tabs/frameworks via the comment_reactions collection.
+for (const framework of REACTIVE_FRAMEWORKS) {
+  test.describe(`${framework.name} comments reactions`, () => {
+    test("clicking 👍 toggles the per-actor reaction and ticks the count", async ({
+      page,
+    }) => {
+      await page.goto(framework.path);
+      await expect(page.locator(".sync-status").first()).toContainText("Live", {
+        timeout: 15000,
+      });
+
+      // Post a comment so we have a row to react to.
+      const body = uniqueComment(`react-${framework.name.toLowerCase()}`);
+      await postComment(page, body);
+
+      const row = page
+        .getByTestId("comments-list")
+        .locator(".task-item", { hasText: body });
+      const thumbs = row.locator('[data-testid$="-👍"]').first();
+      await expect(thumbs).toBeVisible({ timeout: 10000 });
+      await expect(thumbs).toContainText("👍 0");
+
+      // Click — count goes to 1.
+      await thumbs.click();
+      await expect(thumbs).toContainText("👍 1", { timeout: 10000 });
+
+      // Click again — toggles back to 0.
+      await thumbs.click();
+      await expect(thumbs).toContainText("👍 0", { timeout: 10000 });
+    });
+  });
+}
+
 for (const staticPath of ["/html", "/htmx"] as const) {
   test(`${staticPath} shows the 'Sync packs note' pointer to the framework demos`, async ({
     page,

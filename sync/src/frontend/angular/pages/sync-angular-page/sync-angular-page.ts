@@ -7,6 +7,7 @@ import {
 } from "@angular/core";
 import { DatePipe } from "@angular/common";
 import { SyncCollectionService } from "@absolutejs/sync/angular";
+import { CommentReactionsComponent } from "./comment-reactions";
 import {
   createPresence,
   indexedDbCollectionCache,
@@ -114,7 +115,7 @@ const randomName = () => `User-${globalThis.crypto.randomUUID().split("-")[0]}`;
 const taskCache = indexedDbCollectionCache<Task>({ key: "tasks" });
 
 @Component({
-  imports: [DatePipe],
+  imports: [DatePipe, CommentReactionsComponent],
   selector: "sync-angular-page",
   standalone: true,
   templateUrl: "./sync-angular-page.html",
@@ -209,6 +210,10 @@ export class SyncAngularPageComponent implements OnDestroy {
   );
   commentDraft = signal("");
   myUserId = signal(tabUserId());
+  // Expose for the <comment-reactions> child component binding in the
+  // template (module-level `wsUrl()` isn't reachable from Angular's
+  // template scope).
+  wsUrl = wsUrl();
   setCommentDraft(event: Event) {
     const { target } = event;
     if (target instanceof HTMLInputElement) {

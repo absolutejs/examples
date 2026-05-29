@@ -274,6 +274,73 @@ type CommentRow = {
 type DemoUser = { id: string; displayName: string };
 type CommentWithAuthor = CommentRow & { author: DemoUser };
 
+// One reaction row per (commentId, actorId, emoji) — same shape the
+// pack emits.
+type CommentReactionRow = {
+  id: string;
+  commentId: string;
+  actorId: string;
+  emoji: string;
+  createdAt: number;
+};
+const REACTION_PALETTE = ["👍", "❤️", "🎉"] as const;
+
+const toggleReactionFetch = (commentId: string, emoji: string) =>
+  fetch("/sync/comments/toggleReaction", {
+    body: JSON.stringify({ commentId, emoji, userId: tabUserId() }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+
+// Per-comment reactions. Subscribing per row is fine here — the demo
+// thread has at most a handful of comments.
+type CommentReactionsProps = { commentId: string };
+
+const CommentReactions = ({ commentId }: CommentReactionsProps) => {
+  const { data } = useSyncCollection<CommentReactionRow>({
+    collection: "comment_reactions",
+    params: { commentId },
+    url: wsUrl(),
+  });
+  const myId = tabUserId();
+  const counts = new Map<string, number>();
+  const mineByEmoji = new Map<string, boolean>();
+  for (const row of data) {
+    counts.set(row.emoji, (counts.get(row.emoji) ?? 0) + 1);
+    if (row.actorId === myId) mineByEmoji.set(row.emoji, true);
+  }
+
+  return (
+    <span data-testid={`comment-reactions-${commentId}`}>
+      {REACTION_PALETTE.map((emoji) => {
+        const count = counts.get(emoji) ?? 0;
+        const mine = mineByEmoji.get(emoji) === true;
+
+        return (
+          <button
+            data-testid={`reaction-${commentId}-${emoji}`}
+            key={emoji}
+            onClick={() => void toggleReactionFetch(commentId, emoji)}
+            style={{
+              background: mine ? "rgba(99, 102, 241, 0.15)" : "transparent",
+              border: "1px solid",
+              borderColor: mine ? "#6366f1" : "rgba(255,255,255,0.15)",
+              borderRadius: "12px",
+              cursor: "pointer",
+              fontSize: "0.9em",
+              marginRight: "4px",
+              padding: "0 6px",
+            }}
+            type="button"
+          >
+            {emoji} {count}
+          </button>
+        );
+      })}
+    </span>
+  );
+};
+
 const useComments = (resourceId: string) => {
   const url = wsUrl();
   const { data } = useSyncCollection<CommentWithAuthor>({
@@ -950,7 +1017,8 @@ export const SyncReactContent = () => {
                     {comment.body}
                     {comment.editedAt !== null && (
                       <span className="muted"> (edited)</span>
-                    )}
+                    )}{" "}
+                    <CommentReactions commentId={comment.id} />
                   </span>
                   {isOwn && (
                     <span>

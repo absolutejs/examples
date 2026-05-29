@@ -202,6 +202,11 @@
           >: {{ comment.body }} @if (comment.editedAt !== null) {
           <span class="muted"> (edited)</span>
           }
+          <comment-reactions
+            [commentId]="comment.id"
+            [wsUrl]="wsUrl"
+            [myUserId]="myUserId()"
+          />
         </span>
         @if (comment.authorId === myUserId()) {
         <button

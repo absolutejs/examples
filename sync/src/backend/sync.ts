@@ -749,6 +749,11 @@ engine.registerPack(
     joinUsers: {
       hydrate: () => [...demoUsers.values()],
     },
+    // 0.4: emoji reactions. Restrict to a small palette so the UI can show
+    // fixed buttons (no free-form picker).
+    reactions: {
+      allowedEmojis: ["👍", "❤️", "🎉"],
+    },
   }),
 );
 
@@ -1064,6 +1069,22 @@ export const syncPlugin = new Elysia()
     {
       body: t.Object({
         commentId: t.String(),
+        userId: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/sync/comments/toggleReaction",
+    ({ body }) =>
+      engine.runMutation(
+        "comments:toggleReaction",
+        { commentId: body.commentId, emoji: body.emoji },
+        { userId: body.userId },
+      ),
+    {
+      body: t.Object({
+        commentId: t.String(),
+        emoji: t.String(),
         userId: t.String(),
       }),
     },

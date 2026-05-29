@@ -7,6 +7,7 @@ import {
 } from "@absolutejs/sync/client";
 import type { PresenceClient, PresenceMember } from "@absolutejs/sync/client";
 import Nav from "../components/Nav.vue";
+import CommentReactions from "../components/CommentReactions.vue";
 
 type Task = {
   id: string;
@@ -64,6 +65,13 @@ type NotificationRow = {
   createdAt: number;
   readAt: number | null;
   expiresAt: number | null;
+};
+type CommentReactionRow = {
+  id: string;
+  commentId: string;
+  actorId: string;
+  emoji: string;
+  createdAt: number;
 };
 type CounterRow = {
   id: string;
@@ -574,6 +582,11 @@ const onDocInput = (event: Event) => {
               <span v-if="comment.editedAt !== null" class="muted">
                 (edited)</span
               >
+              <CommentReactions
+                :comment-id="comment.id"
+                :ws-url="wsUrl"
+                :my-user-id="myUserId"
+              />
             </span>
             <button
               v-if="comment.authorId === myUserId"
