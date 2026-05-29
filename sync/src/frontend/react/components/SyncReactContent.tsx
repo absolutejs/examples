@@ -12,7 +12,10 @@ import {
   type PresenceMember,
   type SyncStore,
 } from "@absolutejs/sync/client";
+import { createSyncTanStackCollectionOptions } from "@absolutejs/sync/tanstack-db";
 import { createYjsText } from "@absolutejs/sync-yjs";
+import { createCollection, eq } from "@tanstack/db";
+import { useLiveQuery } from "@tanstack/react-db";
 import { treaty } from "@elysiajs/eden";
 import type { Server } from "../../../backend/server";
 
@@ -1304,6 +1307,8 @@ export const SyncReactContent = () => {
 
       <UnsafeHostPanel />
 
+      <TanStackDBPanel />
+
       <EdenTaskTracker />
 
       <IssueTracker />
@@ -1825,6 +1830,147 @@ const UnsafeHostPanel = () => {
             </span>
           </li>
         ))}
+      </ul>
+    </section>
+  );
+};
+
+// @absolutejs/sync@1.8.0+ — `/tanstack-db` subpath wraps a registered sync
+// collection as a TanStack DB CollectionConfig. The same `tasks` table the
+// rest of the page edits is also a TanStack DB collection here, queryable
+// with TanStack DB's compose-able filter/sort/select. The optional
+// `mutations` map routes TanStack-side writes back through the engine's
+// existing addTask / toggleTask / removeTask handlers — neither side adds
+// its own optimistic overlay, the sync engine's roundtrip is authoritative.
+const TanStackDBPanel = () => {
+  // TanStack DB's React binding (useLiveQuery) doesn't ship a
+  // getServerSnapshot, so it can't render under SSR — useSyncExternalStore
+  // throws. Gate the real panel behind a post-mount flag and render a
+  // skeleton on the server so hydration is stable.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) {
+    return (
+      <section className="sync-card" data-testid="tanstack-db-panel">
+        <p className="section-desc">
+          TanStack DB collection backed by{" "}
+          <code>@absolutejs/sync/tanstack-db</code>. (Loading…)
+        </p>
+      </section>
+    );
+  }
+  return <TanStackDBPanelImpl />;
+};
+
+const TanStackDBPanelImpl = () => {
+  const tasksCollection = useMemo(
+    () =>
+      createCollection(
+        createSyncTanStackCollectionOptions<Task, string>({
+          collection: "tasks",
+          getKey: (task) => task.id,
+          id: "tanstack-tasks-demo",
+          mutations: {
+            delete: (mutation) => ({
+              args: { id: mutation.key },
+              name: "removeTask",
+            }),
+            insert: (mutation) => ({
+              args: {
+                id: mutation.modified.id,
+                title: mutation.modified.title,
+              },
+              name: "addTask",
+            }),
+            // The engine's toggleTask flips done; TanStack DB updates can
+            // express it as `collection.update(id, draft => { draft.done = !draft.done })`.
+            update: (mutation) => ({
+              args: { id: mutation.key },
+              name: "toggleTask",
+            }),
+          },
+          url: wsUrl(),
+        }),
+      ),
+    [],
+  );
+
+  const openQuery = useLiveQuery((q) =>
+    q
+      .from({ tasks: tasksCollection })
+      .where(({ tasks }) => eq(tasks.done, false)),
+  );
+  const doneQuery = useLiveQuery((q) =>
+    q
+      .from({ tasks: tasksCollection })
+      .where(({ tasks }) => eq(tasks.done, true)),
+  );
+
+  const insertViaTanStack = () => {
+    void tasksCollection.insert({
+      createdAt: Date.now(),
+      done: false,
+      id: globalThis.crypto.randomUUID(),
+      title: `TanStack DB insert · ${new Date().toLocaleTimeString()}`,
+    });
+  };
+
+  return (
+    <section className="sync-card" data-testid="tanstack-db-panel">
+      <p className="section-desc">
+        TanStack DB collection backed by{" "}
+        <code>@absolutejs/sync/tanstack-db</code>. The same{" "}
+        <code>tasks</code> rows the panel at the top edits are also a
+        TanStack DB collection here — query with the compose-able query
+        builder (<code>eq</code>, <code>where</code>, <code>select</code>,{" "}
+        joins, …), write through <code>collection.insert / update / delete</code>{" "}
+        and the adapter routes the call back to the existing{" "}
+        <code>addTask / toggleTask / removeTask</code> sync mutations. One
+        wire, two reading APIs.
+      </p>
+      <div className="presence-bar" style={{ marginBottom: "8px" }}>
+        <span
+          className="presence-online"
+          data-testid="tanstack-open-count"
+        >
+          📝 {openQuery.data.length} open (via TanStack)
+        </span>
+        <span
+          className="presence-online"
+          data-testid="tanstack-done-count"
+        >
+          ✓ {doneQuery.data.length} done (via TanStack)
+        </span>
+        <button
+          className="primary"
+          data-testid="tanstack-insert"
+          onClick={insertViaTanStack}
+          type="button"
+        >
+          Insert via TanStack DB
+        </button>
+      </div>
+      <ul className="task-list" data-testid="tanstack-open-list">
+        {openQuery.data.length === 0 && (
+          <li className="task-item">
+            <span className="muted">
+              No open tasks — TanStack DB query result is empty.
+            </span>
+          </li>
+        )}
+        {[...openQuery.data]
+          .sort((first, second) => second.createdAt - first.createdAt)
+          .slice(0, 5)
+          .map((task) => (
+            <li className="task-item" key={task.id}>
+              <span>
+                {task.title}
+                <span className="muted" style={{ marginLeft: "6px" }}>
+                  · {new Date(task.createdAt).toLocaleTimeString()}
+                </span>
+              </span>
+            </li>
+          ))}
       </ul>
     </section>
   );

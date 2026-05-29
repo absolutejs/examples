@@ -1546,3 +1546,57 @@ test("unsafeHost panel: sandboxed mutation hits host fn AND writes audit row", a
     .toBe(before + 1);
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SB-3: TanStack DB adapter (@absolutejs/sync/tanstack-db) wired as the
+// flagship example's worked panel.
+//
+// The React page's TanStackDBPanel wraps the same `tasks` collection the
+// rest of the page edits using createSyncTanStackCollectionOptions. Two
+// useLiveQuery results render an open count and a done count; one button
+// inserts a new task through the TanStack DB collection's API and the
+// adapter routes it to the engine's existing `addTask` mutation.
+//
+// The test asserts:
+//   1. The panel renders (post-mount; the impl is gated behind a
+//      `mounted` flag because TanStack DB's react binding doesn't ship
+//      a getServerSnapshot).
+//   2. Pressing "Insert via TanStack DB" results in the new task
+//      materializing in the regular sync tasks list (proves the write
+//      round-tripped through the engine, not just the local TanStack
+//      DB cache).
+//   3. The TanStack live-query counts tick up.
+// ─────────────────────────────────────────────────────────────────────────────
+test("TanStack DB panel: insert via TanStack DB writes through to sync's tasks list", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".sync-status").first()).toContainText("Live", {
+    timeout: 15000,
+  });
+  await expect(page.getByTestId("tanstack-db-panel")).toBeVisible();
+  // Real panel mounts post-SSR — the "loading…" placeholder should give
+  // way to the open/done counters within a tick.
+  await expect(page.getByTestId("tanstack-open-count")).toBeVisible({
+    timeout: 15000,
+  });
+
+  const readOpenCount = async (): Promise<number> => {
+    const text = await page.getByTestId("tanstack-open-count").textContent();
+    return Number(text?.match(/(\d+)/)?.[1] ?? 0);
+  };
+  const before = await readOpenCount();
+
+  await page.getByTestId("tanstack-insert").click();
+  // TanStack live query result reflects the new row.
+  await expect.poll(() => readOpenCount(), { timeout: 15000 }).toBe(before + 1);
+
+  // The new task also lives in the engine's regular tasks collection
+  // (the panel at the top), proving the write round-tripped via the
+  // adapter's mutations map → engine.addTask → live diff back to all
+  // subscribers.
+  const newTask = page
+    .locator(".task-item", { hasText: /TanStack DB insert ·/ })
+    .first();
+  await expect(newTask).toBeVisible({ timeout: 15000 });
+});
+
