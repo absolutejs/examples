@@ -27,6 +27,15 @@ export const Nav = ({ active }: NavProps) => (
       <a className={active === "/htmx" ? "active" : ""} href="/htmx">
         HTMX
       </a>
+      <a
+        className="devtools"
+        href="/sync/devtools"
+        rel="noopener noreferrer"
+        target="_blank"
+        title="Live engine inspector — collections, mutations, activity, and point-in-time replay"
+      >
+        Devtools ↗
+      </a>
     </nav>
   </header>
 );

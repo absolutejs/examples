@@ -15,6 +15,15 @@ defineOptions({ name: "Nav" });
       <a href="/angular">Angular</a>
       <a href="/html">HTML</a>
       <a href="/htmx">HTMX</a>
+      <a
+        class="devtools"
+        href="/sync/devtools"
+        rel="noopener noreferrer"
+        target="_blank"
+        title="Live engine inspector — collections, mutations, activity, and point-in-time replay"
+      >
+        Devtools ↗
+      </a>
     </nav>
   </header>
 </template>

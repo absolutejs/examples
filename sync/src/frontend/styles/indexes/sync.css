@@ -53,6 +53,17 @@ nav a.active {
   color: #fff;
 }
 
+nav a.devtools {
+  margin-left: 0.5rem;
+  background: rgba(137, 180, 250, 0.12);
+  color: #89b4fa;
+}
+
+nav a.devtools:hover {
+  background: rgba(137, 180, 250, 0.22);
+  color: #b4d3ff;
+}
+
 main {
   margin: 0 auto;
   max-width: 760px;
