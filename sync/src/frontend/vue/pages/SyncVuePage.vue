@@ -466,6 +466,16 @@ const onDocInput = (event: Event) => {
         server confirms.
       </p>
 
+      <p class="section-desc">
+        This page is the developer-facing demo.
+        <strong>Devtools ↗</strong> in the nav opens the operator surface —
+        live engine inspector, <strong>point-in-time replay</strong>
+        (<code>engine.replayTo</code>, 1.22; clickable Replay panel, 1.23),
+        and the <strong>tenant migration primitives</strong>
+        (<code>engine.fence</code> / <code>exportSnapshot</code> /
+        <code>importSnapshot</code>, 1.24).
+      </p>
+
       <section class="sync-card">
         <div class="sync-bar">
           <div class="sync-status">

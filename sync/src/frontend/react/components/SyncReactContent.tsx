@@ -770,6 +770,16 @@ export const SyncReactContent = () => {
         offline (the socket resumes from the cached version).
       </p>
 
+      <p className="section-desc">
+        This page is the developer-facing demo. <strong>Devtools ↗</strong> in
+        the nav opens the operator surface — live engine inspector,{" "}
+        <strong>point-in-time replay</strong> (
+        <code>engine.replayTo</code>, 1.22; clickable Replay panel, 1.23), and
+        the <strong>tenant migration primitives</strong> (
+        <code>engine.fence</code> / <code>exportSnapshot</code> /{" "}
+        <code>importSnapshot</code>, 1.24).
+      </p>
+
       <p className="section-desc" data-testid="server-pulse">
         Server pulse #{serverPulse?.count ?? 0}
         {serverPulse
