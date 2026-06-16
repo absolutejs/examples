@@ -5,8 +5,9 @@ import {
   resolveOAuthAuthorization,
   resolveProviderClientConfiguration,
 } from "@absolutejs/auth";
+import { eq } from "drizzle-orm";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
-import { SchemaType, User } from "../../../db/schema";
+import { SchemaType, User, users } from "../../../db/schema";
 import { providerData } from "../../frontend/shared/providerData";
 import {
   createUser,
@@ -22,6 +23,15 @@ export const authConfig = (
   db: NeonHttpDatabase<SchemaType>,
 ) => defineAuthConfig<User>({
   providersConfiguration,
+  getUser: async (sub) => {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.sub, sub))
+      .limit(1);
+
+    return user ?? null;
+  },
   onAuthorizeSuccess: ({ authProvider, authorizationUrl, authIntent }) => {
     const providerName = isValidProviderOption(authProvider)
       ? providerData[authProvider].name
