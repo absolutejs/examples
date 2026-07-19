@@ -252,6 +252,7 @@ const SandboxContent = () => {
             </label>
             <button
               className="primary"
+              data-testid="sandbox-run"
               disabled={running}
               onClick={() => {
                 void run();
@@ -439,12 +440,12 @@ const HibernationPanel = () => {
       <h2>Pool hibernation (0.9.0)</h2>
       <p>
         <code>createHibernatingIsolatePool</code> with{" "}
-        <code>hibernateAfterMs: 30_000</code>. Pick a key, Run a few times
-        — <code>this.count</code> climbs. Hibernate Now — the context's data
-        is checkpointed, the isolate is disposed, the pool's stats show one
-        less <code>active</code> and one more <code>hibernated</code>. Run
-        again — count resumes from the checkpoint. The callable recompiles
-        on wake; the data survived because it's structured-cloneable.
+        <code>hibernateAfterMs: 30_000</code>. Pick a key, Run a few times —{" "}
+        <code>this.count</code> climbs. Hibernate Now — the context's data is
+        checkpointed, the isolate is disposed, the pool's stats show one less{" "}
+        <code>active</code> and one more <code>hibernated</code>. Run again —
+        count resumes from the checkpoint. The callable recompiles on wake; the
+        data survived because it's structured-cloneable.
       </p>
       <div className="presence-bar" style={{ marginBottom: "8px" }}>
         <label style={{ marginRight: "8px" }}>

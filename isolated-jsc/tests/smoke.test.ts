@@ -14,8 +14,9 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   ).toHaveCount(0);
 
   const resultPanel = page.locator(".result");
+  const runButton = page.getByTestId("sandbox-run");
 
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.getByText(/OK .* ms/)).toBeVisible({
     timeout: 15000,
   });
@@ -52,7 +53,7 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   });
 
   await page.getByRole("button", { name: /Runaway loop/ }).click();
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.locator(".result-status")).toContainText(
     "TimeoutError",
     {
@@ -67,7 +68,7 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   );
 
   await page.getByRole("button", { name: /No host filesystem access/ }).click();
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.getByText(/OK .* ms/)).toBeVisible({
     timeout: 10000,
   });
@@ -76,7 +77,7 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   ).toBeVisible({ timeout: 15000 });
 
   await page.getByRole("button", { name: /Result limit/ }).click();
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.locator(".result-status")).toContainText(
     "ResultSizeError",
     { timeout: 15000 },
@@ -86,7 +87,7 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   });
 
   await page.getByRole("button", { name: /Capability output limit/ }).click();
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.locator(".result-status")).toContainText(
     "CapabilityError",
     { timeout: 15000 },
@@ -98,7 +99,7 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   });
 
   await page.getByRole("button", { name: /Console limit/ }).click();
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.getByText(/console capped/)).toBeVisible({
     timeout: 15000,
   });
@@ -112,7 +113,7 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   });
 
   await page.getByRole("button", { name: /Audit buffer/ }).click();
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.getByText(/audit capped/)).toBeVisible({
     timeout: 15000,
   });
@@ -128,7 +129,7 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   });
 
   await page.getByRole("button", { name: /Policy recipe helpers/ }).click();
-  await page.getByRole("button", { exact: true, name: "Run" }).click();
+  await runButton.click();
   await expect(resultPanel.getByText(/recipe helpers applied/)).toBeVisible({
     timeout: 15000,
   });
@@ -137,11 +138,11 @@ test("runs sandbox presets through the UI", async ({ page }) => {
   ).toBeVisible({
     timeout: 15000,
   });
-  await expect(resultPanel.getByText(/defaultMaxOutputBytes/).first()).toBeVisible(
-    {
-      timeout: 15000,
-    },
-  );
+  await expect(
+    resultPanel.getByText(/defaultMaxOutputBytes/).first(),
+  ).toBeVisible({
+    timeout: 15000,
+  });
   await expect(resultPanel.getByText(/maxResultBytes/).first()).toBeVisible({
     timeout: 15000,
   });
