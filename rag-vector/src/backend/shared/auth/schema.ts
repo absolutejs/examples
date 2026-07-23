@@ -1,3 +1,4 @@
+import { defineRelations } from "drizzle-orm";
 import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 const users = pgTable("users", {
@@ -25,3 +26,5 @@ export const authSchema = {
   authIdentities,
   users,
 };
+
+export const authRelations = defineRelations(authSchema);

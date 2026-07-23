@@ -58,6 +58,11 @@ export const providerData: ProviderData = {
     name: "Autodesk",
     primaryColor: "#000000",
   },
+  azureadb2c: {
+    logoUrl: "",
+    name: "Azure AD B2C",
+    primaryColor: "#0078D4",
+  },
   battlenet: {
     logoUrl: "/assets/svg/battlenet-logo.svg",
     name: "Battle.net",
@@ -77,6 +82,11 @@ export const providerData: ProviderData = {
     logoUrl: "/assets/svg/bungie-logo.svg",
     name: "Bungie",
     primaryColor: "#0075BB",
+  },
+  calendly: {
+    logoUrl: "",
+    name: "Calendly",
+    primaryColor: "#006BFF",
   },
   close: {
     logoUrl: "/assets/svg/close-logo.svg",
@@ -233,6 +243,11 @@ export const providerData: ProviderData = {
     name: "Naver",
     primaryColor: "#03C75A",
   },
+  microsoftentraexternalid: {
+    logoUrl: "",
+    name: "Microsoft Entra External ID",
+    primaryColor: "#0078D4",
+  },
   notion: {
     logoUrl: "/assets/svg/notion-logo.svg",
     name: "Notion",
@@ -293,9 +308,19 @@ export const providerData: ProviderData = {
     name: "Shikimori",
     primaryColor: "#343434",
   },
+  onspark: {
+    logoUrl: "",
+    name: "OnSpark",
+    primaryColor: "#111827",
+  },
   slack: {
     logoUrl: "/assets/png/SLA-Slack-from-Salesforce-logo.png",
     name: "Slack",
+    primaryColor: "#4A154B",
+  },
+  slackuser: {
+    logoUrl: "",
+    name: "Slack User",
     primaryColor: "#4A154B",
   },
   spotify: {

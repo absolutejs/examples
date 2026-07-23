@@ -44,6 +44,7 @@ type VoiceDemoStreams = {
 };
 
 const createInitialVoiceState = (): VoiceStreamState<SavedIntake> => ({
+  assistantStreamingText: "",
   assistantAudio: [],
   assistantTexts: [],
   call: null,

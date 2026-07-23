@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { defineRelations } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 
@@ -12,7 +13,8 @@ if (!databaseUrl) {
 
 // Neon serverless (HTTP) Drizzle client. Shared by the backend stores and the
 // app's own queries; the same Neon database backs the voice platform tables.
-export const db = drizzle(neon(databaseUrl), { schema });
+const relations = defineRelations(schema);
+export const db = drizzle({ client: neon(databaseUrl), relations });
 
 // A few package presets persist via Bun.SQL (raw TCP) instead of Drizzle. Neon's
 // `channel_binding=require` is a libpq SCRAM option Bun.SQL does not negotiate,

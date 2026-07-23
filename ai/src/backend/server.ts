@@ -62,7 +62,7 @@ const THINKING_MODELS = new Set([
   "deepseek-reasoner",
 ]);
 
-const getThinking = (_provider: string, model: string) =>
+const getReasoning = (_provider: string, model: string) =>
   THINKING_MODELS.has(model) ? { budgetTokens: 8000 } : undefined;
 
 // A sync-backed conversation store: every persisted message flows through the
@@ -80,7 +80,7 @@ const server = new Elysia()
       provider: getProvider,
       store: conversationStore,
       systemPrompt: SYSTEM_PROMPT,
-      thinking: getThinking,
+      reasoning: getReasoning,
       tools: getTools,
     }),
   )

@@ -5,7 +5,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { type AnyElysia, Elysia } from "elysia";
 import { apiPlugin } from "./plugins/apiPlugin";
 import { pagesPlugin } from "./plugins/pagesPlugin";
-import { schema, User } from "../../db/schema";
+import { relations, User } from "../../db/schema";
 import { authConfig } from "./auth/config";
 import { buildShowcaseBlocks } from "./auth/showcaseBlocks";
 import { createDrizzleLinkedProviderStores } from "./linkedProviders/stores";
@@ -16,7 +16,7 @@ const databaseUrl = getEnv("DATABASE_URL");
 const origin = process.env.PUBLIC_ORIGIN ?? "http://localhost:3000";
 const rpId = new URL(origin).hostname;
 const sql = neon(databaseUrl);
-const db = drizzle(sql, { schema });
+const db = drizzle({ client: sql, relations });
 const authSessionStore = createNeonAuthSessionStore<User>(databaseUrl);
 const { bindingStore, grantStore } = createDrizzleLinkedProviderStores(db);
 

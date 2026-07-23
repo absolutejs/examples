@@ -15,6 +15,7 @@ import type {
   LinkedProviderGrant,
 } from "@absolutejs/linked-providers";
 import { NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { defineRelations } from "drizzle-orm";
 import {
   type AnyPgTable,
   bigint,
@@ -163,7 +164,8 @@ export const schema = {
   webauthnCredentialsTable,
 } satisfies Record<string, AnyPgTable>;
 
-export type SchemaType = typeof schema;
+export const relations = defineRelations(schema);
+export type SchemaType = typeof relations;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

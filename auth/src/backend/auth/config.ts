@@ -50,7 +50,9 @@ export const authConfig = (
     unregisteredSession,
     cookie: { user_session_id },
   }) => {
-    const providerName = providerData[authProvider].name;
+    const providerName = isValidProviderOption(authProvider)
+      ? providerData[authProvider].name
+      : authProvider;
 
     console.log(
       `\nSuccesfully authorized OAuth2 with ${providerName} and got token response:`,
@@ -100,6 +102,11 @@ export const authConfig = (
   }) => {
     if (currentUser === undefined) {
       throw new Error("Connector linking requires an active signed-in user");
+    }
+    if (!isValidProviderOption(authProvider)) {
+      throw new Error(
+        "Connector linking does not support custom provider " + authProvider,
+      );
     }
 
     const resolvedProviderClientConfiguration =

@@ -9,12 +9,14 @@ import {
   type AuthSessionStore,
 } from "@absolutejs/auth";
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import type {
   OAuth2ConfigurationOptions,
   SessionRecord,
 } from "@absolutejs/auth";
-import { authSchema } from "./schema";
+import { authRelations, authSchema } from "./schema";
+
+type AuthDatabase = NeonHttpDatabase<typeof authRelations>;
 
 export type AuthUser = {
   sub: string;
@@ -176,7 +178,7 @@ const createUserWithIdentity = async ({
   userIdentity,
 }: {
   authProvider: string;
-  db: ReturnType<typeof drizzle<typeof authSchema>>;
+  db: AuthDatabase;
   userIdentity: Record<string, unknown>;
 }) => {
   const sub = crypto.randomUUID();
@@ -215,7 +217,7 @@ const getUserByIdentity = async ({
   userIdentity,
 }: {
   authProvider: string;
-  db: ReturnType<typeof drizzle<typeof authSchema>>;
+  db: AuthDatabase;
   userIdentity: Record<string, unknown>;
 }) => {
   const providerSubject = buildProviderSubjectFromIdentity({
@@ -253,13 +255,20 @@ export const buildRagAbsoluteAuth = ({
   authSessionStore: AuthSessionStore<AuthUser>;
 }) => {
   const sql = neon(authDatabaseUrl);
-  const db = drizzle(sql, {
-    schema: authSchema,
-  });
+  const db = drizzle({ client: sql, relations: authRelations });
 
   return auth<AuthUser>({
     authSessionStore,
     providersConfiguration,
+    getUser: async (sub) => {
+      const [user] = await db
+        .select()
+        .from(authSchema.users)
+        .where(eq(authSchema.users.sub, sub))
+        .limit(1);
+
+      return user ?? null;
+    },
     onCallbackSuccess: async ({
       authProvider,
       cookie: { user_session_id },

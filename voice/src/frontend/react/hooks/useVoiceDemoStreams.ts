@@ -23,6 +23,7 @@ export type ReactVoiceDemoStream = ReturnType<
 >;
 
 export const EMPTY_VOICE: ReactVoiceDemoStream = {
+  assistantStreamingText: "",
   assistantAudio: [] as Array<{
     chunk: Uint8Array;
     format: {

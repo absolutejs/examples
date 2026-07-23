@@ -1,4 +1,5 @@
 import type {
+  VoiceOnTurnObjectHandler,
   VoiceRouteResult,
   VoiceSessionHandle,
   VoiceSessionRecord,
@@ -21,12 +22,9 @@ import { rememberSessionRoutingMode } from "./providers";
 import { reactiveHub } from "./sync";
 import { handoffDeliveryStore, sessionStore } from "./stores";
 
-// Wrap the contract-aware turn handler to push the live agent-squad status to
-// any subscribed dashboards after each committed turn. Keep the positional
-// (session, turn, api, context) arity so the runtime's normalizeOnTurn still
-// treats it as a direct handler — collapsing it to a single object arg silently
-// drops the turn (see proofSuite.ts contractAwareOnTurn note). contractAwareOnTurn
-// is typed as the positional|object union, so call it through the direct shape.
+// The contract helper currently returns a positional handler, while carrier
+// bridges require the canonical object handler. Adapt that boundary here and
+// push live agent-squad status after each committed turn.
 type DirectContractTurn = (
   session: VoiceSessionRecord,
   turn: VoiceTurnRecord,
@@ -37,12 +35,11 @@ type DirectContractTurn = (
   | VoiceRouteResult<SavedIntake>
   | void;
 
-const onTurnWithSquadPush: DirectContractTurn = async (
-  session,
-  turn,
-  api,
-  context,
-) => {
+const onTurnWithSquadPush: VoiceOnTurnObjectHandler<
+  unknown,
+  VoiceSessionRecord,
+  SavedIntake
+> = async ({ session, turn, api, context }) => {
   const result = await (contractAwareOnTurn as DirectContractTurn)(
     session,
     turn,
