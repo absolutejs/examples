@@ -37,7 +37,10 @@ import {
   voice,
 } from "@absolutejs/voice";
 import { assemblyai } from "@absolutejs/voice-assemblyai";
-import { deepgram } from "@absolutejs/voice-deepgram";
+import {
+  deepgram,
+  type DeepgramNovaModel,
+} from "@absolutejs/voice-deepgram";
 import { gemini } from "@absolutejs/voice-gemini";
 import { openai } from "@absolutejs/voice-openai";
 import { createVoiceProviderFailureSimulator } from "@absolutejs/voice/testing";
@@ -50,6 +53,20 @@ import {
 } from "./stores";
 
 const deepgramApiKey = getEnv("DEEPGRAM_API_KEY");
+
+const readDeepgramNovaModel = (): DeepgramNovaModel => {
+  const model = process.env.DEEPGRAM_STT_MODEL ?? "nova-3";
+
+  if (model === "nova-3" || model === "nova-2") {
+    return model;
+  }
+
+  throw new Error(
+    `DEEPGRAM_STT_MODEL must be "nova-3" or "nova-2"; received ${JSON.stringify(model)}`,
+  );
+};
+
+const deepgramSTTModel = readDeepgramNovaModel();
 
 const assemblyAIApiKey = process.env.ASSEMBLYAI_API_KEY;
 
@@ -517,7 +534,7 @@ const selectedSTTProvider: VoiceSTTProvider = "deepgram";
 const voiceProviderModels = {
   anthropic: process.env.ANTHROPIC_VOICE_MODEL ?? "claude-sonnet-4-5",
   assemblyai: process.env.ASSEMBLYAI_SPEECH_MODEL ?? "u3-rt-pro",
-  deepgram: process.env.DEEPGRAM_STT_MODEL ?? "nova-3",
+  deepgram: deepgramSTTModel,
   deterministic: "local deterministic support model",
   gemini: process.env.GEMINI_VOICE_MODEL ?? "gemini-2.5-flash",
   openai: process.env.OPENAI_VOICE_MODEL ?? "gpt-4.1-mini",
@@ -1102,7 +1119,7 @@ const sttProviderAdapters = {
     // as "laggy / never talks back".
     endpointing: 300,
     interimResults: true,
-    model: process.env.DEEPGRAM_STT_MODEL ?? "nova-3",
+    model: deepgramSTTModel,
     punctuate: true,
     smartFormat: true,
     utteranceEndMs: 1_000,
