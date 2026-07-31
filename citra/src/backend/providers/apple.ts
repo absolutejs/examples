@@ -141,37 +141,4 @@ export const applePlugin = new Elysia()
 				refresh_token: t.String()
 			})
 		}
-	)
-	.get(
-		'/oauth2/apple/profile',
-		async ({ status, headers: { authorization } }) => {
-			if (authorization === undefined)
-				return status(
-					'Unauthorized',
-					'Access token is missing in headers'
-				);
-
-			const accessToken = authorization.replace('Bearer ', '');
-
-			try {
-				const userProfile =
-					await appleOAuth2Client.fetchUserProfile(accessToken);
-				console.log('\nApple user profile:', userProfile);
-
-				return new Response(JSON.stringify(userProfile), {
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				});
-			} catch (err) {
-				if (err instanceof Error) {
-					return status('Internal Server Error', err.message);
-				}
-
-				return status(
-					'Internal Server Error',
-					`Unexpected error: ${err}`
-				);
-			}
-		}
 	);

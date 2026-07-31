@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState, FormEvent } from 'react';
-import { ProviderOption, providerOptions } from 'citra';
+import { ProfileProvider, profileProviderOptions } from 'citra';
 import { formStyle, formButtonStyle } from '../../styles/styles';
 import { Modal } from '../utils/Modal';
 import { ProviderDropdown } from '../utils/ProviderDropdown';
@@ -14,7 +14,7 @@ export const FetchProfileModal = ({
 	profileModalOpen,
 	setProfileModalOpen
 }: FetchProfileModalProps) => {
-	const [currentProvider, setCurrentProvider] = useState<ProviderOption>();
+	const [currentProvider, setCurrentProvider] = useState<ProfileProvider>();
 	const [accessToken, setAccessToken] = useState<string>('');
 
 	const { addToast } = useToast();
@@ -68,7 +68,7 @@ export const FetchProfileModal = ({
 		>
 			<form onSubmit={handleSubmit} style={formStyle}>
 				<ProviderDropdown
-					providerOptions={providerOptions}
+					providerOptions={profileProviderOptions}
 					setCurrentProvider={setCurrentProvider}
 				/>
 

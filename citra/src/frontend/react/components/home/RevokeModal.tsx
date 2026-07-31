@@ -15,7 +15,7 @@ export const RevokeModal = ({
 	setRevokeModalOpen
 }: RevokeModalProps) => {
 	const [currentProvider, setCurrentProvider] = useState<RevocableProvider>();
-	const [tokenToRevoke, setTokenToRevoke] = useState<string>('');
+	const [revocationInput, setRevocationInput] = useState<string>('');
 
 	const { addToast } = useToast();
 
@@ -27,7 +27,7 @@ export const RevokeModal = ({
 		});
 
 		const response = await fetch(
-			`oauth2/${currentProvider?.toLowerCase()}/revocation?token_to_revoke=${tokenToRevoke}`,
+			`oauth2/${currentProvider?.toLowerCase()}/revocation?token_to_revoke=${encodeURIComponent(revocationInput)}`,
 			{
 				method: 'DELETE'
 			}
@@ -70,22 +70,26 @@ export const RevokeModal = ({
 
 				<input
 					name="token"
-					onChange={(event) => setTokenToRevoke(event.target.value)}
-					placeholder="Enter token to revoke"
+					onChange={(event) => setRevocationInput(event.target.value)}
+					placeholder={
+						currentProvider === 'withings'
+							? 'Enter numeric Withings user ID'
+							: 'Enter token to revoke'
+					}
 					style={{
 						border: '1px solid #ccc',
 						borderRadius: '4px',
 						fontSize: '14px',
 						padding: '8px'
 					}}
-					type="text"
-					value={tokenToRevoke}
+					type={currentProvider === 'withings' ? 'number' : 'text'}
+					value={revocationInput}
 				/>
 
 				<button
-					disabled={!currentProvider || !tokenToRevoke}
+					disabled={!currentProvider || !revocationInput}
 					style={formButtonStyle(
-						currentProvider !== undefined && tokenToRevoke !== ''
+						currentProvider !== undefined && revocationInput !== ''
 					)}
 					type="submit"
 				>

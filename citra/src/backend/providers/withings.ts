@@ -1,6 +1,10 @@
 import { env } from 'process';
 import { Elysia, t } from 'elysia';
-import { createOAuth2Client, generateState } from 'citra';
+import {
+	createOAuth2Client,
+	extractPropFromIdentity,
+	generateState
+} from 'citra';
 import { COOKIE_DURATION } from '../../shared/constants';
 
 if (
@@ -71,7 +75,16 @@ export const withingsPlugin = new Elysia()
 					await withingsOAuth2Client.validateAuthorizationCode({
 						code
 					});
+				const withingsUserId = extractPropFromIdentity(
+					oauthResponse,
+					['body', 'userid'],
+					'number'
+				);
 				console.log('\nWithings authorized:', oauthResponse);
+				console.log(
+					'\nSave this Withings user ID for revocation:',
+					withingsUserId
+				);
 			} catch (err) {
 				if (err instanceof Error) {
 					return status(
@@ -133,12 +146,19 @@ export const withingsPlugin = new Elysia()
 					'Token to revoke is required in query parameters'
 				);
 
+			const withingsUserId = Number(token_to_revoke);
+			if (!Number.isSafeInteger(withingsUserId) || withingsUserId <= 0)
+				return status(
+					'Bad Request',
+					'Withings revocation requires the positive numeric user ID returned by the token response'
+				);
+
 			try {
-				await withingsOAuth2Client.revokeToken(token_to_revoke);
-				console.log('\nWithings token revoked:', token_to_revoke);
+				await withingsOAuth2Client.revokeToken(withingsUserId);
+				console.log('\nWithings user revoked:', withingsUserId);
 
 				return new Response(
-					`Token ${token_to_revoke} revoked successfully`,
+					`Withings user ${withingsUserId} revoked successfully`,
 					{
 						headers: {
 							'Content-Type': 'text/plain'
@@ -151,39 +171,6 @@ export const withingsPlugin = new Elysia()
 						'Internal Server Error',
 						`Failed to revoke token: ${err.message}`
 					);
-				}
-
-				return status(
-					'Internal Server Error',
-					`Unexpected error: ${err}`
-				);
-			}
-		}
-	)
-	.get(
-		'/oauth2/withings/profile',
-		async ({ status, headers: { authorization } }) => {
-			if (authorization === undefined)
-				return status(
-					'Unauthorized',
-					'Authorization header is missing'
-				);
-
-			const accessToken = authorization.replace('Bearer ', '');
-
-			try {
-				const userProfile =
-					await withingsOAuth2Client.fetchUserProfile(accessToken);
-				console.log('\nWithings user profile:', userProfile);
-
-				return new Response(JSON.stringify(userProfile), {
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				});
-			} catch (err) {
-				if (err instanceof Error) {
-					return status('Internal Server Error', `${err.message}`);
 				}
 
 				return status(
