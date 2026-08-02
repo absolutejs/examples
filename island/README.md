@@ -27,8 +27,8 @@ Islands architecture renders most of the page as static HTML on the server and s
 
 ```bash
 # Clone the repository
-git clone https://github.com/alexkahndev/absolutejs-island-example.git
-cd absolutejs-island-example
+git clone https://github.com/absolutejs/examples.git
+cd examples/island
 
 # Install dependencies
 bun install
@@ -41,13 +41,13 @@ The dev server will start and print the local URL (default `http://localhost:300
 
 ## Scripts
 
-| Command            | Description                              |
-| ------------------ | ---------------------------------------- |
-| `bun run dev`      | Start the development server with HMR    |
-| `bun run start`    | Start the production server              |
-| `bun run lint`     | Run ESLint                               |
-| `bun run format`   | Format code with Prettier                |
-| `bun run typecheck`| Run type checking across all frameworks  |
+| Command             | Description                             |
+| ------------------- | --------------------------------------- |
+| `bun run dev`       | Start the development server with HMR   |
+| `bun run start`     | Start the production server             |
+| `bun run lint`      | Run ESLint                              |
+| `bun run format`    | Format code with Prettier               |
+| `bun run typecheck` | Run type checking across all frameworks |
 
 ## Project Structure
 
@@ -80,12 +80,17 @@ src/
 
 ```ts
 // src/frontend/islands/counterStore.ts
-export const counterIslandStore = createIslandStore("counter", {
-  sharedCount: 0,
-}, (set) => ({
-  incrementShared: () => set((state) => ({ sharedCount: state.sharedCount + 1 })),
-  resetShared: () => set({ sharedCount: 0 }),
-}));
+export const counterIslandStore = createIslandStore(
+	'counter',
+	{
+		sharedCount: 0
+	},
+	(set) => ({
+		incrementShared: () =>
+			set((state) => ({ sharedCount: state.sharedCount + 1 })),
+		resetShared: () => set({ sharedCount: 0 })
+	})
+);
 ```
 
 ### 2. Register island components
@@ -93,10 +98,10 @@ export const counterIslandStore = createIslandStore("counter", {
 ```ts
 // src/frontend/islands/registry.ts
 export const islandRegistry = defineIslandRegistry({
-  react:   { ReactCounter },
-  svelte:  { SvelteCounter },
-  vue:     { VueCounter },
-  angular: { AngularCounter },
+	react: { ReactCounter },
+	svelte: { SvelteCounter },
+	vue: { VueCounter },
+	angular: { AngularCounter }
 });
 ```
 
@@ -131,4 +136,4 @@ Every framework has its own typed island helper (`TypedReactIsland`, `TypedSvelt
 | `/svelte`  | Svelte         | Svelte host page with mixed islands  |
 | `/angular` | Angular        | Angular host page with mixed islands |
 | `/html`    | HTML           | Plain HTML host page                 |
-| `/htmx`    | HTMX           | HTMX host page                      |
+| `/htmx`    | HTMX           | HTMX host page                       |

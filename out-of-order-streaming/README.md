@@ -22,8 +22,8 @@ Out-of-order streaming lets slow async sections stream as soon as they resolve i
 
 ```bash
 # Clone the repository
-git clone https://github.com/alexkahndev/absolutejs-out-of-order-streaming-example.git
-cd absolutejs-out-of-order-streaming-example
+git clone https://github.com/absolutejs/examples.git
+cd examples/out-of-order-streaming
 
 # Install dependencies
 bun install
@@ -36,12 +36,12 @@ The dev server will start and print the local URL (default `http://localhost:300
 
 ## Scripts
 
-| Command             | Description                           |
-| ------------------- | ------------------------------------- |
-| `bun run dev`       | Start the development server with HMR |
-| `bun run start`     | Start the production server           |
-| `bun run lint`      | Run ESLint                            |
-| `bun run format`    | Format code with Prettier             |
+| Command             | Description                             |
+| ------------------- | --------------------------------------- |
+| `bun run dev`       | Start the development server with HMR   |
+| `bun run start`     | Start the production server             |
+| `bun run lint`      | Run ESLint                              |
+| `bun run format`    | Format code with Prettier               |
 | `bun run typecheck` | Run type checking across all frameworks |
 
 ## How It Works
@@ -52,15 +52,15 @@ This repository includes equivalent examples for React, Vue, Svelte, and Angular
 
 ## Routes
 
-| Path                | Framework | Description |
-| ------------------- | --------- | ----------- |
-| `/`                 | React     | React out-of-order streaming demo |
-| `/react-streaming`  | React     | Alias for the React streaming demo |
-| `/vue`              | Vue       | Vue out-of-order streaming demo |
-| `/vue-streaming`    | Vue       | Alias for the Vue streaming demo |
-| `/svelte`           | Svelte    | Svelte out-of-order streaming demo |
-| `/svelte-streaming` | Svelte    | Alias for the Svelte streaming demo |
-| `/angular`          | Angular   | Angular out-of-order streaming demo |
-| `/angular-streaming`| Angular   | Alias for the Angular streaming demo |
-| `/html`             | HTML      | Static reference page |
-| `/htmx`             | HTMX      | Static reference page |
+| Path                 | Framework | Description                          |
+| -------------------- | --------- | ------------------------------------ |
+| `/`                  | React     | React out-of-order streaming demo    |
+| `/react-streaming`   | React     | Alias for the React streaming demo   |
+| `/vue`               | Vue       | Vue out-of-order streaming demo      |
+| `/vue-streaming`     | Vue       | Alias for the Vue streaming demo     |
+| `/svelte`            | Svelte    | Svelte out-of-order streaming demo   |
+| `/svelte-streaming`  | Svelte    | Alias for the Svelte streaming demo  |
+| `/angular`           | Angular   | Angular out-of-order streaming demo  |
+| `/angular-streaming` | Angular   | Alias for the Angular streaming demo |
+| `/html`              | HTML      | Static reference page                |
+| `/htmx`              | HTMX      | Static reference page                |
