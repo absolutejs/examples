@@ -4,13 +4,17 @@ import {
   type PolicyDecisionPoint,
 } from "@absolutejs/agency";
 import {
+  agentExchangeApprovalChallenge,
   createAgentExchangeReceiver,
   createAgentExchangeSender,
   createMemoryAgentExchangeReplayStore,
   createMemoryAgentExchangeStore,
   type AgentExchangeReceipt,
+  type AgentExchangeRequest,
   type AgentExchangeSender,
 } from "@absolutejs/agent-exchange";
+import { createAgentExchangeDestinationRegistry } from "@absolutejs/agent-exchange-destinations";
+import { createAgentExchangeHttpDestination } from "@absolutejs/agent-exchange-http-destination";
 import {
   createHardenedOAuthAuthorizationClient,
   decodeOAuthGrant,
@@ -51,6 +55,14 @@ type PendingFlow = {
   readonly sender: AgentExchangeSender;
 };
 
+type PendingEmailFlow = {
+  readonly approval: ReturnType<
+    typeof createWebAuthnAgentExchangeApprovalProvider
+  >;
+  readonly challenge: string;
+  readonly request: AgentExchangeRequest;
+};
+
 export type SafeExchangeResult = {
   readonly assurance: AgentExchangeReceipt["assurance"];
   readonly completedAt: number;
@@ -59,6 +71,16 @@ export type SafeExchangeResult = {
   readonly modelObservedSecret: false;
   readonly processingMode: "tool-confined";
   readonly protocol: ReturnType<MockAuthorizationServer["protocolEvidence"]>;
+  readonly reference?: string;
+  readonly status: "submitted";
+};
+
+export type SafeEmailExchangeResult = {
+  readonly assuranceMode: "passkey-approved-bearer-secret";
+  readonly exchangeId: string;
+  readonly maximumUses: 1;
+  readonly modelObservedSecret: false;
+  readonly processingMode: "tool-confined";
   readonly reference?: string;
   readonly status: "submitted";
 };
@@ -101,6 +123,7 @@ const validDemoOrigin = (value: string): { origin: string; rpId: string } => {
 export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
   const sessions = new Map<string, DemoSession>();
   const flows = new Map<string, PendingFlow>();
+  const emailFlows = new Map<string, PendingEmailFlow>();
   const credentialStore: WebAuthnCredentialStore =
     createInMemoryWebAuthnCredentialStore();
 
@@ -114,6 +137,39 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
       throw new Error("Demo session expired or changed origin.");
     return value;
   };
+
+  const approvalFor = (activeSession: DemoSession) =>
+    createWebAuthnAgentExchangeApprovalProvider({
+      adapter,
+      allowInsecureLocalhost: true,
+      credentialStore,
+      origin: activeSession.origin,
+      resolveUserId: () => USER_ID,
+      rpId: activeSession.rpId,
+    });
+
+  const emailDestinations = createAgentExchangeDestinationRegistry([
+    createAgentExchangeHttpDestination({
+      authorization: () => "Bearer demo-destination-credential",
+      challengeField: "challenge",
+      endpoint: "https://accounts.example.com/api/verify",
+      fetcher: async (url, init) => {
+        const headers = new Headers(init?.headers);
+        if (
+          String(url) !== "https://accounts.example.com/api/verify" ||
+          headers.get("authorization") !==
+            "Bearer demo-destination-credential" ||
+          new TextDecoder().decode(init?.body as Uint8Array) !==
+            "code=482193&challenge=challenge-demo"
+        )
+          throw new Error("The fixed demo destination rejected the request.");
+        return new Response(null, { status: 204 });
+      },
+      id: "accounts-example",
+      operations: ["verification.submit"],
+      reference: "accounts-example:accepted",
+    }),
+  ]);
 
   return Object.freeze({
     approve: async (input: {
@@ -143,6 +199,103 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
       });
       flow.authorizationServer.assertPublicValue(result);
       return result;
+    },
+
+    approveEmailExchange: async (input: {
+      readonly exchangeId: string;
+      readonly origin: string;
+      readonly response: unknown;
+      readonly sessionToken: string;
+    }): Promise<SafeEmailExchangeResult> => {
+      session(input.sessionToken, input.origin);
+      const flow = emailFlows.get(input.exchangeId);
+      if (flow === undefined)
+        throw new Error("Email exchange expired or was already used.");
+      emailFlows.delete(input.exchangeId);
+      await flow.approval.verify({
+        challenge: flow.challenge,
+        request: flow.request,
+        response: input.response,
+        subject: USER_ID,
+        verifierOrigin: input.origin,
+      });
+      const plaintext = new TextEncoder().encode("482193");
+      try {
+        const submitted = await emailDestinations.submit({
+          plaintext,
+          request: flow.request,
+          tenantId: USER_ID,
+        });
+        return Object.freeze({
+          assuranceMode: "passkey-approved-bearer-secret" as const,
+          exchangeId: flow.request.exchangeId,
+          maximumUses: 1 as const,
+          modelObservedSecret: false as const,
+          processingMode: "tool-confined" as const,
+          ...(submitted.reference === undefined
+            ? {}
+            : { reference: submitted.reference }),
+          status: "submitted" as const,
+        });
+      } finally {
+        plaintext.fill(0);
+      }
+    },
+
+    beginEmailExchange: async (input: {
+      readonly origin: string;
+      readonly sessionToken: string;
+    }) => {
+      const activeSession = session(input.sessionToken, input.origin);
+      if ((await credentialStore.listCredentialsByUser(USER_ID)).length === 0)
+        throw new Error("Register a passkey before requesting an exchange.");
+      const now = Date.now();
+      const exchangeId = `email_${crypto.randomUUID()}`;
+      const request = Object.freeze({
+        actionId: `action_${crypto.randomUUID()}`,
+        assurance: {
+          approval: "webauthn-verifier-bound",
+          credential: "token-confined-broker",
+          execution: "purpose-bound",
+        },
+        createdAt: now,
+        exchangeId,
+        expiresAt: now + EXCHANGE_TTL_MS,
+        idempotencyKey: crypto.randomUUID(),
+        maximumUses: 1,
+        nonce: crypto.randomUUID(),
+        processingMode: "tool-confined",
+        purpose: "Retrieve and submit one correlated email verification code",
+        recipient: {
+          agentId: "recipient-mailbox-agent",
+          authority: activeSession.origin,
+          subject: USER_ID,
+        },
+        requester: {
+          agentId: "requester-agent",
+          authority: activeSession.origin,
+          subject: USER_ID,
+        },
+        resource: {
+          accountRef: "mailbox:demo-owner",
+          challengeId: "challenge-demo",
+          operation: "verification.submit",
+          origin: "https://accounts.example.com",
+          provider: "gmail",
+        },
+        risk: "authentication",
+        secretKind: "email-one-time-code",
+      } satisfies AgentExchangeRequest);
+      const approval = approvalFor(activeSession);
+      const challenge = await agentExchangeApprovalChallenge(request);
+      const begun = await approval.begin({
+        challenge,
+        request,
+        subject: USER_ID,
+        verifierOrigin: activeSession.origin,
+      });
+      emailFlows.set(exchangeId, { approval, challenge, request });
+      return Object.freeze({ exchangeId, options: begun.options });
     },
 
     beginExchange: async (input: {
@@ -222,14 +375,7 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
         }),
         allowHighRisk: () => true,
         allowInsecureLocalhost: true,
-        approvalProvider: createWebAuthnAgentExchangeApprovalProvider({
-          adapter,
-          allowInsecureLocalhost: true,
-          credentialStore,
-          origin: activeSession.origin,
-          resolveUserId: () => USER_ID,
-          rpId: activeSession.rpId,
-        }),
+        approvalProvider: approvalFor(activeSession),
         e2ee: envelope,
         keyDirectory: {
           resolve: () => ({

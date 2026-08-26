@@ -7,12 +7,14 @@
       "dependencies": {
         "@absolutejs/absolute": "0.20.0-beta.0",
         "@absolutejs/agency": "0.7.4",
-        "@absolutejs/agent-exchange": "0.2.0",
-        "@absolutejs/agent-exchange-oauth": "0.2.0",
+        "@absolutejs/agent-exchange": "0.3.0",
+        "@absolutejs/agent-exchange-destinations": "0.1.0",
+        "@absolutejs/agent-exchange-http-destination": "0.1.0",
+        "@absolutejs/agent-exchange-oauth": "0.2.1",
         "@absolutejs/agent-exchange-oauth-stores": "0.1.0",
         "@absolutejs/agent-exchange-oauth-webcrypto": "0.1.0",
         "@absolutejs/agent-exchange-provider-conformance": "0.1.0",
-        "@absolutejs/agent-exchange-webauthn": "0.2.0",
+        "@absolutejs/agent-exchange-webauthn": "0.2.1",
         "@absolutejs/auth": "0.73.1",
         "@absolutejs/e2ee-webcrypto": "0.1.0",
         "@simplewebauthn/browser": "13.3.0",
@@ -46,9 +48,13 @@
 
     "@absolutejs/agency": ["@absolutejs/agency@0.7.4", "", { "dependencies": { "@absolutejs/manifest": "^0.7.2", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "drizzle-orm": ">=1.0.0-rc.4 <2" } }, "sha512-NmWqseXKiMietNHijMgwPEkeEHfbsv/kLwNMA6uQ924cnZQRjZACva1zpYWgQRHgqcmWmt4KgGXs9t+0lQ9Grw=="],
 
-    "@absolutejs/agent-exchange": ["@absolutejs/agent-exchange@0.2.0", "", { "dependencies": { "@absolutejs/a2a": "^0.3.6", "@absolutejs/agency": "^0.7.4", "@absolutejs/e2ee": "0.1.0", "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-VxZzcK+q+dTAJT1CmqzKUa2ddjZLM7apa8iy6XyfQ6Gx94LzxnGdWpmbNnCO5g/vg65Vk2VcW2yGctszjC7BmA=="],
+    "@absolutejs/agent-exchange": ["@absolutejs/agent-exchange@0.3.0", "", { "dependencies": { "@absolutejs/a2a": "^0.3.6", "@absolutejs/agency": "^0.7.4", "@absolutejs/e2ee": "0.1.0", "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-t2sQZKjY/YF9YGfddJik6XVAodLLgUMI4QrlHzfeLRHOMZet2iuo/mggFOiqENxFG+/bVxEq3Kqsc46GpPTCgA=="],
 
-    "@absolutejs/agent-exchange-oauth": ["@absolutejs/agent-exchange-oauth@0.2.0", "", { "peerDependencies": { "@absolutejs/agent-exchange": ">=0.2.0 <0.3" } }, "sha512-dcnNoEEihJohzeQlB+COHQ/+PjJX3OsqA8Olpj+bKDX/ZZHxH0AhYUWg2W3RjKjKeBZnUMYmX/V4iKMv5+2xlw=="],
+    "@absolutejs/agent-exchange-destinations": ["@absolutejs/agent-exchange-destinations@0.1.0", "", { "dependencies": { "@absolutejs/agent-exchange": "0.3.0" } }, "sha512-YG0xkaYqUb81ehfAONjfLiEqW9Tb1CNTCLQKajd7GrrzHDe58pkic0+3vEJJQJ0ylBFecRX6kTxSAW2C8JBYqg=="],
+
+    "@absolutejs/agent-exchange-http-destination": ["@absolutejs/agent-exchange-http-destination@0.1.0", "", { "dependencies": { "@absolutejs/agent-exchange-destinations": "0.1.0" } }, "sha512-oow5GXPpPr1INwTvrng2chaWOrClJF2sXFwtkNMN8hkWouYhOgmx1Ibd4nJA3qIFz0MmmoXOJ1tU6q/t1pqLZg=="],
+
+    "@absolutejs/agent-exchange-oauth": ["@absolutejs/agent-exchange-oauth@0.2.1", "", { "peerDependencies": { "@absolutejs/agent-exchange": ">=0.2.0 <0.4" } }, "sha512-yXeerAhy4d5WTZDeuJ3cBu5bZLNK4Cgjprnq/r7Y+QjwRpWADcLDN3zz4MJphGCgaF/AJ7sIUZh6s/yrNDIfyQ=="],
 
     "@absolutejs/agent-exchange-oauth-stores": ["@absolutejs/agent-exchange-oauth-stores@0.1.0", "", { "peerDependencies": { "@absolutejs/agent-exchange-oauth": ">=0.2.0 <0.3" } }, "sha512-GCvXKnsVDhSbtojuhRtl7hscJiOj1c4qF4q5Ctwb2y+tLqAx16sjuYfem1XCNcdTfPgauX7iUi+CSIL1RKpwkQ=="],
 
@@ -56,7 +62,7 @@
 
     "@absolutejs/agent-exchange-provider-conformance": ["@absolutejs/agent-exchange-provider-conformance@0.1.0", "", {}, "sha512-UTx0e5zmyw1MlkTBHQDa3xrjcY3jCarRD80gH5Ln9dTKkfX2zm05SJhmWJ0pyDBJjVedLE1Pa6uqJ3MjNFNL5w=="],
 
-    "@absolutejs/agent-exchange-webauthn": ["@absolutejs/agent-exchange-webauthn@0.2.0", "", { "peerDependencies": { "@absolutejs/agent-exchange": ">=0.2.0 <0.3", "@absolutejs/auth": ">=0.73.1 <0.74" } }, "sha512-aVFs14auPkRL+4qOIySu82Q94PrFeh5NyQxu1w4brc7MLIRZ3iK6BaprtIuHw0WPCC34gQn5QHg2EphPMcJvPQ=="],
+    "@absolutejs/agent-exchange-webauthn": ["@absolutejs/agent-exchange-webauthn@0.2.1", "", { "peerDependencies": { "@absolutejs/agent-exchange": ">=0.2.0 <0.4", "@absolutejs/auth": ">=0.73.1 <0.74" } }, "sha512-XPcWb16V3n9lPZAU3YM46/P2cQTTOEG88LmvUNLyYhTHzkCfE2LvaOPJ9WgiEW8fDelRLI7GpMalzx4UVAQvjw=="],
 
     "@absolutejs/auth": ["@absolutejs/auth@0.73.1", "", { "dependencies": { "@absolutejs/linked-providers": "0.0.6", "@absolutejs/manifest": "^0.10.0", "@neondatabase/serverless": "1.0.0", "@opentelemetry/api": "1.9.1", "@simplewebauthn/browser": "13.3.0", "citra": "0.29.13", "typebox": "^1.3.16" }, "peerDependencies": { "@node-saml/node-saml": ">=5.1.0 <6", "@simplewebauthn/server": ">=13.3.2 <14", "drizzle-orm": ">=1.0.0-rc.4 <2", "elysia": "^2.0.0-beta.6", "react": ">=18 <20", "solid-js": ">=1.9.14 <2", "svelte": ">=5.56.7 <6", "vue": ">=3.5.40 <4" }, "optionalPeers": ["@node-saml/node-saml", "@simplewebauthn/server", "react", "solid-js", "svelte", "vue"], "bin": { "absolute-auth": "dist/cli/migrate.js" } }, "sha512-OlDH0k5V8mlXvBcbazOGhTRXk/a2OUVRGi6ZzWn3p4B/VUzyG31eIKJwAz0BBxzZbtr6CjoUvfYqiJZNfY+DrA=="],
 

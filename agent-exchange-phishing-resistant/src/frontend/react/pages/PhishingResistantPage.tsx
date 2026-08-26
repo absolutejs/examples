@@ -23,6 +23,16 @@ type SafeReceipt = {
   readonly status: "submitted";
 };
 
+type SafeEmailReceipt = {
+  readonly assuranceMode: "passkey-approved-bearer-secret";
+  readonly exchangeId: string;
+  readonly maximumUses: 1;
+  readonly modelObservedSecret: false;
+  readonly processingMode: "tool-confined";
+  readonly reference?: string;
+  readonly status: "submitted";
+};
+
 const api = async <Result,>(
   path: string,
   sessionToken?: string,
@@ -46,6 +56,7 @@ export const PhishingResistantPage = ({
   cssPath,
 }: PhishingResistantPageProps) => {
   const [error, setError] = useState<string>();
+  const [emailReceipt, setEmailReceipt] = useState<SafeEmailReceipt>();
   const [passkeyReady, setPasskeyReady] = useState(false);
   const [receipt, setReceipt] = useState<SafeReceipt>();
   const [running, setRunning] = useState(false);
@@ -106,6 +117,38 @@ export const PhishingResistantPage = ({
         caught instanceof Error
           ? caught.message
           : "The exchange failed safely.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const runEmailExchange = async () => {
+    setError(undefined);
+    setEmailReceipt(undefined);
+    setRunning(true);
+    try {
+      const token = await ensureSession();
+      const begun = await api<{
+        readonly exchangeId: string;
+        readonly options: Parameters<
+          typeof startAuthentication
+        >[0]["optionsJSON"];
+      }>("/api/email-exchanges", token);
+      const response = await startAuthentication({
+        optionsJSON: begun.options,
+      });
+      setEmailReceipt(
+        await api<SafeEmailReceipt>("/api/email-exchanges/approve", token, {
+          exchangeId: begun.exchangeId,
+          response,
+        }),
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The email exchange failed safely.",
       );
     } finally {
       setRunning(false);
@@ -212,6 +255,30 @@ export const PhishingResistantPage = ({
                 </dl>
               )}
             </article>
+          </section>
+
+          <section className="boundary">
+            <strong>Explicit compatibility mode: email bearer secret</strong>
+            <span>
+              This second flow uses the same exact-request passkey approval, but
+              labels the six-digit email code honestly as a relayable bearer
+              secret. A deterministic destination adapter submits it to one
+              fixed HTTPS endpoint; neither agent receives the code or endpoint
+              response.
+            </span>
+            <button
+              disabled={running || !passkeyReady}
+              onClick={runEmailExchange}
+              type="button"
+            >
+              {running ? "Waiting for secure approval…" : "Run email-code mode"}
+            </button>
+            {emailReceipt === undefined ? null : (
+              <span>
+                Receipt: {emailReceipt.status}; model saw secret: no; assurance:{" "}
+                {emailReceipt.assuranceMode}
+              </span>
+            )}
           </section>
 
           {error === undefined ? null : (

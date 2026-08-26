@@ -5,6 +5,13 @@ action after a real, verifier-bound passkey approval. The authorization code,
 PKCE verifier, DPoP access token, and decrypted grant remain inside deterministic
 tools; agent-visible output is a redacted receipt.
 
+It also demonstrates the explicitly weaker compatibility mode requested for
+email verification: the passkey approval remains phishing-resistant, while the
+six-digit email code is honestly labeled a relayable bearer secret. The code is
+submitted through `@absolutejs/agent-exchange-destinations` and a fixed
+`@absolutejs/agent-exchange-http-destination`; it is never returned to either
+agent.
+
 ```bash
 bun install
 bun run dev
@@ -22,12 +29,15 @@ deliberate WebAuthn development exception implemented only for `localhost` and
 - OAuth PAR, RAR authorization details, S256 PKCE, issuer checking, resource indicators
 - non-exportable WebCrypto P-256 DPoP key, authorization-server nonce retry, and `ath`
 - one-time, DPoP-bound protected-resource call and agent-visible leakage canary
+- exact origin/operation/secret-kind destination routing, fixed HTTPS endpoint,
+  redirect rejection, isolated secret bytes, and a response-body-blind receipt
 
-The authorization server, resource server, stores, and transport are in-process
-demonstration adapters. A production deployment should use durable stores and a
-trusted token-confined broker. Google and Microsoft profiles remain BYO adapters,
-but are not represented as satisfying this strict profile while their public
-capabilities have gaps.
+The authorization server, resource server, mailbox code, destination, stores,
+and transport are in-process demonstration adapters. A production deployment
+should use the durable PaaS broker, real mailbox source, encrypted destination
+credentials, and an operator-reviewed destination allowlist. Google and
+Microsoft profiles remain BYO adapters, but are not represented as satisfying
+the strict sender-constrained profile while their public capabilities have gaps.
 
 ## Standards
 
@@ -40,4 +50,3 @@ capabilities have gaps.
 - Authorization Server Issuer Identification (RFC 9207): <https://www.rfc-editor.org/rfc/rfc9207>
 - DPoP (RFC 9449): <https://www.rfc-editor.org/rfc/rfc9449>
 - HPKE (RFC 9180): <https://www.rfc-editor.org/rfc/rfc9180>
-

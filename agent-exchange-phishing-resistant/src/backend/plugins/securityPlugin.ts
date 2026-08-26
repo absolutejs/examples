@@ -88,4 +88,23 @@ export const securityPlugin = new Elysia({ prefix: "/api" })
         sessionToken: sessionToken(request),
       });
     }),
+  )
+  .post("/email-exchanges", ({ request, set }) =>
+    safely(set, () =>
+      demo.beginEmailExchange({
+        origin: requestOrigin(request),
+        sessionToken: sessionToken(request),
+      }),
+    ),
+  )
+  .post("/email-exchanges/approve", ({ body, request, set }) =>
+    safely(set, () => {
+      const approval = approvalBody(body);
+      return demo.approveEmailExchange({
+        exchangeId: approval.exchangeId,
+        origin: requestOrigin(request),
+        response: approval.response,
+        sessionToken: sessionToken(request),
+      });
+    }),
   );
