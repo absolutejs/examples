@@ -172,6 +172,11 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
       });
 
       const requested = await sender.request({
+        assurance: {
+          approval: "policy",
+          credential: "bearer",
+          execution: "purpose-bound",
+        },
         expiresAt: Date.now() + 60_000,
         idempotencyKey: crypto.randomUUID(),
         processingMode: "tool-confined",
@@ -246,7 +251,7 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
       <body>
         <main>
           <header className="page-header">
-            <p className="eyebrow">@absolutejs/agent-exchange · 0.1</p>
+            <p className="eyebrow">@absolutejs/agent-exchange · 0.2</p>
             <h1>Let agents use a code without letting models read it.</h1>
             <p className="lead">
               This browser demo runs the real Agency authorization, single-use
@@ -256,11 +261,14 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
           </header>
 
           <section className="warning" aria-label="Experimental warning">
-            <strong>Experimental cryptography provider</strong>
+            <strong>
+              Confidential and model-blind, not phishing-resistant
+            </strong>
             <span>
-              The exchange protocol is real; the same-page tools, transport, and
-              in-memory stores are demonstration adapters, not a production OTP
-              relay.
+              A six-digit email code is a bearer credential, so a phisher can
+              relay it even when its delivery is encrypted. The exchange
+              protocol is real; the same-page tools, transport, and in-memory
+              stores are demonstration adapters, not a production OTP relay.
             </span>
           </section>
 

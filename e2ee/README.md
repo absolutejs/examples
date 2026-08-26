@@ -14,6 +14,11 @@ The demo email also carries a simulated mailbox-trusted DMARC pass and echoes
 the request challenge, exercising the source adapter's hardened correlation
 path.
 
+This example deliberately declares `policy + bearer + purpose-bound` assurance.
+An email OTP is not phishing-resistant, even when E2EE keeps it away from both
+agent models. For phishing-resistant authorization, use a request-bound WebAuthn
+approval and the DPoP OAuth grant flow from `agent-exchange-providers`.
+
 ## Run
 
 ```bash
