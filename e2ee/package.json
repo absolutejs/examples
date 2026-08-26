@@ -16,7 +16,7 @@
     "@absolutejs/absolute": "0.20.0-beta.0",
     "@absolutejs/agency": "0.7.4",
     "@absolutejs/agent-exchange": "0.1.1",
-    "@absolutejs/agent-exchange-email": "0.2.0",
+    "@absolutejs/agent-exchange-email": "0.2.1",
     "@absolutejs/e2ee": "0.1.0",
     "@absolutejs/e2ee-webcrypto": "0.1.0",
     "elysia": "2.0.0-beta.6",
