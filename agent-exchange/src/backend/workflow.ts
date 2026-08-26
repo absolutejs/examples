@@ -5,6 +5,7 @@ import {
 } from "@absolutejs/agency";
 import {
   AgentExchangeError,
+  agentExchangeMandateApprovalChallenge,
   createAgentExchangeReceiver,
   createAgentExchangeSender,
   createAgentExchangeStandingMandateAuthority,
@@ -14,8 +15,15 @@ import {
   type AgentExchangeMandateJwsSigner,
   type AgentExchangeMandateJwsVerifier,
   type AgentExchangeRequest,
+  type AgentExchangeStandingMandateDraft,
 } from "@absolutejs/agent-exchange";
 import { createEmailVerificationCodeSource } from "@absolutejs/agent-exchange-email";
+import { createWebAuthnAgentExchangeMandateApprovalProvider } from "@absolutejs/agent-exchange-webauthn";
+import type {
+  WebAuthnAdapter,
+  WebAuthnCredential,
+  WebAuthnCredentialStore,
+} from "@absolutejs/auth";
 import {
   createWebCryptoEnvelopeProvider,
   generateWebCryptoRecipientKeyPair,
@@ -51,6 +59,13 @@ const encodeBase64Url = (value: Uint8Array): string =>
   Buffer.from(value).toString("base64url");
 const decodeBase64Url = (value: string): Uint8Array<ArrayBuffer> =>
   new Uint8Array([...Buffer.from(value, "base64url")]);
+
+const sha256 = async (value: string): Promise<string> =>
+  `sha256:${encodeBase64Url(
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)),
+    ),
+  )}`;
 
 const createJws = async (): Promise<{
   readonly signer: AgentExchangeMandateJwsSigner;
@@ -178,15 +193,7 @@ export const runSecureDelegationDemo =
       store: createMemoryAgentExchangeMandateStore(),
       verifier,
     });
-    const issued = await mandateAuthority.issue({
-      approval: {
-        credentialIdHash: "sha256:synthetic-passkey-credential",
-        method: "webauthn-verifier-bound",
-        rpId: "owner.example",
-        userVerified: true,
-        verifiedAt: now,
-        verifierOrigin: issuer.authority,
-      },
+    const mandateDraft: AgentExchangeStandingMandateDraft = {
       audience,
       expiresAt: now + 24 * 60 * 60_000,
       grants: [
@@ -205,6 +212,86 @@ export const runSecureDelegationDemo =
       maximumUses: 1,
       notBefore: now,
       requester,
+    };
+    const credential: WebAuthnCredential = {
+      counter: 4,
+      createdAt: now - 86_400_000,
+      credentialId: "synthetic-passkey-credential",
+      publicKey: "synthetic-public-key",
+      userId: issuer.subject,
+    };
+    const credentialStore: WebAuthnCredentialStore = {
+      getCredential: async (credentialId) =>
+        credentialId === credential.credentialId ? credential : undefined,
+      listCredentialsByUser: async (userId) =>
+        userId === credential.userId ? [credential] : [],
+      removeCredential: async () => {},
+      saveCredential: async (value) => {
+        Object.assign(credential, value);
+      },
+    };
+    const webauthnAdapter: WebAuthnAdapter = {
+      createAuthenticationOptions: async (input) => ({
+        challenge: input.challenge ?? "",
+        options: {
+          allowCredentials: input.allowCredentials,
+          rpId: input.rpId,
+          userVerification: input.userVerification,
+        },
+      }),
+      createRegistrationOptions: async () => ({
+        challenge: "unused",
+        options: {},
+      }),
+      verifyAuthentication: async (input) => {
+        const response = input.response as { readonly id?: unknown };
+        return {
+          newCounter: input.credential.counter + 1,
+          verified:
+            input.expectedChallenge ===
+              (await agentExchangeMandateApprovalChallenge(mandateDraft)) &&
+            input.expectedOrigin === issuer.authority &&
+            input.expectedRPID === "owner.example" &&
+            input.requireUserVerification === true &&
+            response.id === credential.credentialId,
+        };
+      },
+      verifyRegistration: async () => ({ verified: false }),
+    };
+    const approvalProvider = createWebAuthnAgentExchangeMandateApprovalProvider(
+      {
+        adapter: webauthnAdapter,
+        credentialStore,
+        now: () => now,
+        origin: issuer.authority,
+        resolveUserId: ({ subject }) => subject,
+        rpId: "owner.example",
+      },
+    );
+    const challenge = await agentExchangeMandateApprovalChallenge(mandateDraft);
+    await approvalProvider.begin({
+      challenge,
+      draft: mandateDraft,
+      subject: issuer.subject,
+      verifierOrigin: issuer.authority,
+    });
+    const verifiedApproval = await approvalProvider.verify({
+      challenge,
+      draft: mandateDraft,
+      response: { id: credential.credentialId },
+      subject: issuer.subject,
+      verifierOrigin: issuer.authority,
+    });
+    const issued = await mandateAuthority.issue({
+      ...mandateDraft,
+      approval: {
+        credentialIdHash: await sha256(verifiedApproval.credentialId),
+        method: "webauthn-verifier-bound",
+        rpId: verifiedApproval.rpId,
+        userVerified: verifiedApproval.userVerified,
+        verifiedAt: now,
+        verifierOrigin: verifiedApproval.verifierOrigin,
+      },
     });
     steps.push({
       detail:
