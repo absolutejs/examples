@@ -1,9 +1,77 @@
 import { Elysia } from "elysia";
+import { createMemoryA2aTaskStore } from "@absolutejs/a2a";
+import {
+  connectAgentExchangeA2a,
+  createAgentExchangeA2aHandler,
+} from "@absolutejs/agent-exchange-a2a";
 import { createSimpleWebAuthnAdapter } from "@absolutejs/auth/webauthn";
 import { createExchangeDemo } from "../security/exchangeDemo";
 
 const adapter = await createSimpleWebAuthnAdapter();
 const demo = createExchangeDemo(adapter);
+const delegatedCaller = Object.freeze({
+  agentId: "requester-agent",
+  delegationId: "demo-oauth-delegation",
+  userId: "demo-owner",
+});
+const exchangeA2aHandler = createAgentExchangeA2aHandler<
+  typeof delegatedCaller
+>({
+  agentCard: {
+    capabilities: {},
+    defaultInputModes: ["application/json"],
+    defaultOutputModes: ["application/json"],
+    description: "Demo recipient mailbox agent",
+    name: "Recipient mailbox agent",
+    skills: [],
+    supportedInterfaces: [
+      {
+        protocolBinding: "JSONRPC",
+        protocolVersion: "1.0",
+        url: "https://recipient-agent.example/a2a",
+      },
+    ],
+    version: "0.1.0",
+  },
+  authorize: (request) =>
+    request.headers.get("authorization") === "Bearer demo-delegated-agent-token"
+      ? {
+          actor: {
+            agentId: delegatedCaller.agentId,
+            scopes: ["agent-exchange:email:request"],
+            userId: delegatedCaller.userId,
+          },
+          authorizationKey: `${delegatedCaller.userId}:${delegatedCaller.delegationId}`,
+          caller: delegatedCaller,
+          ok: true as const,
+        }
+      : { ok: false as const },
+  execute: async ({ caller, reference }) => {
+    const receipt = await demo.executeStandingMandate({ caller, reference });
+    return {
+      completedAt: Date.now(),
+      exchangeId: receipt.exchangeId,
+      mandateId: receipt.mandateId,
+      modelObservedSecret: false,
+      processingMode: "tool-confined",
+      ...(receipt.reference === undefined
+        ? {}
+        : { reference: receipt.reference }),
+      status: "submitted" as const,
+      usesRemaining: receipt.usesRemaining,
+    };
+  },
+  path: "/a2a",
+  taskStore: createMemoryA2aTaskStore(),
+});
+const exchangeA2aFetch = async (input: RequestInfo | URL, init?: RequestInit) =>
+  (await exchangeA2aHandler(new Request(input, init))) ??
+  new Response("not found", { status: 404 });
+const exchangeA2aClient = connectAgentExchangeA2a({
+  fetch: exchangeA2aFetch,
+  headers: { authorization: "Bearer demo-delegated-agent-token" },
+  origin: "https://recipient-agent.example",
+});
 
 const requestOrigin = (request: Request): string => new URL(request.url).origin;
 
@@ -157,13 +225,15 @@ export const securityPlugin = new Elysia({ prefix: "/api" })
     }),
   )
   .post("/standing-mandates/execute", ({ body, request, set }) =>
-    safely(set, () =>
-      demo.executeStandingMandate({
+    safely(set, async () => {
+      const prepared = demo.prepareStandingMandateRequest({
+        caller: delegatedCaller,
         ...mandateBody(body),
         origin: requestOrigin(request),
         sessionToken: sessionToken(request),
-      }),
-    ),
+      });
+      return (await exchangeA2aClient).send(prepared);
+    }),
   )
   .post("/standing-mandates/revoke", ({ body, request, set }) =>
     safely(set, () =>

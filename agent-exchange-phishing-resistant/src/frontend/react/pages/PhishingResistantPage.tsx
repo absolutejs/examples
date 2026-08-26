@@ -42,7 +42,7 @@ type StandingMandate = {
 };
 
 type StandingMandateReceipt = {
-  readonly assuranceMode: "passkey-enrolled-standing-mandate";
+  readonly completedAt: number;
   readonly exchangeId: string;
   readonly mandateId: string;
   readonly modelObservedSecret: false;
@@ -427,7 +427,8 @@ export const PhishingResistantPage = ({
             {standingReceipt === undefined ? null : (
               <span>
                 Receipt: {standingReceipt.status}; model saw secret: no;
-                authorization: {standingReceipt.assuranceMode}
+                authorization: passkey-enrolled standing mandate over negotiated
+                A2A
               </span>
             )}
           </section>

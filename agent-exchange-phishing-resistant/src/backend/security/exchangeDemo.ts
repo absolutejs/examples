@@ -20,6 +20,10 @@ import {
   type AgentExchangeStandingMandateDraft,
   type SignedAgentExchangeStandingMandate,
 } from "@absolutejs/agent-exchange";
+import {
+  toA2aAgentExchangeReference,
+  type A2aAgentExchangeReference,
+} from "@absolutejs/agent-exchange/a2a";
 import { createAgentExchangeDestinationRegistry } from "@absolutejs/agent-exchange-destinations";
 import { createAgentExchangeHttpDestination } from "@absolutejs/agent-exchange-http-destination";
 import {
@@ -91,6 +95,12 @@ type PendingMandateFlow = {
 type ActiveMandate = {
   readonly mandate: AgentExchangeStandingMandate;
   readonly signedMandate: SignedAgentExchangeStandingMandate;
+};
+
+export type DemoDelegatedAgentCaller = {
+  readonly agentId: string;
+  readonly delegationId: string;
+  readonly userId: string;
 };
 
 type DemoMandateRecord = AgentExchangeMandateRegistration & {
@@ -235,6 +245,7 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
   const emailFlows = new Map<string, PendingEmailFlow>();
   const mandateFlows = new Map<string, PendingMandateFlow>();
   const activeMandates = new Map<string, ActiveMandate>();
+  const standingRequests = new Map<string, AgentExchangeRequest>();
   const credentialStore: WebAuthnCredentialStore =
     createInMemoryWebAuthnCredentialStore();
   const mandateStore = createDemoMandateStore();
@@ -537,14 +548,20 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
       return Object.freeze({ mandateId, options: begun.options });
     },
 
-    executeStandingMandate: async (input: {
-      readonly mandateId: string;
+    prepareStandingMandateRequest: (input: {
+      readonly caller: DemoDelegatedAgentCaller;
       readonly origin: string;
       readonly sessionToken: string;
-    }): Promise<StandingMandateExecutionResult> => {
-      const activeSession = session(input.sessionToken, input.origin);
+      readonly mandateId: string;
+    }): AgentExchangeRequest => {
+      session(input.sessionToken, input.origin);
       const active = activeMandates.get(input.mandateId);
-      if (active === undefined)
+      if (
+        active === undefined ||
+        active.mandate.requester.agentId !== input.caller.agentId ||
+        active.mandate.requester.delegationId !== input.caller.delegationId ||
+        active.mandate.requester.subject !== input.caller.userId
+      )
         throw new Error("The standing mandate is unavailable.");
       const now = Date.now();
       const exchangeId = `standing_${crypto.randomUUID()}`;
@@ -576,6 +593,31 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
         risk: "authentication",
         secretKind: "email-one-time-code",
       } satisfies AgentExchangeRequest);
+      standingRequests.set(exchangeId, request);
+      return request;
+    },
+
+    executeStandingMandate: async (input: {
+      readonly caller: DemoDelegatedAgentCaller;
+      readonly reference: A2aAgentExchangeReference;
+    }): Promise<StandingMandateExecutionResult> => {
+      const request = standingRequests.get(input.reference.exchangeId);
+      if (request === undefined)
+        throw new Error("The standing request is unavailable.");
+      standingRequests.delete(input.reference.exchangeId);
+      const active =
+        request.mandateId === undefined
+          ? undefined
+          : activeMandates.get(request.mandateId);
+      if (
+        active === undefined ||
+        JSON.stringify(toA2aAgentExchangeReference(request)) !==
+          JSON.stringify(input.reference) ||
+        request.requester.agentId !== input.caller.agentId ||
+        request.requester.delegationId !== input.caller.delegationId ||
+        request.requester.subject !== input.caller.userId
+      )
+        throw new Error("The delegated standing request was rejected.");
       await (
         await mandateAuthority
       ).authorize({
@@ -588,12 +630,12 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
         const submitted = await emailDestinations.submit({
           plaintext,
           request,
-          tenantId: activeSession.origin,
+          tenantId: active.mandate.issuer.subject,
         });
         return Object.freeze({
           assuranceMode: "passkey-enrolled-standing-mandate" as const,
-          exchangeId,
-          mandateId: input.mandateId,
+          exchangeId: request.exchangeId,
+          mandateId: active.mandate.mandateId,
           maximumUses: 1 as const,
           modelObservedSecret: false as const,
           processingMode: "tool-confined" as const,
@@ -601,7 +643,7 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
             ? {}
             : { reference: submitted.reference }),
           status: "submitted" as const,
-          usesRemaining: mandateStore.remaining(input.mandateId),
+          usesRemaining: mandateStore.remaining(active.mandate.mandateId),
         });
       } finally {
         plaintext.fill(0);
