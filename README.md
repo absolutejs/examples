@@ -7,6 +7,7 @@ Each directory is a standalone example app. Pick one, `cd` in, `bun install`, `b
 | [`ai/`](./ai)                                         | Multi-provider chat / completion using `@absolutejs/ai`                                                    | `@absolutejs/ai`           |
 | [`auth/`](./auth)                                     | 6-framework OAuth2 login, identity linking/merging, and connector grants against `@absolutejs/auth`        | `@absolutejs/auth`         |
 | [`crm/`](./crm)                                       | 6-framework lead-capture form against `@absolutejs/crm` runtime + local entity store                       | `@absolutejs/crm`          |
+| [`e2ee/`](./e2ee)                                     | Explicit E2EE provider selection and a purpose-bound, model-blind protected-value exchange                 | `@absolutejs/e2ee`         |
 | [`error-boundaries/`](./error-boundaries)             | Per-route error boundaries, fallback UIs, RUM hooks                                                        | `@absolutejs/absolute`     |
 | [`image-optimization/`](./image-optimization)         | Image pipeline: format negotiation, responsive srcsets, blur placeholders                                  | `@absolutejs/absolute`     |
 | [`isolated-jsc/`](./isolated-jsc)                     | Browser demo for Bun-native sandboxed JavaScript execution with timeouts, memory caps, and host References | `@absolutejs/isolated-jsc` |

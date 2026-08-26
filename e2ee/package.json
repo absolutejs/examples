@@ -1,0 +1,42 @@
+{
+  "name": "absolutejs-e2ee-example",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "config": "absolute config",
+    "dev": "absolute dev",
+    "format": "absolute prettier --write",
+    "lint": "absolute eslint",
+    "ls": "absolute ls",
+    "ps": "absolute ps",
+    "start": "absolute start",
+    "typecheck": "absolute typecheck"
+  },
+  "dependencies": {
+    "@absolutejs/absolute": "0.20.0-beta.0",
+    "@absolutejs/e2ee": "file:../../e2ee",
+    "@absolutejs/e2ee-webcrypto": "file:../../e2ee-providers/webcrypto",
+    "elysia": "2.0.0-beta.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/bun": "^1.3.11",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint": "^10.1.0",
+    "eslint-plugin-absolute": "^0.11.5",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-security": "^4.0.0",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.57.2"
+  },
+  "overrides": {
+    "@absolutejs/e2ee": "file:../../e2ee"
+  }
+}
