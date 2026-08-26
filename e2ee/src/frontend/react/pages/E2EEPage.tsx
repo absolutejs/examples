@@ -18,6 +18,7 @@ import {
   createWebCryptoEnvelopeProvider,
   generateWebCryptoRecipientKeyPair,
 } from "@absolutejs/e2ee-webcrypto";
+import { runMlsDemo, type MlsDemoResult } from "../../lib/mlsDemo";
 
 type E2EEPageProps = { cssPath?: string };
 
@@ -58,6 +59,26 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
   const [receipt, setReceipt] = useState<DemoReceipt>();
   const [running, setRunning] = useState(false);
   const [securityMode, setSecurityMode] = useState<SecurityMode>("strict-e2ee");
+  const [mlsError, setMlsError] = useState<string>();
+  const [mlsResult, setMlsResult] = useState<MlsDemoResult>();
+  const [mlsRunning, setMlsRunning] = useState(false);
+
+  const runMessagingDemo = async () => {
+    setMlsError(undefined);
+    setMlsResult(undefined);
+    setMlsRunning(true);
+    try {
+      setMlsResult(await runMlsDemo(securityMode));
+    } catch (caught) {
+      setMlsError(
+        caught instanceof Error
+          ? caught.message
+          : "The MLS demonstration failed safely.",
+      );
+    } finally {
+      setMlsRunning(false);
+    }
+  };
 
   const runExchange = async () => {
     if (!/^\d{6}$/u.test(code)) {
@@ -371,10 +392,84 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
             </div>
           </section>
 
+          <section className="mls-section">
+            <div className="mls-copy">
+              <p className="step">4 · Multi-device messaging</p>
+              <h2>Run a real MLS 1.0 conversation.</h2>
+              <p>
+                Alice creates a group, adds Bob with a one-use KeyPackage and
+                Welcome, and both devices exchange encrypted,
+                sender-authenticated messages. Alice then seals her evolving
+                group state with a non-exportable local key and restores it.
+              </p>
+              <button
+                disabled={mlsRunning}
+                onClick={runMessagingDemo}
+                type="button"
+              >
+                {mlsRunning ? "Creating the MLS group…" : "Run two-device MLS"}
+              </button>
+              {mlsError === undefined ? null : (
+                <p className="error" role="alert">
+                  {mlsError}
+                </p>
+              )}
+            </div>
+
+            <div className="mls-result" aria-live="polite">
+              {mlsResult === undefined ? (
+                <p className="empty">
+                  No MLS conversation has completed in this page session.
+                </p>
+              ) : (
+                <dl>
+                  <div>
+                    <dt>Protocol</dt>
+                    <dd>{mlsResult.protocol}</dd>
+                  </div>
+                  <div>
+                    <dt>Mode</dt>
+                    <dd>{mlsResult.securityMode}</dd>
+                  </div>
+                  <div>
+                    <dt>Epoch</dt>
+                    <dd>{mlsResult.epoch}</dd>
+                  </div>
+                  <div>
+                    <dt>Members</dt>
+                    <dd>{mlsResult.members.join(", ")}</dd>
+                  </div>
+                  <div>
+                    <dt>Alice verified</dt>
+                    <dd>{mlsResult.aliceReceived}</dd>
+                  </div>
+                  <div>
+                    <dt>Bob verified</dt>
+                    <dd>{mlsResult.bobReceived}</dd>
+                  </div>
+                  <div>
+                    <dt>Ciphertext</dt>
+                    <dd>{mlsResult.ciphertextBytes} bytes</dd>
+                  </div>
+                  <div>
+                    <dt>State restored</dt>
+                    <dd>{mlsResult.restoredState ? "yes" : "no"}</dd>
+                  </div>
+                  <div>
+                    <dt>Provider</dt>
+                    <dd>{mlsResult.provider}</dd>
+                  </div>
+                </dl>
+              )}
+            </div>
+          </section>
+
           <footer>
             The agent receives authorization state and a typed completion
             receipt. The six-digit value exists only inside the source,
-            encrypted envelope, and recipient sink boundaries.
+            encrypted envelope, and recipient sink boundaries. The MLS demo is
+            experimental and runs locally; its direct KeyPackage handoff is not
+            a production key-transparency or delivery service.
           </footer>
         </main>
       </body>

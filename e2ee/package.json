@@ -10,6 +10,7 @@
     "ls": "absolute ls",
     "ps": "absolute ps",
     "start": "absolute start",
+    "test": "bun test tests/",
     "typecheck": "absolute typecheck"
   },
   "dependencies": {
@@ -17,8 +18,9 @@
     "@absolutejs/agency": "0.7.4",
     "@absolutejs/agent-exchange": "0.2.0",
     "@absolutejs/agent-exchange-email": "0.3.0",
-    "@absolutejs/e2ee": "0.1.0",
-    "@absolutejs/e2ee-webcrypto": "0.1.0",
+    "@absolutejs/e2ee": "0.4.0",
+    "@absolutejs/e2ee-mls": "0.0.1",
+    "@absolutejs/e2ee-webcrypto": "0.1.1",
     "elysia": "2.0.0-beta.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"

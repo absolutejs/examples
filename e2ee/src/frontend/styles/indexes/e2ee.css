@@ -131,6 +131,34 @@ footer {
   background: rgba(7, 20, 18, 0.88);
 }
 
+.mls-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 28px;
+  margin-top: 48px;
+  padding-top: 36px;
+  border-top: 1px solid #1b3732;
+}
+
+.mls-copy h2 {
+  margin-top: 12px;
+  font-size: 1.65rem;
+}
+
+.mls-copy p:not(.step, .error),
+.mls-result {
+  color: #9bb9b2;
+  line-height: 1.65;
+}
+
+.mls-result {
+  min-height: 280px;
+  padding: 24px;
+  border: 1px solid #1b3732;
+  border-radius: 16px;
+  background: rgba(7, 20, 18, 0.88);
+}
+
 .panel label {
   display: block;
   margin: 30px 0 8px;
@@ -218,7 +246,8 @@ footer {
   }
 
   .mode-grid,
-  .exchange-grid {
+  .exchange-grid,
+  .mls-section {
     grid-template-columns: 1fr;
   }
 
