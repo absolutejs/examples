@@ -1,0 +1,233 @@
+import { useState } from "react";
+import { Head } from "@absolutejs/absolute/react/components";
+import {
+  startAuthentication,
+  startRegistration,
+} from "@simplewebauthn/browser";
+
+type PhishingResistantPageProps = { readonly cssPath?: string };
+
+type SafeReceipt = {
+  readonly exchangeId: string;
+  readonly modelObservedSecret: false;
+  readonly processingMode: "tool-confined";
+  readonly protocol: {
+    readonly accessTokenSenderConstrained: true;
+    readonly authorizationDetailsBound: true;
+    readonly nonceRetryObserved: boolean;
+    readonly parUsed: true;
+    readonly pkceS256Verified: boolean;
+    readonly resourceIndicatorBound: true;
+  };
+  readonly reference?: string;
+  readonly status: "submitted";
+};
+
+const api = async <Result,>(
+  path: string,
+  sessionToken?: string,
+  body?: unknown,
+): Promise<Result> => {
+  const response = await fetch(path, {
+    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: {
+      ...(body === undefined ? {} : { "content-type": "application/json" }),
+      ...(sessionToken === undefined ? {} : { "x-demo-session": sessionToken }),
+    },
+    method: "POST",
+  });
+  const value = (await response.json()) as Result & { readonly error?: string };
+  if (!response.ok)
+    throw new Error(value.error ?? "The secure operation failed.");
+  return value;
+};
+
+export const PhishingResistantPage = ({
+  cssPath,
+}: PhishingResistantPageProps) => {
+  const [error, setError] = useState<string>();
+  const [passkeyReady, setPasskeyReady] = useState(false);
+  const [receipt, setReceipt] = useState<SafeReceipt>();
+  const [running, setRunning] = useState(false);
+  const [sessionToken, setSessionToken] = useState<string>();
+
+  const ensureSession = async (): Promise<string> => {
+    if (sessionToken !== undefined) return sessionToken;
+    const created = await api<{ readonly sessionToken: string }>(
+      "/api/session",
+    );
+    setSessionToken(created.sessionToken);
+    return created.sessionToken;
+  };
+
+  const registerPasskey = async () => {
+    setError(undefined);
+    setRunning(true);
+    try {
+      const token = await ensureSession();
+      const optionsJSON = await api<
+        Parameters<typeof startRegistration>[0]["optionsJSON"]
+      >("/api/passkeys/options", token);
+      const response = await startRegistration({ optionsJSON });
+      await api("/api/passkeys/verify", token, { response });
+      setPasskeyReady(true);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Passkey setup failed.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const runExchange = async () => {
+    setError(undefined);
+    setReceipt(undefined);
+    setRunning(true);
+    try {
+      const token = await ensureSession();
+      const begun = await api<{
+        readonly exchangeId: string;
+        readonly options: Parameters<
+          typeof startAuthentication
+        >[0]["optionsJSON"];
+      }>("/api/exchanges", token);
+      const response = await startAuthentication({
+        optionsJSON: begun.options,
+      });
+      const completed = await api<SafeReceipt>(
+        "/api/exchanges/approve",
+        token,
+        { exchangeId: begun.exchangeId, response },
+      );
+      setReceipt(completed);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The exchange failed safely.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <html lang="en">
+      <Head cssPath={cssPath} title="Phishing-resistant Agent Exchange" />
+      <body>
+        <main>
+          <header>
+            <p className="eyebrow">AbsoluteJS · passkey + PAR + PKCE + DPoP</p>
+            <h1>Agents can ask. Your passkey decides.</h1>
+            <p className="lead">
+              A requester agent asks a paired recipient agent to perform one
+              exact action. A verifier-bound passkey approval authorizes a
+              one-use, purpose-bound exchange; neither model receives the
+              authorization code, access token, or protected value.
+            </p>
+          </header>
+
+          <section className="boundary">
+            <strong>Real security ceremonies, simulated service</strong>
+            <span>
+              WebAuthn and WebCrypto are real. The authorization server and
+              protected API run in-process so the complete RFC profile is
+              testable without a vendor account. HTTP is accepted only on
+              localhost.
+            </span>
+          </section>
+
+          <section className="flow" aria-label="Agent exchange flow">
+            <article>
+              <span>1</span>
+              <h2>Register your passkey</h2>
+              <p>
+                The RP ID and browser origin are checked at verification time.
+              </p>
+              <button
+                disabled={running || passkeyReady}
+                onClick={registerPasskey}
+                type="button"
+              >
+                {passkeyReady ? "Passkey ready" : "Create passkey"}
+              </button>
+            </article>
+            <article>
+              <span>2</span>
+              <h2>Approve the exact request</h2>
+              <p>
+                The signed challenge is a digest of the agent, purpose,
+                resource, and expiry.
+              </p>
+              <button
+                disabled={running || !passkeyReady}
+                onClick={runExchange}
+                type="button"
+              >
+                {running
+                  ? "Waiting for secure approval…"
+                  : "Request one-time action"}
+              </button>
+            </article>
+            <article>
+              <span>3</span>
+              <h2>Read only the receipt</h2>
+              {receipt === undefined ? (
+                <p className="muted">No completed exchange.</p>
+              ) : (
+                <dl>
+                  <div>
+                    <dt>Status</dt>
+                    <dd>{receipt.status}</dd>
+                  </div>
+                  <div>
+                    <dt>Model saw secret</dt>
+                    <dd>no</dd>
+                  </div>
+                  <div>
+                    <dt>DPoP token</dt>
+                    <dd>
+                      {receipt.protocol.accessTokenSenderConstrained
+                        ? "bound"
+                        : "failed"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Nonce retry</dt>
+                    <dd>
+                      {receipt.protocol.nonceRetryObserved
+                        ? "verified"
+                        : "failed"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>PKCE S256</dt>
+                    <dd>
+                      {receipt.protocol.pkceS256Verified
+                        ? "verified"
+                        : "failed"}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </article>
+          </section>
+
+          {error === undefined ? null : (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <footer>
+            Production deployments replace the in-memory stores, mock
+            authorization server, and direct transport with durable adapters and
+            a trusted token-confined broker. Provider capability gaps remain
+            explicit.
+          </footer>
+        </main>
+      </body>
+    </html>
+  );
+};
