@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@absolutejs/absolute": "0.20.0-beta.0",
-    "@absolutejs/e2ee": "file:../../e2ee",
-    "@absolutejs/e2ee-webcrypto": "file:../../e2ee-providers/webcrypto",
+    "@absolutejs/e2ee": "0.1.0",
+    "@absolutejs/e2ee-webcrypto": "0.1.0",
     "elysia": "2.0.0-beta.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -35,8 +35,5 @@
     "prettier": "^3.8.1",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.57.2"
-  },
-  "overrides": {
-    "@absolutejs/e2ee": "file:../../e2ee"
   }
 }
