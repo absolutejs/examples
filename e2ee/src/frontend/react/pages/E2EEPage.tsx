@@ -12,6 +12,7 @@ import {
   createMemoryAgentExchangeStore,
   type AgentExchangeReceipt,
 } from "@absolutejs/agent-exchange";
+import { createEmailVerificationCodeSource } from "@absolutejs/agent-exchange-email";
 import { selectE2EEProvider, type SecurityMode } from "@absolutejs/e2ee";
 import {
   createWebCryptoEnvelopeProvider,
@@ -116,23 +117,43 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
           },
         },
       });
+      const emailSource = createEmailVerificationCodeSource({
+        lookup: {
+          find: (input) =>
+            Promise.resolve([
+              {
+                accountEmail: input.accountEmail,
+                bodyText: `Your verification code is ${code}.`,
+                direction: "inbound",
+                from: { address: "security@example.com" },
+                id: "demo-email-message",
+                occurredAt: new Date(),
+                provider: "gmail",
+                subject: "Sign in to Example",
+                to: [{ address: input.accountEmail }],
+              },
+            ]),
+        },
+        profiles: [
+          {
+            bodyMarkers: ["verification code"],
+            id: "accounts-example-six-digit-v1",
+            operations: ["verification.submit"],
+            origins: ["https://accounts.example.com"],
+            providers: ["gmail"],
+            senderAddresses: ["security@example.com"],
+            subjectIncludesAny: ["sign in"],
+          },
+        ],
+        resolveAccountEmail: () => "member@example.net",
+      });
       const sender = createAgentExchangeSender({
         agency,
         e2ee: selected,
         keyDirectory: {
           resolve: () => ({ keyId: keyHandle, publicKey: keyPair.publicKey }),
         },
-        source: {
-          read: () => ({
-            bytes: new TextEncoder().encode(code),
-            evidence: {
-              matchedAt: Date.now(),
-              messageId: "demo-email-message",
-              parserId: "six-digit-email-code-v1",
-              provider: "demo-inbox",
-            },
-          }),
-        },
+        source: emailSource,
         store: createMemoryAgentExchangeStore(),
         transport: {
           deliver: async (delivery) => {
@@ -165,7 +186,7 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
           challengeId: "demo-challenge",
           operation: "verification.submit",
           origin: "https://accounts.example.com",
-          provider: "demo-inbox",
+          provider: "gmail",
         },
         risk: "authentication",
         secretKind: "email-one-time-code",
