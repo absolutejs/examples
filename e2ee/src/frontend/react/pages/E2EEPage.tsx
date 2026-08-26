@@ -1,41 +1,60 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Head } from "@absolutejs/absolute/react/components";
+import {
+  createAgency,
+  createMemoryAgencyStore,
+  type PolicyDecisionPoint,
+} from "@absolutejs/agency";
+import {
+  createAgentExchangeReceiver,
+  createAgentExchangeSender,
+  createMemoryAgentExchangeReplayStore,
+  createMemoryAgentExchangeStore,
+  type AgentExchangeReceipt,
+} from "@absolutejs/agent-exchange";
 import { selectE2EEProvider, type SecurityMode } from "@absolutejs/e2ee";
 import {
   createWebCryptoEnvelopeProvider,
   generateWebCryptoRecipientKeyPair,
-  type WebCryptoRecipientKeyMaterial,
 } from "@absolutejs/e2ee-webcrypto";
 
-type E2EEPageProps = {
-  cssPath?: string;
+type E2EEPageProps = { cssPath?: string };
+
+type DemoReceipt = AgentExchangeReceipt & {
+  readonly ciphertextBytes: number;
+  readonly leaseConsumed: true;
+  readonly provider: string;
+  readonly securityMode: SecurityMode;
 };
 
-type ExchangeReceipt = {
-  ciphertextBytes: number;
-  modelObservedSecret: false;
-  processingMode: "tool-confined";
-  provider: string;
-  purpose: "email.verification.submit";
-  requestId: string;
-  securityMode: SecurityMode;
-  status: "submitted";
-};
-
-const equalBytes = (left: Uint8Array, right: Uint8Array): boolean => {
-  let difference = left.length ^ right.length;
-  const length = Math.max(left.length, right.length);
-  for (let index = 0; index < length; index += 1) {
-    difference |= (left[index] ?? 0) ^ (right[index] ?? 0);
-  }
-  return difference === 0;
-};
+const approvalPolicy = (): PolicyDecisionPoint => ({
+  evaluate: ({ approval, now }) =>
+    approval === undefined
+      ? {
+          decisionId: `decision_${crypto.randomUUID()}`,
+          evaluatedAt: now,
+          kind: "deny",
+          prerequisites: [
+            {
+              kind: "consent",
+              prerequisiteId: "recipient-pairing",
+              title: "Approve this exact one-time exchange",
+            },
+          ],
+          reason: "Exact approval is required.",
+          requestable: true,
+        }
+      : {
+          decisionId: `decision_${crypto.randomUUID()}`,
+          evaluatedAt: now,
+          kind: "allow",
+        },
+});
 
 export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
-  const keys = useRef(new Map<string, WebCryptoRecipientKeyMaterial>());
   const [code, setCode] = useState("482193");
   const [error, setError] = useState<string>();
-  const [receipt, setReceipt] = useState<ExchangeReceipt>();
+  const [receipt, setReceipt] = useState<DemoReceipt>();
   const [running, setRunning] = useState(false);
   const [securityMode, setSecurityMode] = useState<SecurityMode>("strict-e2ee");
 
@@ -54,17 +73,14 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
     setError(undefined);
     setReceipt(undefined);
     setRunning(true);
-    const plaintext = new TextEncoder().encode(code);
-    let opened: Uint8Array | undefined;
 
     try {
-      const recipient = await generateWebCryptoRecipientKeyPair();
-      const keyHandle = crypto.randomUUID();
-      keys.current.set(keyHandle, recipient.keyMaterial);
-
+      const keyPair = await generateWebCryptoRecipientKeyPair();
+      const keyHandle = `key_${crypto.randomUUID()}`;
       const provider = createWebCryptoEnvelopeProvider({
         maxPlaintextBytes: 64,
-        resolveRecipientPrivateKey: async (handle) => keys.current.get(handle),
+        resolveRecipientPrivateKey: async (handle) =>
+          handle === keyHandle ? keyPair.keyMaterial : undefined,
       });
       const selected = selectE2EEProvider([provider], {
         minimumAssurance: "experimental",
@@ -74,70 +90,148 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
         runtime: "browser",
         securityMode,
       });
-      const requestId = crypto.randomUUID();
-      const authenticatedContext = {
-        conversationId: requestId,
-        expiresAt: Date.now() + 60_000,
-        purpose: "email.verification.submit",
-        securityEpoch: 0,
-        senderId: "demo-source-tool",
-      } as const;
-      const envelope = await selected.seal({
-        authenticatedContext,
-        plaintext,
-        recipientPublicKey: recipient.publicKey,
+      const agency = createAgency({
+        policy: approvalPolicy(),
+        store: createMemoryAgencyStore(),
+      });
+      const deliveries: Uint8Array[] = [];
+      const submitted: string[] = [];
+      const receiver = createAgentExchangeReceiver({
+        consent: {
+          assertAllows: (request) => ({
+            consentId: `paired:${request.requester.agentId}:${request.recipient.agentId}`,
+            expiresAt: request.expiresAt,
+          }),
+        },
+        e2ee: selected,
+        replay: createMemoryAgentExchangeReplayStore(),
+        sink: {
+          submit: ({ plaintext }) => {
+            const value = new TextDecoder().decode(plaintext);
+            if (!/^\d{6}$/u.test(value)) {
+              throw new Error("The recipient rejected the protected value.");
+            }
+            submitted.push(value);
+            return { reference: "verification-form", status: "submitted" };
+          },
+        },
+      });
+      const sender = createAgentExchangeSender({
+        agency,
+        e2ee: selected,
+        keyDirectory: {
+          resolve: () => ({ keyId: keyHandle, publicKey: keyPair.publicKey }),
+        },
+        source: {
+          read: () => ({
+            bytes: new TextEncoder().encode(code),
+            evidence: {
+              matchedAt: Date.now(),
+              messageId: "demo-email-message",
+              parserId: "six-digit-email-code-v1",
+              provider: "demo-inbox",
+            },
+          }),
+        },
+        store: createMemoryAgentExchangeStore(),
+        transport: {
+          deliver: async (delivery) => {
+            deliveries.push(delivery.envelope);
+            return receiver.receive(delivery);
+          },
+        },
       });
 
-      opened = await selected.open({
-        envelope,
-        expectedContext: authenticatedContext,
-        recipientKeyHandle: keyHandle,
+      const requested = await sender.request({
+        expiresAt: Date.now() + 60_000,
+        idempotencyKey: crypto.randomUUID(),
+        processingMode: "tool-confined",
+        purpose: "email.verification.submit",
+        recipient: {
+          agentId: "recipient-agent",
+          authority: "https://auth.recipient.example",
+          deviceId: "recipient-browser",
+          subject: "recipient-user",
+        },
+        requester: {
+          agentId: "requester-agent",
+          authority: "https://auth.requester.example",
+          delegationId: "demo-delegation",
+          deviceId: "requester-browser",
+          subject: "requester-user",
+        },
+        resource: {
+          accountRef: "demo-account",
+          challengeId: "demo-challenge",
+          operation: "verification.submit",
+          origin: "https://accounts.example.com",
+          provider: "demo-inbox",
+        },
+        risk: "authentication",
+        secretKind: "email-one-time-code",
       });
-      if (!equalBytes(plaintext, opened)) {
-        throw new Error("Recipient tool rejected the protected value.");
+
+      if (
+        requested.decision.kind !== "deny" ||
+        !requested.decision.requestable
+      ) {
+        throw new Error("The demo expected an explicit approval checkpoint.");
+      }
+      await agency.approve({
+        actionId: requested.exchange.actionId,
+        approvedBy: "requester-user",
+        approvedUntil: requested.exchange.expiresAt,
+        conditions: { recipientConsentRequired: true },
+      });
+      const lease = await sender.issueLease(requested.exchange.exchangeId);
+      const completed = await sender.execute({
+        exchangeId: requested.exchange.exchangeId,
+        leaseId: lease.leaseId,
+      });
+      if (submitted.length !== 1 || deliveries.length !== 1) {
+        throw new Error("The one-time exchange invariant failed.");
       }
 
       setReceipt({
-        ciphertextBytes: envelope.length,
-        modelObservedSecret: false,
-        processingMode: "tool-confined",
+        ...completed.receipt,
+        ciphertextBytes: deliveries[0]?.byteLength ?? 0,
+        leaseConsumed: true,
         provider: selected.manifest.packageName,
-        purpose: authenticatedContext.purpose,
-        requestId,
         securityMode,
-        status: "submitted",
       });
       setCode("");
-      keys.current.delete(keyHandle);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Exchange failed.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The protected exchange failed safely.",
+      );
     } finally {
-      plaintext.fill(0);
-      opened?.fill(0);
       setRunning(false);
     }
   };
 
   return (
     <html lang="en">
-      <Head cssPath={cssPath} title="AbsoluteJS E2EE" />
+      <Head cssPath={cssPath} title="AbsoluteJS Agent Exchange" />
       <body>
         <main>
           <header className="page-header">
-            <p className="eyebrow">@absolutejs/e2ee · 0.x</p>
-            <h1>Verified exchange without showing the agent the secret.</h1>
+            <p className="eyebrow">@absolutejs/agent-exchange · 0.1</p>
+            <h1>Let agents use a code without letting models read it.</h1>
             <p className="lead">
-              This browser-only architecture demo selects an envelope provider
-              explicitly, binds a six-digit value to one purpose and expiry, and
-              gives the model only a receipt.
+              This browser demo runs the real Agency authorization, single-use
+              lease, authenticated E2EE envelope, recipient consent, replay
+              guard, deterministic sink, and redacted receipt path.
             </p>
           </header>
 
           <section className="warning" aria-label="Experimental warning">
-            <strong>Experimental provider</strong>
+            <strong>Experimental cryptography provider</strong>
             <span>
-              This demonstrates the trust boundary; it is not an audited
-              messaging or production OTP system.
+              The exchange protocol is real; the same-page tools, transport, and
+              in-memory stores are demonstration adapters, not a production OTP
+              relay.
             </span>
           </section>
 
@@ -156,7 +250,7 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
                   type="radio"
                 />
                 <strong>Strict E2EE</strong>
-                <span>Only the recipient key can open this envelope.</span>
+                <span>Only the paired recipient key opens the envelope.</span>
               </label>
               <label
                 className={
@@ -170,16 +264,14 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
                   type="radio"
                 />
                 <strong>Managed recovery</strong>
-                <span>
-                  Visible but gated: a declared recovery provider is required.
-                </span>
+                <span>Requires a declared recovery-authority provider.</span>
               </label>
             </div>
           </section>
 
           <section className="exchange-grid">
             <div className="panel">
-              <div className="step">2 · Trusted source tool</div>
+              <div className="step">2 · Deterministic source tool</div>
               <label htmlFor="code">Six-digit email code</label>
               <input
                 autoComplete="one-time-code"
@@ -192,7 +284,9 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
                 value={code}
               />
               <button disabled={running} onClick={runExchange} type="button">
-                {running ? "Protecting…" : "Run tool-confined exchange"}
+                {running
+                  ? "Authorizing and protecting…"
+                  : "Approve and exchange once"}
               </button>
               {error === undefined ? null : (
                 <p className="error" role="alert">
@@ -206,7 +300,7 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
             </div>
 
             <div className="panel receipt-panel">
-              <div className="step">3 · Agent-visible receipt</div>
+              <div className="step">3 · Agent-visible receipt only</div>
               {receipt === undefined ? (
                 <p className="empty">No exchange has completed.</p>
               ) : (
@@ -214,6 +308,10 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
                   <div>
                     <dt>Status</dt>
                     <dd>{receipt.status}</dd>
+                  </div>
+                  <div>
+                    <dt>Lease consumed</dt>
+                    <dd>{receipt.leaseConsumed ? "yes" : "no"}</dd>
                   </div>
                   <div>
                     <dt>Processing</dt>
@@ -237,9 +335,9 @@ export const E2EEPage = ({ cssPath }: E2EEPageProps) => {
           </section>
 
           <footer>
-            Production Agent Exchange will add Auth identity, Agency single-use
-            leases, A2A transport, deterministic email retrieval, and auditable
-            receipts around this protected payload path.
+            The agent receives authorization state and a typed completion
+            receipt. The six-digit value exists only inside the source,
+            encrypted envelope, and recipient sink boundaries.
           </footer>
         </main>
       </body>
