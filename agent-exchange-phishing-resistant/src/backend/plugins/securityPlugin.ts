@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { createMemoryA2aTaskStore } from "@absolutejs/a2a";
 import {
+  AGENT_EXCHANGE_PREPARATION_MEDIA_TYPE,
   connectAgentExchangeA2a,
   createAgentExchangeA2aHandler,
 } from "@absolutejs/agent-exchange-a2a";
@@ -62,15 +63,57 @@ const exchangeA2aHandler = createAgentExchangeA2aHandler<
     };
   },
   path: "/a2a",
+  preparationEndpoint:
+    "https://recipient-agent.example/agent-exchange/requests",
   taskStore: createMemoryA2aTaskStore(),
 });
-const exchangeA2aFetch = async (input: RequestInfo | URL, init?: RequestInit) =>
-  (await exchangeA2aHandler(new Request(input, init))) ??
-  new Response("not found", { status: 404 });
+const exchangeA2aFetch = async (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => {
+  const incoming = new Request(input, init);
+  if (
+    incoming.method === "POST" &&
+    new URL(incoming.url).pathname === "/agent-exchange/requests"
+  ) {
+    if (
+      incoming.headers.get("authorization") !== "Bearer demo-preparation-token"
+    )
+      return new Response(null, { status: 401 });
+    const body: unknown = await incoming.json();
+    const request =
+      typeof body === "object" && body !== null
+        ? Reflect.get(body, "request")
+        : undefined;
+    try {
+      return Response.json(
+        {
+          reference: demo.registerStandingMandateRequest({
+            caller: delegatedCaller,
+            request,
+          }),
+        },
+        {
+          headers: {
+            "cache-control": "no-store",
+            "content-type": AGENT_EXCHANGE_PREPARATION_MEDIA_TYPE,
+          },
+        },
+      );
+    } catch {
+      return new Response(null, { status: 400 });
+    }
+  }
+  return (
+    (await exchangeA2aHandler(incoming)) ??
+    new Response("not found", { status: 404 })
+  );
+};
 const exchangeA2aClient = connectAgentExchangeA2a({
   fetch: exchangeA2aFetch,
   headers: { authorization: "Bearer demo-delegated-agent-token" },
   origin: "https://recipient-agent.example",
+  preparationHeaders: { authorization: "Bearer demo-preparation-token" },
 });
 
 const requestOrigin = (request: Request): string => new URL(request.url).origin;
@@ -226,7 +269,7 @@ export const securityPlugin = new Elysia({ prefix: "/api" })
   )
   .post("/standing-mandates/execute", ({ body, request, set }) =>
     safely(set, async () => {
-      const prepared = demo.prepareStandingMandateRequest({
+      const prepared = demo.createStandingMandateRequest({
         caller: delegatedCaller,
         ...mandateBody(body),
         origin: requestOrigin(request),

@@ -9,7 +9,7 @@
         "@absolutejs/absolute": "0.20.0-beta.0",
         "@absolutejs/agency": "0.7.4",
         "@absolutejs/agent-exchange": "0.4.4",
-        "@absolutejs/agent-exchange-a2a": "0.1.1",
+        "@absolutejs/agent-exchange-a2a": "0.2.0",
         "@absolutejs/agent-exchange-destinations": "0.2.1",
         "@absolutejs/agent-exchange-http-destination": "0.2.1",
         "@absolutejs/agent-exchange-mandate-webcrypto": "0.1.0",
@@ -53,7 +53,7 @@
 
     "@absolutejs/agent-exchange": ["@absolutejs/agent-exchange@0.4.4", "", { "dependencies": { "@absolutejs/a2a": "^0.3.6", "@absolutejs/agency": "^0.7.4", "@absolutejs/e2ee": "0.1.0", "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-cSbKEw+ZQLaUC5HIeUE+FRX2dfCPcZzDOmrjraqbHheKKcLj6tE+IFLPd1fvMoP3d2Ye6vDfKKaPcuKqhkXjnA=="],
 
-    "@absolutejs/agent-exchange-a2a": ["@absolutejs/agent-exchange-a2a@0.1.1", "", { "peerDependencies": { "@absolutejs/a2a": ">=0.3.6 <0.4", "@absolutejs/agent-exchange": ">=0.4.4 <0.5" } }, "sha512-yYurxM4LtLPENjWnfxo3rnPGUh1m+wVg8a0FHuaArOvxulJJDVB53566FOHMokOCWTfMSIy0yr85+Yyd3hedOg=="],
+    "@absolutejs/agent-exchange-a2a": ["@absolutejs/agent-exchange-a2a@0.2.0", "", { "peerDependencies": { "@absolutejs/a2a": ">=0.3.6 <0.4", "@absolutejs/agent-exchange": ">=0.4.4 <0.5" } }, "sha512-1kFdp6IJyqYt8DVWGi6Ll3luh730oCWIigzLSjU6PnR1JY57Zlw9jr3asGIpzhYQlpRmHhaW6W6sJ8gM89A4fw=="],
 
     "@absolutejs/agent-exchange-destinations": ["@absolutejs/agent-exchange-destinations@0.2.1", "", { "dependencies": { "@absolutejs/agent-exchange": ">=0.4.3 <0.5" } }, "sha512-h0TFX0GSqnExmWjIMLgLGSWzqsY/I+c/SC7T/0kNi74HeSLSzfJoS2WBarzUMdGIfPqJaG7e7+u9Tf+kO2mJig=="],
 

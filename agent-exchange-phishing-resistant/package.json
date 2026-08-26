@@ -18,7 +18,7 @@
     "@absolutejs/absolute": "0.20.0-beta.0",
     "@absolutejs/agency": "0.7.4",
     "@absolutejs/agent-exchange": "0.4.4",
-    "@absolutejs/agent-exchange-a2a": "0.1.1",
+    "@absolutejs/agent-exchange-a2a": "0.2.0",
     "@absolutejs/agent-exchange-destinations": "0.2.1",
     "@absolutejs/agent-exchange-http-destination": "0.2.1",
     "@absolutejs/agent-exchange-mandate-webcrypto": "0.1.0",

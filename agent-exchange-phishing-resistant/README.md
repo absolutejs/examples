@@ -22,11 +22,12 @@ models that verified identity as a fixed delegation so the mandate mechanics
 remain easy to inspect.
 
 The simulated later request now crosses a real A2A 1.0 client/server boundary
-through `@absolutejs/agent-exchange-a2a`. Agent Card discovery, required-extension
-advertisement, `A2A-Extensions` activation, OAuth-like delegated caller
-authentication, opaque-reference resolution, task persistence, and redacted
-receipt parsing are exercised in-process. The full request is registered in a
-trusted local map for the demo and never appears in A2A task history.
+through `@absolutejs/agent-exchange-a2a`. Agent Card discovery, extension
+advertisement, protected preparation discovery, `A2A-Extensions` activation,
+separate OAuth-like credentials for preparation and A2A, exact-reference
+validation, task persistence, and redacted receipt parsing are exercised
+in-process. The preparation endpoint places the full request in a trusted local
+map for the demo; it never appears in A2A task history.
 
 ```bash
 bun install
@@ -49,8 +50,9 @@ deliberate WebAuthn development exception implemented only for `localhost` and
   redirect rejection, isolated secret bytes, and a response-body-blind receipt
 - RFC 7515 ES256 JWS standing mandates over RFC 8785 canonical JSON, with exact
   actor/delegation binding, atomic replay/use accounting, expiry, and revocation
-- negotiated A2A 1.0 extension activation with an authenticated caller, opaque
-  exchange reference, and redacted receipt artifact
+- negotiated A2A 1.0 extension activation with protected request preparation,
+  exact audience separation, an opaque exchange reference, and a redacted
+  receipt artifact
 
 The authorization server, resource server, mailbox code, destination, stores,
 and transport are in-process demonstration adapters. A production deployment

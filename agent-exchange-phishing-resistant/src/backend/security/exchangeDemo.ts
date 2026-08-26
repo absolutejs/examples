@@ -11,6 +11,7 @@ import {
   createAgentExchangeStandingMandateAuthority,
   createMemoryAgentExchangeReplayStore,
   createMemoryAgentExchangeStore,
+  DEFAULT_EXCHANGE_MAX_TTL_MS,
   type AgentExchangeMandateRegistration,
   type AgentExchangeMandateStore,
   type AgentExchangeReceipt,
@@ -19,6 +20,7 @@ import {
   type AgentExchangeStandingMandate,
   type AgentExchangeStandingMandateDraft,
   type SignedAgentExchangeStandingMandate,
+  validateAgentExchangeRequest,
 } from "@absolutejs/agent-exchange";
 import {
   toA2aAgentExchangeReference,
@@ -548,7 +550,7 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
       return Object.freeze({ mandateId, options: begun.options });
     },
 
-    prepareStandingMandateRequest: (input: {
+    createStandingMandateRequest: (input: {
       readonly caller: DemoDelegatedAgentCaller;
       readonly origin: string;
       readonly sessionToken: string;
@@ -593,8 +595,37 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
         risk: "authentication",
         secretKind: "email-one-time-code",
       } satisfies AgentExchangeRequest);
-      standingRequests.set(exchangeId, request);
       return request;
+    },
+
+    registerStandingMandateRequest: (input: {
+      readonly caller: DemoDelegatedAgentCaller;
+      readonly request: unknown;
+    }): A2aAgentExchangeReference => {
+      if (
+        typeof input.request !== "object" ||
+        input.request === null ||
+        Array.isArray(input.request)
+      )
+        throw new Error("The standing request was rejected.");
+      const request = input.request as AgentExchangeRequest;
+      validateAgentExchangeRequest(request, {
+        allowInsecureLocalhost: false,
+        maxTtlMs: DEFAULT_EXCHANGE_MAX_TTL_MS,
+        now: Date.now(),
+      });
+      if (
+        request.assurance.approval !== "standing-mandate" ||
+        request.mandateId === undefined ||
+        !activeMandates.has(request.mandateId) ||
+        request.requester.agentId !== input.caller.agentId ||
+        request.requester.delegationId !== input.caller.delegationId ||
+        request.requester.subject !== input.caller.userId ||
+        standingRequests.has(request.exchangeId)
+      )
+        throw new Error("The delegated standing request was rejected.");
+      standingRequests.set(request.exchangeId, request);
+      return toA2aAgentExchangeReference(request);
     },
 
     executeStandingMandate: async (input: {
