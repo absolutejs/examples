@@ -1,0 +1,44 @@
+{
+  "dependencies": {
+    "@absolutejs/absolute": "0.20.0-beta.0",
+    "@absolutejs/agency": "0.7.4",
+    "@absolutejs/agent-exchange": "0.5.0",
+    "@absolutejs/agent-exchange-email": "0.5.0",
+    "@absolutejs/e2ee-webcrypto": "0.2.1",
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
+    "@angular/compiler-cli": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0",
+    "@angular/platform-server": "^21.0.0",
+    "@angular/ssr": "^21.0.0",
+    "elysia": "^2.0.0-beta.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "svelte": "5.55.0",
+    "vue": "3.5.27"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "prettier": "^3.9.0",
+    "typescript": "5.9.3"
+  },
+  "name": "absolutejs-agent-exchange-example",
+  "private": true,
+  "scripts": {
+    "build": "absolute build",
+    "config": "absolute config",
+    "dev": "absolute dev",
+    "format": "absolute prettier --write",
+    "lint": "absolute eslint",
+    "ls": "absolute ls",
+    "ps": "absolute ps",
+    "start": "absolute start",
+    "test": "bun test tests/",
+    "typecheck": "absolute typecheck"
+  },
+  "type": "module",
+  "version": "0.0.1"
+}
