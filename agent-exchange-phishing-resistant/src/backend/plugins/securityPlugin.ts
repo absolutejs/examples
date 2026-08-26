@@ -36,6 +36,35 @@ const approvalBody = (
   return { exchangeId: body.exchangeId, response: body.response };
 };
 
+const mandateApprovalBody = (
+  body: unknown,
+): { mandateId: string; response: unknown } => {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("response" in body) ||
+    !("mandateId" in body) ||
+    typeof body.mandateId !== "string" ||
+    body.mandateId.length === 0 ||
+    body.mandateId.length > 256
+  )
+    throw new Error("A bounded mandate approval is required.");
+  return { mandateId: body.mandateId, response: body.response };
+};
+
+const mandateBody = (body: unknown): { mandateId: string } => {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("mandateId" in body) ||
+    typeof body.mandateId !== "string" ||
+    body.mandateId.length === 0 ||
+    body.mandateId.length > 256
+  )
+    throw new Error("A bounded mandate identifier is required.");
+  return { mandateId: body.mandateId };
+};
+
 const safely = async <Result>(
   set: { status?: number | string },
   operation: () => Promise<Result> | Result,
@@ -107,4 +136,41 @@ export const securityPlugin = new Elysia({ prefix: "/api" })
         sessionToken: sessionToken(request),
       });
     }),
+  )
+  .post("/standing-mandates", ({ request, set }) =>
+    safely(set, () =>
+      demo.beginStandingMandate({
+        origin: requestOrigin(request),
+        sessionToken: sessionToken(request),
+      }),
+    ),
+  )
+  .post("/standing-mandates/approve", ({ body, request, set }) =>
+    safely(set, () => {
+      const approval = mandateApprovalBody(body);
+      return demo.approveStandingMandate({
+        mandateId: approval.mandateId,
+        origin: requestOrigin(request),
+        response: approval.response,
+        sessionToken: sessionToken(request),
+      });
+    }),
+  )
+  .post("/standing-mandates/execute", ({ body, request, set }) =>
+    safely(set, () =>
+      demo.executeStandingMandate({
+        ...mandateBody(body),
+        origin: requestOrigin(request),
+        sessionToken: sessionToken(request),
+      }),
+    ),
+  )
+  .post("/standing-mandates/revoke", ({ body, request, set }) =>
+    safely(set, () =>
+      demo.revokeStandingMandate({
+        ...mandateBody(body),
+        origin: requestOrigin(request),
+        sessionToken: sessionToken(request),
+      }),
+    ),
   );

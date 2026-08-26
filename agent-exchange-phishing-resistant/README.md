@@ -12,6 +12,15 @@ submitted through `@absolutejs/agent-exchange-destinations` and a fixed
 `@absolutejs/agent-exchange-http-destination`; it is never returned to either
 agent.
 
+The standing mode demonstrates the asynchronous human workflow: the owner uses
+a passkey once to sign a short-lived, revocable mandate restricted to one exact
+requester agent, OAuth delegation, recipient agent, mailbox, purpose,
+destination origin, operation, secret kind, and maximum use count. The agent can
+then request the bounded action while the owner is offline. Each request still
+requires its own OAuth-authenticated agent identity in PaaS; the in-process demo
+models that verified identity as a fixed delegation so the mandate mechanics
+remain easy to inspect.
+
 ```bash
 bun install
 bun run dev
@@ -31,6 +40,8 @@ deliberate WebAuthn development exception implemented only for `localhost` and
 - one-time, DPoP-bound protected-resource call and agent-visible leakage canary
 - exact origin/operation/secret-kind destination routing, fixed HTTPS endpoint,
   redirect rejection, isolated secret bytes, and a response-body-blind receipt
+- RFC 7515 ES256 JWS standing mandates over RFC 8785 canonical JSON, with exact
+  actor/delegation binding, atomic replay/use accounting, expiry, and revocation
 
 The authorization server, resource server, mailbox code, destination, stores,
 and transport are in-process demonstration adapters. A production deployment
@@ -50,3 +61,6 @@ the strict sender-constrained profile while their public capabilities have gaps.
 - Authorization Server Issuer Identification (RFC 9207): <https://www.rfc-editor.org/rfc/rfc9207>
 - DPoP (RFC 9449): <https://www.rfc-editor.org/rfc/rfc9449>
 - HPKE (RFC 9180): <https://www.rfc-editor.org/rfc/rfc9180>
+- JSON Web Signature (RFC 7515): <https://www.rfc-editor.org/rfc/rfc7515>
+- JSON Canonicalization Scheme (RFC 8785): <https://www.rfc-editor.org/rfc/rfc8785>
+- OAuth Token Exchange subject/actor model (RFC 8693): <https://www.rfc-editor.org/rfc/rfc8693>

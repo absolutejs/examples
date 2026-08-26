@@ -5,16 +5,27 @@ import {
 } from "@absolutejs/agency";
 import {
   agentExchangeApprovalChallenge,
+  agentExchangeMandateApprovalChallenge,
   createAgentExchangeReceiver,
   createAgentExchangeSender,
+  createAgentExchangeStandingMandateAuthority,
   createMemoryAgentExchangeReplayStore,
   createMemoryAgentExchangeStore,
+  type AgentExchangeMandateRegistration,
+  type AgentExchangeMandateStore,
   type AgentExchangeReceipt,
   type AgentExchangeRequest,
   type AgentExchangeSender,
+  type AgentExchangeStandingMandate,
+  type AgentExchangeStandingMandateDraft,
+  type SignedAgentExchangeStandingMandate,
 } from "@absolutejs/agent-exchange";
 import { createAgentExchangeDestinationRegistry } from "@absolutejs/agent-exchange-destinations";
 import { createAgentExchangeHttpDestination } from "@absolutejs/agent-exchange-http-destination";
+import {
+  createWebCryptoMandateJwsSigner,
+  createWebCryptoMandateJwsVerifier,
+} from "@absolutejs/agent-exchange-mandate-webcrypto";
 import {
   createHardenedOAuthAuthorizationClient,
   decodeOAuthGrant,
@@ -23,7 +34,10 @@ import {
 } from "@absolutejs/agent-exchange-oauth";
 import { createMemoryOAuthAuthorizationSessionStore } from "@absolutejs/agent-exchange-oauth-stores";
 import { createWebCryptoDpopProofSigner } from "@absolutejs/agent-exchange-oauth-webcrypto";
-import { createWebAuthnAgentExchangeApprovalProvider } from "@absolutejs/agent-exchange-webauthn";
+import {
+  createWebAuthnAgentExchangeApprovalProvider,
+  createWebAuthnAgentExchangeMandateApprovalProvider,
+} from "@absolutejs/agent-exchange-webauthn";
 import {
   createInMemoryWebAuthnCredentialStore,
   type WebAuthnAdapter,
@@ -42,6 +56,9 @@ import {
 const USER_ID = "demo-owner";
 const SESSION_TTL_MS = 10 * 60_000;
 const EXCHANGE_TTL_MS = 2 * 60_000;
+const MANDATE_TTL_MS = 15 * 60_000;
+const MANDATE_MAXIMUM_USES = 3;
+const MANDATE_KEY_ID = "demo-standing-mandate-key";
 
 type DemoSession = {
   readonly expiresAt: number;
@@ -61,6 +78,29 @@ type PendingEmailFlow = {
   >;
   readonly challenge: string;
   readonly request: AgentExchangeRequest;
+};
+
+type PendingMandateFlow = {
+  readonly approval: ReturnType<
+    typeof createWebAuthnAgentExchangeMandateApprovalProvider
+  >;
+  readonly challenge: string;
+  readonly draft: AgentExchangeStandingMandateDraft;
+};
+
+type ActiveMandate = {
+  readonly mandate: AgentExchangeStandingMandate;
+  readonly signedMandate: SignedAgentExchangeStandingMandate;
+};
+
+type DemoMandateRecord = AgentExchangeMandateRegistration & {
+  readonly exchanges: Set<string>;
+  revoked: boolean;
+  uses: number;
+};
+
+type DemoMandateStore = AgentExchangeMandateStore & {
+  readonly remaining: (mandateId: string) => number;
 };
 
 export type SafeExchangeResult = {
@@ -83,6 +123,75 @@ export type SafeEmailExchangeResult = {
   readonly processingMode: "tool-confined";
   readonly reference?: string;
   readonly status: "submitted";
+};
+
+export type StandingMandateResult = {
+  readonly expiresAt: number;
+  readonly mandateId: string;
+  readonly maximumUses: number;
+  readonly status: "authorized";
+  readonly usesRemaining: number;
+};
+
+export type StandingMandateExecutionResult = Omit<
+  SafeEmailExchangeResult,
+  "assuranceMode"
+> & {
+  readonly assuranceMode: "passkey-enrolled-standing-mandate";
+  readonly mandateId: string;
+  readonly usesRemaining: number;
+};
+
+const createDemoMandateStore = (): DemoMandateStore => {
+  const records = new Map<string, DemoMandateRecord>();
+  return Object.freeze({
+    consume: async ({ exchangeId, mandateId, now }) => {
+      const record = records.get(mandateId);
+      if (record === undefined || now >= record.expiresAt) return "unknown";
+      if (record.revoked) return "revoked";
+      if (record.exchanges.has(exchangeId)) return "replay";
+      if (record.uses >= record.maximumUses) return "exhausted";
+      record.exchanges.add(exchangeId);
+      record.uses += 1;
+      return "consumed";
+    },
+    register: async (registration) => {
+      if (records.has(registration.mandateId)) return false;
+      records.set(registration.mandateId, {
+        ...registration,
+        exchanges: new Set(),
+        revoked: false,
+        uses: 0,
+      });
+      return true;
+    },
+    remaining: (mandateId) => {
+      const record = records.get(mandateId);
+      return record === undefined
+        ? 0
+        : Math.max(0, record.maximumUses - record.uses);
+    },
+    revoke: async ({ issuer, mandateId }) => {
+      const record = records.get(mandateId);
+      if (
+        record === undefined ||
+        record.issuer.authority !== issuer.authority ||
+        record.issuer.subject !== issuer.subject
+      )
+        return false;
+      record.revoked = true;
+      return true;
+    },
+  });
+};
+
+const credentialIdHash = async (credentialId: string): Promise<string> => {
+  const bytes = new TextEncoder().encode(
+    `org.absolutejs.agent-exchange.webauthn-credential.v1\u0000${credentialId}`,
+  );
+  return Buffer.from(await crypto.subtle.digest("SHA-256", bytes)).toString(
+    "base64url",
+  );
 };
 
 const approvalPolicy = (): PolicyDecisionPoint => ({
@@ -124,8 +233,37 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
   const sessions = new Map<string, DemoSession>();
   const flows = new Map<string, PendingFlow>();
   const emailFlows = new Map<string, PendingEmailFlow>();
+  const mandateFlows = new Map<string, PendingMandateFlow>();
+  const activeMandates = new Map<string, ActiveMandate>();
   const credentialStore: WebAuthnCredentialStore =
     createInMemoryWebAuthnCredentialStore();
+  const mandateStore = createDemoMandateStore();
+  const mandateAuthority = (async () => {
+    const generatedKey = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["sign", "verify"],
+    );
+    if (!("privateKey" in generatedKey))
+      throw new Error("The mandate signing key could not be created.");
+    return createAgentExchangeStandingMandateAuthority({
+      allowInsecureLocalhost: true,
+      signer: createWebCryptoMandateJwsSigner({
+        keyId: MANDATE_KEY_ID,
+        privateKey: generatedKey.privateKey,
+      }),
+      store: mandateStore,
+      verifier: createWebCryptoMandateJwsVerifier({
+        keys: {
+          resolve: ({ keyId }) => {
+            if (keyId !== MANDATE_KEY_ID)
+              throw new Error("The mandate signing key is not trusted.");
+            return generatedKey.publicKey;
+          },
+        },
+      }),
+    });
+  })();
 
   const session = (token: string, origin: string): DemoSession => {
     const value = sessions.get(token);
@@ -140,6 +278,16 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
 
   const approvalFor = (activeSession: DemoSession) =>
     createWebAuthnAgentExchangeApprovalProvider({
+      adapter,
+      allowInsecureLocalhost: true,
+      credentialStore,
+      origin: activeSession.origin,
+      resolveUserId: () => USER_ID,
+      rpId: activeSession.rpId,
+    });
+
+  const mandateApprovalFor = (activeSession: DemoSession) =>
+    createWebAuthnAgentExchangeMandateApprovalProvider({
       adapter,
       allowInsecureLocalhost: true,
       credentialStore,
@@ -172,6 +320,46 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
   ]);
 
   return Object.freeze({
+    approveStandingMandate: async (input: {
+      readonly mandateId: string;
+      readonly origin: string;
+      readonly response: unknown;
+      readonly sessionToken: string;
+    }): Promise<StandingMandateResult> => {
+      session(input.sessionToken, input.origin);
+      const flow = mandateFlows.get(input.mandateId);
+      if (flow === undefined)
+        throw new Error("Mandate enrollment expired or was already used.");
+      mandateFlows.delete(input.mandateId);
+      const verified = await flow.approval.verify({
+        challenge: flow.challenge,
+        draft: flow.draft,
+        response: input.response,
+        subject: USER_ID,
+        verifierOrigin: input.origin,
+      });
+      const authority = await mandateAuthority;
+      const issued = await authority.issue({
+        ...flow.draft,
+        approval: {
+          credentialIdHash: await credentialIdHash(verified.credentialId),
+          method: "webauthn-verifier-bound",
+          rpId: verified.rpId,
+          userVerified: true,
+          verifiedAt: Date.now(),
+          verifierOrigin: verified.verifierOrigin,
+        },
+      });
+      activeMandates.set(input.mandateId, issued);
+      return Object.freeze({
+        expiresAt: issued.mandate.expiresAt,
+        mandateId: issued.mandate.mandateId,
+        maximumUses: issued.mandate.maximumUses,
+        status: "authorized" as const,
+        usesRemaining: mandateStore.remaining(input.mandateId),
+      });
+    },
+
     approve: async (input: {
       readonly exchangeId: string;
       readonly origin: string;
@@ -296,6 +484,146 @@ export const createExchangeDemo = (adapter: WebAuthnAdapter) => {
       });
       emailFlows.set(exchangeId, { approval, challenge, request });
       return Object.freeze({ exchangeId, options: begun.options });
+    },
+
+    beginStandingMandate: async (input: {
+      readonly origin: string;
+      readonly sessionToken: string;
+    }) => {
+      const activeSession = session(input.sessionToken, input.origin);
+      if ((await credentialStore.listCredentialsByUser(USER_ID)).length === 0)
+        throw new Error("Register a passkey before authorizing a mandate.");
+      const now = Date.now();
+      const mandateId = `mandate_${crypto.randomUUID()}`;
+      const draft: AgentExchangeStandingMandateDraft = Object.freeze({
+        audience: {
+          agentId: "recipient-mailbox-agent",
+          authority: activeSession.origin,
+          subject: USER_ID,
+        },
+        expiresAt: now + MANDATE_TTL_MS,
+        grants: [
+          {
+            accountRef: "mailbox:demo-owner",
+            operation: "verification.submit",
+            origin: "https://accounts.example.com",
+            provider: "gmail",
+            purpose:
+              "Retrieve and submit one correlated email verification code",
+            risk: "authentication",
+            secretKind: "email-one-time-code",
+          },
+        ],
+        issuer: { authority: activeSession.origin, subject: USER_ID },
+        mandateId,
+        maximumUses: MANDATE_MAXIMUM_USES,
+        notBefore: now,
+        requester: {
+          agentId: "requester-agent",
+          authority: activeSession.origin,
+          delegationId: "demo-oauth-delegation",
+          subject: USER_ID,
+        },
+      });
+      const approval = mandateApprovalFor(activeSession);
+      const challenge = await agentExchangeMandateApprovalChallenge(draft);
+      const begun = await approval.begin({
+        challenge,
+        draft,
+        subject: USER_ID,
+        verifierOrigin: activeSession.origin,
+      });
+      mandateFlows.set(mandateId, { approval, challenge, draft });
+      return Object.freeze({ mandateId, options: begun.options });
+    },
+
+    executeStandingMandate: async (input: {
+      readonly mandateId: string;
+      readonly origin: string;
+      readonly sessionToken: string;
+    }): Promise<StandingMandateExecutionResult> => {
+      const activeSession = session(input.sessionToken, input.origin);
+      const active = activeMandates.get(input.mandateId);
+      if (active === undefined)
+        throw new Error("The standing mandate is unavailable.");
+      const now = Date.now();
+      const exchangeId = `standing_${crypto.randomUUID()}`;
+      const request = Object.freeze({
+        actionId: `action_${crypto.randomUUID()}`,
+        assurance: {
+          approval: "standing-mandate",
+          credential: "token-confined-broker",
+          execution: "purpose-bound",
+        },
+        createdAt: now,
+        exchangeId,
+        expiresAt: Math.min(now + EXCHANGE_TTL_MS, active.mandate.expiresAt),
+        idempotencyKey: crypto.randomUUID(),
+        mandateId: input.mandateId,
+        maximumUses: 1,
+        nonce: crypto.randomUUID(),
+        processingMode: "tool-confined",
+        purpose: "Retrieve and submit one correlated email verification code",
+        recipient: active.mandate.audience,
+        requester: active.mandate.requester,
+        resource: {
+          accountRef: "mailbox:demo-owner",
+          challengeId: "challenge-demo",
+          operation: "verification.submit",
+          origin: "https://accounts.example.com",
+          provider: "gmail",
+        },
+        risk: "authentication",
+        secretKind: "email-one-time-code",
+      } satisfies AgentExchangeRequest);
+      await (
+        await mandateAuthority
+      ).authorize({
+        expectedIssuer: active.mandate.issuer,
+        request,
+        signedMandate: active.signedMandate,
+      });
+      const plaintext = new TextEncoder().encode("482193");
+      try {
+        const submitted = await emailDestinations.submit({
+          plaintext,
+          request,
+          tenantId: activeSession.origin,
+        });
+        return Object.freeze({
+          assuranceMode: "passkey-enrolled-standing-mandate" as const,
+          exchangeId,
+          mandateId: input.mandateId,
+          maximumUses: 1 as const,
+          modelObservedSecret: false as const,
+          processingMode: "tool-confined" as const,
+          ...(submitted.reference === undefined
+            ? {}
+            : { reference: submitted.reference }),
+          status: "submitted" as const,
+          usesRemaining: mandateStore.remaining(input.mandateId),
+        });
+      } finally {
+        plaintext.fill(0);
+      }
+    },
+
+    revokeStandingMandate: async (input: {
+      readonly mandateId: string;
+      readonly origin: string;
+      readonly sessionToken: string;
+    }) => {
+      session(input.sessionToken, input.origin);
+      const active = activeMandates.get(input.mandateId);
+      if (active === undefined)
+        throw new Error("The standing mandate is unavailable.");
+      const revoked = await (
+        await mandateAuthority
+      ).revoke({
+        issuer: active.mandate.issuer,
+        mandateId: input.mandateId,
+      });
+      return Object.freeze({ mandateId: input.mandateId, revoked });
     },
 
     beginExchange: async (input: {

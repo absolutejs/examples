@@ -33,6 +33,24 @@ type SafeEmailReceipt = {
   readonly status: "submitted";
 };
 
+type StandingMandate = {
+  readonly expiresAt: number;
+  readonly mandateId: string;
+  readonly maximumUses: number;
+  readonly status: "authorized";
+  readonly usesRemaining: number;
+};
+
+type StandingMandateReceipt = {
+  readonly assuranceMode: "passkey-enrolled-standing-mandate";
+  readonly exchangeId: string;
+  readonly mandateId: string;
+  readonly modelObservedSecret: false;
+  readonly processingMode: "tool-confined";
+  readonly status: "submitted";
+  readonly usesRemaining: number;
+};
+
 const api = async <Result,>(
   path: string,
   sessionToken?: string,
@@ -61,6 +79,9 @@ export const PhishingResistantPage = ({
   const [receipt, setReceipt] = useState<SafeReceipt>();
   const [running, setRunning] = useState(false);
   const [sessionToken, setSessionToken] = useState<string>();
+  const [standingMandate, setStandingMandate] = useState<StandingMandate>();
+  const [standingReceipt, setStandingReceipt] =
+    useState<StandingMandateReceipt>();
 
   const ensureSession = async (): Promise<string> => {
     if (sessionToken !== undefined) return sessionToken;
@@ -149,6 +170,87 @@ export const PhishingResistantPage = ({
         caught instanceof Error
           ? caught.message
           : "The email exchange failed safely.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const enrollStandingMandate = async () => {
+    setError(undefined);
+    setStandingReceipt(undefined);
+    setRunning(true);
+    try {
+      const token = await ensureSession();
+      const begun = await api<{
+        readonly mandateId: string;
+        readonly options: Parameters<
+          typeof startAuthentication
+        >[0]["optionsJSON"];
+      }>("/api/standing-mandates", token);
+      const response = await startAuthentication({
+        optionsJSON: begun.options,
+      });
+      setStandingMandate(
+        await api<StandingMandate>("/api/standing-mandates/approve", token, {
+          mandateId: begun.mandateId,
+          response,
+        }),
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Standing authorization failed safely.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const executeStandingMandate = async () => {
+    if (standingMandate === undefined) return;
+    setError(undefined);
+    setRunning(true);
+    try {
+      const token = await ensureSession();
+      const completed = await api<StandingMandateReceipt>(
+        "/api/standing-mandates/execute",
+        token,
+        { mandateId: standingMandate.mandateId },
+      );
+      setStandingReceipt(completed);
+      setStandingMandate({
+        ...standingMandate,
+        usesRemaining: completed.usesRemaining,
+      });
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Delegated execution failed safely.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const revokeStandingMandate = async () => {
+    if (standingMandate === undefined) return;
+    setError(undefined);
+    setRunning(true);
+    try {
+      const token = await ensureSession();
+      await api("/api/standing-mandates/revoke", token, {
+        mandateId: standingMandate.mandateId,
+      });
+      setStandingMandate(undefined);
+      setStandingReceipt(undefined);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Mandate revocation failed safely.",
       );
     } finally {
       setRunning(false);
@@ -277,6 +379,55 @@ export const PhishingResistantPage = ({
               <span>
                 Receipt: {emailReceipt.status}; model saw secret: no; assurance:{" "}
                 {emailReceipt.assuranceMode}
+              </span>
+            )}
+          </section>
+
+          <section className="boundary">
+            <strong>Standing mode: authorize an agent ahead of time</strong>
+            <span>
+              One passkey ceremony signs an exact, fifteen-minute mandate for
+              this requester agent, recipient agent, mailbox, destination,
+              purpose, secret kind, and at most three uses. Later executions do
+              not need the owner online. The email code remains a bearer secret,
+              so it stays inside the deterministic broker and destination tool.
+            </span>
+            {standingMandate === undefined ? (
+              <button
+                disabled={running || !passkeyReady}
+                onClick={enrollStandingMandate}
+                type="button"
+              >
+                {running
+                  ? "Waiting for secure approval…"
+                  : "Authorize standing agent access"}
+              </button>
+            ) : (
+              <div>
+                <span>
+                  Mandate active · {standingMandate.usesRemaining} of{" "}
+                  {standingMandate.maximumUses} uses remain
+                </span>
+                <button
+                  disabled={running || standingMandate.usesRemaining === 0}
+                  onClick={executeStandingMandate}
+                  type="button"
+                >
+                  {running ? "Agent is executing…" : "Simulate agent request"}
+                </button>
+                <button
+                  disabled={running}
+                  onClick={revokeStandingMandate}
+                  type="button"
+                >
+                  Revoke mandate
+                </button>
+              </div>
+            )}
+            {standingReceipt === undefined ? null : (
+              <span>
+                Receipt: {standingReceipt.status}; model saw secret: no;
+                authorization: {standingReceipt.assuranceMode}
               </span>
             )}
           </section>
