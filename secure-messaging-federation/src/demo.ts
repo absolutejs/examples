@@ -6,10 +6,14 @@ import {
   createFederationAbuseReport,
   negotiateFederation,
   signFederationEnvelope,
-  verifyFederationEnvelope,
   type FederationOffer,
   type FederationSignatureProvider,
 } from "@absolutejs/secure-messaging-federation";
+import { createFederatedDeliveryService } from "@absolutejs/secure-messaging-federation-delivery";
+import {
+  decodeFederationHttpsBatch,
+  encodeFederationHttpsBatch,
+} from "@absolutejs/secure-messaging-federation-https";
 import {
   MIMI_DRAFT_OPT_IN,
   MIMI_DRAFT_REVISIONS,
@@ -26,6 +30,8 @@ export type SecureMessagingFederationDemoResult = {
   readonly abuseEvidenceText: string;
   readonly abuseSenderAuthenticity: "receiver-asserted";
   readonly draftRevision: typeof MIMI_DRAFT_REVISIONS.protocol;
+  readonly deliveryBridgeAuthenticated: true;
+  readonly httpsBatchRoundTripped: true;
   readonly negotiatedMode: "strict-e2ee";
   readonly replayBlocked: true;
   readonly routingMetadataContainsSensitiveValue: false;
@@ -173,26 +179,61 @@ export const runSecureMessagingFederationDemo =
         return "claimed";
       },
     };
-    await verifyFederationEnvelope({
+    const httpsLimits = {
+      maximumBatchBytes: 16_384,
+      maximumBatchMessages: 25,
+      maximumEnvelopeBytes: 8_192,
+      maximumPayloadBytes: 4_096,
+      maximumResponseBytes: 16_384,
+      maximumSignatureBytes: 1_024,
+      requestTimeoutMs: 5_000,
+    } as const;
+    const wireBatch = encodeFederationHttpsBatch([signed], httpsLimits);
+    let queue = [...decodeFederationHttpsBatch(wireBatch, httpsLimits)];
+    const transport = {
+      id: "example.https-inbox",
+      acknowledge: async () => {
+        queue = [];
+      },
+      receive: async () => ({
+        cursor: "cursor-1",
+        messages: queue,
+      }),
+      send: async () => {
+        throw new Error("This example transport is inbound-only.");
+      },
+    };
+    const delivery = createFederatedDeliveryService({
+      directory: {
+        resolveInboundSession: async () => ({
+          securityMode: "strict-e2ee",
+          session,
+        }),
+        resolveOutboundRoute: async () => undefined,
+        resolveVerifiedInboundRoute: async () => ({
+          conversationId: "opaque-conversation-1",
+          recipientDeviceId: "bob-device-1",
+        }),
+      },
       limits,
       localDomain: "bob.example",
-      now: now + 20,
+      maximumMessagesPerReceive: 25,
+      now: () => now + 20,
       replayStore,
-      session,
       signatureProvider: verifier,
-      signed,
+      transport,
     });
+    const delivered = await delivery.receive({ deviceId: "bob-device-1" });
+    if (delivered.messages[0]?.id !== signed.envelope.id)
+      throw new Error("The authenticated delivery bridge lost the message.");
     let replayBlocked = false;
-    await verifyFederationEnvelope({
-      limits,
-      localDomain: "bob.example",
-      now: now + 20,
-      replayStore,
-      session,
-      signatureProvider: verifier,
-      signed,
-    }).catch(() => {
+    await delivery.receive({ deviceId: "bob-device-1" }).catch(() => {
       replayBlocked = true;
+    });
+    if (!delivered.cursor) throw new Error("The transport omitted its cursor.");
+    await delivery.acknowledge({
+      cursor: delivered.cursor,
+      deviceId: "bob-device-1",
     });
 
     let signatureSubstitutionBlocked = false;
@@ -277,7 +318,9 @@ export const runSecureMessagingFederationDemo =
     return Object.freeze({
       abuseEvidenceText: new TextDecoder().decode(openedEvidence),
       abuseSenderAuthenticity: "receiver-asserted",
+      deliveryBridgeAuthenticated: true,
       draftRevision: MIMI_DRAFT_REVISIONS.protocol,
+      httpsBatchRoundTripped: true,
       negotiatedMode: session.profile.security.mode,
       replayBlocked: true,
       routingMetadataContainsSensitiveValue: false,

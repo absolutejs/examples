@@ -5,7 +5,9 @@
     "": {
       "name": "absolutejs-secure-messaging-federation-example",
       "dependencies": {
-        "@absolutejs/secure-messaging-federation": "0.0.3",
+        "@absolutejs/secure-messaging-federation": "0.1.0",
+        "@absolutejs/secure-messaging-federation-delivery": "0.0.1",
+        "@absolutejs/secure-messaging-federation-https": "0.0.1",
         "@absolutejs/secure-messaging-federation-mimi": "0.0.1",
         "@absolutejs/secure-messaging-federation-webcrypto": "0.0.1",
       },
@@ -17,9 +19,15 @@
     },
   },
   "packages": {
+    "@absolutejs/e2ee": ["@absolutejs/e2ee@0.8.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-POqferRMc0rfqsl2BItK+yFwc5118unC2FJYhDCf/lSt7C83uSzmrIhqGqSO3LXrgigR9KkC/2Pzw3Eur5RXOQ=="],
+
     "@absolutejs/manifest": ["@absolutejs/manifest@0.9.0", "", { "peerDependencies": { "@sinclair/typebox": ">=0.34.0 <0.35.0" }, "bin": { "absolute-manifest": "dist/cli.js" } }, "sha512-naNDdwNoWQgJ3HuFbAu1UcOVR7SGpLBJz/seO8MMX32vrxk6esgzY7OB1CL8YDOegtI/EqQfcvnulnP66A9aGg=="],
 
-    "@absolutejs/secure-messaging-federation": ["@absolutejs/secure-messaging-federation@0.0.3", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-cimtY5EfwwW8adjFsemxZ8DybmYbDFM3GwgxpxSIQJVtckT8ABjk8p1XGYpGRBDyXVXU35HgcsaBoiQzzQgtjw=="],
+    "@absolutejs/secure-messaging-federation": ["@absolutejs/secure-messaging-federation@0.1.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-Yx/w8sxwE2fsn/w1hOT6S8ElpcB+VAiiKyZjFNC4eKkJ307Q3YMDx7An//lLR9txxFKHbN23UHLtMjnvJK5CVw=="],
+
+    "@absolutejs/secure-messaging-federation-delivery": ["@absolutejs/secure-messaging-federation-delivery@0.0.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/e2ee": ">=0.8.0 <0.9", "@absolutejs/secure-messaging-federation": ">=0.1.0 <0.2" } }, "sha512-8VDsMHSWPuHgogUKOvF+Su+lquagmOWAgClD5+trkFmJLPnlO72CvDPCi4oWTYo/uS3EhVOWBh5vaJueZPdZZA=="],
+
+    "@absolutejs/secure-messaging-federation-https": ["@absolutejs/secure-messaging-federation-https@0.0.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-messaging-federation": ">=0.1.0 <0.2" } }, "sha512-z2HqqArv2flmhFeix2MLPN74t8Z/vp7VBn2FCHSBa4gen6VKxL6jJPBmGiWRpMo5ByF7fM8RuZKX8irE7SLjUw=="],
 
     "@absolutejs/secure-messaging-federation-mimi": ["@absolutejs/secure-messaging-federation-mimi@0.0.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-messaging-federation": ">=0.0.2 <0.1" } }, "sha512-lWZc9ytgkcEGeOKtxgijd+3ffwM3Uuux3AnxSsjMzNaMbeIvTjFW3lpe9P5+wr+yQ8vT9SkSBNFTIRYZmxu4GQ=="],
 

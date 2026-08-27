@@ -5,7 +5,9 @@ test("federates an opaque secure message and confidential abuse evidence", async
   expect(await runSecureMessagingFederationDemo()).toEqual({
     abuseEvidenceText: "User-selected private evidence",
     abuseSenderAuthenticity: "receiver-asserted",
+    deliveryBridgeAuthenticated: true,
     draftRevision: "draft-ietf-mimi-protocol-06",
+    httpsBatchRoundTripped: true,
     negotiatedMode: "strict-e2ee",
     replayBlocked: true,
     routingMetadataContainsSensitiveValue: false,
