@@ -5,8 +5,8 @@
     "": {
       "name": "absolutejs-secure-transfer-example",
       "dependencies": {
-        "@absolutejs/secure-transfer": "0.1.2",
-        "@absolutejs/secure-transfer-local": "0.1.0",
+        "@absolutejs/secure-transfer": "0.2.0",
+        "@absolutejs/secure-transfer-local": "0.2.0",
         "@absolutejs/secure-transfer-webcrypto": "0.1.0",
       },
       "devDependencies": {
@@ -19,9 +19,9 @@
   "packages": {
     "@absolutejs/manifest": ["@absolutejs/manifest@0.9.0", "", { "peerDependencies": { "@sinclair/typebox": ">=0.34.0 <0.35.0" }, "bin": { "absolute-manifest": "dist/cli.js" } }, "sha512-naNDdwNoWQgJ3HuFbAu1UcOVR7SGpLBJz/seO8MMX32vrxk6esgzY7OB1CL8YDOegtI/EqQfcvnulnP66A9aGg=="],
 
-    "@absolutejs/secure-transfer": ["@absolutejs/secure-transfer@0.1.2", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-7p0opbjF5Lyi+LIKfjdFl1rmZU9lwD0Wc94LEWoo9+1FbcK5X4x4EAjbciUas/dplSHPMKEM2VB89C8kVK8FvQ=="],
+    "@absolutejs/secure-transfer": ["@absolutejs/secure-transfer@0.2.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-KsJ5AvwUYdLjO2wlNiKHATDu2i+Q1HBqIIrIFBBsjAU1G1HLXsvusj/MbnfU06+G4iQEZfwMSm8xSwS9wWUJGQ=="],
 
-    "@absolutejs/secure-transfer-local": ["@absolutejs/secure-transfer-local@0.1.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-transfer": ">=0.1.1 <0.2" } }, "sha512-EpAx1rGJNdSFZ3X6LkbMUtk9qsbBjUSjOmLqfmJNrvBNs5aii6eZ7wFJE05BCnck8Ew4CukZd2LMmfNPP3pa6w=="],
+    "@absolutejs/secure-transfer-local": ["@absolutejs/secure-transfer-local@0.2.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-transfer": ">=0.2.0 <0.3" } }, "sha512-YpcRIA4/bmSDQr7fbaTEmw7PnrWNVe/a2I3KEGFCsWYIXy2CahicZ0kl81cMbRPT6HEvvapABaRzNisus4AIBg=="],
 
     "@absolutejs/secure-transfer-webcrypto": ["@absolutejs/secure-transfer-webcrypto@0.1.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-transfer": ">=0.1.1 <0.2" } }, "sha512-tSXEYsDYz1vJuqkV/alsrC0OmnUodGefh1TjHpY2lcpOEOgftQ23d93H+DvqfeuBS3gixvVdR63i9/0GkWVRnA=="],
 

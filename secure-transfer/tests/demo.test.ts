@@ -7,10 +7,13 @@ test("streams an encrypted attachment through untrusted storage", async () => {
     "A private attachment crossing an untrusted object store.",
   );
   expect(result.ciphertextRecords).toBeGreaterThan(1);
+  expect(result.authenticatedRangeText).toBe("private attac");
   expect(result.descriptorBytes).toBeGreaterThan(0);
   expect(result.storageCanReadPlaintext).toBe(false);
   expect(result.protectedReceiptPlaintextVisible).toBe(false);
   expect(result.resumedFromByteOffset).toBe(8);
   expect(result.tamperRejected).toBe(true);
   expect(result.partialPlaintextCommitted).toBe(false);
+  expect(result.revocationBytes).toBeGreaterThan(0);
+  expect(result.revokedDownloadBlocked).toBe(true);
 });

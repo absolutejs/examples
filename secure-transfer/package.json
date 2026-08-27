@@ -2,15 +2,15 @@
   "name": "absolutejs-secure-transfer-example",
   "private": true,
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "test": "bun test tests/",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@absolutejs/secure-transfer": "0.1.2",
-    "@absolutejs/secure-transfer-local": "0.1.0",
+    "@absolutejs/secure-transfer": "0.2.0",
+    "@absolutejs/secure-transfer-local": "0.2.0",
     "@absolutejs/secure-transfer-webcrypto": "0.1.0"
   },
   "devDependencies": {

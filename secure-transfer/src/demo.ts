@@ -4,11 +4,14 @@ import { join } from "node:path";
 import {
   createSecureTransferClient,
   decodeSecureTransferDescriptor,
+  decodeSecureTransferRevocation,
   encodeSecureTransferDescriptor,
+  encodeSecureTransferRevocation,
   type SecureTransferStore,
 } from "@absolutejs/secure-transfer";
 import {
   localProtectedReceiptStore,
+  localSecureTransferRevocationStore,
   localSecureTransferStore,
 } from "@absolutejs/secure-transfer-local";
 import {
@@ -17,11 +20,14 @@ import {
 } from "@absolutejs/secure-transfer-webcrypto";
 
 export type SecureTransferDemoResult = {
+  readonly authenticatedRangeText: string;
   readonly ciphertextRecords: number;
   readonly descriptorBytes: number;
   readonly downloadedText: string;
   readonly partialPlaintextCommitted: false;
   readonly protectedReceiptPlaintextVisible: false;
+  readonly revocationBytes: number;
+  readonly revokedDownloadBlocked: true;
   readonly resumedFromByteOffset: number;
   readonly storageCanReadPlaintext: false;
   readonly tamperRejected: true;
@@ -62,6 +68,7 @@ export const runSecureTransferDemo =
         },
       };
       const receiptStore = localProtectedReceiptStore({ root });
+      const revocations = localSecureTransferRevocationStore({ root });
       const receiptProtector =
         await createSecureTransferWebcryptoReceiptProtector({
           key: crypto.getRandomValues(new Uint8Array(32)),
@@ -83,6 +90,7 @@ export const runSecureTransferDemo =
           protector: receiptProtector,
           store: receiptStore,
         },
+        revocations,
         store,
         transferIdFactory: () => "opaque-transfer-id",
       });
@@ -179,6 +187,24 @@ export const runSecureTransferDemo =
       if (storageCanReadPlaintext)
         throw new Error("Untrusted storage received visible plaintext.");
 
+      const rangeRecords: Uint8Array[] = [];
+      await transfer.downloadRange(
+        receivedDescriptor,
+        { start: 2, endExclusive: 15 },
+        {
+          abort: async () => {
+            rangeRecords.length = 0;
+          },
+          commit: async () => undefined,
+          write: async (bytes) => {
+            rangeRecords.push(bytes.slice());
+          },
+        },
+      );
+      const authenticatedRangeText = new TextDecoder().decode(
+        Uint8Array.from(rangeRecords.flatMap((record) => [...record])),
+      );
+
       tamperReads = true;
       let tamperRejected = false;
       let partialPlaintextCommitted = false;
@@ -196,12 +222,47 @@ export const runSecureTransferDemo =
       if (!tamperRejected || partialPlaintextCommitted)
         throw new Error("Tampered download did not fail transactionally.");
 
+      tamperReads = false;
+      const { ciphertextRemoved, revocation } = await transfer.revoke({
+        descriptor: receivedDescriptor,
+        reason: "member-removed",
+        revokerDeviceId: "alice-phone",
+      });
+      if (!ciphertextRemoved)
+        throw new Error("Local ciphertext cleanup unexpectedly failed.");
+      // In production this strict payload travels in authenticated E2EE with
+      // purpose `secure-transfer.revocation`. Authorize its sender before apply.
+      const encodedRevocation = encodeSecureTransferRevocation(revocation);
+      const receivedRevocation = decodeSecureTransferRevocation(
+        encodedRevocation,
+        1_024,
+      );
+      await transfer.applyRevocation({
+        descriptor: receivedDescriptor,
+        revocation: receivedRevocation,
+      });
+      let revokedDownloadBlocked = false;
+      await transfer
+        .download(receivedDescriptor, {
+          abort: async () => undefined,
+          commit: async () => undefined,
+          write: async () => undefined,
+        })
+        .catch(() => {
+          revokedDownloadBlocked = true;
+        });
+      if (!revokedDownloadBlocked)
+        throw new Error("A revoked attachment remained downloadable.");
+
       return Object.freeze({
+        authenticatedRangeText,
         ciphertextRecords: descriptor.recordCount,
         descriptorBytes: protectedChannelPayload.length,
         downloadedText: new TextDecoder().decode(downloaded),
         partialPlaintextCommitted: false,
         protectedReceiptPlaintextVisible,
+        revocationBytes: encodedRevocation.length,
+        revokedDownloadBlocked: true,
         resumedFromByteOffset,
         storageCanReadPlaintext,
         tamperRejected: true,
