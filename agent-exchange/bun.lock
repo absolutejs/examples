@@ -9,7 +9,7 @@
         "@absolutejs/agency": "0.7.4",
         "@absolutejs/agent-exchange": "0.5.0",
         "@absolutejs/agent-exchange-email": "0.5.0",
-        "@absolutejs/agent-exchange-secure-messaging": "0.0.1",
+        "@absolutejs/agent-exchange-secure-messaging": "0.1.0",
         "@absolutejs/agent-exchange-webauthn": "0.4.0",
         "@absolutejs/auth": "0.73.1",
         "@absolutejs/e2ee": "0.8.0",
@@ -49,7 +49,7 @@
 
     "@absolutejs/agent-exchange-email": ["@absolutejs/agent-exchange-email@0.5.0", "", { "dependencies": { "@absolutejs/email": "0.3.1", "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/agent-exchange": ">=0.5.0 <0.6" } }, "sha512-srXtiykzSIlheHCZ61X4IG+fu3SVROomupLrcrEXNtZxGvYSO4T5asWKV6vhV6SrzaXfwM9X9DD6Rd0AIUWhrA=="],
 
-    "@absolutejs/agent-exchange-secure-messaging": ["@absolutejs/agent-exchange-secure-messaging@0.0.1", "", { "peerDependencies": { "@absolutejs/agent-exchange": ">=0.5.0 <0.6", "@absolutejs/secure-messaging": ">=0.5.1 <0.6" } }, "sha512-0eFVd7XZUb27sAmd9zlHBlYHOycX3NVdQbMuKdPL6woLn9iZnMgGsJWj22XGh8P6iH3en10In9BcpSsCK/R8hg=="],
+    "@absolutejs/agent-exchange-secure-messaging": ["@absolutejs/agent-exchange-secure-messaging@0.1.0", "", { "peerDependencies": { "@absolutejs/agent-exchange": ">=0.5.0 <0.6", "@absolutejs/secure-messaging": ">=0.5.1 <0.6" } }, "sha512-qMsvPybGaUwtZaIwPNh75iK5ibNQ+csVmPUCzK1ZDsWc59+dvTBrC8mThotJDHXmmsHkC/7wAn9PwMVPke8r7w=="],
 
     "@absolutejs/agent-exchange-webauthn": ["@absolutejs/agent-exchange-webauthn@0.4.0", "", { "peerDependencies": { "@absolutejs/agent-exchange": ">=0.5.0 <0.6", "@absolutejs/auth": ">=0.68.0 <0.74" } }, "sha512-vlM5uU0T6GbzCCmaOZm1ANCIQDkTDTkWI7npy2VlLo0Wq4Cs/nOjvdIcjyrb9JZ9LlNQjdI90LfuwBK3cINYDw=="],
 

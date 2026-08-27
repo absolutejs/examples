@@ -4,7 +4,7 @@
     "@absolutejs/agency": "0.7.4",
     "@absolutejs/agent-exchange": "0.5.0",
     "@absolutejs/agent-exchange-email": "0.5.0",
-    "@absolutejs/agent-exchange-secure-messaging": "0.0.1",
+    "@absolutejs/agent-exchange-secure-messaging": "0.1.0",
     "@absolutejs/agent-exchange-webauthn": "0.4.0",
     "@absolutejs/auth": "0.73.1",
     "@absolutejs/e2ee": "0.8.0",
