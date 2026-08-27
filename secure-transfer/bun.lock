@@ -6,7 +6,7 @@
       "name": "absolutejs-secure-transfer-example",
       "dependencies": {
         "@absolutejs/secure-transfer": "0.2.0",
-        "@absolutejs/secure-transfer-local": "0.2.0",
+        "@absolutejs/secure-transfer-local": "0.2.1",
         "@absolutejs/secure-transfer-webcrypto": "0.1.0",
       },
       "devDependencies": {
@@ -21,7 +21,7 @@
 
     "@absolutejs/secure-transfer": ["@absolutejs/secure-transfer@0.2.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-KsJ5AvwUYdLjO2wlNiKHATDu2i+Q1HBqIIrIFBBsjAU1G1HLXsvusj/MbnfU06+G4iQEZfwMSm8xSwS9wWUJGQ=="],
 
-    "@absolutejs/secure-transfer-local": ["@absolutejs/secure-transfer-local@0.2.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-transfer": ">=0.2.0 <0.3" } }, "sha512-YpcRIA4/bmSDQr7fbaTEmw7PnrWNVe/a2I3KEGFCsWYIXy2CahicZ0kl81cMbRPT6HEvvapABaRzNisus4AIBg=="],
+    "@absolutejs/secure-transfer-local": ["@absolutejs/secure-transfer-local@0.2.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-transfer": ">=0.2.0 <0.3" } }, "sha512-AX2ZjjAe3rTjiqLezL8jJgXG4NPEkkcShlnmu4M//w+xXlrvt5semNY6IlXAhTj54XOIFJUioYpN24e7aRewOw=="],
 
     "@absolutejs/secure-transfer-webcrypto": ["@absolutejs/secure-transfer-webcrypto@0.1.0", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-transfer": ">=0.1.1 <0.2" } }, "sha512-tSXEYsDYz1vJuqkV/alsrC0OmnUodGefh1TjHpY2lcpOEOgftQ23d93H+DvqfeuBS3gixvVdR63i9/0GkWVRnA=="],
 
