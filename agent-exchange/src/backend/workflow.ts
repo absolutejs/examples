@@ -18,6 +18,11 @@ import {
   type AgentExchangeStandingMandateDraft,
 } from "@absolutejs/agent-exchange";
 import { createEmailVerificationCodeSource } from "@absolutejs/agent-exchange-email";
+import {
+  createAgentExchangeSecureMessagingHandler,
+  createAgentExchangeSecureMessagingTransport,
+  createMemoryAgentExchangeSecureMessagingReceiptStore,
+} from "@absolutejs/agent-exchange-secure-messaging";
 import { createWebAuthnAgentExchangeMandateApprovalProvider } from "@absolutejs/agent-exchange-webauthn";
 import type {
   WebAuthnAdapter,
@@ -28,6 +33,7 @@ import {
   createWebCryptoEnvelopeProvider,
   generateWebCryptoRecipientKeyPair,
 } from "@absolutejs/e2ee-webcrypto";
+import { createDemoMessagingPair } from "./secureMessaging";
 
 const DEMO_CODE = "482193";
 const JWS_TYPE = "absolute-agent-exchange-mandate+jws";
@@ -170,6 +176,7 @@ const errorCode = async (
 export const runSecureDelegationDemo =
   async (): Promise<SecureDelegationDemoResult> => {
     const now = Date.now();
+    const messaging = await createDemoMessagingPair(now);
     const steps: DemoStep[] = [];
     const issuer = {
       authority: "https://owner.example",
@@ -179,11 +186,13 @@ export const runSecureDelegationDemo =
       agentId: "requesting-agent",
       authority: "https://requester.example",
       delegationId: "oauth-delegation-requesting-agent",
+      deviceId: messaging.requesterDeviceId,
       subject: "requesting-person",
     };
     const audience = {
       agentId: "recipient-agent",
       authority: "https://recipient.example",
+      deviceId: messaging.recipientDeviceId,
       subject: "mailbox-owner",
     };
     const { signer, verifier } = await createJws();
@@ -377,6 +386,60 @@ export const runSecureDelegationDemo =
         },
       },
     });
+    const authorizedExchanges = new Set<string>();
+    const transportReceipts =
+      createMemoryAgentExchangeSecureMessagingReceiptStore();
+    const recipientHandler = createAgentExchangeSecureMessagingHandler({
+      authorizeRequest: ({ delivery, signedMandate }) => {
+        if (
+          !authorizedExchanges.has(delivery.request.exchangeId) ||
+          signedMandate?.compactJws !== issued.signedMandate.compactJws
+        )
+          throw new Error("The encrypted delivery was not mandate-authorized.");
+      },
+      localDeviceId: messaging.recipientDeviceId,
+      maximumTtlMs: 60_000,
+      now: () => now,
+      receipts: transportReceipts,
+      receiver,
+    });
+    const requesterHandler = createAgentExchangeSecureMessagingHandler({
+      authorizeRequest: () => {
+        throw new Error("A receipt cannot request execution.");
+      },
+      localDeviceId: messaging.requesterDeviceId,
+      maximumTtlMs: 60_000,
+      now: () => now,
+      receipts: transportReceipts,
+      receiver: {
+        receive: async () => {
+          throw new Error("A receipt cannot contain a protected value.");
+        },
+      },
+    });
+    let draining = false;
+    const transport = createAgentExchangeSecureMessagingTransport({
+      client: messaging.requester,
+      maximumTtlMs: 60_000,
+      now: () => now,
+      pollIntervalMs: 1,
+      receipts: transportReceipts,
+      resolveRoute: () => ({
+        conversationId: messaging.conversationId,
+        recipientDeviceId: messaging.recipientDeviceId,
+      }),
+      resolveSignedMandate: () => issued.signedMandate,
+      sleep: async () => {
+        if (draining) return;
+        draining = true;
+        try {
+          await messaging.recipient.receiveAndHandle(recipientHandler);
+          await messaging.requester.receiveAndHandle(requesterHandler);
+        } finally {
+          draining = false;
+        }
+      },
+    });
     const sender = createAgentExchangeSender({
       agency,
       e2ee,
@@ -395,7 +458,7 @@ export const runSecureDelegationDemo =
         },
       },
       store: createMemoryAgentExchangeStore(),
-      transport: { deliver: (delivery) => receiver.receive(delivery) },
+      transport,
     });
     const requested = await sender.request({
       assurance: {
@@ -447,6 +510,7 @@ export const runSecureDelegationDemo =
       request: requested.exchange,
       signedMandate: issued.signedMandate,
     });
+    authorizedExchanges.add(requested.exchange.exchangeId);
     await agency.approve({
       actionId: requested.exchange.actionId,
       approvedBy: issuer.subject,
@@ -467,7 +531,7 @@ export const runSecureDelegationDemo =
     });
     steps.push({
       detail:
-        "The correlated email code crossed only the HPKE and destination tools.",
+        "The code crossed HPKE inside a device-bound strict-E2EE MLS request/receipt exchange.",
       name: "Model-blind delivery",
       status: "passed",
     });

@@ -8,14 +8,18 @@ This example runs the original two-person automation scenario end to end:
    verification challenge.
 3. The owner-side broker verifies the signed mandate, independently checks the
    requesting agent's delegation, and retrieves one challenge-correlated email.
-4. The six-digit code is encrypted for the recipient and submitted by a
-   deterministic tool. Neither agent model, receipt, API response, nor Agency
-   history receives the code.
+4. The six-digit code is HPKE-protected, carried through a device-bound
+   strict-E2EE MLS conversation, and submitted by a deterministic tool. The MLS
+   receipt is atomically queued before the request is acknowledged. Neither
+   agent model, receipt, API response, nor Agency history receives the code.
 
 The mailbox, passkey result, and destination are synthetic so the example is
 safe to run locally. The mandate itself is a real Ed25519-signed compact JWS,
 the email parser is the real `@absolutejs/email` path, and the envelope is the
 real certified WebCrypto HPKE provider.
+The two endpoints use the real `@absolutejs/e2ee-mls` provider through
+`@absolutejs/secure-messaging`, and the response leg uses the interchangeable
+`@absolutejs/agent-exchange-secure-messaging` transport.
 
 The page also runs purpose-substitution and replay probes. Both must fail before
 another mailbox read or destination submission.
