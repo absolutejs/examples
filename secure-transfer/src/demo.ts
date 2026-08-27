@@ -15,6 +15,14 @@ export type SecureTransferDemoResult = {
   readonly tamperRejected: true;
 };
 
+const contains = (haystack: Uint8Array, needle: Uint8Array): boolean => {
+  if (needle.length > haystack.length) return false;
+  for (let offset = 0; offset <= haystack.length - needle.length; offset += 1)
+    if (needle.every((value, index) => haystack[offset + index] === value))
+      return true;
+  return false;
+};
+
 export const runSecureTransferDemo =
   async (): Promise<SecureTransferDemoResult> => {
     const records = new Map<string, Uint8Array>();
@@ -84,6 +92,12 @@ export const runSecureTransferDemo =
     });
     if (!committed) throw new Error("Transactional sink did not commit.");
     const downloaded = Uint8Array.from(staged.flatMap((record) => [...record]));
+    const storedCiphertext = Uint8Array.from(
+      [...records.values()].flatMap((record) => [...record]),
+    );
+    const storageCanReadPlaintext = contains(storedCiphertext, plaintext);
+    if (storageCanReadPlaintext)
+      throw new Error("Untrusted storage received visible plaintext.");
 
     const first = records.get("opaque-transfer-id:0");
     if (first === undefined)
@@ -110,7 +124,7 @@ export const runSecureTransferDemo =
       descriptorBytes: protectedChannelPayload.length,
       downloadedText: new TextDecoder().decode(downloaded),
       partialPlaintextCommitted: false,
-      storageCanReadPlaintext: false,
+      storageCanReadPlaintext,
       tamperRejected: true,
     });
   };
