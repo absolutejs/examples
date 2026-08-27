@@ -3,11 +3,12 @@
 A small executable demonstration of `@absolutejs/secure-transfer` with the
 interchangeable `@absolutejs/secure-transfer-webcrypto` provider.
 
-It splits a private note across authenticated AES-256-GCM records, stores only
-ciphertext in an untrusted in-memory object store, strictly round-trips the
-capability-bearing descriptor as a simulated secure-message payload, downloads
-into a transactional staging sink, and proves tampering cannot commit partial
-plaintext.
+It protects a bearer upload receipt with per-receipt WebCrypto keys, persists it
+through the atomic local adapter, interrupts the source after one record, resumes
+from the durable byte offset, and removes the completed receipt. It then strictly
+round-trips the capability-bearing descriptor as a simulated secure-message
+payload, downloads into a transactional staging sink, and proves tampering cannot
+commit partial plaintext.
 
 ```bash
 bun install
@@ -20,6 +21,7 @@ In an application, send `encodeSecureTransferDescriptor(descriptor)` as a
 `secure-transfer.descriptor`. The example intentionally does not pretend its
 same-process descriptor handoff is a real delivery or identity system.
 
-The in-memory store is deliberately tiny. Production stores must provide
-create-only writes, bounded reads, expiry cleanup, authorization, and opaque key
-mapping. Decrypted filenames and content types remain untrusted.
+The local adapter is suitable for tests and single-host installations. Multi-host
+deployments can swap in `@absolutejs/secure-transfer-s3`, which uses conditional
+S3/R2 writes and ETag compare-and-swap receipt leases. Decrypted filenames and
+content types remain untrusted.

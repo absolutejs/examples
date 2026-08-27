@@ -9,6 +9,8 @@ test("streams an encrypted attachment through untrusted storage", async () => {
   expect(result.ciphertextRecords).toBeGreaterThan(1);
   expect(result.descriptorBytes).toBeGreaterThan(0);
   expect(result.storageCanReadPlaintext).toBe(false);
+  expect(result.protectedReceiptPlaintextVisible).toBe(false);
+  expect(result.resumedFromByteOffset).toBe(8);
   expect(result.tamperRejected).toBe(true);
   expect(result.partialPlaintextCommitted).toBe(false);
 });

@@ -1,16 +1,28 @@
+import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   createSecureTransferClient,
   decodeSecureTransferDescriptor,
   encodeSecureTransferDescriptor,
   type SecureTransferStore,
 } from "@absolutejs/secure-transfer";
-import { createSecureTransferWebcryptoProvider } from "@absolutejs/secure-transfer-webcrypto";
+import {
+  localProtectedReceiptStore,
+  localSecureTransferStore,
+} from "@absolutejs/secure-transfer-local";
+import {
+  createSecureTransferWebcryptoProvider,
+  createSecureTransferWebcryptoReceiptProtector,
+} from "@absolutejs/secure-transfer-webcrypto";
 
 export type SecureTransferDemoResult = {
   readonly ciphertextRecords: number;
   readonly descriptorBytes: number;
   readonly downloadedText: string;
   readonly partialPlaintextCommitted: false;
+  readonly protectedReceiptPlaintextVisible: false;
+  readonly resumedFromByteOffset: number;
   readonly storageCanReadPlaintext: false;
   readonly tamperRejected: true;
 };
@@ -25,106 +37,176 @@ const contains = (haystack: Uint8Array, needle: Uint8Array): boolean => {
 
 export const runSecureTransferDemo =
   async (): Promise<SecureTransferDemoResult> => {
-    const records = new Map<string, Uint8Array>();
-    const store: SecureTransferStore = {
-      id: "demo-untrusted-store",
-      getRecord: async ({ recordIndex, transferId }) =>
-        records.get(`${transferId}:${recordIndex}`)?.slice(),
-      putRecord: async ({ bytes, recordIndex, transferId }) => {
-        const key = `${transferId}:${recordIndex}`;
-        if (records.has(key)) return "exists";
-        records.set(key, bytes.slice());
-        return "created";
-      },
-      removeTransfer: async (transferId) => {
-        for (const key of [...records.keys()])
-          if (key.startsWith(`${transferId}:`)) records.delete(key);
-      },
-    };
-    const transfer = createSecureTransferClient({
-      cryptoProvider: createSecureTransferWebcryptoProvider(),
-      now: () => 1_000,
-      policy: {
-        maximumAttachmentBytes: 1_024,
-        maximumDescriptorBytes: 4_096,
-        maximumFutureSkewMs: 100,
-        maximumMetadataBytes: 512,
-        maximumRecordPlaintextBytes: 8,
-        maximumRecords: 128,
-        maximumTtlMs: 1_000,
-      },
-      store,
-      transferIdFactory: () => "opaque-transfer-id",
-    });
-    const plaintext = new TextEncoder().encode(
-      "A private attachment crossing an untrusted object store.",
+    const root = await mkdtemp(
+      join(tmpdir(), "absolute-secure-transfer-example-"),
     );
-    const descriptor = await transfer.upload({
-      attachmentId: "attachment-1",
-      body: plaintext,
-      byteLength: plaintext.length,
-      contentType: "text/plain",
-      conversationId: "conversation-1",
-      expiresAt: 1_500,
-      fileName: "private-note.txt",
-      senderDeviceId: "alice-phone",
-    });
-
-    // This capability-bearing descriptor must be the plaintext of a
-    // @absolutejs/secure-messaging message, never public object metadata.
-    const protectedChannelPayload = encodeSecureTransferDescriptor(descriptor);
-    const receivedDescriptor = decodeSecureTransferDescriptor(
-      protectedChannelPayload,
-      4_096,
-    );
-    const staged: Uint8Array[] = [];
-    let committed = false;
-    await transfer.download(receivedDescriptor, {
-      abort: async () => {
-        staged.length = 0;
-      },
-      commit: async () => {
-        committed = true;
-      },
-      write: async (record) => {
-        staged.push(record.slice());
-      },
-    });
-    if (!committed) throw new Error("Transactional sink did not commit.");
-    const downloaded = Uint8Array.from(staged.flatMap((record) => [...record]));
-    const storedCiphertext = Uint8Array.from(
-      [...records.values()].flatMap((record) => [...record]),
-    );
-    const storageCanReadPlaintext = contains(storedCiphertext, plaintext);
-    if (storageCanReadPlaintext)
-      throw new Error("Untrusted storage received visible plaintext.");
-
-    const first = records.get("opaque-transfer-id:0");
-    if (first === undefined)
-      throw new Error("Expected the first ciphertext record.");
-    first[0] = (first[0] ?? 0) ^ 1;
-    let tamperRejected = false;
-    let partialPlaintextCommitted = false;
-    await transfer
-      .download(receivedDescriptor, {
-        abort: async () => undefined,
-        commit: async () => {
-          partialPlaintextCommitted = true;
+    try {
+      const local = localSecureTransferStore({ root });
+      const capturedCiphertext: Uint8Array[] = [];
+      let tamperReads = false;
+      const store: SecureTransferStore = {
+        ...local,
+        getRecord: async (input) => {
+          const bytes = await local.getRecord(input);
+          if (!tamperReads || bytes === undefined || input.recordIndex !== 0)
+            return bytes;
+          const tampered = bytes.slice();
+          tampered[0] = (tampered[0] ?? 0) ^ 1;
+          return tampered;
         },
-        write: async () => undefined,
-      })
-      .catch(() => {
-        tamperRejected = true;
+        putRecord: async (input) => {
+          const result = await local.putRecord(input);
+          if (result === "created")
+            capturedCiphertext.push(input.bytes.slice());
+          return result;
+        },
+      };
+      const receiptStore = localProtectedReceiptStore({ root });
+      const receiptProtector =
+        await createSecureTransferWebcryptoReceiptProtector({
+          key: crypto.getRandomValues(new Uint8Array(32)),
+        });
+      const transfer = createSecureTransferClient({
+        cryptoProvider: createSecureTransferWebcryptoProvider(),
+        now: () => 1_000,
+        policy: {
+          maximumAttachmentBytes: 1_024,
+          maximumDescriptorBytes: 4_096,
+          maximumFutureSkewMs: 100,
+          maximumMetadataBytes: 512,
+          maximumRecordPlaintextBytes: 8,
+          maximumRecords: 128,
+          maximumTtlMs: 1_000,
+        },
+        resumable: {
+          leaseDurationMs: 100,
+          protector: receiptProtector,
+          store: receiptStore,
+        },
+        store,
+        transferIdFactory: () => "opaque-transfer-id",
       });
-    if (!tamperRejected || partialPlaintextCommitted)
-      throw new Error("Tampered download did not fail transactionally.");
+      const plaintext = new TextEncoder().encode(
+        "A private attachment crossing an untrusted object store.",
+      );
+      const { receiptId } = await transfer.beginResumableUpload({
+        attachmentId: "attachment-1",
+        byteLength: plaintext.length,
+        contentType: "text/plain",
+        conversationId: "conversation-1",
+        expiresAt: 1_500,
+        fileName: "private-note.txt",
+        senderDeviceId: "alice-phone",
+      });
 
-    return Object.freeze({
-      ciphertextRecords: descriptor.recordCount,
-      descriptorBytes: protectedChannelPayload.length,
-      downloadedText: new TextDecoder().decode(downloaded),
-      partialPlaintextCommitted: false,
-      storageCanReadPlaintext,
-      tamperRejected: true,
-    });
+      const receiptDirectory = join(root, ".receipts");
+      const [receiptFile] = (await readdir(receiptDirectory)).filter((name) =>
+        name.endsWith(".receipt.json"),
+      );
+      if (receiptFile === undefined)
+        throw new Error("Protected receipt missing.");
+      const receiptState = new Uint8Array(
+        await readFile(join(receiptDirectory, receiptFile)),
+      );
+      const protectedReceiptPlaintextVisible = contains(
+        receiptState,
+        new TextEncoder().encode("private-note.txt"),
+      );
+      if (protectedReceiptPlaintextVisible)
+        throw new Error("Receipt storage received visible bearer metadata.");
+
+      let firstPull = true;
+      await transfer
+        .resumeUpload({
+          receiptId,
+          source: () =>
+            new ReadableStream<Uint8Array>({
+              pull(controller) {
+                if (firstPull) {
+                  firstPull = false;
+                  controller.enqueue(plaintext.slice(0, 8));
+                } else {
+                  controller.error(new Error("simulated interrupted source"));
+                }
+              },
+            }),
+        })
+        .then(
+          () => {
+            throw new Error("Interrupted source unexpectedly completed.");
+          },
+          () => undefined,
+        );
+
+      let resumedFromByteOffset = -1;
+      const descriptor = await transfer.resumeUpload({
+        receiptId,
+        source: (byteOffset) => {
+          resumedFromByteOffset = byteOffset;
+          return plaintext.slice(byteOffset);
+        },
+      });
+
+      // This capability-bearing descriptor must be the plaintext of a
+      // @absolutejs/secure-messaging message, never public object metadata.
+      const protectedChannelPayload =
+        encodeSecureTransferDescriptor(descriptor);
+      const receivedDescriptor = decodeSecureTransferDescriptor(
+        protectedChannelPayload,
+        4_096,
+      );
+      const staged: Uint8Array[] = [];
+      let committed = false;
+      await transfer.download(receivedDescriptor, {
+        abort: async () => {
+          staged.length = 0;
+        },
+        commit: async () => {
+          committed = true;
+        },
+        write: async (record) => {
+          staged.push(record.slice());
+        },
+      });
+      if (!committed) throw new Error("Transactional sink did not commit.");
+      const downloaded = Uint8Array.from(
+        staged.flatMap((record) => [...record]),
+      );
+      const storedCiphertext = Uint8Array.from(
+        capturedCiphertext.flatMap((record) => [...record]),
+      );
+      const storageCanReadPlaintext = contains(storedCiphertext, plaintext);
+      if (storageCanReadPlaintext)
+        throw new Error("Untrusted storage received visible plaintext.");
+
+      tamperReads = true;
+      let tamperRejected = false;
+      let partialPlaintextCommitted = false;
+      await transfer
+        .download(receivedDescriptor, {
+          abort: async () => undefined,
+          commit: async () => {
+            partialPlaintextCommitted = true;
+          },
+          write: async () => undefined,
+        })
+        .catch(() => {
+          tamperRejected = true;
+        });
+      if (!tamperRejected || partialPlaintextCommitted)
+        throw new Error("Tampered download did not fail transactionally.");
+
+      return Object.freeze({
+        ciphertextRecords: descriptor.recordCount,
+        descriptorBytes: protectedChannelPayload.length,
+        downloadedText: new TextDecoder().decode(downloaded),
+        partialPlaintextCommitted: false,
+        protectedReceiptPlaintextVisible,
+        resumedFromByteOffset,
+        storageCanReadPlaintext,
+        tamperRejected: true,
+      });
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
   };
