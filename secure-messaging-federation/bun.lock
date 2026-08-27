@@ -5,7 +5,7 @@
     "": {
       "name": "absolutejs-secure-messaging-federation-example",
       "dependencies": {
-        "@absolutejs/secure-messaging-federation": "0.0.2",
+        "@absolutejs/secure-messaging-federation": "0.0.3",
         "@absolutejs/secure-messaging-federation-mimi": "0.0.1",
         "@absolutejs/secure-messaging-federation-webcrypto": "0.0.1",
       },
@@ -19,7 +19,7 @@
   "packages": {
     "@absolutejs/manifest": ["@absolutejs/manifest@0.9.0", "", { "peerDependencies": { "@sinclair/typebox": ">=0.34.0 <0.35.0" }, "bin": { "absolute-manifest": "dist/cli.js" } }, "sha512-naNDdwNoWQgJ3HuFbAu1UcOVR7SGpLBJz/seO8MMX32vrxk6esgzY7OB1CL8YDOegtI/EqQfcvnulnP66A9aGg=="],
 
-    "@absolutejs/secure-messaging-federation": ["@absolutejs/secure-messaging-federation@0.0.2", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-ULx4F6qwIpI3G08985Q2X+lk6nBbB5vtf8mhUcXLSeUUQSS8MY0S5dGunq340iIoLaxrB8ywXp1iqO80/kozwQ=="],
+    "@absolutejs/secure-messaging-federation": ["@absolutejs/secure-messaging-federation@0.0.3", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-cimtY5EfwwW8adjFsemxZ8DybmYbDFM3GwgxpxSIQJVtckT8ABjk8p1XGYpGRBDyXVXU35HgcsaBoiQzzQgtjw=="],
 
     "@absolutejs/secure-messaging-federation-mimi": ["@absolutejs/secure-messaging-federation-mimi@0.0.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-messaging-federation": ">=0.0.2 <0.1" } }, "sha512-lWZc9ytgkcEGeOKtxgijd+3ffwM3Uuux3AnxSsjMzNaMbeIvTjFW3lpe9P5+wr+yQ8vT9SkSBNFTIRYZmxu4GQ=="],
 

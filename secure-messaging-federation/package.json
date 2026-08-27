@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@absolutejs/secure-messaging-federation": "0.0.2",
+    "@absolutejs/secure-messaging-federation": "0.0.3",
     "@absolutejs/secure-messaging-federation-mimi": "0.0.1",
     "@absolutejs/secure-messaging-federation-webcrypto": "0.0.1"
   },
