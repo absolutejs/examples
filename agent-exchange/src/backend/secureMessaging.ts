@@ -20,6 +20,10 @@ import {
   AGENT_EXCHANGE_SECURE_MESSAGING_RECEIPT_PURPOSE,
   AGENT_EXCHANGE_SECURE_MESSAGING_REQUEST_PURPOSE,
 } from "@absolutejs/agent-exchange-secure-messaging";
+import {
+  createPostgresJsSecureMessagingClient,
+  createPostgresSecureMessagingStore,
+} from "@absolutejs/secure-messaging-postgres";
 
 const hex = (bytes: Uint8Array) =>
   [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
@@ -152,8 +156,36 @@ export type DemoMessagingPair = {
   readonly requesterDeviceId: string;
 };
 
+export type DemoMessagingStores = {
+  readonly recipient: SecureMessagingStore;
+  readonly requester: SecureMessagingStore;
+};
+
+export const createDemoPostgresMessagingStores = (options: {
+  readonly postgres: unknown;
+  readonly tenantId: string;
+}): DemoMessagingStores => {
+  const client = createPostgresJsSecureMessagingClient(options.postgres);
+  return Object.freeze({
+    recipient: createPostgresSecureMessagingStore({
+      client,
+      deviceId: "recipient-device-1",
+      tenantId: options.tenantId,
+    }),
+    requester: createPostgresSecureMessagingStore({
+      client,
+      deviceId: "requester-device-1",
+      tenantId: options.tenantId,
+    }),
+  });
+};
+
 export const createDemoMessagingPair = async (
   now: number,
+  stores: DemoMessagingStores = {
+    recipient: messagingStore(),
+    requester: messagingStore(),
+  },
 ): Promise<DemoMessagingPair> => {
   const requesterDeviceId = "requester-device-1";
   const recipientDeviceId = "recipient-device-1";
@@ -232,13 +264,13 @@ export const createDemoMessagingPair = async (
     ...common,
     deviceCredential: requesterCredential,
     provider: requesterProvider,
-    store: messagingStore(),
+    store: stores.requester,
   });
   const recipient = createSecureMessagingClient({
     ...common,
     deviceCredential: recipientCredential,
     provider: recipientProvider,
-    store: messagingStore(),
+    store: stores.recipient,
   });
   await recipient.publishKeyPackage(now + 60_000);
   await requester.createConversation(conversationId);

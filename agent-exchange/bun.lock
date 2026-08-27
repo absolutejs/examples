@@ -16,6 +16,7 @@
         "@absolutejs/e2ee-mls": "0.5.0",
         "@absolutejs/e2ee-webcrypto": "0.2.1",
         "@absolutejs/secure-messaging": "0.5.1",
+        "@absolutejs/secure-messaging-postgres": "0.1.0",
         "@angular/common": "^21.0.0",
         "@angular/compiler": "^21.0.0",
         "@angular/compiler-cli": "^21.0.0",
@@ -80,6 +81,8 @@
     "@absolutejs/native-windows-x64": ["@absolutejs/native-windows-x64@0.20.0-beta.0", "", { "os": "win32", "cpu": "x64" }, "sha512-fqhxHnz08EXqcyWtgddXMM3Arloj8WJrrYT/tCJl2TTNre1MohPIpY7GJSXbi+SeojXNvCcu+p3zOww1eAZwlw=="],
 
     "@absolutejs/secure-messaging": ["@absolutejs/secure-messaging@0.5.1", "", { "dependencies": { "@absolutejs/e2ee": "0.8.0", "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" } }, "sha512-iAzCBjBWnOxCqtxASS5HtTvz/hOi4MIupKxLt5N/iiX/LHUF4BEvA5GwvOTV/de1e9ZD1G1+MmS9KzuexfPo4Q=="],
+
+    "@absolutejs/secure-messaging-postgres": ["@absolutejs/secure-messaging-postgres@0.1.0", "", { "peerDependencies": { "@absolutejs/secure-messaging": ">=0.5.1 <0.6" } }, "sha512-g1X1nxjFn//eBRFT6RXwqP895Z4EkvH+S2ioGHthd+E2oxw23bU2kky8V+uu1lrqe1yGjQgRZNIuj+TJW/2OJg=="],
 
     "@angular/common": ["@angular/common@21.2.21", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/core": "21.2.21", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-ntouT80emF5osQW5XOI6PHSa6E3ZxPGIbwtIYznuiz9bBboW0TRs9YUSNg8TRfOiTBqwG8FKXCr19eyCaaTsgA=="],
 

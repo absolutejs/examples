@@ -21,6 +21,13 @@ The two endpoints use the real `@absolutejs/e2ee-mls` provider through
 `@absolutejs/secure-messaging`, and the response leg uses the interchangeable
 `@absolutejs/agent-exchange-secure-messaging` transport.
 
+The demo defaults to isolated memory stores so it starts without infrastructure.
+For a durable run, apply the migration exported by
+`@absolutejs/secure-messaging-postgres` and pass stores created with
+`createDemoPostgresMessagingStores({ postgres, tenantId })` into
+`createDemoMessagingPair`. Requester and recipient device IDs receive separate
+database namespaces even when they belong to the same tenant.
+
 The page also runs purpose-substitution and replay probes. Both must fail before
 another mailbox read or destination submission.
 
