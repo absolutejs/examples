@@ -4,9 +4,10 @@ import { join } from "node:path";
 import {
   createSecureTransferClient,
   decodeSecureTransferDescriptor,
-  decodeSecureTransferRevocation,
+  decodeSecureTransferReplacement,
   encodeSecureTransferDescriptor,
-  encodeSecureTransferRevocation,
+  encodeSecureTransferReplacement,
+  type SecureTransferDescriptor,
   type SecureTransferStore,
 } from "@absolutejs/secure-transfer";
 import {
@@ -26,7 +27,8 @@ export type SecureTransferDemoResult = {
   readonly downloadedText: string;
   readonly partialPlaintextCommitted: false;
   readonly protectedReceiptPlaintextVisible: false;
-  readonly revocationBytes: number;
+  readonly replacementBytes: number;
+  readonly replacementDownloadedText: string;
   readonly revokedDownloadBlocked: true;
   readonly resumedFromByteOffset: number;
   readonly storageCanReadPlaintext: false;
@@ -69,6 +71,7 @@ export const runSecureTransferDemo =
       };
       const receiptStore = localProtectedReceiptStore({ root });
       const revocations = localSecureTransferRevocationStore({ root });
+      let transferSequence = 0;
       const receiptProtector =
         await createSecureTransferWebcryptoReceiptProtector({
           key: crypto.getRandomValues(new Uint8Array(32)),
@@ -92,7 +95,7 @@ export const runSecureTransferDemo =
         },
         revocations,
         store,
-        transferIdFactory: () => "opaque-transfer-id",
+        transferIdFactory: () => `opaque-transfer-${(transferSequence += 1)}`,
       });
       const plaintext = new TextEncoder().encode(
         "A private attachment crossing an untrusted object store.",
@@ -223,24 +226,46 @@ export const runSecureTransferDemo =
         throw new Error("Tampered download did not fail transactionally.");
 
       tamperReads = false;
-      const { ciphertextRemoved, revocation } = await transfer.revoke({
-        descriptor: receivedDescriptor,
-        reason: "member-removed",
-        revokerDeviceId: "alice-phone",
+      const replacement = await transfer.prepareReplacement({
+        previousDescriptor: receivedDescriptor,
+        reason: "membership-change",
+        replacement: {
+          attachmentId: receivedDescriptor.attachmentId,
+          body: plaintext,
+          byteLength: plaintext.length,
+          contentType: receivedDescriptor.contentType,
+          conversationId: receivedDescriptor.conversationId,
+          expiresAt: 1_500,
+          fileName: receivedDescriptor.fileName,
+          senderDeviceId: "alice-phone",
+        },
+        securityEpoch: 2,
       });
-      if (!ciphertextRemoved)
-        throw new Error("Local ciphertext cleanup unexpectedly failed.");
-      // In production this strict payload travels in authenticated E2EE with
-      // purpose `secure-transfer.revocation`. Authorize its sender before apply.
-      const encodedRevocation = encodeSecureTransferRevocation(revocation);
-      const receivedRevocation = decodeSecureTransferRevocation(
-        encodedRevocation,
-        1_024,
+      // In production this one payload is sent with expectedSecurityEpoch: 2
+      // after the MLS removal Commit is durable.
+      const encodedReplacement = encodeSecureTransferReplacement(replacement);
+      const receivedReplacement = decodeSecureTransferReplacement(
+        encodedReplacement,
+        8_192,
+        4_096,
       );
-      await transfer.applyRevocation({
-        descriptor: receivedDescriptor,
-        revocation: receivedRevocation,
+      let currentDescriptor: SecureTransferDescriptor | undefined;
+      const activated = await transfer.activateReplacement({
+        authenticatedContext: {
+          conversationId: "conversation-1",
+          purpose: "secure-transfer.replacement",
+          securityEpoch: 2,
+          senderId: "alice-phone",
+        },
+        persistReplacement: async (next) => {
+          currentDescriptor = next;
+        },
+        previousDescriptor: receivedDescriptor,
+        removeSupersededCiphertext: true,
+        replacement: receivedReplacement,
       });
+      if (!activated.ciphertextRemoved || currentDescriptor === undefined)
+        throw new Error("Replacement activation did not complete.");
       let revokedDownloadBlocked = false;
       await transfer
         .download(receivedDescriptor, {
@@ -254,6 +279,20 @@ export const runSecureTransferDemo =
       if (!revokedDownloadBlocked)
         throw new Error("A revoked attachment remained downloadable.");
 
+      const replacementRecords: Uint8Array[] = [];
+      await transfer.download(currentDescriptor, {
+        abort: async () => {
+          replacementRecords.length = 0;
+        },
+        commit: async () => undefined,
+        write: async (bytes) => {
+          replacementRecords.push(bytes.slice());
+        },
+      });
+      const replacementDownloadedText = new TextDecoder().decode(
+        Uint8Array.from(replacementRecords.flatMap((record) => [...record])),
+      );
+
       return Object.freeze({
         authenticatedRangeText,
         ciphertextRecords: descriptor.recordCount,
@@ -261,7 +300,8 @@ export const runSecureTransferDemo =
         downloadedText: new TextDecoder().decode(downloaded),
         partialPlaintextCommitted: false,
         protectedReceiptPlaintextVisible,
-        revocationBytes: encodedRevocation.length,
+        replacementBytes: encodedReplacement.length,
+        replacementDownloadedText,
         revokedDownloadBlocked: true,
         resumedFromByteOffset,
         storageCanReadPlaintext,

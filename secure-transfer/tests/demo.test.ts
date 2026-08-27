@@ -14,6 +14,7 @@ test("streams an encrypted attachment through untrusted storage", async () => {
   expect(result.resumedFromByteOffset).toBe(8);
   expect(result.tamperRejected).toBe(true);
   expect(result.partialPlaintextCommitted).toBe(false);
-  expect(result.revocationBytes).toBeGreaterThan(0);
+  expect(result.replacementBytes).toBeGreaterThan(0);
+  expect(result.replacementDownloadedText).toBe(result.downloadedText);
   expect(result.revokedDownloadBlocked).toBe(true);
 });
