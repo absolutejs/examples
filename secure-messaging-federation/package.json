@@ -5,10 +5,12 @@
   "version": "0.0.1",
   "scripts": {
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
+    "inbox": "bun run src/inbox.ts",
     "test": "bun test tests/",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@absolutejs/auth": "0.75.4",
     "@absolutejs/secure-messaging-federation": "0.1.0",
     "@absolutejs/secure-messaging-federation-delivery": "0.0.1",
     "@absolutejs/secure-messaging-federation-https": "0.0.3",

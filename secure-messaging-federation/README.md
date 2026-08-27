@@ -10,12 +10,43 @@ This example shows the complete safe boundary for cross-provider messaging:
 - minimal routing metadata, durable replay rejection, and destination binding;
 - user-approved abuse evidence sealed endpoint-to-moderator; and
 - explicit `receiver-asserted` authenticity instead of a false franking claim.
+- a runnable managed-inbox agent using device authorization, audience-bound
+  DPoP tokens, separate authorization/resource nonces, leasing, and
+  acknowledgement.
 
 ```bash
 bun install
 bun test
 bun run typecheck
 ```
+
+## Managed PaaS inbox agent
+
+The CLI demonstrates the complete public-agent flow against an enabled AbsoluteJS
+PaaS instance. It discovers both sides of OAuth, dynamically registers the agent,
+starts a device authorization, obtains a DPoP sender-constrained token, retries
+RFC 9449 nonce challenges with fresh proofs, leases encrypted messages, and
+acknowledges them with the one-time lease capability.
+
+```bash
+cp .env.example .env
+bun run inbox
+```
+
+Open the printed verification URL and approve the exact
+`federation:inbox:consume` delegation. The CLI intentionally prints only message
+IDs, origins, and sequence numbers. It does not print access tokens, refresh
+tokens, lease capabilities, or encrypted application payloads. The DPoP private
+key is non-exportable and exists only for the process lifetime.
+
+The PaaS resource must advertise
+`dpop_bound_access_tokens_required: true`. The client stops instead of silently
+falling back to Bearer authentication. Authorization-server and resource-server
+nonces use separate cache scopes even when both endpoints share an origin.
+Discovery is fail closed: the PaaS URL, resource, issuer, OAuth endpoints, and
+verification links must use HTTPS; the advertised resource and issuer must
+exactly match the URLs being discovered. Error messages never include arbitrary
+server response bodies.
 
 The random opaque payload represents the bytes produced by
 `@absolutejs/secure-messaging`; it is not a substitute for MLS. The MIMI adapter
