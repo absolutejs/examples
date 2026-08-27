@@ -7,7 +7,7 @@
       "dependencies": {
         "@absolutejs/secure-messaging-federation": "0.1.0",
         "@absolutejs/secure-messaging-federation-delivery": "0.0.1",
-        "@absolutejs/secure-messaging-federation-https": "0.0.1",
+        "@absolutejs/secure-messaging-federation-https": "0.0.3",
         "@absolutejs/secure-messaging-federation-mimi": "0.0.1",
         "@absolutejs/secure-messaging-federation-webcrypto": "0.0.1",
       },
@@ -27,7 +27,7 @@
 
     "@absolutejs/secure-messaging-federation-delivery": ["@absolutejs/secure-messaging-federation-delivery@0.0.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/e2ee": ">=0.8.0 <0.9", "@absolutejs/secure-messaging-federation": ">=0.1.0 <0.2" } }, "sha512-8VDsMHSWPuHgogUKOvF+Su+lquagmOWAgClD5+trkFmJLPnlO72CvDPCi4oWTYo/uS3EhVOWBh5vaJueZPdZZA=="],
 
-    "@absolutejs/secure-messaging-federation-https": ["@absolutejs/secure-messaging-federation-https@0.0.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-messaging-federation": ">=0.1.0 <0.2" } }, "sha512-z2HqqArv2flmhFeix2MLPN74t8Z/vp7VBn2FCHSBa4gen6VKxL6jJPBmGiWRpMo5ByF7fM8RuZKX8irE7SLjUw=="],
+    "@absolutejs/secure-messaging-federation-https": ["@absolutejs/secure-messaging-federation-https@0.0.3", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-messaging-federation": ">=0.1.0 <0.2" } }, "sha512-VzF+f5y5ot+vwd28xmo03GFO+AaGLNN1h/Vc4j+C9qTFIQ86bUiVhGdKCuacLCKipELJa61K5Mvj2GRYTTsEWg=="],
 
     "@absolutejs/secure-messaging-federation-mimi": ["@absolutejs/secure-messaging-federation-mimi@0.0.1", "", { "dependencies": { "@absolutejs/manifest": "^0.9.0", "@sinclair/typebox": "^0.34.0" }, "peerDependencies": { "@absolutejs/secure-messaging-federation": ">=0.0.2 <0.1" } }, "sha512-lWZc9ytgkcEGeOKtxgijd+3ffwM3Uuux3AnxSsjMzNaMbeIvTjFW3lpe9P5+wr+yQ8vT9SkSBNFTIRYZmxu4GQ=="],
 
