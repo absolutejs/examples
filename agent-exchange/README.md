@@ -27,6 +27,9 @@ For a durable run, apply the migration exported by
 `createDemoPostgresMessagingStores({ postgres, tenantId })` into
 `createDemoMessagingPair`. Requester and recipient device IDs receive separate
 database namespaces even when they belong to the same tenant.
+The example selects `local-wal`, which forces PostgreSQL `fsync` and synchronous
+local WAL acknowledgement. Production deployments that configure a synchronous
+standby can deliberately select `synchronous-replica` instead.
 
 The page also runs purpose-substitution and replay probes. Both must fail before
 another mailbox read or destination submission.

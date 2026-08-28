@@ -11,7 +11,7 @@
     "@absolutejs/e2ee-webcrypto": "0.2.1",
     "@absolutejs/e2ee-mls": "0.5.0",
     "@absolutejs/secure-messaging": "0.5.1",
-    "@absolutejs/secure-messaging-postgres": "0.1.0",
+    "@absolutejs/secure-messaging-postgres": "0.2.0",
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",

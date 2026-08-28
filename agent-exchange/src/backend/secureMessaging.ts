@@ -170,11 +170,13 @@ export const createDemoPostgresMessagingStores = (options: {
     recipient: createPostgresSecureMessagingStore({
       client,
       deviceId: "recipient-device-1",
+      durability: "local-wal",
       tenantId: options.tenantId,
     }),
     requester: createPostgresSecureMessagingStore({
       client,
       deviceId: "requester-device-1",
+      durability: "local-wal",
       tenantId: options.tenantId,
     }),
   });
