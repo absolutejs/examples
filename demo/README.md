@@ -15,11 +15,15 @@ all in one recording, composed into a single `.mp4` per run:
    saucedemo.com by driving its real login screen.
 
 Credentials are passed to the profiles as env *references* (`{ env: "NAME" }`),
-so values never enter the script, the manifest, or the recording. They are
+so values stay out of the script. This does not redact the login UI: review
+recordings and reports before sharing, and use demo accounts. They are
 **required** — the demo refuses to run without them (no silent defaults).
 
 ```sh
 bun install
+bunx playwright install chromium
+# Build the local @absolutejs/demo dependency first: (cd ../../demo && bun run build)
+# Install ffmpeg on PATH and set ELEVENLABS_API_KEY in .env before running.
 OWN_SITE_EMAIL=owner@example.com OWN_SITE_PASSWORD='demo-password' \
 SAUCE_USERNAME=standard_user SAUCE_PASSWORD=secret_sauce \
 bun run demo
@@ -36,6 +40,8 @@ recording, screenshots, voiceover audio, manifest, and the composed
 `…​.mp4` — review that single MP4 to see the whole run (sign-ins included).
 
 Voiceover uses the upgraded ElevenLabs path; `ELEVENLABS_API_KEY` loads from
-`~/onspark/absolutejs/dealroom/.env` by default (set `DEMO_ENV_FILE` to change).
+the local `.env` by default (set `DEMO_ENV_FILE` to load a different file).
+For a minimal browser-to-MP4 walkthrough without third-party sign-ins, use
+[`demo/examples/quick-start.ts`](../../demo/examples/quick-start.ts).
 Set `DEMO_COMPOSE=false` to skip FFmpeg composition, `DEMO_HEADLESS=1` to run
 without a visible browser.

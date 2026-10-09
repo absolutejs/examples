@@ -217,7 +217,7 @@ const parseEnvLine = (line: string) => {
 
 const loadVoiceAndAiEnv = async () => {
 	const envFile =
-		process.env.DEMO_ENV_FILE ?? "~/onspark/absolutejs/dealroom/.env";
+		process.env.DEMO_ENV_FILE ?? ".env";
 	try {
 		const text = await readFile(expandHome(envFile), "utf8");
 		for (const line of text.split(/\r?\n/)) parseEnvLine(line);
