@@ -68,7 +68,7 @@ export const pagesPlugin = (manifest: Record<string, string>) => {
 
   return (
     new Elysia()
-      .get("/", ({ redirect }) => redirect("/react", 302))
+      .get("/", ({ redirect }) => redirect("/react"))
       .get("/react", reactHandler)
       .get("/react/*", reactHandler)
       .get("/svelte", svelteHandler)
