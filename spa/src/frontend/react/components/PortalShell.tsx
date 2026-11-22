@@ -4,6 +4,16 @@ import { Home } from "./Home";
 import { Profile } from "./Profile";
 import { Settings } from "./Settings";
 
+// The portal's pages. Each loads its code the first time it is shown: the
+// framework splits a router's pages on its own, so they are plain imports.
+const PortalRoutes = () => (
+  <Routes>
+    <Route element={<Home />} path="/react" />
+    <Route element={<Settings />} path="/react/settings" />
+    <Route element={<Profile />} path="/react/profile" />
+  </Routes>
+);
+
 export const PortalShell = () => {
   const [clicks, setClicks] = useState(0);
   const { pathname } = useLocation();
@@ -53,11 +63,7 @@ export const PortalShell = () => {
           </Link>
         </aside>
         <section className="portal-content">
-          <Routes>
-            <Route element={<Home />} path="/react" />
-            <Route element={<Settings />} path="/react/settings" />
-            <Route element={<Profile />} path="/react/profile" />
-          </Routes>
+          <PortalRoutes />
         </section>
       </div>
 

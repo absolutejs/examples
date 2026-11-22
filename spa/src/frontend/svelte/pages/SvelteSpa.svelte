@@ -3,7 +3,10 @@
   import Route from "@absolutejs/absolute/svelte/router/Route.svelte";
   import Router from "@absolutejs/absolute/svelte/router/Router.svelte";
   import { page } from "@absolutejs/absolute/svelte/router";
+  import Home from "../components/Home.svelte";
   import Nav from "../components/Nav.svelte";
+  import Profile from "../components/Profile.svelte";
+  import Settings from "../components/Settings.svelte";
 
   type SvelteSpaProps = {
     cssPath?: string;
@@ -65,40 +68,13 @@
         </aside>
         <section class="portal-content">
           <Route path="/svelte">
-            {#snippet content()}
-              <h2>Home</h2>
-              <p>
-                The default sub-route. Click the links in the sidebar — the URL
-                updates, this content swaps, and the sidebar + click counter
-                stay mounted.
-              </p>
-              <p>
-                Refresh the page on any sub-route. The server-rendered initial
-                HTML already shows the matching view because the request URL is
-                forwarded to <code>&lt;Router url=&#123;url&#125;&gt;</code>.
-              </p>
-            {/snippet}
+            {#snippet content()}<Home />{/snippet}
           </Route>
           <Route path="/svelte/settings">
-            {#snippet content()}
-              <h2>Settings</h2>
-              <p>
-                Each sub-route is just a <code>&lt;Route&gt;</code> declared inside
-                the page. The AbsoluteJS Svelte router handles the dispatch on both
-                server and client.
-              </p>
-            {/snippet}
+            {#snippet content()}<Settings />{/snippet}
           </Route>
           <Route path="/svelte/profile">
-            {#snippet content()}
-              <h2>Profile</h2>
-              <p>
-                Notice the sidebar didn't reload, the click counter above is
-                intact, and the URL bar shows <code>/svelte/profile</code>.
-                That's intra-framework SPA — the framework's own router doing
-                what it already does best.
-              </p>
-            {/snippet}
+            {#snippet content()}<Profile />{/snippet}
           </Route>
         </section>
       </div>

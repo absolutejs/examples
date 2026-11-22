@@ -1,48 +1,82 @@
 # absolutejs-spa-example
 
-Demonstrates intra-framework SPA navigation in AbsoluteJS using each
-framework's **native** router. The top-level route between frameworks
-(`/react` → `/svelte`) is a full-page MPA navigation. The sub-routes
-inside each framework page (`/react/settings`, `/react/profile`) are
-client-side SPA navigations driven by the framework's own router.
+Single-page navigation inside AbsoluteJS pages, in React, Svelte, Vue and
+Angular. Moving between frameworks (`/react` → `/svelte`) is an ordinary
+page load. Moving inside one (`/react` → `/react/settings`) is client-side
+navigation: the layout, sidebar and any state stay mounted, and only the
+page area changes.
 
-The point: AbsoluteJS doesn't ship a router. Users install
-`react-router-dom` / `vue-router` / `svelte-routing` themselves; the
-adapter just makes the SSR pass cooperate so SEO, deep-link load, and
-refresh-mid-route all work.
+Every sub-route is server-rendered. Load or refresh `/vue/settings`
+directly and the HTML already holds the Settings view, which then hydrates
+in place.
 
 ## Run
 
     bun install
     bun run dev
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>. For the production build, run `bun run start`.
 
-## What to look at
+## Pages load when they're first shown
 
-- `src/frontend/{react,svelte,vue,angular}/pages/*` — each framework's
-  SPA page wires its native router. Refreshing on a sub-route renders
-  the correct view because the request URL is forwarded to the router
-  on the server.
-- `src/backend/plugins/pagesPlugin.ts` — Elysia routes use wildcard
-  patterns (`/react/*` etc.) so the same handler responds for every
-  sub-URL.
-- **React** uses `<StaticRouter location={url}>` on the server and
-  `<BrowserRouter>` on the client. URL is plumbed as a normal prop.
-- **Svelte** uses `<Router url={url}>` from `svelte-routing`. URL is
-  plumbed as a normal prop.
-- **Angular** uses `provideRouter` exported from the page module.
-  AbsoluteJS forwards `request.url` into `renderApplication`.
-- **Vue** exports a `setupApp(app, { url, isServer })` hook from the
-  page module. AbsoluteJS calls this on both server and client, so
-  `app.use(router)` + `router.push(url)` + `router.isReady()` runs in
-  both environments.
+Each page inside a router is its own chunk. The browser downloads Settings
+the first time you open Settings, not with the layout. A page opened once
+opens instantly after that.
 
-## Note on the Vue adapter
+You don't write anything for this. Import the page normally and put it in
+the router; the build does the splitting for every framework:
 
-The Vue `setupApp` convention is new in `@absolutejs/absolute@0.19.0-beta.817`.
-Page modules export `setupApp(app, { url, isServer })`; AbsoluteJS calls
-it on both server (in `pageHandler.ts`, before `renderToWebStream`) and
-client (in `compileVue.ts`'s auto-generated index, before `app.mount()`).
-This is the only way to get vue-router cooperating with SSR + hydration
-without forking the Vue mount path.
+```tsx
+// React: src/frontend/react/components/PortalShell.tsx
+import { Settings } from "./Settings";
+<Route element={<Settings />} path="/react/settings" />;
+```
+
+```svelte
+<!-- Svelte: src/frontend/svelte/pages/SvelteSpa.svelte -->
+<Route path="/svelte/settings">
+  {#snippet content()}<Settings />{/snippet}
+</Route>
+```
+
+```ts
+// Vue: src/frontend/vue/pages/VueSpa.vue
+export const routes = defineRoutes([
+  { component: Settings, path: "/vue/settings" },
+]);
+```
+
+```ts
+// Angular: src/frontend/angular/pages/angular-spa/angular-spa.ts
+export const routes: Routes = [
+  { component: SettingsComponent, path: "settings" },
+];
+```
+
+What stays in the entry, so it renders at once:
+
+- layout routes (routes with child routes)
+- wrappers around a page, such as an auth guard or a page frame
+- any component the file also uses outside the router
+
+## How each framework is wired
+
+- **React**: `UniversalRouter` from `@absolutejs/absolute/react/router`
+  with react-router's `<Routes>`/`<Route>`. It renders from the request
+  URL on the server and uses the browser's history on the client.
+- **Svelte**: the framework's own router, `Router`, `Route` and `Link`
+  from `@absolutejs/absolute/svelte/router`. The page passes the request
+  URL to `<Router url={url}>`.
+- **Vue**: export `routes = defineRoutes([...])` from the page. AbsoluteJS
+  creates vue-router for you (memory history on the server, web history
+  in the browser) and waits for it before rendering and before hydrating.
+  `VuePinia.vue` and `VueI18n.vue` also export `defineVueSetupApp(...)` to
+  install a plugin (`app.use(createPinia())`, `app.use(i18n)`) on both
+  sides.
+- **Angular**: export `routes` from the page module. AbsoluteJS finds it,
+  provides the router and sets `APP_BASE_HREF` from the page's mount
+  (`/angular/`).
+
+On the server, `src/backend/plugins/pagesPlugin.ts` mounts each page at
+a wildcard (`/react/*` and so on), so one handler answers for every
+sub-route.

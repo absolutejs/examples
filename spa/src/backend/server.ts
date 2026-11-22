@@ -8,10 +8,11 @@ const server = new Elysia()
   .use(absolutejs)
   .use(pagesPlugin(manifest))
   .use(networking)
-  .on("error", (error) => {
-    const { request } = error;
+  .onError(({ error, request }) => {
     console.error(
-      `Server error on ${request.method} ${request.url}: ${error.message}`,
+      `Server error on ${request.method} ${request.url}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   });
 

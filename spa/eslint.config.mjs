@@ -1,6 +1,4 @@
 // eslint.config.mjs
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 import pluginJs from "@eslint/js";
 import stylistic from "@stylistic/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
@@ -11,7 +9,9 @@ import securityPlugin from "eslint-plugin-security";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Where this config lives: the project root the TypeScript parser reads
+// tsconfig.json from.
+const __dirname = import.meta.dirname;
 
 export default defineConfig([
   {
@@ -28,6 +28,8 @@ export default defineConfig([
       "**/client/**",
       "**/server/**",
       "src/frontend/vue/pages/**/*.js",
+      // Config data, not code.
+      "**/*.json",
     ],
   },
 
